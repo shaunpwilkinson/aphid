@@ -16,5 +16,5 @@ LazyData: TRUE
 SystemRequirements: GNU make
 Imports:
     Rcpp (>= 0.12.5)
-LinkingTo:
-    Rcpp
+LinkingTo: Rcpp
+RoxygenNote: 5.0.1

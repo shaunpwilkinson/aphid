@@ -1,10 +1,10 @@
 #' Find the optimal path through a HMM or PHMM
-#' 
+#'
 #' \code{Viterbi} finds the optimal path of a sequence through a HMM
-#' or PHMM and returns its log-odds score 
-#' 
+#' or PHMM and returns its log-odds score.
+#'
 #' @param x an object of class \code{HMM} or \code{PHMM}, or a character vector.
-#' @param y a character vector consisting of residues emitted by the 
+#' @param y a character vector consisting of residues emitted by the
 #' HMM or PHMM.
 #' @param qe an optional named vector of background residue frequencies. If NULL
 #' background residue frequencies from the PHMMs are used. If these are not available
@@ -15,30 +15,38 @@
 #' at the beginning and end of the path should count towards the final score
 #' ('global'; default), or not ('semiglobal'), or whether the highest scoring
 #' sub-path should be returned ('local').
-#' @param S an optional scoring matrix with rows and columns named according 
-#' to the residue alphabet. Note that for local alignments scores for 
-#' mismatches should generally take negative values or else spurious 
+#' @param S an optional scoring matrix with rows and columns named according
+#' to the residue alphabet. Note that for local alignments scores for
+#' mismatches should generally take negative values or else spurious
 #' alignments could occur. If NULL matches are scored as 1 and
 #' mismatches scored as -1.
-#' @param offset column score offset to specify level of greediness. Defaults to 
+#' @param offset column score offset to specify level of greediness. Defaults to
 #' -0.1 bits as recommended by Soding (2005).
-#' @param itertab an optional two column matrix of row and column indices used 
+#' @param itertab an optional two column matrix of row and column indices used
 #' to iterate through a subset of the viterbi array.
-#' 
+#' @name Viterbi
+#'
 #' @examples
 #' x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
 #' y <- c("P", "A", "W", "H", "E", "A", "E")
 #' Viterbi(x, y,  d = 8, e = 2)
-#' 
-Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE, 
-                         type = "semiglobal", offset = -0.1, 
+#'
+Viterbi <- function(x, y, qe = NULL, logspace = FALSE,
+type = "semiglobal", offset = -0.1, d = 8,
+e = 2, S = NULL, itertab = NULL){
+  UseMethod("Viterbi")
+}
+
+#' @rdname Viterbi
+Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
+                         type = "semiglobal", offset = -0.1,
                          itertab = NULL){
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
   pp <- inherits(y, 'PHMM')
   n <- ncol(x$E)
   m <- if(pp) ncol(y$E) else length(y)
   states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
-  V <- array(-Inf, dim = c(n + 1, m + 1, length(states)), 
+  V <- array(-Inf, dim = c(n + 1, m + 1, length(states)),
              dimnames = list(x = 0:n, y = 0:m, state = states))
   P <- V + NA # pointer array
   if(!(is.null(qe))){
@@ -49,7 +57,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
         qe <- if(logspace) (exp(x$qe) + exp(y$qe))/2 else (x$qe + y$qe)/2
         qe <- log(qe)
       }else if(!is.null(x$qe)){
-        qe <- if(logspace) x$qe else log(x$qe) 
+        qe <- if(logspace) x$qe else log(x$qe)
       }else{
         qe <- if(logspace) y$qe else log(y$qe)
       }
@@ -59,7 +67,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
     }
   }else{
     if(!is.null(x$qe)){
-      qe <- if(logspace) x$qe else log(x$qe) 
+      qe <- if(logspace) x$qe else log(x$qe)
     }else{
       qe <- log(rep(1/nrow(x$E), nrow(x$E)))
       names(qe) <- rownames(x$E)
@@ -73,16 +81,16 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
     fun <- Vectorize(function(a, b) logsum((Ex[, a] + Ey[, b]) - qe))
     Saa <- outer(1:n, 1:m, fun)
     if(type == "global"){
-      V[-1, 1, "MI"] <- cumsum(c(Ax["M", 1, "M"] + Ay["M", 1, "I"], 
-                                 Ax["M", 2:n, "M"] + Ay["I", 1, "I"]))   
+      V[-1, 1, "MI"] <- cumsum(c(Ax["M", 1, "M"] + Ay["M", 1, "I"],
+                                 Ax["M", 2:n, "M"] + Ay["I", 1, "I"]))
       P[-1, 1, "MI"] <- c(3, rep(1, n - 1))
       V[-1, 1, "DG"] <- cumsum(c(Ax["M", 1, "D"], Ax["D", 2:n , "D"]))
       P[-1, 1, "DG"] <- c(3, rep(2, n - 1))
       V[1, 1, "MM"] <- 0
       V[1, -1, "GD"] <- cumsum(c(Ay["M", 1, "D"], Ay["D", 2:m , "D"]))
-      P[1, -1, "GD"] <- c(3, rep(4, m - 1))      
-      V[1, -1, "IM"] <- cumsum(c(Ax["M", 1, "I"] + Ay["M", 1, "M"], 
-                                 Ax["I", 1, "I"] + Ay["M", 2:m, "M"]))  
+      P[1, -1, "GD"] <- c(3, rep(4, m - 1))
+      V[1, -1, "IM"] <- cumsum(c(Ax["M", 1, "I"] + Ay["M", 1, "M"],
+                                 Ax["I", 1, "I"] + Ay["M", 2:m, "M"]))
       P[1, -1, "IM"] <- c(3, rep(5, m - 1))
     }else{
       V[1, , "MM"] <- V[, 1, "MM"] <- 0
@@ -100,7 +108,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
                    V[i, j + 1, "DG"] + Ax["D", i, "D"])
         MMcdt <- c(V[i, j, "MI"] + Ax["M", i, "M"] + Ay["I", j, "M"] + sij,
                    V[i, j, "DG"] + Ax["D", i, "M"] + Ay["M", j, "M"] + sij,
-                   V[i, j, "MM"] + Ax["M", i, "M"] + Ay["M", j, "M"] + sij, 
+                   V[i, j, "MM"] + Ax["M", i, "M"] + Ay["M", j, "M"] + sij,
                    V[i, j, "GD"] + Ax["M", i, "M"] + Ay["D", j, "M"] + sij,
                    V[i, j, "IM"] + Ax["I", i, "M"] + Ay["M", j, "M"] + sij,
                    if(type == "local") 0 else NULL)
@@ -118,10 +126,10 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
         V[i + 1, j + 1, "MM"] <- MMcdt[MMmax]
         V[i + 1, j + 1, "GD"] <- GDcdt[GDmax]
         V[i + 1, j + 1, "IM"] <- IMcdt[IMmax]
-        P[i + 1, j + 1, "MI"] <- c(3, 1)[MImax] 
-        P[i + 1, j + 1, "DG"] <- c(3, 2)[DGmax] 
-        P[i + 1, j + 1, "MM"] <- c(1:6)[MMmax] 
-        P[i + 1, j + 1, "GD"] <- c(3, 4)[GDmax] 
+        P[i + 1, j + 1, "MI"] <- c(3, 1)[MImax]
+        P[i + 1, j + 1, "DG"] <- c(3, 2)[DGmax]
+        P[i + 1, j + 1, "MM"] <- c(1:6)[MMmax]
+        P[i + 1, j + 1, "GD"] <- c(3, 4)[GDmax]
         P[i + 1, j + 1, "IM"] <- c(3, 5)[IMmax]
       }
     }
@@ -150,7 +158,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
       z <- c(ind, 3)
       score <- V[z[1], z[2], z[3]]
       if(z[1] < n + 1){
-        path <- rep(2, n + 1 - z[1]) 
+        path <- rep(2, n + 1 - z[1])
         progression <- rbind(z[1]:n + 1, rep(z[2], n + 1 - z[1]))
       }else if(z[2] < m + 1){
         path <- rep(4, m + 1 - z[2])
@@ -208,7 +216,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
                   V[i, j + 1, "M"] + A["M", i, "D"],
                   V[i, j + 1, "I"] + A["I", i, "D"])
         Mcdt <- c(V[i, j, "D"] + A["D", i, "M"] + sij,
-                  V[i, j, "M"] + A["M", i, "M"] + sij, 
+                  V[i, j, "M"] + A["M", i, "M"] + sij,
                   V[i, j, "I"] + A["I", i, "M"] + sij,
                   if(type == "local") 0 else NULL)
         Icdt <- c(V[i + 1, j, "D"] + A["D", i + 1, "I"],
@@ -220,23 +228,23 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
         V[i + 1, j + 1, "D"] <- Dcdt[Dmax]
         V[i + 1, j + 1, "M"] <- Mcdt[Mmax]
         V[i + 1, j + 1, "I"] <- Icdt[Imax]
-        P[i + 1, j + 1, "D"] <- Dmax 
-        P[i + 1, j + 1, "M"] <- Mmax 
-        P[i + 1, j + 1, "I"] <- Imax 
+        P[i + 1, j + 1, "D"] <- Dmax
+        P[i + 1, j + 1, "M"] <- Mmax
+        P[i + 1, j + 1, "I"] <- Imax
       }
     }
     path <- c()
     progression <- c()
     if(type == 'global'){
       LLcdt <- c(V[n + 1, m + 1, "D"] + A["D", n + 1, "M"],
-                 V[n + 1, m + 1, "M"] + A["M", n + 1, "M"], 
+                 V[n + 1, m + 1, "M"] + A["M", n + 1, "M"],
                  V[n + 1, m + 1, "I"] + A["I", n + 1, "M"])
       LLptr <- whichismax(LLcdt)
       score <- LLcdt[LLptr]
       z <- c(n + 1, m + 1, LLptr)
       while(z[1] > 1 | z[2] > 1){
         path <- c(z[3], path)
-        progression <- c(z[1], progression)       
+        progression <- c(z[1], progression)
         z[3] <- P[z[1], z[2], z[3]]
         z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
 
@@ -291,17 +299,19 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
                         progression = progression,
                         #firstmatch = firstmatch,
                         key = key,
-                        V = V, 
-                        pointer = P), 
+                        V = V,
+                        pointer = P),
                    class = 'Viterbi')
   return(res)
 }
+
+#' @rdname Viterbi
 Viterbi.HMM <- function (x, y, logspace = FALSE){
   n <- length(y)
   states <- names(x$s)
   H <- length(states)
   path <- rep(NA, n)
-  V <- array(-Inf, dim = c(H, n), 
+  V <- array(-Inf, dim = c(H, n),
              dimnames = list(states = states, index = 1:n))
   P <- V + NA # pointer array
   E <- if(logspace) x$E else log(x$E)
@@ -311,7 +321,7 @@ Viterbi.HMM <- function (x, y, logspace = FALSE){
   fun <- Vectorize(function(k, l) V[k, i - 1] + A[k, l])
   for (i in 2:n){
     tmp <- outer(1:H, 1:H, fun)
-    V[, i] <- E[, y[i]] + apply(tmp, 2, max) 
+    V[, i] <- E[, y[i]] + apply(tmp, 2, max)
     P[, i] <- states[apply(tmp, 2, which.max)]
   }
   maxLL <- max(V[, n])
@@ -326,11 +336,13 @@ Viterbi.HMM <- function (x, y, logspace = FALSE){
                         #alignment = NULL,
                         progression = NULL,
                         V = V,
-                        pointer = P), 
+                        pointer = P),
                    class = 'Viterbi')
   return(res)
 }
-Viterbi.default <- function(x, y, type = 'semiglobal', d = 8, e = 2, 
+
+#' @rdname Viterbi
+Viterbi.default <- function(x, y, type = 'semiglobal', d = 8, e = 2,
                             S = NULL, itertab = NULL, offset = 0){
   ###check that x is a character vector###
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
@@ -363,8 +375,8 @@ Viterbi.default <- function(x, y, type = 'semiglobal', d = 8, e = 2,
       }
       sij <-  S[x[i - 1], y[j - 1]] + offset
       Ixcdt <- c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e))#x alig to gap in y
-      Mcdt <- c(M[i - 1, j - 1, 1] + sij, 
-                M[i - 1, j - 1, 2] + sij, 
+      Mcdt <- c(M[i - 1, j - 1, 1] + sij,
+                M[i - 1, j - 1, 2] + sij,
                 M[i - 1, j - 1, 3] + sij,
                 if(type == 'local') 0 else NULL)
       Iycdt <- c(-Inf, M[i, j - 1, 2] - (d + e), M[i, j - 1, 3] - e)
@@ -436,14 +448,14 @@ Viterbi.default <- function(x, y, type = 'semiglobal', d = 8, e = 2,
   key <- "1: x aligns to gap in y, 2: match, 3: y aligns to gap in x"
   progression <- progression - 1
   rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
-  res <- structure(list(score = score, 
-                        #alignment = alig, 
-                        path = path, 
+  res <- structure(list(score = score,
+                        #alignment = alig,
+                        path = path,
                         #firstmatch = firstmatch,
                         progression = progression,
                         key = key,
-                        V = M, 
-                        pointer = P), 
+                        V = M,
+                        pointer = P),
                    class = 'Viterbi')
   return(res)
 }

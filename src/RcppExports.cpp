@@ -5,13 +5,29 @@
 
 using namespace Rcpp;
 
-// rcpp_hello
-List rcpp_hello();
-RcppExport SEXP profile_rcpp_hello() {
+// ViterbiHMM
+List ViterbiHMM(List x, CharacterVector y, bool logspace);
+RcppExport SEXP profile_ViterbiHMM(SEXP xSEXP, SEXP ySEXP, SEXP logspaceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
-    __result = Rcpp::wrap(rcpp_hello());
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< bool >::type logspace(logspaceSEXP);
+    __result = Rcpp::wrap(ViterbiHMM(x, y, logspace));
+    return __result;
+END_RCPP
+}
+// ViterbiPHMM
+List ViterbiPHMM(List x, CharacterVector y, bool logspace);
+RcppExport SEXP profile_ViterbiPHMM(SEXP xSEXP, SEXP ySEXP, SEXP logspaceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< bool >::type logspace(logspaceSEXP);
+    __result = Rcpp::wrap(ViterbiPHMM(x, y, logspace));
     return __result;
 END_RCPP
 }
