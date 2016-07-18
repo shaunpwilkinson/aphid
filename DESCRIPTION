@@ -4,14 +4,16 @@ Title: Profile hidden Markov models for sequence analysis
 Version: 0.0.0.9000
 Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
+Maintainer: Shaun Wilkinson <shaunpwilkinson@gmail.com>
 Description: Contains functions for the creation, application and visualization
-    of profile hidden Markov models for bioinformatic analysis.
+    of profile hidden Markov models for bioinformatic sequence analysis.
 License: GPL-2
 URL: http://github.com/shaunpwilkinson/profile
 BugReports: http://github.com/shaunpwilkinson/profile/issues
 Depends:
     R (>= 3.2.0)
 LazyData: TRUE
+SystemRequirements: GNU make
 Imports:
     Rcpp (>= 0.12.5)
 LinkingTo:
