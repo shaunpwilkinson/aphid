@@ -87,6 +87,6 @@ List ViterbiHMM(List x, CharacterVector y, bool logspace = false){
 //' @export
 // [[Rcpp::export(name = "ViterbiC.PHMM")]]
 List ViterbiPHMM(List x, CharacterVector y, bool logspace = false){
-  Rcout << "sorry Viterbi method is not available for PHMMs yet";
+  Rcout << "sorry Viterbi method is not available for PHMMs yet\n";
   return 0;
 }

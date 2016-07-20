@@ -1,51 +1,51 @@
-BaumWelch <- function(x, obs, iterations = 100, 
-                      delta.llk = 0.0000001, logspace = FALSE,
+BaumWelch <- function(x, y, iterations = 100,
+                      deltaLL = 0.0000001, logspace = FALSE,
                       quiet = FALSE){
   if(!(inherits(x, 'HMM'))) stop("x must be an object of class 'HMM'")
-  n <- length(obs)
+  n <- length(y)
   states <- names(x$s)
   H <- length(states)
   residues <- colnames(x$E)
-  symblen <- length(residues)
-  res <- x
+  reslen <- length(residues)
+  out <- x
   if(!logspace){
-    res$E <- log(res$E)
-    res$A <- log(res$A)
-    res$s <- log(res$s)
+    out$E <- log(out$E)
+    out$A <- log(out$A)
+    out$s <- log(out$s)
   }
-  E <- res$E
-  A <- res$A
-  s <- res$s
-  llk <- -1000000
-  Akl <- Vectorize(function(k, l) 
-    exp(logsum(R[k, -n] + A[k, l] + E[l, obs[-1]] + B[l, -1]) - logPx))
+  E <- out$E
+  A <- out$A
+  s <- out$s
+  LL <- -1000000
+  Akl <- Vectorize(function(k, l)
+    exp(logsum(R[k, -n] + A[k, l] + E[l, y[-1]] + B[l, -1]) - logPx))
   Ekb <- Vectorize(function(k, b){
-    cond <- obs == residues[b]
+    cond <- y == residues[b]
     return(exp(logsum(R[k, cond] + B[k, cond]) - logPx))
   })
   for(i in 1:iterations){
-    forw <- forward(res, obs, logspace = TRUE)
+    forw <- forward(out, y, logspace = TRUE)
     R <- forw$forwardArray
     logPx <- forw$logFullProb
     if(!quiet) cat("Iteration", i, "log likelihood = ", logPx, "\n")
-    if(llk - logPx < -delta.llk){
-      back <- backward(res, obs, logspace = TRUE)
+    if(LL - logPx < -deltaLL){
+      back <- backward(out, y, logspace = TRUE)
       B <- back$backwardArray
       tmp <- outer(1:H, 1:H, Akl)
       A[] <- log(tmp/apply(tmp, 1, sum))
-      tmp <- outer(1:H, 1:symblen, Ekb)
+      tmp <- outer(1:H, 1:reslen, Ekb)
       E[] <- log(tmp/apply(tmp, 1, sum))
-      res$A <- A
-      res$E <- E
-      llk <- logPx
+      out$A <- A
+      out$E <- E
+      LL <- logPx
     }else{
       if(!logspace){
-        res$A <- exp(res$A)
-        res$E <- exp(res$E)
-        res$s <- exp(res$s)
+        out$A <- exp(out$A)
+        out$E <- exp(out$E)
+        out$s <- exp(out$s)
       }
-      if(!quiet) cat("Model converged after", i, "iterations")
-      return(res)
+      if(!quiet) cat("Model converged after", i, "EM iterations\n")
+      return(out)
     }
   }
   stop("Model did not converge")

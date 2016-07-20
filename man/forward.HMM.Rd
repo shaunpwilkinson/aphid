@@ -4,7 +4,7 @@
 \alias{forward.HMM}
 \title{Implement the forward algorithm}
 \usage{
-\method{forward}{HMM}(x, obs, logspace = FALSE)
+\method{forward}{HMM}(x, y, logspace = FALSE)
 }
 \description{
 Implement the forward algorithm
