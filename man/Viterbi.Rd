@@ -5,7 +5,7 @@
 \alias{Viterbi.HMM}
 \alias{Viterbi.PHMM}
 \alias{Viterbi.default}
-\title{Find the optimal path through a HMM or PHMM}
+\title{Find the optimal sequence path recursively}
 \usage{
 Viterbi(x, y, qe = NULL, logspace = FALSE, type = "semiglobal",
   offset = -0.1, d = 8, e = 2, S = NULL, itertab = NULL)
@@ -29,7 +29,7 @@ background residue frequencies from the PHMMs are used. If these are not availab
 equal background residue frequencies are assumed.}
 
 \item{logspace}{logical argument indicating whether the emission
-and transmission probabilities for the model(s) are logged.}
+and transmission probabilities povided for the model(s) are logged.}
 
 \item{type}{a character string indicating whether insert and delete states
 at the beginning and end of the path should count towards the final score
@@ -38,6 +38,10 @@ sub-path should be returned ('local').}
 
 \item{offset}{column score offset to specify level of greediness. Defaults to
 -0.1 bits as recommended by Soding (2005).}
+
+\item{d}{gap opening penalty for sequence vs. sequence alignment}
+
+\item{e}{gap extension penalty for sequence vs. sequence alignment}
 
 \item{S}{an optional scoring matrix with rows and columns named according
 to the residue alphabet. Note that for local alignments scores for

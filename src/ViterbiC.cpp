@@ -14,9 +14,9 @@ using namespace Rcpp;
 //' @export
 // [[Rcpp::export(name = "ViterbiC.HMM")]]
 List ViterbiHMM(List x, CharacterVector y, bool logspace = false){
-  NumericVector s = clone(VECTOR_ELT(x, 0));
-  NumericMatrix A = clone(VECTOR_ELT(x, 1));
-  NumericMatrix E = clone(VECTOR_ELT(x, 2));
+  //NumericVector s = clone(VECTOR_ELT(x, 0));
+  NumericMatrix A = clone(VECTOR_ELT(x, 0));
+  NumericMatrix E = clone(VECTOR_ELT(x, 1));
   List names = E.attr("dimnames");
   CharacterVector states = VECTOR_ELT(names, 0);
   CharacterVector residues = VECTOR_ELT(names, 1);
@@ -25,12 +25,13 @@ List ViterbiHMM(List x, CharacterVector y, bool logspace = false){
   int nresidues = residues.size();
   if(!logspace){
     for(int i = 0; i < nstates; i++){
-      s[i] = log(s[i]);
+      //s[i] = log(s[i]);
       A(i, _) = log(A(i, _));
       E(i, _) = log(E(i, _));
     }
+    A(nstates, _) = log(A(nstates, _));
   }
-  IntegerVector yind(nrolls);
+  IntegerVector yind(nrolls); // to code residues
   //IntegerVector rseq = seq_along(residues); // this starts at 1
   //IntegerVector rseq = Range(0, nresidues - 1);
   for(int i = 0; i < nrolls; i++){
@@ -41,7 +42,9 @@ List ViterbiHMM(List x, CharacterVector y, bool logspace = false){
   CharacterVector rolls = as<CharacterVector>(prerolls);
   List vnames = List::create(Named("state") = states, Named("roll") = rolls);
   V.attr("dimnames") = vnames;
-  V(_, 0) = E(_, yind[0]) + s;
+  NumericVector s = A(0, _);
+  NumericVector e = A(_, 0);
+  V(_, 0) = E(_, yind[0]) + s[seq(1, nstates)];
   IntegerMatrix rawP(nstates, nrolls);
   //CharacterMatrix P(nstates, nrolls);
   //P.attr("dimnames") = vnames;
@@ -51,7 +54,7 @@ List ViterbiHMM(List x, CharacterVector y, bool logspace = false){
   for(int i = 1; i < nrolls; i++){
     for(int j = 0; j < nstates; j++){
       for(int k = 0; k < nstates; k++){
-        tmp(j, k) = V(j, i - 1) + A(j, k);
+        tmp(j, k) = V(j, i - 1) + A(j + 1, k + 1);
       }
     }
     for(int l = 0; l < nstates; l++){
@@ -62,10 +65,15 @@ List ViterbiHMM(List x, CharacterVector y, bool logspace = false){
     V(_, i) = E(_, yind[i]) + colmaxs;
     rawP(_, i) = maxstates;
     //P(_, i) = as<CharacterVector>(states[maxstates]);
-    checkUserInterrupt(); // could speed up by checking less reqularly
+    checkUserInterrupt(); //could speed up slightly by checking less frequently
   }
-  int maxstate = which_max(V(_, nrolls - 1));
-  double score = V(_, nrolls - 1)[maxstate];
+  NumericVector ak0(nstates);
+  bool allinfinite = all(e[seq(1, nstates)] == rep(-INFINITY, nstates)).is_true();
+
+  if(!allinfinite){ak0 += e[seq(1, nstates)];}
+
+  int maxstate = which_max(V(_, nrolls - 1) + ak0);
+  double score = V(_, nrolls - 1)[maxstate] + ak0[maxstate];
   IntegerVector rawpath(nrolls);
   CharacterVector path(nrolls);
   rawpath[nrolls - 1] = maxstate;

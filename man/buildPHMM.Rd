@@ -2,20 +2,20 @@
 % Please edit documentation in R/build.R
 \name{buildPHMM}
 \alias{buildPHMM}
-\title{Build HMMs or profile HMMs}
+\title{Manually build HMMs or profile HMMs}
 \usage{
 buildPHMM(E, A, qe, qa, n)
 }
 \arguments{
-\item{E}{a matrix of emission probabilities}
+\item{E}{matrix of emission probabilities with \code{"dimnames"} attributes
+following \code{dimnames(E) = List(state = states, residue = residues)}}
 
-\item{A}{a matrix of transition probabilities}
+\item{A}{matrix of transition probabilities with \code{"dimnames"} attributes
+following \code{dimnames(A) = List(from = states, to = states)}}
 
 \item{qe}{a named vector of profile HMM background emission frequencies}
 
 \item{qa}{a 3 x 3 matrix of profile HMM background transition frequencies}
-
-\item{s}{a named vector of HMM start probabilities}
 }
 \description{
 \code{buildPHMM} and \code{buildHMM} are functions for the manual creation of

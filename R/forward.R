@@ -1,18 +1,18 @@
-#' Implement the forward algorithm
+#' Full log probability of an input sequence
 #'
 forward.HMM <- function (x, y, logspace = FALSE){
   n <- length(y)
-  states <- names(x$s)
+  states <- rownames(x$A)[-1]
   H <- length(states)
   E <- if(logspace) x$E else log(x$E)
   A <- if(logspace) x$A else log(x$A)
-  s <- if(logspace) x$s else log(x$s)
-  R <- array(NA, dim = c(H, n), dimnames = list(states = states, index = 1:n))
-  R[,1] <- E[, y[1]] + s
-  fun <- Vectorize(function(k, l) R[k, i - 1] + A[k, l])
+  #s <- if(logspace) x$s else log(x$s)
+  R <- array(NA, dim = c(H, n), dimnames = list(state = states, rolls = 1:n))
+  R[,1] <- E[, y[1]] + A[1, -1] # formerly s
+  fun <- Vectorize(function(k, l) R[k, i - 1] + A[k + 1, l + 1])
   for (i in 2:n) R[, i] <- E[, y[i]] + apply(outer(1:H, 1:H, fun), 2, logsum)
-  res <- structure(list(logFullProb = logsum(R[, n]),
-                        forwardArray = R), class = 'forward')
+  res <- structure(list(score = logsum(R[, n]),
+                        array = R), class = 'forward')
   return(res)
 }
 forward.PHMM <- function (x, y, logspace = FALSE, global = TRUE){

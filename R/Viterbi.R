@@ -1,4 +1,4 @@
-#' Find the optimal path through a HMM or PHMM
+#' Find the optimal sequence path recursively
 #'
 #' \code{Viterbi} finds the optimal path of a sequence through a HMM
 #' or PHMM and returns its log-odds score.
@@ -10,7 +10,7 @@
 #' background residue frequencies from the PHMMs are used. If these are not available
 #' equal background residue frequencies are assumed.
 #' @param logspace logical argument indicating whether the emission
-#' and transmission probabilities for the model(s) are logged.
+#' and transmission probabilities povided for the model(s) are logged.
 #' @param type a character string indicating whether insert and delete states
 #' at the beginning and end of the path should count towards the final score
 #' ('global'; default), or not ('semiglobal'), or whether the highest scoring
@@ -24,6 +24,8 @@
 #' -0.1 bits as recommended by Soding (2005).
 #' @param itertab an optional two column matrix of row and column indices used
 #' to iterate through a subset of the viterbi array.
+#' @param d gap opening penalty for sequence vs. sequence alignment
+#' @param e gap extension penalty for sequence vs. sequence alignment
 #' @name Viterbi
 #'
 #' @examples
@@ -31,9 +33,8 @@
 #' y <- c("P", "A", "W", "H", "E", "A", "E")
 #' Viterbi(x, y,  d = 8, e = 2)
 #'
-Viterbi <- function(x, y, qe = NULL, logspace = FALSE,
-type = "semiglobal", offset = -0.1, d = 8,
-e = 2, S = NULL, itertab = NULL){
+Viterbi <- function(x, y, qe = NULL, logspace = FALSE, type = "semiglobal",
+                    offset = -0.1, d = 8, e = 2, S = NULL, itertab = NULL){
   UseMethod("Viterbi")
 }
 
@@ -308,32 +309,32 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
 #' @rdname Viterbi
 Viterbi.HMM <- function (x, y, logspace = FALSE){
   n <- length(y)
-  states <- names(x$s)
-  H <- length(states)
+  states <- rownames(x$A)[-1]
+  H <- length(states) # not including BeginEnd state
   path <- rep(NA, n)
-  V <- array(-Inf, dim = c(H, n),
-             dimnames = list(states = states, index = 1:n))
+  V <- array(-Inf, dim = c(H, n), dimnames = list(state = states, roll = 1:n))
   P <- V + NA # pointer array
   E <- if(logspace) x$E else log(x$E)
   A <- if(logspace) x$A else log(x$A)
-  s <- if(logspace) x$s else log(x$s)
-  V[, 1] <- E[, y[1]] + s
-  fun <- Vectorize(function(k, l) V[k, i - 1] + A[k, l])
+  #s <- if(logspace) x$s else log(x$s)
+  V[, 1] <- E[, y[1]] + A[1, -1] # formerly s
+  fun <- Vectorize(function(k, l) V[k, i - 1] + A[k + 1, l + 1])
   for (i in 2:n){
     tmp <- outer(1:H, 1:H, fun)
     V[, i] <- E[, y[i]] + apply(tmp, 2, max)
     P[, i] <- states[apply(tmp, 2, which.max)]
   }
-  maxLL <- max(V[, n])
-  path[n] <- states[which.max(V[, n])]
-  path_i <- path[n]
+  ak0 <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H)
+  endstate <- which.max(V[, n] + ak0)
+  maxLL <- V[endstate, n] + ak0[endstate]
+  path[n] <- states[endstate]
+  tmp <- path[n]
   for(i in n:2){
-    path[i - 1] <- P[path_i, i]
-    path_i <- path[i - 1]
+    path[i - 1] <- P[tmp, i]
+    tmp <- path[i - 1]
   }
   res <- structure(list(score = maxLL,
                         path = path,
-                        #alignment = NULL,
                         progression = NULL,
                         V = V,
                         pointer = P),

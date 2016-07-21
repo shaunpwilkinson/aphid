@@ -1,15 +1,18 @@
 #' Derive profile HMMs from sequence alignments.
 #'
-#' \code{derive} converts a multiple sequence alignment to a profile HMM.
+#' \code{derivePHMM} converts a multiple sequence alignment to a profile HMM.
 #'
 #' @param x a character matrix of aligned sequences.
 #' @param residues one of the character strings 'auto' (default), aminos' or
 #' 'bases', or a case sensitive character vector matching the residue
 #' alphabet. Specifying the symbol type ('aminos' or 'bases') can increase speed
-#' for larger alignments.
+#' for larger alignments. Note that setting \code{residues = 'auto'} will not
+#' detect rare residues that are not present in the alignment and thus will
+#' not assign them emission probabilities.
 #' @param gapchar the character used to represent gaps in the alignment matrix.
 #' @param method the method used to account for the possible absence of certain
-#' character states in the alignment columns. If \code{method = background} and
+#' character states in the alignment columns. Currently only \code{method = Laplace}
+#' and \code{method = background} are supported. If \code{method = background} and
 #' some transition/emission types are absent from the alignment, Laplacean
 #' pseudocounts are automatically added.
 #' @param qe an optional named vector of background emission probabilities the
@@ -23,7 +26,7 @@
 #' where M, I and D represent matches, inserts and deletions, respectively. If
 #' NULL background transition probabilities are derived from the alignment.
 #'
-derive <- function(x, residues = 'auto', gapchar = "-",
+derivePHMM <- function(x, residues = 'auto', gapchar = "-",
                    method = 'background', qe = NULL, qa = NULL){
   if(!(method %in% c('background', 'Laplace'))) stop("invalid method")
   if(identical(residues, "auto")) residues <- sort(unique(as.vector(x)))
@@ -140,73 +143,74 @@ derive <- function(x, residues = 'auto', gapchar = "-",
 }
 
 #-------------------------------------------------------------------------------
+# this was written when transitions from begin state were provided separately as 's'
 
-deriveHMM <- function(x, residues = 'auto', states = 'auto', modelend = "FALSE",
-                      spseudocounts = setNames(rep(1, length(states)), states),
-                      Apseudocounts = matrix(1, length(states), length(states),
-                                             dimnames = list(from = states,
-                                                             to = states)),
-                      Epseudocounts = matrix(1, length(states), length(residues),
-                                             dimnames = list(state = states,
-                                                             residue = residues)))
-  {
-  if(!(is.list(x))) stop("x must be a list of named vectors")
-  # x is a list of named character vectors
-  #check list of named vectors
-  # includes start and or end states?
-  namesok <- all(sapply(x, function(y) !is.null(names(y))))
-  if(!(namesok)) stop("all elements of x must be named vectors")
-  unlistx <- unlist(x)
-  # states will be coerced to character:
-  if(identical(residues, "auto")) residues <- as.character(sort(unique(unlistx)))
-  if(!(length(residues) > 1)) stop("invalid residues argument")
-  if(identical(states, "auto")) states <- sort(unique(names(unlistx)))
-  if(!(length(states) > 1)) stop("invalid states argument")
-  nres <- length(residues)
-  nstates <- length(states)
-  indices <- 0:(nstates - 1)
-  names(indices) <- states
-  pathscoded <- lapply(x, function(v) indices[names(v)])
-  # Start probabilities
-  beginstates <- sapply(x, function(v) names(v)[1])
-  scounts <- rep(NA, nstates)
-  names(scounts) <- states
-  for(i in states) scounts[i] <- sum(beginstates == i)
-  scounts <- scounts + spseudocounts
-  s <- scounts/sum(scounts)
-  # Transition probabilities
-  Afun <- function(v, states){
-    tuples <- rbind(v[-length(v)], v[-1])
-    decs <- apply(tuples, 2, convert, length(states), 10)
-    #bug in convert - what if nstates = 10?
-    # note there are nstates^2 possible 2-tuples
-    counts <- rep(0, length(states)^2)
-    for(i in 1:length(counts)) counts[i] <- sum(decs == i - 1)
-    return(counts)
-  }
-  Acounts <- apply(sapply(pathscoded, Afun, states), 1, sum)
-  Acounts <- matrix(Acounts, nrow = nstates, byrow = TRUE)
-  Acounts <- Acounts + Apseudocounts
-  A <- Acounts/apply(Acounts, 1, sum) #rows must sum to 1
-  # Emission probabilities
-  Efun <- function(v, states, residues){
-    counts <- matrix(0, length(states), length(residues))
-    dimnames(counts) <- list(states, residues)
-    for(i in states){
-      for(j in residues){
-        counts[i, j] <- sum(names(v) == i & v == j)
-      }
-    }
-    return(counts)
-  }
-  Ecounts <- apply(sapply(x, Efun, states, residues), 1, sum)
-  Ecounts <- matrix(Ecounts, nrow = nstates, byrow = FALSE)
-  Ecounts <- Ecounts + Epseudocounts
-  E <- Ecounts/apply(Ecounts, 1, sum)
-  # compile hidden Markov model object
-  res <- structure(list(s = s, A = A, E = E), class = "HMM")
-  return(res)
-}
+# deriveHMMold <- function(x, residues = 'auto', states = 'auto', modelend = "FALSE",
+#                       spseudocounts = setNames(rep(1, length(states)), states),
+#                       Apseudocounts = matrix(1, length(states), length(states),
+#                                              dimnames = list(from = states,
+#                                                              to = states)),
+#                       Epseudocounts = matrix(1, length(states), length(residues),
+#                                              dimnames = list(state = states,
+#                                                              residue = residues)))
+#   {
+#   if(!(is.list(x))) stop("x must be a list of named vectors")
+#   # x is a list of named character vectors
+#   #check list of named vectors
+#   # includes start and or end states?
+#   namesok <- all(sapply(x, function(y) !is.null(names(y))))
+#   if(!(namesok)) stop("all elements of x must be named vectors")
+#   unlistx <- unlist(x)
+#   # states will be coerced to character:
+#   if(identical(residues, "auto")) residues <- as.character(sort(unique(unlistx)))
+#   if(!(length(residues) > 1)) stop("invalid residues argument")
+#   if(identical(states, "auto")) states <- sort(unique(names(unlistx)))
+#   if(!(length(states) > 1)) stop("invalid states argument")
+#   nres <- length(residues)
+#   nstates <- length(states)
+#   indices <- 0:(nstates - 1)
+#   names(indices) <- states
+#   pathscoded <- lapply(x, function(v) indices[names(v)])
+#   # Start probabilities
+#   beginstates <- sapply(x, function(v) names(v)[1])
+#   scounts <- rep(NA, nstates)
+#   names(scounts) <- states
+#   for(i in states) scounts[i] <- sum(beginstates == i)
+#   scounts <- scounts + spseudocounts
+#   s <- scounts/sum(scounts)
+#   # Transition probabilities
+#   Afun <- function(v, states){
+#     tuples <- rbind(v[-length(v)], v[-1])
+#     decs <- apply(tuples, 2, convert, length(states), 10)
+#     #bug in convert - what if nstates = 10?
+#     # note there are nstates^2 possible 2-tuples
+#     counts <- rep(0, length(states)^2)
+#     for(i in 1:length(counts)) counts[i] <- sum(decs == i - 1)
+#     return(counts)
+#   }
+#   Acounts <- apply(sapply(pathscoded, Afun, states), 1, sum)
+#   Acounts <- matrix(Acounts, nrow = nstates, byrow = TRUE)
+#   Acounts <- Acounts + Apseudocounts
+#   A <- Acounts/apply(Acounts, 1, sum) #rows must sum to 1
+#   # Emission probabilities
+#   Efun <- function(v, states, residues){
+#     counts <- matrix(0, length(states), length(residues))
+#     dimnames(counts) <- list(states, residues)
+#     for(i in states){
+#       for(j in residues){
+#         counts[i, j] <- sum(names(v) == i & v == j)
+#       }
+#     }
+#     return(counts)
+#   }
+#   Ecounts <- apply(sapply(x, Efun, states, residues), 1, sum)
+#   Ecounts <- matrix(Ecounts, nrow = nstates, byrow = FALSE)
+#   Ecounts <- Ecounts + Epseudocounts
+#   E <- Ecounts/apply(Ecounts, 1, sum)
+#   # compile hidden Markov model object
+#   res <- structure(list(s = s, A = A, E = E), class = "HMM")
+#   return(res)
+# }
 
 
 

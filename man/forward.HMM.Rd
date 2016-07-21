@@ -2,11 +2,11 @@
 % Please edit documentation in R/forward.R
 \name{forward.HMM}
 \alias{forward.HMM}
-\title{Implement the forward algorithm}
+\title{Full log probability of an input sequence}
 \usage{
 \method{forward}{HMM}(x, y, logspace = FALSE)
 }
 \description{
-Implement the forward algorithm
+Full log probability of an input sequence
 }
 
