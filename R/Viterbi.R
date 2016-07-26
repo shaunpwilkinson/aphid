@@ -309,7 +309,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
 #' @rdname Viterbi
 Viterbi.HMM <- function (x, y, logspace = FALSE){
   n <- length(y)
-  states <- rownames(x$A)[-1]
+  states <- rownames(x$E)
   H <- length(states) # not including BeginEnd state
   path <- rep(NA, n)
   V <- array(-Inf, dim = c(H, n), dimnames = list(state = states, roll = 1:n))

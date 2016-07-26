@@ -2,17 +2,20 @@
 #'
 forward.HMM <- function (x, y, logspace = FALSE){
   n <- length(y)
-  states <- rownames(x$A)[-1]
+  states <- rownames(x$E)
   H <- length(states)
   E <- if(logspace) x$E else log(x$E)
   A <- if(logspace) x$A else log(x$A)
   #s <- if(logspace) x$s else log(x$s)
+  if(length(y) == 0) return(structure(list(score = A[1, 1], array = NULL),
+                                      class = 'forward'))
   R <- array(NA, dim = c(H, n), dimnames = list(state = states, rolls = 1:n))
   R[,1] <- E[, y[1]] + A[1, -1] # formerly s
   fun <- Vectorize(function(k, l) R[k, i - 1] + A[k + 1, l + 1])
   for (i in 2:n) R[, i] <- E[, y[i]] + apply(outer(1:H, 1:H, fun), 2, logsum)
-  res <- structure(list(score = logsum(R[, n]),
-                        array = R), class = 'forward')
+  ak0 <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H)
+  score <- logsum(R[, n] + ak0)
+  res <- structure(list(score = score, array = R), class = 'forward')
   return(res)
 }
 forward.PHMM <- function (x, y, logspace = FALSE, global = TRUE){

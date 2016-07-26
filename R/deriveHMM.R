@@ -19,20 +19,20 @@
 #' the unique states provided in the 'names' attributes in
 #' the list of training
 #' sequences.
-#' @param method the method used to account for the possible absence of certain
-#' character states in the alignment columns. Currently only \code{method = Laplace}
-#' is supported.
+#' @param pseudocounts used to account for the possible absence of certain transition
+#' and/or emission types in the training dataset.
+#' either \code{'Laplace'} (adds one of each possible transition and emission type to the
+#' training dataset; default), \code{'none'}, or a two-element list containing a matrix of
+#' transition pseudocounts as its first element and a matrix of emission pseudocounts
+#' as its second. If a list is supplied both matrices must have row and column names
+#' according to the residues (column names of emission matrix) and states
+#' (row and column names of the transition matrix and row names of the emission matrix).
+#' The first row and column of the transition matrix must be 'BeginEnd'.
 #' @param modelend logical indicating whether transitions to the 'end' state should be
 #' modeled. Defaults to FALSE.
 #'
 deriveHMM <- function(x, residues = 'auto', states = 'auto', modelend = FALSE,
-                      Apseudocounts = matrix(1, length(states), length(states),
-                                             dimnames = list(from = states,
-                                                             to = states)),
-                      Epseudocounts = matrix(1, length(states[-1]), length(residues),
-                                             dimnames = list(state = states[-1],
-                                                             residue = residues)))
-{
+                      pseudocounts = "Laplace"){
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
   #check list of named vectors
@@ -41,13 +41,28 @@ deriveHMM <- function(x, residues = 'auto', states = 'auto', modelend = FALSE,
   if(!(namesok)) stop("all elements of x must be named vectors")
   #if(!modelend) Apseudocounts[, 1] <- 0
   unlistx <- unlist(x)
-  # states will be coerced to character:
+  # states are coerced to character:
   if(identical(residues, "auto")) residues <- as.character(sort(unique(unlistx)))
-  if(!(length(residues) > 1)) stop("invalid residues argument")
+  if(!(length(residues) > 1)) stop("invalid 'residues' argument")
   if(identical(states, "auto")) states <- c("BeginEnd", sort(unique(names(unlistx))))
-  if(!(length(states) > 1)) stop("invalid states argument")
+  if(!(length(states) > 1)) stop("invalid 'states' argument")
   nres <- length(residues)
   nstates <- length(states)
+  # check pseudocounts ok
+  Apseudocounts <- matrix(nrow = nstates, ncol = nstates)
+  Epseudocounts <- matrix(nrow = nstates - 1, ncol = nres)
+  dimnames(Apseudocounts) <- list(from = states, to = states)
+  dimnames(Epseudocounts) <- list(state = states[-1], residue = residues)
+  if(identical(pseudocounts, "Laplace")){
+    Apseudocounts[] <- Epseudocounts[] <- 1
+  } else if(identical(pseudocounts, "none")){
+    AApseudocounts[] <- Epseudocounts[] <- 0
+  } else if(is.list(pseudocounts)){
+    stopifnot(length(pseudocounts == 2))
+    Apseudocounts[] <- pseudocounts[[1]]
+    Epseudocounts[] <- pseudocounts[[2]]
+  } else stop("invalid 'pseudocounts' argument")
+  # code states as integers
   indices <- 0:(nstates - 1)
   names(indices) <- states
   pathscoded <- lapply(x, function(v) indices[c("BeginEnd", names(v), "BeginEnd")])

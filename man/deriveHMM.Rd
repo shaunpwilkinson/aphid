@@ -5,10 +5,7 @@
 \title{Derive a HMM from training sequences.}
 \usage{
 deriveHMM(x, residues = "auto", states = "auto", modelend = FALSE,
-  Apseudocounts = matrix(1, length(states), length(states), dimnames =
-  list(from = states, to = states)), Epseudocounts = matrix(1,
-  length(states[-1]), length(residues), dimnames = list(state = states[-1],
-  residue = residues)))
+  pseudocounts = "Laplace")
 }
 \arguments{
 \item{x}{a list of named character vectors representing residue emissions
@@ -32,9 +29,15 @@ sequences.}
 \item{modelend}{logical indicating whether transitions to the 'end' state should be
 modeled. Defaults to FALSE.}
 
-\item{method}{the method used to account for the possible absence of certain
-character states in the alignment columns. Currently only \code{method = Laplace}
-is supported.}
+\item{pseudocounts}{used to account for the possible absence of certain transition
+and/or emission types in the training dataset.
+either \code{'Laplace'} (adds one of each possible transition and emission type to the
+training dataset; default), \code{'none'}, or a two-element list containing a matrix of
+transition pseudocounts as its first element and a matrix of emission pseudocounts
+as its second. If a list is supplied both matrices must have row and column names
+according to the residues (column names of emission matrix) and states
+(row and column names of the transition matrix and row names of the emission matrix).
+The first row and column of the transition matrix must be 'BeginEnd'.}
 }
 \description{
 \code{deriveHMM} calculates the maximum likelihood hidden Markov model from

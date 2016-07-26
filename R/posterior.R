@@ -1,6 +1,6 @@
 posterior.HMM <- function(x, y){
   n <- length(y)
-  states <- rownames(x$A)[-1]
+  states <- rownames(x$E)
   H <- length(states)
   back <- backward(x, y)
   B <- back$array
