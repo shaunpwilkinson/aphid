@@ -31,3 +31,14 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// logsum
+double logsum(NumericVector x);
+RcppExport SEXP profile_logsum(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
+    __result = Rcpp::wrap(logsum(x));
+    return __result;
+END_RCPP
+}

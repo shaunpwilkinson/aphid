@@ -2,11 +2,11 @@
 
 ### geometric functions
 arc <- function(x, y, radx, rady = radx, from = 0, to = 2 * pi,
-                no.points = 100, fill = NULL, 
+                no.points = 100, fill = NULL,
                 arrow = NULL, arrowsize = 0.08, code = 2, ...){
   piseq <- seq(from, to, by = (to - from)/no.points)
   coords <- matrix(nrow = no.points + 1, ncol = 2)
-  coords[, 1] <- x + radx * sin(piseq) 
+  coords[, 1] <- x + radx * sin(piseq)
   coords[, 2] <- y + rady * cos(piseq)
   if(from == 0 & to == 2 * pi){
     polygon(coords, col = fill, ... = ...)
@@ -16,17 +16,17 @@ arc <- function(x, y, radx, rady = radx, from = 0, to = 2 * pi,
   if(!(is.null(arrow))){
     if(arrow < 0 | arrow > 1) stop ("arrow argument must be between 0 and 1")
     if(arrow == 0){
-      arrows(x0 = coords[1, 1], y0 = coords[1, 2], x1 = coords[2, 1], 
+      arrows(x0 = coords[1, 1], y0 = coords[1, 2], x1 = coords[2, 1],
              y1 = coords[2, 2], code = 1, length = arrowsize, ... = ...)
     }else{
       l <- ceiling(arrow * no.points)
-      arrows(x0 = coords[l, 1], y0 = coords[l, 2], x1 = coords[l + 1, 1], 
+      arrows(x0 = coords[l, 1], y0 = coords[l, 2], x1 = coords[l + 1, 1],
              y1 = coords[l + 1, 2], code = code, length = arrowsize, ... = ...)
     }
   }
 }
 
-chord <- function(x, y, rad, type = 'outer', no.points = 100, 
+chord <- function(x, y, rad, type = 'outer', no.points = 100,
                   arrow = TRUE, arrowlength = 0.08, reversearrow = FALSE,
                   ...){#x and y are vectors of from, to
   distance <- sqrt(diff(x)^2 + diff(y)^2)
@@ -42,31 +42,31 @@ chord <- function(x, y, rad, type = 'outer', no.points = 100,
   if(type == 'outer'){
     piseq <- seq(startang, startang + segangle, by = segangle/no.points)
   } else if (type == 'inner'){
-    piseq <- seq(startang, startang - (2 * pi - segangle), 
+    piseq <- seq(startang, startang - (2 * pi - segangle),
                  by = -(2 * pi - segangle)/no.points)
   } else{
     stop("type argument must be set to either 'outer' or 'inner'")
   }
   coords <- matrix(nrow = no.points + 1, ncol = 2)
-  coords[, 1] <- centcoords[1] + rad * sin(piseq) 
+  coords[, 1] <- centcoords[1] + rad * sin(piseq)
   coords[, 2] <- centcoords[2] + rad * cos(piseq)
   lines(coords, ... = ...)
   if(arrow){
     arrowdir <- if(reversearrow) -1 else 1
-    arrows(x0 = coords[no.points/2 , 1], 
-           y0 = coords[no.points/2, 2], 
-           x1 = coords[no.points/2 + arrowdir, 1], 
+    arrows(x0 = coords[no.points/2 , 1],
+           y0 = coords[no.points/2, 2],
+           x1 = coords[no.points/2 + arrowdir, 1],
            y1 = coords[no.points/2 + arrowdir, 2],
            length = arrowlength,
            ... = ...)
   }
 }
 
-ellipse <- function(x, y, radx, rady = radx, 
+ellipse <- function(x, y, radx, rady = radx,
                     no.points = 100, col = NULL, lwd = 1){
   piseq <- seq(0, 2 * pi, by = (2 * pi)/no.points)
   coords <- matrix(nrow = no.points + 1, ncol = 2)
-  coords[, 1] <- x + radx * sin(piseq) 
+  coords[, 1] <- x + radx * sin(piseq)
   coords[, 2] <- y - rady * cos(piseq)
   polygon(coords, col = col, lwd = lwd)
 }
@@ -81,12 +81,12 @@ diamond <- function(x, y, radx, rady = radx, col = NULL, lwd = 1){
 
 longisland <- function(x) max(which(c(F,x) & !c(x,F)) - which(!c(F,x) & c(x,F)))
 
-logsum <- function(x){
+logsumR <- function(x){
   n <- length(x)
   if(n == 1) return(x)
   res <- x[1]
   for(i in 2:n){
-    if(res == -Inf) res <- x[i] 
+    if(res == -Inf) res <- x[i]
     else if(x[i] == -Inf) res <- res
     else if(res > x[i]) res <- res + log1p(exp(x[i] - res))
     else res <- x[i] + log1p(exp(res - x[i]))
@@ -124,8 +124,8 @@ addmats <- function(x){ # list of matrices all of same dimension
 quickdist <- function(x, y, k = 4){
   N1 <- length(x)
   N2 <- length(y)
-  n2t <- function(x) switch(x, 'a' = 0, '88' = 0, 'c' = 1, '28' = 1, 
-                            'g'= 2, '48' = 2, 't' = 3, '18' = 3, 
+  n2t <- function(x) switch(x, 'a' = 0, '88' = 0, 'c' = 1, '28' = 1,
+                            'g'= 2, '48' = 2, 't' = 3, '18' = 3,
                             sample(0:3, 1)) ### this is a quick hack
   xtr <- unname(sapply(x, n2t)) #x expressed as a ternary vector
   ytr <- unname(sapply(y, n2t)) #y expressed as a ternary vector
@@ -195,7 +195,7 @@ pathfinder <- function(v){
 
 insertcolumn <- function(x, what, where){
   if(nrow(x) != length(what)) stop("new column has different length to destination")
-  tmp <- rep(TRUE, ncol(x) + length(where)) 
+  tmp <- rep(TRUE, ncol(x) + length(where))
   tmp[where] <- FALSE
   index <- as.numeric(tmp)
   index[tmp] <- 1:ncol(x)
@@ -214,7 +214,7 @@ insertgaps <- function(x, positions, lengths, gapchar = "-"){
   if(xisvec) x <- matrix(x, nrow = 1)
   n <- nrow(x)
   m <- ncol(x)
-  tmp <- rep(TRUE, ncol(x) + sum(lengths)) 
+  tmp <- rep(TRUE, ncol(x) + sum(lengths))
   tab <- rep(0, m + 1)
   names(tab) <- 0:m
   tab[positions + 1] <- lengths
@@ -222,7 +222,7 @@ insertgaps <- function(x, positions, lengths, gapchar = "-"){
   notgap <- unlist(lapply(tab, fun))[-1]   #remember to delete true #1
   indices <- as.numeric(notgap)
   indices[notgap] <- 1:m
-  indices <- indices + 1  
+  indices <- indices + 1
   res <- cbind(rep(gapchar, n), x, deparse.level = 0)[, indices]
   if(xisvec) res <- as.vector(res)
   return(res)
@@ -255,7 +255,7 @@ insertlengths <- function(x){
 
 insert <- function(X, v, index, margin = 2){
   #x is a matrix, v is a vector, index is the row/col no. to insert
-  if(is.null(index)) return(X) 
+  if(is.null(index)) return(X)
   if(is.na(index)) return(X)
   xisvec <- is.vector(X)
   if(xisvec) X <- matrix(X, nrow = 1)
@@ -293,5 +293,5 @@ recycle <- function(v, len){
 whichismax <- function(v){
   ind <- which(v == max(v))
   if(length(ind) > 1) ind <- sample(ind, 1)
-  ind   
+  ind
 }

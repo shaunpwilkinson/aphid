@@ -1,6 +1,6 @@
 #include <Rcpp.h>
 using namespace Rcpp;
-//' Find the optimal path through a HMM or PHMM
+//' Optimal path of sequence through model.
 //'
 //' \code{ViterbiC} finds the optimal path of a sequence through a HMM
 //' or PHMM and returns its log-odds score.
@@ -25,7 +25,6 @@ List ViterbiHMM(List x, CharacterVector y, bool logspace = false){
   int nresidues = residues.size();
   if(!logspace){
     for(int i = 0; i < nstates; i++){
-      //s[i] = log(s[i]);
       A(i, _) = log(A(i, _));
       E(i, _) = log(E(i, _));
     }

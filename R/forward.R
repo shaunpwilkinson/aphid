@@ -1,4 +1,4 @@
-#' Full log probability of an input sequence
+#' Full log probability of sequence given model.
 #'
 forward.HMM <- function (x, y, logspace = FALSE){
   n <- length(y)
