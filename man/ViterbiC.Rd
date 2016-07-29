@@ -4,7 +4,7 @@
 \alias{ViterbiC}
 \alias{ViterbiC.HMM}
 \alias{ViterbiC.PHMM}
-\title{Find the optimal path through a HMM or PHMM.}
+\title{Optimal path of sequence through model.}
 \usage{
 \method{ViterbiC}{HMM}(x, y, logspace = FALSE)
 

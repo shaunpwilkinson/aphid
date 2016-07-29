@@ -42,3 +42,29 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// forwardC
+List forwardC(List x, CharacterVector y, bool logspace);
+RcppExport SEXP profile_forwardC(SEXP xSEXP, SEXP ySEXP, SEXP logspaceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< bool >::type logspace(logspaceSEXP);
+    __result = Rcpp::wrap(forwardC(x, y, logspace));
+    return __result;
+END_RCPP
+}
+// backwardC
+List backwardC(List x, CharacterVector y, bool logspace);
+RcppExport SEXP profile_backwardC(SEXP xSEXP, SEXP ySEXP, SEXP logspaceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< bool >::type logspace(logspaceSEXP);
+    __result = Rcpp::wrap(backwardC(x, y, logspace));
+    return __result;
+END_RCPP
+}

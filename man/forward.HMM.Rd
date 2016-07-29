@@ -2,11 +2,11 @@
 % Please edit documentation in R/forward.R
 \name{forward.HMM}
 \alias{forward.HMM}
-\title{Full log probability of an input sequence}
+\title{Full log probability of sequence given model.}
 \usage{
 \method{forward}{HMM}(x, y, logspace = FALSE)
 }
 \description{
-Full log probability of an input sequence
+Full log probability of sequence given model.
 }
 
