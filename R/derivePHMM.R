@@ -71,7 +71,7 @@ derivePHMM <- function(x, residues = 'auto', gapchar = "-",
   xtr[!gapsn & insertsn] <- 2 # Insert
   xtr <- matrix(xtr, nrow = n, byrow = TRUE)
   xtr <- cbind(1, xtr, 1) # begin and end match states
-  tupler <- function(v) apply(rbind(v[-(length(v))], v[-1]), 2, convert, 3, 10)
+  tupler <- function(v) apply(rbind(v[-(length(v))], v[-1]), 2, decimal, 3)
   xdc <- t(apply(xtr, 1, tupler)) + 1 # transition types coded to decimal
   tab <- function(v){
     res <- rep(NA, 9)
@@ -84,7 +84,7 @@ derivePHMM <- function(x, residues = 'auto', gapchar = "-",
   rownames(tcs) <- c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
   if(sum(inserts) > 0){
     # merge insert states
-    itp <- apply(rbind(c(F, inserts), c(inserts, F)), 2, convert, 2, 10)
+    itp <- apply(rbind(c(F, inserts), c(inserts, F)), 2, decimal, 2)
     ist <- which(itp == 1) #insert start positions
     ien <- which(itp == 2) #insert end positions
     tmp <- mapply(":", ist, ien, SIMPLIFY = FALSE)
@@ -141,76 +141,6 @@ derivePHMM <- function(x, residues = 'auto', gapchar = "-",
                    class = "PHMM")
   return(res)
 }
-
-#-------------------------------------------------------------------------------
-# this was written when transitions from begin state were provided separately as 's'
-
-# deriveHMMold <- function(x, residues = 'auto', states = 'auto', modelend = "FALSE",
-#                       spseudocounts = setNames(rep(1, length(states)), states),
-#                       Apseudocounts = matrix(1, length(states), length(states),
-#                                              dimnames = list(from = states,
-#                                                              to = states)),
-#                       Epseudocounts = matrix(1, length(states), length(residues),
-#                                              dimnames = list(state = states,
-#                                                              residue = residues)))
-#   {
-#   if(!(is.list(x))) stop("x must be a list of named vectors")
-#   # x is a list of named character vectors
-#   #check list of named vectors
-#   # includes start and or end states?
-#   namesok <- all(sapply(x, function(y) !is.null(names(y))))
-#   if(!(namesok)) stop("all elements of x must be named vectors")
-#   unlistx <- unlist(x)
-#   # states will be coerced to character:
-#   if(identical(residues, "auto")) residues <- as.character(sort(unique(unlistx)))
-#   if(!(length(residues) > 1)) stop("invalid residues argument")
-#   if(identical(states, "auto")) states <- sort(unique(names(unlistx)))
-#   if(!(length(states) > 1)) stop("invalid states argument")
-#   nres <- length(residues)
-#   nstates <- length(states)
-#   indices <- 0:(nstates - 1)
-#   names(indices) <- states
-#   pathscoded <- lapply(x, function(v) indices[names(v)])
-#   # Start probabilities
-#   beginstates <- sapply(x, function(v) names(v)[1])
-#   scounts <- rep(NA, nstates)
-#   names(scounts) <- states
-#   for(i in states) scounts[i] <- sum(beginstates == i)
-#   scounts <- scounts + spseudocounts
-#   s <- scounts/sum(scounts)
-#   # Transition probabilities
-#   Afun <- function(v, states){
-#     tuples <- rbind(v[-length(v)], v[-1])
-#     decs <- apply(tuples, 2, convert, length(states), 10)
-#     #bug in convert - what if nstates = 10?
-#     # note there are nstates^2 possible 2-tuples
-#     counts <- rep(0, length(states)^2)
-#     for(i in 1:length(counts)) counts[i] <- sum(decs == i - 1)
-#     return(counts)
-#   }
-#   Acounts <- apply(sapply(pathscoded, Afun, states), 1, sum)
-#   Acounts <- matrix(Acounts, nrow = nstates, byrow = TRUE)
-#   Acounts <- Acounts + Apseudocounts
-#   A <- Acounts/apply(Acounts, 1, sum) #rows must sum to 1
-#   # Emission probabilities
-#   Efun <- function(v, states, residues){
-#     counts <- matrix(0, length(states), length(residues))
-#     dimnames(counts) <- list(states, residues)
-#     for(i in states){
-#       for(j in residues){
-#         counts[i, j] <- sum(names(v) == i & v == j)
-#       }
-#     }
-#     return(counts)
-#   }
-#   Ecounts <- apply(sapply(x, Efun, states, residues), 1, sum)
-#   Ecounts <- matrix(Ecounts, nrow = nstates, byrow = FALSE)
-#   Ecounts <- Ecounts + Epseudocounts
-#   E <- Ecounts/apply(Ecounts, 1, sum)
-#   # compile hidden Markov model object
-#   res <- structure(list(s = s, A = A, E = E), class = "HMM")
-#   return(res)
-# }
 
 
 

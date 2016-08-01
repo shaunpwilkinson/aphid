@@ -31,13 +31,14 @@
 #' @param modelend logical indicating whether transitions to the 'end' state should be
 #' modeled. Defaults to FALSE.
 #'
+
 deriveHMM <- function(x, residues = 'auto', states = 'auto', modelend = FALSE,
-                      pseudocounts = "Laplace"){
+                      pseudocounts = "Laplace", logspace = FALSE){
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
   #check list of named vectors
   # includes start and or end states?
-  namesok <- all(sapply(x, function(y) !is.null(names(y))))
+  namesok <- all(sapply(x, function(y) !is.null(names(y))  | length(y) == 0))
   if(!(namesok)) stop("all elements of x must be named vectors")
   #if(!modelend) Apseudocounts[, 1] <- 0
   unlistx <- unlist(x)
@@ -69,8 +70,7 @@ deriveHMM <- function(x, residues = 'auto', states = 'auto', modelend = FALSE,
   # Transition probabilities
   Afun <- function(v, states){
     tuples <- rbind(v[-length(v)], v[-1])
-    decs <- apply(tuples, 2, convert, length(states), 10)
-    #bug in convert - what if nstates = 10?
+    decs <- apply(tuples, 2, decimal, length(states))
     # note there are nstates^2 possible 2-tuples
     counts <- rep(0, length(states)^2)
     for(i in 1:length(counts)) counts[i] <- sum(decs == i - 1)
@@ -97,6 +97,10 @@ deriveHMM <- function(x, residues = 'auto', states = 'auto', modelend = FALSE,
   Ecounts <- Ecounts + Epseudocounts
   E <- Ecounts/apply(Ecounts, 1, sum)
   # compile hidden Markov model object
+  if(logspace){
+    A <- log(A)
+    E <- log(E)
+  }
   res <- structure(list(A = A, E = E), class = "HMM")
   return(res)
 }

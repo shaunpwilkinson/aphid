@@ -5,7 +5,7 @@
 \title{Derive a HMM from training sequences.}
 \usage{
 deriveHMM(x, residues = "auto", states = "auto", modelend = FALSE,
-  pseudocounts = "Laplace")
+  pseudocounts = "Laplace", logspace = FALSE)
 }
 \arguments{
 \item{x}{a list of named character vectors representing residue emissions

@@ -124,3 +124,4 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
                           pseudocounts = "Laplace"){
   stop("BaumWelch method for PHMMs is work in progress")
 }
+

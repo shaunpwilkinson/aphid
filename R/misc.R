@@ -95,10 +95,13 @@ logsumR <- function(x){
 }
 
 
-convert <- function(x, from = 10, to = 2){
-  if(to %% 1 > 0) stop("sorry can't convert non-integers yet")
-  if(from != 10) x <- sum(x * from^rev(seq_along(x) - 1))
-  if(to == 10) return(x)
+convert <- function(x, from = 10, to = 2, collapse = FALSE){
+  if(to %% 1 > 0) stop("Non-integers are not supported yet")
+  if(length(x) == 1) x <- as.integer(strsplit(paste(x), split = "")[[1]])
+  x <- sum(x * from^rev(seq_along(x) - 1))
+  if(to == 10){
+    if(collapse) x else as.integer(strsplit(paste(x), split = "")[[1]])
+  }
   dividend <- as.integer(to)
   quotient <- floor(x/dividend)
   result <- x %% dividend
@@ -107,8 +110,15 @@ convert <- function(x, from = 10, to = 2){
     result = c(remainder, result)
     quotient <- floor(quotient/dividend)
   }
+  if(collapse) result <- as.integer(paste(result, collapse = ""))
   return(result)
 }
+
+# x is an integer vector in 'from' numbering system (eg for binary, from = 2)
+# decimal(x, from) is the same as convert(x, from, to = 10, collapse = FALSE)
+decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
+
+
 
 addmats <- function(x){ # list of matrices all of same dimension
   dmn <- dimnames(x[[1]])

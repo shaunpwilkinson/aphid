@@ -11,7 +11,7 @@
 #' equal background residue frequencies are assumed.
 #' @param logspace logical argument indicating whether the emission
 #' and transmission probabilities povided for the model(s) are logged.
-#' @param type a character string indicating whether insert and delete states
+#' @param type character string indicating whether insert and delete states
 #' at the beginning and end of the path should count towards the final score
 #' ('global'; default), or not ('semiglobal'), or whether the highest scoring
 #' sub-path should be returned ('local').

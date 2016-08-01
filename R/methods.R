@@ -5,10 +5,6 @@ ViterbiC <- function(x, y, qe = NULL, logspace = FALSE,
   UseMethod("ViterbiC")
 }
 
-forward <- function(x, obs, logspace = FALSE, global = TRUE){
-  UseMethod("forward")
-}
-
 backward <- function(x, obs, logspace = FALSE){
   UseMethod("backward")
 }

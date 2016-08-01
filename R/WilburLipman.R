@@ -12,8 +12,8 @@ WilburLipman <- function(x, y, k = 4, d = 6, e = 0, w = 10, S = NULL){
   ytr <- unname(sapply(y, n2t)) #y expressed as a ternary vector
   xnc <- N1 - k + 1 # number of columns for the k-row x matrix
   ync <- N2 - k + 1 # number of columns for the k-row y matrix
-  xsq <- 1:xnc 
-  ysq <- 1:ync 
+  xsq <- 1:xnc
+  ysq <- 1:ync
   xdf <- xtr[xsq]
   ydf <- ytr[ysq]
   for(i in 2:k){
@@ -22,9 +22,9 @@ WilburLipman <- function(x, y, k = 4, d = 6, e = 0, w = 10, S = NULL){
     xdf <- rbind(xdf, xtr[xsq])
     ydf <- rbind(ydf, ytr[ysq])
   }
-  tmp <- apply(ydf, 2, convert, from = 4, to = 10) + 1
+  tmp <- apply(ydf, 2, decimal, from = 4) + 1
   pointer <- apply(matrix(1:k^4, nrow = 1), 2, function(x) which(x == tmp))
-  S1 <- apply(xdf, 2, function(x) pointer[[convert(x, from = 4, to = 10) + 1]])
+  S1 <- apply(xdf, 2, function(x) pointer[[decimal(x, from = 4) + 1]])
   diags <- table(unlist(mapply("-", S1, 1:xnc)))
   if(length(diags) == 0) return(NULL)
   possdiags <- xnc + ync + 1
@@ -60,7 +60,7 @@ WilburLipman <- function(x, y, k = 4, d = 6, e = 0, w = 10, S = NULL){
                      M[i - 1, j - 1, 3] + sij)
     M[i, j, 2] <- max(Mcandidates)
     Mpointer <- which(Mcandidates == max(Mcandidates))
-    if(length(Mpointer) > 1) Mpointer <- sample(Mpointer, size = 1)      
+    if(length(Mpointer) > 1) Mpointer <- sample(Mpointer, size = 1)
     P[i, j, 2] <- Mpointer
     # x aligned to gap in y
     Ixcandidates <- c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e))
@@ -81,7 +81,7 @@ WilburLipman <- function(x, y, k = 4, d = 6, e = 0, w = 10, S = NULL){
   }
   # initialize result alignment (matrix)
   alig <- matrix(c(NA, NA))
-  # find highest score 
+  # find highest score
   bottomright <- rbind(M[n, , ], M[-n, m, ])
   max.ind <- which(bottomright == max(bottomright), arr.ind = TRUE)
   tbm <- max.ind[2]
@@ -106,7 +106,7 @@ WilburLipman <- function(x, y, k = 4, d = 6, e = 0, w = 10, S = NULL){
   # traceback
   while(!(tbr == 1 | tbc == 1)){
     app <- switch(tbm,
-                  c(x[tbr - 1], "-"), 
+                  c(x[tbr - 1], "-"),
                   c(x[tbr - 1], y[tbc - 1]),
                   c("-", y[tbc - 1]))
     alig <- cbind(alig, unname(app))
@@ -124,7 +124,7 @@ WilburLipman <- function(x, y, k = 4, d = 6, e = 0, w = 10, S = NULL){
   if(tbr == 1 & tbc == 1){
     leftend <- NULL
   }else if(tbr == 1){
-    leftend <- rbind(rep("-", tbc - 1), y[1:(tbc - 1)]) 
+    leftend <- rbind(rep("-", tbc - 1), y[1:(tbc - 1)])
   }else{
     leftend <- rbind(x[1:(tbr - 1)], rep("-", tbr - 1))
   }
@@ -133,9 +133,9 @@ WilburLipman <- function(x, y, k = 4, d = 6, e = 0, w = 10, S = NULL){
   rownames(alig) <- c(deparse(substitute(x)), deparse(substitute(y)))
   globalalig <- alig
   alig <- cbind(leftend, alig, rightend)
-  res <- structure(list(score = score, globalAlignment = globalalig, 
-                        alignment = alig, ViterbiPath = NULL, 
-                        ViterbiArray = M, PointerArray = P), 
+  res <- structure(list(score = score, globalAlignment = globalalig,
+                        alignment = alig, ViterbiPath = NULL,
+                        ViterbiArray = M, PointerArray = P),
                    class = 'alignment')
   res
 }
