@@ -5,9 +5,6 @@ ViterbiC <- function(x, y, qe = NULL, logspace = FALSE,
   UseMethod("ViterbiC")
 }
 
-backward <- function(x, obs, logspace = FALSE){
-  UseMethod("backward")
-}
 
 posterior <- function(x, obs){
   UseMethod("posterior")

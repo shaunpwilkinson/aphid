@@ -1,16 +1,16 @@
 #' Pairwise alignment of sequences and/or sequence alignments.
-#' 
-#' \code{align} uses the Viterbi algorithm to find the optimal alignment 
+#'
+#' \code{align} uses the Viterbi algorithm to find the optimal alignment
 #' between two sequences, a sequence and an alignment, or two alignments.
-#' 
+#'
 #' @param x,y character vectors or character matrices of aligned sequences.
 #' @param d,e gap opening and gap extension penalties for pairwise sequence
 #' alignment.
-#' @param S an optional substitution matrix with \code{dimnames} attributes 
+#' @param S an optional substitution matrix with \code{dimnames} attributes
 #' corresponding to the residue alphabet. If NULL matches are
 #' scored as 1 and mismatches as -1.
-#' @param type a character string specifying whether the alignment should be 
-#' 'global' (penalized end gaps), 'semiglobal' (default; free end gaps) or 
+#' @param type a character string specifying whether the alignment should be
+#' 'global' (penalized end gaps), 'semiglobal' (default; free end gaps) or
 #' local (highest scoring subalignment).
 #' @return a character matrix of aligned sequences.
 #' @examples
@@ -18,13 +18,13 @@
 #' y <- c("P", "A", "W", "H", "E", "A", "E")
 #' z <- align(x, y)
 #' align(x, z)
-#' 
-align <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL, 
-                  logspace = FALSE, type = 'global', 
+#'
+align <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
+                  logspace = FALSE, type = 'global',
                   offset = -0.1, itertab = NULL, method = 'background',
                   residues = 'auto', gapchar = "-"){
   if(is.vector(x) & is.vector(y)){
-    alig <- Viterbi(x, y, d = d, e = e, S = S, type = type, 
+    alig <- Viterbi(x, y, d = d, e = e, S = S, type = type,
                     itertab = itertab)#, offset = offset) ###not necessary for vec vs vec
     xind <- yind <- alig$path
     xind[alig$path != 3] <- 1:length(x)
@@ -32,7 +32,7 @@ align <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     newx <- c(gapchar, x)[xind + 1]
     yind[alig$path != 1] <- 1:length(y)
     yind[alig$path == 1] <- 0
-    newy <- c(gapchar, y)[yind + 1]    
+    newy <- c(gapchar, y)[yind + 1]
     res <- rbind(newx, newy)
     rownames(res) <- c(deparse(substitute(x)), deparse(substitute(y)))
     return(res)
@@ -45,12 +45,12 @@ align <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
       y <- tmp2
     }else{
       tmp1 <- deparse(substitute(y))
-    } 
+    }
     if(identical(residues, "auto")) residues <- sort(unique(c(as.vector(x), y)))
     n <- nrow(x)
-    z <- derive(x, method = method, residues = residues)
+    z <- derivePHMM(x, method = method, residues = residues)
     l <- z$size
-    alig <- Viterbi(z, y, qe = qe, logspace = logspace, type = type, 
+    alig <- Viterbi(z, y, qe = qe, logspace = logspace, type = type,
                     offset = offset, itertab = itertab)
     yind <- alig$path
     yind[alig$path != 1] <- 1:length(y)
@@ -58,8 +58,8 @@ align <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     newy <- c(gapchar, y)[yind + 1]
     #also need to account for inserts in x
     ynotinsert <- alig$path != 3 #logical vector
-    yinsertlengths <- insertlengths(ynotinsert) #tabulate insert lengths 
-    xinsertlengths <- z$insertlengths 
+    yinsertlengths <- insertlengths(ynotinsert) #tabulate insert lengths
+    xinsertlengths <- z$insertlengths
     #reconcile x and y insert lengths
     # gls = gap lengths, gps = gap positions
     diffsx <- diffsy <- yinsertlengths - xinsertlengths
@@ -67,7 +67,7 @@ align <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     if(any(diffsx > 0)){
       diffsx[diffsx < 0] <- 0
       xgls <- diffsx[diffsx > 0]
-      xgps <- c(z$alignment, ncol(x) + 1)[which(diffsx > 0)] - 1 
+      xgps <- c(z$alignment, ncol(x) + 1)[which(diffsx > 0)] - 1
       newx <- insertgaps(newx, xgps, xgls, gapchar = gapchar)
     }
     if(any(diffsy < 0)){
@@ -85,13 +85,13 @@ align <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     if(identical(residues, "auto")) residues <- sort(unique(c(as.vector(x), as.vector(y))))
     nx <- nrow(x)
     ny <- nrow(y)
-    zx <- derive(x, method = method, residues = residues)
-    zy <- derive(y, method = method, residues = residues)
+    zx <- derivePHMM(x, method = method, residues = residues)
+    zy <- derivePHMM(y, method = method, residues = residues)
     lx <- zx$size
     ly <- zy$size
-    alig <- Viterbi(zx, zy, qe = qe, logspace = logspace, type = type, 
+    alig <- Viterbi(zx, zy, qe = qe, logspace = logspace, type = type,
             offset = offset, itertab = itertab)
-    #vectors same length as model (+ 1 for begin state) with counts of 
+    #vectors same length as model (+ 1 for begin state) with counts of
     #no of gaps to insert after each position
     xinsertlengths <- insertlengths(alig$path < 4) - zx$insertlengths
     yinsertlengths <- insertlengths(alig$path > 2) - zy$insertlengths

@@ -1,59 +1,84 @@
-#' Full log likelihood.
+#' Forward algorithm.
 #'
-#' Forward and backward algorithms for calculating the full (log) probability
-#' of a sequence given a HMM or PHMM.
+#' Forward algorithm for calculating the full log-odds
+#' of a sequence given a HMM or PHMM and its random equivalent.
 #'
-#' @param x an object of class \code{HMM} or \code{PHMM}, or a character vector.
+#' @param x an object of class \code{PHMM} or \code{HMM}.
+#' @param y a character vector representing a single instance of a sequence
+#' hypothetically emitted by the model.
+#' @param logspace logical argument indicating whether the emission
+#' and transmission probabilities povided for the model(s) are logged.
+#' @param type character string indicating whether insert and delete states
+#' at the beginning and end of the path should count towards the final score
+#' ('global'; default). Note that semiglobal and local models
+#' are not currently supported in this version.
 #' @name forward
 
-forward <- function(x, y, logspace = FALSE, global = TRUE){
+forward <- function(x, y, logspace = FALSE, odds = FALSE, type = "global"){
   UseMethod("forward")
 }
 
 #' @rdname forward
-forward.PHMM <- function (x, y, logspace = FALSE, global = TRUE){
-  E <- if(logspace) x$E - x$qe else log(x$E/x$qe)
-  A <- if(logspace) x$A else log(x$A)
-  n <- length(y)
-  l <- ncol(x$E)
-  states <- c("M", "I", "D")
-  R <- array(NA, dim = c(n + 1, l + 1, 3))
-  dimnames(R) <- list(y = 0:n, mod = 0:l, state = states)
-  R["0", , "M"] <- -Inf
-  R[, "0", "M"] <- -Inf
-  R["0", "0", "M"] <- 0
-  R["0", , "I"] <- -Inf
-  R["1", "0", "I"] <- R["0", "0", "M"] + A["M", "0", "I"]
-  for(i in 2:n) {
-    R[i + 1, "0", "I"] <- R[i, "0", "I"] + A["I", "0", "I"]
-  }
-  R[, "0", "D"] <- -Inf
-  R["0", "1", "D"] <- R["0", "0", "M"] + A["M", "0", "D"]
-  for(j in 2:l){
-    R["0", j + 1, "D"] <- R["0", j, "D"] + A["D", j, "D"]
-  }
-  for(i in 1:n){
-    for(j in 1:l){
-      Mcandidates <- c(R[i, j, "M"] + A["M", j, "M"],
-                       R[i, j, "I"] + A["I", j, "M"],
-                       R[i, j, "D"] + A["D", j, "M"])
-      Icandidates <- c(R[i, j + 1, "M"] + A["M", j + 1, "I"],
-                       R[i, j + 1, "I"] + A["I", j + 1, "I"],
-                       R[i, j + 1, "D"] + A["D", j + 1, "I"])
-      Dcandidates <- c(R[i + 1, j, "M"] + A["M", j, "D"],
-                       R[i + 1, j, "I"] + A["I", j, "D"],
-                       R[i + 1, j, "D"] + A["D", j, "D"])
-      R[i + 1, j + 1, "M"] <- E[y[i], j] + logsum(Mcandidates)
-      R[i + 1, j + 1, "I"] <- logsum(Icandidates)
-      R[i + 1, j + 1, "D"] <- logsum(Dcandidates)
+forward.PHMM <- function (x, y, logspace = FALSE, odds = FALSE, type = "global"){
+  if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
+  if(type %in% c('semiglobal','local'))
+    stop("semiglobal and local models are not supported in this version")
+  pp <- inherits(y, 'PHMM')
+  n <- ncol(x$E)
+  m <- if(pp) ncol(y$E) else length(y)
+  states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
+  R <- array(-Inf, dim = c(n + 1, m + 1, length(states)))
+  dimnames(R) <- list(x = 0:n, y = 0:m, state = states)
+  if(pp){
+    stop("PHMM vs PHMM forward algorithm is not supported yet")
+    #
+    #
+  }else{
+    if(!is.null(x$qe)){
+      qe <- if(logspace) x$qe else log(x$qe)
+    }else{
+      qe <- log(rep(1/nrow(x$E), nrow(x$E)))
+      names(qe) <- rownames(x$E)
     }
+    A <- if(logspace) x$A else log(x$A)
+    E <- if(logspace) x$E else log(x$E)
+    if(odds) E <- E - qe
+    R[1, 1, 2] <- 0
+    if(type == "global"){ #key: D = 1, M = 2, I = 3
+      # R[-1, 1, 1] <- cumsum(c(0, A["D", 2:n, "D"])) + A["M", 1, "D"]
+      # R[1, -1, 3] <- seq(from = A["M", 1, "I"], by = A["I", 1, "I"], length.out = m)
+      R[2, 1, "D"] <- A["M", 1, "D"]
+      for(i in 2:n) R[i + 1, 1, "D"] <- R[i, 1, "D"] + A["D", i, "D"]
+      R[1, 2, "I"] <- A["M", 1, "I"] + if(odds) 0 else qe[y[1]]
+      for(j in 2:m) R[1, j + 1, "I"] <- R[1, j, "I"] + A["I", 1, "I"] +
+        if(odds) 0 else qe[y[j]]
+    }else{
+      R[-1, 1, 1] <- R[1, -1, 3] <- 0 ### check this
+    }
+    for(i in 1:n){
+      for(j in 1:m){
+        sij <- E[y[j], i]
+        Dcdt <- c(R[i, j + 1, "D"] + A["D", i, "D"],
+                  R[i, j + 1, "M"] + A["M", i, "D"],
+                  R[i, j + 1, "I"] + A["I", i, "D"])
+        Mcdt <- c(R[i, j, "D"] + A["D", i, "M"],
+                  R[i, j, "M"] + A["M", i, "M"],
+                  R[i, j, "I"] + A["I", i, "M"])
+        Icdt <- c(R[i + 1, j, "D"] + A["D", i + 1, "I"],
+                  R[i + 1, j, "M"] + A["M", i + 1, "I"],
+                  R[i + 1, j, "I"] + A["I", i + 1, "I"])
+        R[i + 1, j + 1, "D"] <- logsum(Dcdt)
+        R[i + 1, j + 1, "M"] <- logsum(Mcdt) + sij
+        R[i + 1, j + 1, "I"] <- logsum(Icdt) + if(odds) 0 else qe[y[j]]
+      }
+    }
+    LLcdt <- c(R[n + 1, m + 1, "M"] + A["M", n + 1, "M"],
+               R[n + 1, m + 1, "I"] + A["I", n + 1, "M"],
+               R[n + 1, m + 1, "D"] + A["D", n + 1, "M"])
+    score <- logsum(LLcdt)
+    res <- structure(list(score = score, array = R), class = 'forward')
+    return(res)
   }
-  LLcandidates <- c(R[n + 1, l + 1, "M"] + A["M", l + 1, "M"],
-                    R[n + 1, l + 1, "I"] + A["I", l + 1, "M"],
-                    R[n + 1, l + 1, "D"] + A["D", l + 1, "M"])
-  res <- structure(list(logFullProb = logsum(LLcandidates),
-                        forwardArray = R), class = 'forward')
-  return(res)
 }
 
 #' @rdname forward
@@ -79,6 +104,7 @@ forward.HMM <- function (x, y, logspace = FALSE){
 forward.default <- function(x, y, type = 'semiglobal', d = 8, e = 2,
                            S = NULL, itertab = NULL, offset = 0){
   ###check that x is a character vector###
+  # this is incorrect, d and e have no probabilistic interpretation
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
   n <- length(x) + 1
   m <- length(y) + 1
@@ -116,7 +142,6 @@ forward.default <- function(x, y, type = 'semiglobal', d = 8, e = 2,
   if(type == 'global'){
     # find highest score in bottom right corner of scoring array M
     score <- logsum(M[n, m, ])
-    #alig <- trackback(z, condition = "z[1] > 1 | z[2] > 1", P = P)
   }else if(type == 'semiglobal'){
     # find highest score on bottom row or right column of scoring array M
     border <- rbind(M[n, , ], M[-n, m, ])

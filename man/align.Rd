@@ -14,19 +14,19 @@ align(x, y, d = 8, e = 2, S = NULL, qe = NULL, logspace = FALSE,
 \item{d, e}{gap opening and gap extension penalties for pairwise sequence
 alignment.}
 
-\item{S}{an optional substitution matrix with \code{dimnames} attributes 
+\item{S}{an optional substitution matrix with \code{dimnames} attributes
 corresponding to the residue alphabet. If NULL matches are
 scored as 1 and mismatches as -1.}
 
-\item{type}{a character string specifying whether the alignment should be 
-'global' (penalized end gaps), 'semiglobal' (default; free end gaps) or 
+\item{type}{a character string specifying whether the alignment should be
+'global' (penalized end gaps), 'semiglobal' (default; free end gaps) or
 local (highest scoring subalignment).}
 }
 \value{
 a character matrix of aligned sequences.
 }
 \description{
-\code{align} uses the Viterbi algorithm to find the optimal alignment 
+\code{align} uses the Viterbi algorithm to find the optimal alignment
 between two sequences, a sequence and an alignment, or two alignments.
 }
 \examples{

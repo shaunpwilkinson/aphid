@@ -5,7 +5,7 @@
 \title{Derive profile HMMs from sequence alignments.}
 \usage{
 derivePHMM(x, residues = "auto", gapchar = "-", method = "background",
-  qe = NULL, qa = NULL)
+  qe = NULL, qa = NULL, threshold = 0.5, DI = FALSE)
 }
 \arguments{
 \item{x}{a character matrix of aligned sequences.}
@@ -20,14 +20,14 @@ not assign them emission probabilities.}
 \item{gapchar}{the character used to represent gaps in the alignment matrix.}
 
 \item{method}{the method used to account for the possible absence of certain
-character states in the alignment columns. Currently only \code{method = Laplace}
-and \code{method = background} are supported. If \code{method = background} and
+character states in the alignment. Currently only \code{"Laplace"}
+and \code{"background"} are supported. If \code{method = background} and
 some transition/emission types are absent from the alignment, Laplacean
 pseudocounts are automatically added.}
 
 \item{qe}{an optional named vector of background emission probabilities the
-same length as the number of residues (i.e. 4 for nucleotides and 20 for
-amino acids) and with names corresponding to the residue alphabet
+same length as the residue alphabet (i.e. 4 for nucleotides and 20 for
+amino acids) and with  corresponding names
 (i.e. A C D E F G H I K L M N P Q R S T V W Y for amino acids or
 a c g t for nucleotides). If NULL, background emission probabilities are
 derived from the alignment.}
@@ -36,8 +36,19 @@ derived from the alignment.}
 \code{dimnames(qa) = list(from = c('D', 'M', 'I'), to = c('D', 'M', 'I'))},
 where M, I and D represent matches, inserts and deletions, respectively. If
 NULL background transition probabilities are derived from the alignment.}
+
+\item{threshold}{the maximum proportion of gaps for an alignment column
+to be considered a module in the PHMM (defaults to 0.5).
+This is a simple heuristic; the option to assign columns to PHMM modules
+by maximum \emph{a posteriori} (MAP) model construction will be added
+in a later version.}
 }
 \description{
 \code{derivePHMM} converts a multiple sequence alignment to a profile HMM.
+}
+\details{
+This function is the homologue of \code{hmmbuild} in HMMER3.1 (http://hmmer.org/) and
+\code{modelfromalign} and \code{buildmodel} in the SAM package
+(https://compbio.soe.ucsc.edu/sam.html).
 }
 

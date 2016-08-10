@@ -151,9 +151,9 @@ quickdist <- function(x, y, k = 4){
     xdf <- rbind(xdf, xtr[xsq])
     ydf <- rbind(ydf, ytr[ysq])
   }
-  tmp <- apply(ydf, 2, convert, from = 4, to = 10) + 1
+  tmp <- apply(ydf, 2, decimal, 4) + 1
   pointer <- apply(matrix(1:k^4, nrow = 1), 2, function(x) which(x == tmp))
-  S1 <- apply(xdf, 2, function(x) pointer[[convert(x, from = 4, to = 10) + 1]])
+  S1 <- apply(xdf, 2, function(x) pointer[[decimal(x, from = 4) + 1]])
   diags <- table(factor(unlist(mapply("-", S1, 1:xnc)), levels = -xnc:ync))
   ndgs <- length(diags)
   # need a vector of expected freqs of 'chance tuples' same length as diags vec
@@ -248,7 +248,7 @@ insertgaps <- function(x, positions, lengths, gapchar = "-"){
 # note - also outputs a zero position
 insertlengths <- function(x){
   tuples <- rbind(c(T, x), c(x, T))
-  decs <- apply(tuples, 2, convert, 2, 10)
+  decs <- apply(tuples, 2, decimal, 2)
   startsl <- decs == 2
   starts <- which(startsl) #insert start positions
   ends <- which(decs == 1)

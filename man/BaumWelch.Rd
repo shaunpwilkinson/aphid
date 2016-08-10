@@ -7,14 +7,14 @@
 \title{Iterative estimation of model parameters.}
 \usage{
 BaumWelch(x, y, maxiter = 100, deltaLL = 1e-07, logspace = FALSE,
-  quiet = FALSE, pseudocounts = "Laplace")
+  quiet = FALSE, pseudocounts = "Laplace", DI = FALSE)
+
+\method{BaumWelch}{PHMM}(x, y, maxiter = 100, deltaLL = 1e-07,
+  logspace = FALSE, quiet = FALSE, pseudocounts = "Laplace", DI = FALSE)
 
 \method{BaumWelch}{HMM}(x, y, maxiter = 100, deltaLL = 1e-07,
   logspace = FALSE, quiet = FALSE, modelend = FALSE,
   pseudocounts = "Laplace")
-
-\method{BaumWelch}{PHMM}(x, y, maxiter = 100, deltaLL = 1e-07,
-  logspace = FALSE, quiet = FALSE, pseudocounts = "Laplace")
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'} specifying the

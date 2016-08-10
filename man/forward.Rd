@@ -4,19 +4,35 @@
 \alias{forward}
 \alias{forward.HMM}
 \alias{forward.PHMM}
-\title{Full log likelihood.}
+\alias{forward.default}
+\title{Forward algorithm.}
 \usage{
-forward(x, y, logspace = FALSE, global = TRUE)
+forward(x, y, logspace = FALSE, odds = FALSE, type = "global")
 
-\method{forward}{PHMM}(x, y, logspace = FALSE, global = TRUE)
+\method{forward}{PHMM}(x, y, logspace = FALSE, odds = FALSE,
+  type = "global")
 
 \method{forward}{HMM}(x, y, logspace = FALSE)
+
+\method{forward}{default}(x, y, type = "semiglobal", d = 8, e = 2,
+  S = NULL, itertab = NULL, offset = 0)
 }
 \arguments{
-\item{x}{an object of class \code{HMM} or \code{PHMM}, or a character vector.}
+\item{x}{an object of class \code{PHMM} or \code{HMM}.}
+
+\item{y}{a character vector representing a single instance of a sequence
+hypothetically emitted by the model.}
+
+\item{logspace}{logical argument indicating whether the emission
+and transmission probabilities povided for the model(s) are logged.}
+
+\item{type}{character string indicating whether insert and delete states
+at the beginning and end of the path should count towards the final score
+('global'; default). Note that semiglobal and local models
+are not currently supported in this version.}
 }
 \description{
-Forward and backward algorithms for calculating the full (log) probability
-of a sequence given a HMM or PHMM.
+Forward algorithm for calculating the full log-odds
+of a sequence given a HMM or PHMM and its random equivalent.
 }
 
