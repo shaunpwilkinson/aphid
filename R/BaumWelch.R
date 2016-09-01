@@ -4,11 +4,15 @@
 #' to find the locally-optimal parameters of a HMM or PHMM.
 #' @param x an object of class \code{'HMM'} or \code{'PHMM'} specifying the
 #' starting parameter values.
-#' @param y a list of training sequences whose hidden states are unknown.
+#' @param y a list of training sequences (character vectors) whose hidden states are unknown.
 #' @param maxiter the maximum number of EM iterations before the process is terminated
 #' @param deltaLL the change in log likelihood specified as the convergence threshold
-#' @param logspace logical argument indicating whether the emission
-#' and transmission probabilities povided for the model(s) are logged.
+#' @param logspace logical argument indicating whether the emission and transition
+#' probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
+#' \code{logspace = "autodetect"} (default), the function will automatically detect
+#' if the probabilities are in log space, returning an error if inconsistencies are found.
+#' Note that choosing the latter option increases the computational
+#' overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
 #' @param quiet logical argument indicating whether the iteration progress should
 #' be suppressed (TRUE) or printed to the console (FALSE; default).
 #' @param pseudocounts used to account for the possible absence of certain transition
@@ -26,16 +30,17 @@
 #' @name BaumWelch
 #'
 BaumWelch <- function(x, y, maxiter = 100, deltaLL = 1E-07,
-                          logspace = FALSE, quiet = FALSE,
-                          pseudocounts = "Laplace", DI = FALSE){
+                          logspace = "autodetect", quiet = FALSE,
+                          pseudocounts = "Laplace", DI = TRUE){
   UseMethod("BaumWelch")
 }
 
 
 #' @rdname BaumWelch
 BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
-                           logspace = FALSE, quiet = FALSE,
-                           pseudocounts = "Laplace", DI = FALSE){
+                           logspace = "autodetect", quiet = FALSE,
+                           pseudocounts = "Laplace", DI = TRUE){
+  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   if(is.list(y)){
   }else if(is.vector(y, mode = "character")){
     y <- list(y)
@@ -43,6 +48,10 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
     stop("invalid y argument")
   }
   n <- length(y)
+  if(!logspace){
+    x$E <- log(x$E)
+    x$A <- log(x$A)
+  }
   if(!is.null(x$qe)){
     x$qe <- if(logspace) x$qe else log(x$qe)
   }else{
@@ -68,11 +77,6 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
     qepseudocounts[] <- pseudocounts[[3]]
   } else stop("invalid 'pseudocounts' argument")
   out <- x
-  if(!logspace){
-    out$E <- log(out$E)
-    out$A <- log(out$A)
-    out$qa <- log(out$qa)
-  }
   E <- out$E
   A <- out$A
   qe <- out$qe
@@ -171,6 +175,7 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
       if(!logspace){
         out$A <- exp(out$A)
         out$E <- exp(out$E)
+        out$qe <- exp(out$qe)
       }
       if(!quiet) cat("Convergence threshold reached after", i, "EM iterations\n")
       return(out)
@@ -182,8 +187,9 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
 
 #' @rdname BaumWelch
 BaumWelch.HMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
-                      logspace = FALSE, quiet = FALSE,
+                      logspace = "autodetect", quiet = FALSE,
                       modelend = FALSE, pseudocounts = "Laplace"){
+  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   if(is.list(y)){
   } else if(is.vector(y, mode = "character")){
     y <- list(y)

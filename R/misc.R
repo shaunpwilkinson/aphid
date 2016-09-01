@@ -1,82 +1,5 @@
 #-------------------------------------------------------------------------------
 
-### geometric functions
-arc <- function(x, y, radx, rady = radx, from = 0, to = 2 * pi,
-                no.points = 100, fill = NULL,
-                arrow = NULL, arrowsize = 0.08, code = 2, ...){
-  piseq <- seq(from, to, by = (to - from)/no.points)
-  coords <- matrix(nrow = no.points + 1, ncol = 2)
-  coords[, 1] <- x + radx * sin(piseq)
-  coords[, 2] <- y + rady * cos(piseq)
-  if(from == 0 & to == 2 * pi){
-    polygon(coords, col = fill, ... = ...)
-  }else{
-    lines(coords, ... = ...)
-  }
-  if(!(is.null(arrow))){
-    if(arrow < 0 | arrow > 1) stop ("arrow argument must be between 0 and 1")
-    if(arrow == 0){
-      arrows(x0 = coords[1, 1], y0 = coords[1, 2], x1 = coords[2, 1],
-             y1 = coords[2, 2], code = 1, length = arrowsize, ... = ...)
-    }else{
-      l <- ceiling(arrow * no.points)
-      arrows(x0 = coords[l, 1], y0 = coords[l, 2], x1 = coords[l + 1, 1],
-             y1 = coords[l + 1, 2], code = code, length = arrowsize, ... = ...)
-    }
-  }
-}
-
-chord <- function(x, y, rad, type = 'outer', no.points = 100,
-                  arrow = TRUE, arrowlength = 0.08, reversearrow = FALSE,
-                  ...){#x and y are vectors of from, to
-  distance <- sqrt(diff(x)^2 + diff(y)^2)
-  tmp <- sqrt(rad^2 - (distance/2)^2) #distance from midpoint to centre
-  midpoint <- c(mean(x), mean(y)) #coordinates
-  angle <- atan2(diff(x), diff(y))
-  opp <- sin(angle) * tmp
-  adj <- cos(angle) * tmp
-  centcoords <- midpoint + (c(adj, -opp))
-  segangle <- 2 * acos(tmp/rad)
-  startang <- atan2(x[1]- centcoords[1], y[1] - centcoords[2])
-  if(startang < 0) startang <- -startang + (2 * (pi + startang))
-  if(type == 'outer'){
-    piseq <- seq(startang, startang + segangle, by = segangle/no.points)
-  } else if (type == 'inner'){
-    piseq <- seq(startang, startang - (2 * pi - segangle),
-                 by = -(2 * pi - segangle)/no.points)
-  } else{
-    stop("type argument must be set to either 'outer' or 'inner'")
-  }
-  coords <- matrix(nrow = no.points + 1, ncol = 2)
-  coords[, 1] <- centcoords[1] + rad * sin(piseq)
-  coords[, 2] <- centcoords[2] + rad * cos(piseq)
-  lines(coords, ... = ...)
-  if(arrow){
-    arrowdir <- if(reversearrow) -1 else 1
-    arrows(x0 = coords[no.points/2 , 1],
-           y0 = coords[no.points/2, 2],
-           x1 = coords[no.points/2 + arrowdir, 1],
-           y1 = coords[no.points/2 + arrowdir, 2],
-           length = arrowlength,
-           ... = ...)
-  }
-}
-
-ellipse <- function(x, y, radx, rady = radx,
-                    no.points = 100, col = NULL, lwd = 1){
-  piseq <- seq(0, 2 * pi, by = (2 * pi)/no.points)
-  coords <- matrix(nrow = no.points + 1, ncol = 2)
-  coords[, 1] <- x + radx * sin(piseq)
-  coords[, 2] <- y - rady * cos(piseq)
-  polygon(coords, col = col, lwd = lwd)
-}
-
-diamond <- function(x, y, radx, rady = radx, col = NULL, lwd = 1){
-  xcoords <- c(x + c(0, radx, 0, -radx))
-  ycoords <- c(y + c(rady, 0, -rady, 0))
-  polygon(xcoords, ycoords, col = col, lwd = lwd)
-}
-
 ### other functions
 
 longisland <- function(x) max(which(c(F,x) & !c(x,F)) - which(!c(F,x) & c(x,F)))
@@ -95,31 +18,6 @@ logsumR <- function(x){
 }
 
 
-convert <- function(x, from = 10, to = 2, collapse = FALSE){
-  if(to %% 1 > 0) stop("Non-integers are not supported yet")
-  if(length(x) == 1) x <- as.integer(strsplit(paste(x), split = "")[[1]])
-  x <- sum(x * from^rev(seq_along(x) - 1))
-  if(to == 10){
-    if(collapse) x else as.integer(strsplit(paste(x), split = "")[[1]])
-  }
-  dividend <- as.integer(to)
-  quotient <- floor(x/dividend)
-  result <- x %% dividend
-  while(quotient > 0){
-    remainder <- quotient %% dividend
-    result = c(remainder, result)
-    quotient <- floor(quotient/dividend)
-  }
-  if(collapse) result <- as.integer(paste(result, collapse = ""))
-  return(result)
-}
-
-# x is an integer vector in 'from' numbering system (eg for binary, from = 2)
-# decimal(x, from) is the same as convert(x, from, to = 10, collapse = FALSE)
-decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
-
-
-
 addmats <- function(x){ # list of matrices all of same dimension
   dmn <- dimnames(x[[1]])
   n <- nrow(x[[1]])
@@ -129,68 +27,6 @@ addmats <- function(x){ # list of matrices all of same dimension
   tmp <- apply(tmp, 1, sum)
   res <- matrix(tmp, nrow = n, dimnames = dmn)
   res
-}
-
-quickdist <- function(x, y, k = 4){
-  N1 <- length(x)
-  N2 <- length(y)
-  n2t <- function(x) switch(x, 'a' = 0, '88' = 0, 'c' = 1, '28' = 1,
-                            'g'= 2, '48' = 2, 't' = 3, '18' = 3,
-                            sample(0:3, 1)) ### this is a quick hack
-  xtr <- unname(sapply(x, n2t)) #x expressed as a ternary vector
-  ytr <- unname(sapply(y, n2t)) #y expressed as a ternary vector
-  xnc <- N1 - k + 1 # number of columns for the x matrix
-  ync <- N2 - k + 1 # number of columns for the y matrix
-  xsq <- 1:xnc # seq along x
-  ysq <- 1:ync # seq along y
-  xdf <- xtr[xsq]
-  ydf <- ytr[ysq]
-  for(i in 2:k){
-    xsq <- xsq + 1
-    ysq <- ysq + 1
-    xdf <- rbind(xdf, xtr[xsq])
-    ydf <- rbind(ydf, ytr[ysq])
-  }
-  tmp <- apply(ydf, 2, decimal, 4) + 1
-  pointer <- apply(matrix(1:k^4, nrow = 1), 2, function(x) which(x == tmp))
-  S1 <- apply(xdf, 2, function(x) pointer[[decimal(x, from = 4) + 1]])
-  diags <- table(factor(unlist(mapply("-", S1, 1:xnc)), levels = -xnc:ync))
-  ndgs <- length(diags)
-  # need a vector of expected freqs of 'chance tuples' same length as diags vec
-  # this is to correct for white noise
-  # first generate vector of diag lengths
-  vdglns <- k:N1 #vertical diags including 0
-  hdglns <- (N2 - 1):k #vertical diags including 0
-  dif <- N1 - N2
-  if(dif > 0) vdglns[xnc:(xnc - dif)] <- N2
-  if(dif < 0) hdglns[1:abs(dif)] <- N1
-  dglns <- c(vdglns, hdglns)
-  tuplns <- c(0, dglns - k + 1, 0)
-  names(tuplns) <- names(diags)
-  cutoffs <- sapply(tuplns, qbinom, p = 1 - 0.01/ndgs, prob = 1/length(pointer))
-  expecteds <- sapply(tuplns, function(z) round(z/length(pointer)))
-  signals <- diags - cutoffs >= 0
-  # now subtract expected noise value from the diags with signif signal
-  diags[!signals] <- 0
-  diags[signals] <- diags[signals] - expecteds[signals]
-  mjdgln <- tuplns[names(which.max(diags))] #major diag length
-  diss <- 1 - sum(diags)/mjdgln
-  diss
-}
-
-JC69 <- function(x, fivecharstates = TRUE){
-  if(!fivecharstates) x <- x[, x[1,] != "-" & x[2,] != "-"]
-  d <- sum(x[1,] != x[2,])/ncol(x)
-  if(fivecharstates){
-    if(!(d < 0.8)) stop("fraction of differing sites should not exceed 4/5")
-    K <- (-4/5) * log(1 - ((5 * d)/ 4))
-    VarK <- d * (1 - d)/(n * ((1 - ((5/4) * d))^2))
-  }else{
-    if(!(d < 0.75)) stop("fraction of differing sites should not exceed 3/4")
-    K <- (-3/4) * log(1 - ((4 * d)/ 3))
-    VarK <- d * (1 - d)/(n * ((1 - ((4/3) * d))^2))
-  }
-  list(K = K, VarK = VarK)
 }
 
 
@@ -300,8 +136,4 @@ recycle <- function(v, len){
   return(v)
 }
 
-whichismax <- function(v){
-  ind <- which(v == max(v))
-  if(length(ind) > 1) ind <- sample(ind, 1)
-  ind
-}
+

@@ -41,3 +41,11 @@ backwardC <- function(x, y, logspace = FALSE) {
     .Call('profile_backwardC', PACKAGE = 'profile', x, y, logspace)
 }
 
+returnmod <- function(x) {
+    .Call('profile_returnmod', PACKAGE = 'profile', x)
+}
+
+tab9C <- function(x, modules) {
+    .Call('profile_tab9C', PACKAGE = 'profile', x, modules)
+}
+

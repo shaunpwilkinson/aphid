@@ -6,29 +6,37 @@
 \alias{backward.PHMM}
 \title{Backward algorithm.}
 \usage{
-backward(x, obs, logspace = FALSE, odds = FALSE, type = "global")
+backward(x, y, logspace = "autodetect", odds = FALSE, type = "global")
 
-\method{backward}{PHMM}(x, y, logspace = FALSE, odds = FALSE,
+\method{backward}{PHMM}(x, y, logspace = "autodetect", odds = FALSE,
   type = "global")
 
-\method{backward}{HMM}(x, y, logspace = FALSE)
+\method{backward}{HMM}(x, y, logspace = "autodetect")
 }
 \arguments{
 \item{x}{an object of class \code{PHMM} or \code{HMM}.}
 
-\item{logspace}{logical argument indicating whether the emission
-and transmission probabilities povided for the model(s) are logged.}
+\item{y}{a character vector representing a single instance of a sequence
+hypothetically emitted by the model.}
+
+\item{logspace}{logical argument indicating whether the emission and transition
+probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
+\code{logspace = "autodetect"} (default), the function will automatically detect
+if the probabilities are in log space, returning an error if inconsistencies are found.
+Note that choosing the latter option increases the computational
+overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
+
+\item{odds}{logical indicating whether the full (log) probability is required
+(\code{FALSE}; default) or if the log-odds score should be returned
+(\code{TRUE}).}
 
 \item{type}{character string indicating whether insert and delete states
 at the beginning and end of the path should count towards the final score
 ('global'; default). Note that semiglobal and local models
 are not currently supported in this version.}
-
-\item{y}{a character vector representing a single instance of a sequence
-hypothetically emitted by the model.}
 }
 \description{
 Backward algorithm for calculating the full (log) probability
-of a sequence given a HMM or PHMM.
+of a sequence given a hidden Markov model.
 }
 

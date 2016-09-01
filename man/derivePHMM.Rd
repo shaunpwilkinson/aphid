@@ -2,53 +2,71 @@
 % Please edit documentation in R/derivePHMM.R
 \name{derivePHMM}
 \alias{derivePHMM}
-\title{Derive profile HMMs from sequence alignments.}
+\title{Derive a profile HMM from a multiple sequence alignment.}
 \usage{
-derivePHMM(x, residues = "auto", gapchar = "-", method = "background",
-  qe = NULL, qa = NULL, threshold = 0.5, DI = FALSE)
+derivePHMM(x, residues = "autodetect", gapchar = "-",
+  pseudocounts = "background", logspace = TRUE, qe = NULL, qa = NULL,
+  inserts = "threshold", threshold = 0.5, lambda = 0, DI = TRUE)
 }
 \arguments{
 \item{x}{a character matrix of aligned sequences.}
 
-\item{residues}{one of the character strings 'auto' (default), aminos' or
-'bases', or a case sensitive character vector matching the residue
+\item{residues}{one of the character strings 'autodetect' (default), aminos' or
+'bases', or a case sensitive character vector specifying the residue
 alphabet. Specifying the symbol type ('aminos' or 'bases') can increase speed
-for larger alignments. Note that setting \code{residues = 'auto'} will not
+for larger alignments. Note that setting \code{residues = 'autodetect'} will not
 detect rare residues that are not present in the alignment and thus will
 not assign them emission probabilities.}
 
 \item{gapchar}{the character used to represent gaps in the alignment matrix.}
 
-\item{method}{the method used to account for the possible absence of certain
+\item{pseudocounts}{the method used to account for the possible absence of certain
 character states in the alignment. Currently only \code{"Laplace"}
-and \code{"background"} are supported. If \code{method = background} and
+and \code{"background"} are supported. If \code{pseudocounts = "background"} and
 some transition/emission types are absent from the alignment, Laplacean
 pseudocounts are automatically added.}
+
+\item{logspace}{logical indicating whether the emission and transition
+probability on the returned model should be logged.}
 
 \item{qe}{an optional named vector of background emission probabilities the
 same length as the residue alphabet (i.e. 4 for nucleotides and 20 for
 amino acids) and with  corresponding names
 (i.e. A C D E F G H I K L M N P Q R S T V W Y for amino acids or
-a c g t for nucleotides). If NULL, background emission probabilities are
-derived from the alignment.}
+a c g t for nucleotides). If \code{NULL}, background emission probabilities are
+generated from the alignment.}
 
 \item{qa}{an optional named 3 x 3 matrix of background transition probabilities with
 \code{dimnames(qa) = list(from = c('D', 'M', 'I'), to = c('D', 'M', 'I'))},
 where M, I and D represent matches, inserts and deletions, respectively. If
-NULL background transition probabilities are derived from the alignment.}
+\code{NULL}, background transition probabilities are generated from the alignment.}
+
+\item{inserts}{model construction method. Either 'threshold' (default),'map',
+or if insert columns are to be specified manually, a logical vector of length ncol(x),
+specifying the columns of x that should be designated
+as inserts (\code{TRUE} for insert columns, \code{FALSE} for match states).
+If \code{inserts = "threshold"} columns are assigned as insert states if the proportion of
+gap characters in the column is higher than a specified threshold (defaults to 0.5).
+If set to 'map' insert columns are found using the maximum \emph{a posteriori}
+dynamic programming method outlined in Durbin et al. (1998).}
 
 \item{threshold}{the maximum proportion of gaps for an alignment column
-to be considered a module in the PHMM (defaults to 0.5).
-This is a simple heuristic; the option to assign columns to PHMM modules
-by maximum \emph{a posteriori} (MAP) model construction will be added
-in a later version.}
+to be considered a module in the PHMM (defaults to 0.5). Only applicable for
+\code{inserts = "threshold"}.}
+
+\item{lambda}{penalty parameter used to favour models with fewer match states. Equivalent
+to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).
+Only applicable for \code{inserts = "map"}.}
 }
 \description{
-\code{derivePHMM} converts a multiple sequence alignment to a profile HMM.
+\code{derivePHMM} generates a profile HMM from a given multiple sequence alignment.
 }
 \details{
 This function is the homologue of \code{hmmbuild} in HMMER3.1 (http://hmmer.org/) and
 \code{modelfromalign} and \code{buildmodel} in the SAM package
 (https://compbio.soe.ucsc.edu/sam.html).
+}
+\references{
+Durbin..
 }
 

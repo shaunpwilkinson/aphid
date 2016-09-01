@@ -1,5 +1,10 @@
 plot.PHMM <- function(x, from = "start", to = "end", just = "center",
                       arrexp = 1, textexp = 1, ...){
+  logspace <- logdetect(x)
+  if(logspace){
+    x$A <- exp(x$A)
+    x$E <- exp(x$E)
+  }
   plot(0:1, 0:1, type = 'n', axes = FALSE, ylab = "", xlab = "", ... = ...)
   parusr <- par()$usr
   residues <- rownames(x$E)
@@ -126,6 +131,11 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
 
 plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
                      includebegin = FALSE, ...){
+  logspace <- logdetect(x)
+  if(logspace){
+    x$A <- exp(x$A)
+    x$E <- exp(x$E)
+  }
   plot(0:1, 0:1, type = 'n', axes = FALSE, ylab = "", xlab = "")#, ... = ...)
   parusr <- par()$usr
   states <- rownames(x$E)
@@ -229,5 +239,84 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
     }
     symbcoords[, 1] <- symbcoords[, 1] + (2 * xunit)
   }
+}
+
+
+#' Geometric functions.
+#'
+arc <- function(x, y, radx, rady = radx, from = 0, to = 2 * pi,
+                no.points = 100, fill = NULL,
+                arrow = NULL, arrowsize = 0.08, code = 2, ...){
+  piseq <- seq(from, to, by = (to - from)/no.points)
+  coords <- matrix(nrow = no.points + 1, ncol = 2)
+  coords[, 1] <- x + radx * sin(piseq)
+  coords[, 2] <- y + rady * cos(piseq)
+  if(from == 0 & to == 2 * pi){
+    polygon(coords, col = fill, ... = ...)
+  }else{
+    lines(coords, ... = ...)
+  }
+  if(!(is.null(arrow))){
+    if(arrow < 0 | arrow > 1) stop ("arrow argument must be between 0 and 1")
+    if(arrow == 0){
+      arrows(x0 = coords[1, 1], y0 = coords[1, 2], x1 = coords[2, 1],
+             y1 = coords[2, 2], code = 1, length = arrowsize, ... = ...)
+    }else{
+      l <- ceiling(arrow * no.points)
+      arrows(x0 = coords[l, 1], y0 = coords[l, 2], x1 = coords[l + 1, 1],
+             y1 = coords[l + 1, 2], code = code, length = arrowsize, ... = ...)
+    }
+  }
+}
+
+chord <- function(x, y, rad, type = 'outer', no.points = 100,
+                  arrow = TRUE, arrowlength = 0.08, reversearrow = FALSE,
+                  ...){#x and y are vectors of from, to
+  distance <- sqrt(diff(x)^2 + diff(y)^2)
+  tmp <- sqrt(rad^2 - (distance/2)^2) #distance from midpoint to centre
+  midpoint <- c(mean(x), mean(y)) #coordinates
+  angle <- atan2(diff(x), diff(y))
+  opp <- sin(angle) * tmp
+  adj <- cos(angle) * tmp
+  centcoords <- midpoint + (c(adj, -opp))
+  segangle <- 2 * acos(tmp/rad)
+  startang <- atan2(x[1]- centcoords[1], y[1] - centcoords[2])
+  if(startang < 0) startang <- -startang + (2 * (pi + startang))
+  if(type == 'outer'){
+    piseq <- seq(startang, startang + segangle, by = segangle/no.points)
+  } else if (type == 'inner'){
+    piseq <- seq(startang, startang - (2 * pi - segangle),
+                 by = -(2 * pi - segangle)/no.points)
+  } else{
+    stop("type argument must be set to either 'outer' or 'inner'")
+  }
+  coords <- matrix(nrow = no.points + 1, ncol = 2)
+  coords[, 1] <- centcoords[1] + rad * sin(piseq)
+  coords[, 2] <- centcoords[2] + rad * cos(piseq)
+  lines(coords, ... = ...)
+  if(arrow){
+    arrowdir <- if(reversearrow) -1 else 1
+    arrows(x0 = coords[no.points/2 , 1],
+           y0 = coords[no.points/2, 2],
+           x1 = coords[no.points/2 + arrowdir, 1],
+           y1 = coords[no.points/2 + arrowdir, 2],
+           length = arrowlength,
+           ... = ...)
+  }
+}
+
+ellipse <- function(x, y, radx, rady = radx,
+                    no.points = 100, col = NULL, lwd = 1){
+  piseq <- seq(0, 2 * pi, by = (2 * pi)/no.points)
+  coords <- matrix(nrow = no.points + 1, ncol = 2)
+  coords[, 1] <- x + radx * sin(piseq)
+  coords[, 2] <- y - rady * cos(piseq)
+  polygon(coords, col = col, lwd = lwd)
+}
+
+diamond <- function(x, y, radx, rady = radx, col = NULL, lwd = 1){
+  xcoords <- c(x + c(0, radx, 0, -radx))
+  ycoords <- c(y + c(rady, 0, -rady, 0))
+  polygon(xcoords, ycoords, col = col, lwd = lwd)
 }
 

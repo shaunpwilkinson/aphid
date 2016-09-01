@@ -7,13 +7,13 @@
 \alias{Viterbi.default}
 \title{Find the optimal sequence path recursively}
 \usage{
-Viterbi(x, y, qe = NULL, logspace = FALSE, type = "semiglobal",
+Viterbi(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal",
   offset = -0.1, d = 8, e = 2, S = NULL, itertab = NULL)
 
-\method{Viterbi}{PHMM}(x, y, qe = NULL, logspace = FALSE,
+\method{Viterbi}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
   type = "semiglobal", offset = -0.1, itertab = NULL)
 
-\method{Viterbi}{HMM}(x, y, logspace = FALSE)
+\method{Viterbi}{HMM}(x, y, logspace = "autodetect")
 
 \method{Viterbi}{default}(x, y, type = "semiglobal", d = 8, e = 2,
   S = NULL, itertab = NULL, offset = 0)
@@ -28,8 +28,12 @@ HMM or PHMM.}
 background residue frequencies from the PHMMs are used. If these are not available
 equal background residue frequencies are assumed.}
 
-\item{logspace}{logical argument indicating whether the emission
-and transmission probabilities povided for the model(s) are logged.}
+\item{logspace}{logical argument indicating whether the emission and transition
+probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
+\code{logspace = "autodetect"} (default), the function will automatically detect
+if the probabilities are in log space, returning an error if inconsistencies are found.
+Note that choosing the latter option increases the computational
+overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
 
 \item{type}{character string indicating whether insert and delete states
 at the beginning and end of the path should count towards the final score

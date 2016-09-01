@@ -7,12 +7,12 @@
 \alias{forward.default}
 \title{Forward algorithm.}
 \usage{
-forward(x, y, logspace = FALSE, odds = FALSE, type = "global")
+forward(x, y, logspace = "autodetect", odds = FALSE, type = "global")
 
-\method{forward}{PHMM}(x, y, logspace = FALSE, odds = FALSE,
+\method{forward}{PHMM}(x, y, logspace = "autodetect", odds = FALSE,
   type = "global")
 
-\method{forward}{HMM}(x, y, logspace = FALSE)
+\method{forward}{HMM}(x, y, logspace = "autodetect")
 
 \method{forward}{default}(x, y, type = "semiglobal", d = 8, e = 2,
   S = NULL, itertab = NULL, offset = 0)
@@ -23,8 +23,12 @@ forward(x, y, logspace = FALSE, odds = FALSE, type = "global")
 \item{y}{a character vector representing a single instance of a sequence
 hypothetically emitted by the model.}
 
-\item{logspace}{logical argument indicating whether the emission
-and transmission probabilities povided for the model(s) are logged.}
+\item{logspace}{logical argument indicating whether the emission and transition
+probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
+\code{logspace = "autodetect"} (default), the function will automatically detect
+if the probabilities are in log space, returning an error if inconsistencies are found.
+Note that choosing the latter option increases the computational
+overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
 
 \item{type}{character string indicating whether insert and delete states
 at the beginning and end of the path should count towards the final score

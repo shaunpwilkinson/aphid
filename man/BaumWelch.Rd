@@ -6,28 +6,33 @@
 \alias{BaumWelch.PHMM}
 \title{Iterative estimation of model parameters.}
 \usage{
-BaumWelch(x, y, maxiter = 100, deltaLL = 1e-07, logspace = FALSE,
-  quiet = FALSE, pseudocounts = "Laplace", DI = FALSE)
+BaumWelch(x, y, maxiter = 100, deltaLL = 1e-07, logspace = "autodetect",
+  quiet = FALSE, pseudocounts = "Laplace", DI = TRUE)
 
 \method{BaumWelch}{PHMM}(x, y, maxiter = 100, deltaLL = 1e-07,
-  logspace = FALSE, quiet = FALSE, pseudocounts = "Laplace", DI = FALSE)
+  logspace = "autodetect", quiet = FALSE, pseudocounts = "Laplace",
+  DI = TRUE)
 
 \method{BaumWelch}{HMM}(x, y, maxiter = 100, deltaLL = 1e-07,
-  logspace = FALSE, quiet = FALSE, modelend = FALSE,
+  logspace = "autodetect", quiet = FALSE, modelend = FALSE,
   pseudocounts = "Laplace")
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'} specifying the
 starting parameter values.}
 
-\item{y}{a list of training sequences whose hidden states are unknown.}
+\item{y}{a list of training sequences (character vectors) whose hidden states are unknown.}
 
 \item{maxiter}{the maximum number of EM iterations before the process is terminated}
 
 \item{deltaLL}{the change in log likelihood specified as the convergence threshold}
 
-\item{logspace}{logical argument indicating whether the emission
-and transmission probabilities povided for the model(s) are logged.}
+\item{logspace}{logical argument indicating whether the emission and transition
+probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
+\code{logspace = "autodetect"} (default), the function will automatically detect
+if the probabilities are in log space, returning an error if inconsistencies are found.
+Note that choosing the latter option increases the computational
+overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
 
 \item{quiet}{logical argument indicating whether the iteration progress should
 be suppressed (TRUE) or printed to the console (FALSE; default).}

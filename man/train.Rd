@@ -3,18 +3,25 @@
 \name{train}
 \alias{train}
 \alias{train.HMM}
+\alias{train.PHMM}
 \title{Viterbi training.}
 \usage{
-train(x, y, maxiter = 100, logspace = FALSE, quiet = FALSE,
-  modelend = FALSE, pseudocounts = "Laplace")
+train(x, y, maxiter = 100, logspace = "autodetect", quiet = FALSE,
+  modelend = FALSE, pseudocounts = "Laplace", fixqa = FALSE,
+  fixqe = FALSE, inserts = "threshold", threshold = 0.5, lambda = 0,
+  DI = TRUE)
 
-\method{train}{HMM}(x, y, maxiter = 100, logspace = FALSE, quiet = FALSE,
-  modelend = FALSE, pseudocounts = "Laplace")
+\method{train}{PHMM}(x, y, maxiter = 100, logspace = "autodetect",
+  quiet = FALSE, pseudocounts = "Laplace", fixqa = FALSE, fixqe = FALSE,
+  inserts = "threshold", threshold = 0.5, lambda = 0, DI = TRUE)
+
+\method{train}{HMM}(x, y, maxiter = 100, logspace = "autodetect",
+  quiet = FALSE, modelend = FALSE, pseudocounts = "Laplace")
 }
 \arguments{
 \item{x}{the initial model with starting parameters to be updated.}
 
-\item{y}{a list of character vectors...}
+\item{y}{a list of training sequences (character vectors) whose hidden states are unknown.}
 }
 \description{
 Update model parameters using a list of training sequences. Also known as the
@@ -25,5 +32,7 @@ Juang B-H & Rabiner L R (1990) The segmental K-means
 algorithm for estimating parameters of hidden Markov models.
 IEEE transactions on Acoustics,
 Speech...
+
+Durbin...
 }
 

@@ -6,20 +6,25 @@
 #' @param x an object of class \code{PHMM} or \code{HMM}.
 #' @param y a character vector representing a single instance of a sequence
 #' hypothetically emitted by the model.
-#' @param logspace logical argument indicating whether the emission
-#' and transmission probabilities povided for the model(s) are logged.
+#' @param logspace logical argument indicating whether the emission and transition
+#' probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
+#' \code{logspace = "autodetect"} (default), the function will automatically detect
+#' if the probabilities are in log space, returning an error if inconsistencies are found.
+#' Note that choosing the latter option increases the computational
+#' overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
 #' @param type character string indicating whether insert and delete states
 #' at the beginning and end of the path should count towards the final score
 #' ('global'; default). Note that semiglobal and local models
 #' are not currently supported in this version.
 #' @name forward
 
-forward <- function(x, y, logspace = FALSE, odds = FALSE, type = "global"){
+forward <- function(x, y, logspace = "autodetect", odds = FALSE, type = "global"){
   UseMethod("forward")
 }
 
 #' @rdname forward
-forward.PHMM <- function (x, y, logspace = FALSE, odds = FALSE, type = "global"){
+forward.PHMM <- function (x, y, logspace = "autodetect", odds = FALSE, type = "global"){
+  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
   if(type %in% c('semiglobal','local'))
     stop("semiglobal and local models are not supported in this version")
@@ -76,27 +81,29 @@ forward.PHMM <- function (x, y, logspace = FALSE, odds = FALSE, type = "global")
                R[n + 1, m + 1, "I"] + A["I", n + 1, "M"],
                R[n + 1, m + 1, "D"] + A["D", n + 1, "M"])
     score <- logsum(LLcdt)
-    res <- structure(list(score = score, array = R), class = 'forward')
+    res <- structure(list(score = score, array = R, odds = odds),
+                     class = 'fullprob')
     return(res)
   }
 }
 
 #' @rdname forward
-forward.HMM <- function (x, y, logspace = FALSE){
+forward.HMM <- function (x, y, logspace = "autodetect"){
+  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   n <- length(y)
   states <- rownames(x$E)
   H <- length(states)
   E <- if(logspace) x$E else log(x$E)
   A <- if(logspace) x$A else log(x$A)
-  #s <- if(logspace) x$s else log(x$s)
-  if(length(y) == 0) structure(list(score = A[1, 1], array = NULL), class = 'forward')
+  if(length(y) == 0) structure(list(score = A[1, 1], array = NULL), class = 'fullprob')
   R <- array(NA, dim = c(H, n), dimnames = list(state = states, rolls = 1:n))
   R[,1] <- E[, y[1]] + A[1, -1]
   fun <- Vectorize(function(k, l) R[k, i - 1] + A[k + 1, l + 1])
   for (i in 2:n) R[, i] <- E[, y[i]] + apply(outer(1:H, 1:H, fun), 2, logsum)
   ak0 <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H)
   score <- logsum(R[, n] + ak0)
-  res <- structure(list(score = score, array = R), class = 'forward')
+  res <- structure(list(score = score, array = R, odds = FALSE),
+                   class = 'fullprob')
   return(res)
 }
 

@@ -12,17 +12,17 @@ clustal(x, quick = TRUE, pivot = FALSE, type = "semiglobal")
 \item{quick}{logical value indicating whether the Wilbur Lipman k-tuples heuristic
 should be used for the calculation of the pairwise distance matrix.}
 
-\item{pivot}{logical value indicating whether pivot objects should be used 
+\item{pivot}{logical value indicating whether pivot objects should be used
 in mbed to allocate the most dissimilar seeds.}
 
-\item{type}{a character string specifying whether the alignment should be 
+\item{type}{a character string specifying whether the alignment should be
 'global' (penalized end gaps) or 'semiglobal' (default; free end gaps).}
 }
 \value{
 a character matrix of aligned sequences.
 }
 \description{
-Align multiple DNA or protein 
+Align multiple DNA or protein
 sequences using the clustal omega algorithm.
 }
 

@@ -68,3 +68,26 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// returnmod
+List returnmod(List x);
+RcppExport SEXP profile_returnmod(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    __result = Rcpp::wrap(returnmod(x));
+    return __result;
+END_RCPP
+}
+// tab9C
+IntegerMatrix tab9C(IntegerMatrix x, int modules);
+RcppExport SEXP profile_tab9C(SEXP xSEXP, SEXP modulesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type modules(modulesSEXP);
+    __result = Rcpp::wrap(tab9C(x, modules));
+    return __result;
+END_RCPP
+}

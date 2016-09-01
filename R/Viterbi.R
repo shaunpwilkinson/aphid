@@ -9,8 +9,12 @@
 #' @param qe an optional named vector of background residue frequencies. If NULL
 #' background residue frequencies from the PHMMs are used. If these are not available
 #' equal background residue frequencies are assumed.
-#' @param logspace logical argument indicating whether the emission
-#' and transmission probabilities povided for the model(s) are logged.
+#' @param logspace logical argument indicating whether the emission and transition
+#' probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
+#' \code{logspace = "autodetect"} (default), the function will automatically detect
+#' if the probabilities are in log space, returning an error if inconsistencies are found.
+#' Note that choosing the latter option increases the computational
+#' overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
 #' @param type character string indicating whether insert and delete states
 #' at the beginning and end of the path should count towards the final score
 #' ('global'; default), or not ('semiglobal'), or whether the highest scoring
@@ -33,15 +37,16 @@
 #' y <- c("P", "A", "W", "H", "E", "A", "E")
 #' Viterbi(x, y,  d = 8, e = 2)
 #'
-Viterbi <- function(x, y, qe = NULL, logspace = FALSE, type = "semiglobal",
+Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal",
                     offset = -0.1, d = 8, e = 2, S = NULL, itertab = NULL){
   UseMethod("Viterbi")
 }
 
 #' @rdname Viterbi
-Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
+Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "semiglobal", offset = -0.1,
                          itertab = NULL){
+  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
   pp <- inherits(y, 'PHMM')
   n <- ncol(x$E)
@@ -75,6 +80,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
     }
   }
   if(pp){
+    if(logdetect(y) != logspace) stop("Both models must be in the same logspace format")
     Ax <- if(logspace) x$A else log(x$A)
     Ay <- if(logspace) y$A else log(y$A)
     Ex <- if(logspace) x$E else log(x$E)
@@ -295,10 +301,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
   }
   progression <- progression - 1
   res <- structure(list(score = score,
-                        #alignment = alig,
                         path = path,
                         progression = progression,
-                        #firstmatch = firstmatch,
                         key = key,
                         V = V,
                         pointer = P),
@@ -307,7 +311,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = FALSE,
 }
 
 #' @rdname Viterbi
-Viterbi.HMM <- function (x, y, logspace = FALSE){
+Viterbi.HMM <- function (x, y, logspace = "autodetect"){
+  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   n <- length(y)
   states <- rownames(x$E)
   H <- length(states) # not including BeginEnd state
