@@ -64,7 +64,7 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
   Epseudocounts <- x$E
   qepseudocounts <- x$qe
   if(identical(pseudocounts, "Laplace")){
-    Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- 1
+    Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- 0.01
     Apseudocounts["D", "0", ] <- Apseudocounts[ , ncol(x$A), "D"] <- rep(0, 3)
     if(!DI) Apseudocounts["D", , "I"] <- Apseudocounts["I", , "D"] <- 0
   } else if(identical(pseudocounts, "none")){

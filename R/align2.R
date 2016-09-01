@@ -13,8 +13,12 @@
 #' for larger alignments. Note that setting \code{residues = "autodetect"} will not
 #' detect rare residues that are not present in the alignment and thus will
 #' not assign them emission probabilities.
+#' @param refine the method used to refine the model following progressive alignment.
+#' Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
+#' Baum Welch parameter optimization (\code{refine = "BaumWelch"}).
+#'
 align <- function(sequences, type = "global", residues = "autodetect",
-                  gapchar = "-", DI = FALSE,
+                  gapchar = "-", DI = FALSE, refine = "Viterbi",
                   ...){
   if(!(is.list(sequences))) stop("invalid 'sequences' agrument")
   nsq <- length(sequences)
@@ -32,12 +36,18 @@ align <- function(sequences, type = "global", residues = "autodetect",
   newick <- gsub("\\(", "alignpair\\(", newick)
   if(type == 'semiglobal') newick <- gsub("\\)", ", type = 'semiglobal'\\)", newick)
   msa1 <- with(sequences, eval(parse(text = newick)))
-  omniphmm <- derivePHMM(msa1, DI = FALSE)
-  finalphmm <- BaumWelch(omniphmm, sequences, maxiter = 300, DI = FALSE)
+  omniphmm <- derivePHMM(msa1, DI = FALSE, pseudocounts = "background")
+  if(refine == "Viterbi"){
+    finalphmm <- train(omniphmm, sequences, maxiter = 300, DI = FALSE, inserts = "map")
+  }else if(refine == "BaumWelch"){
+    finalphmm <- BaumWelch(omniphmm, sequences, maxiter = 300, DI = FALSE)
+  } else if (refine == "none"){
+    return(omniphmm)
+  } else stop("argiument 'refine' must be either 'Viterbi', 'BaumWelch' or 'none'")
   align2phmm(sequences, model = finalphmm)
 }
 
-#' Pairwise alignment of sequences and/or sequence alignments.
+#' Pairwise alignment of sequences and/or multiple sequence alignments.
 #'
 #' \code{alignpair} uses the Viterbi algorithm to find the optimal alignment
 #' between two sequences, a sequence and an alignment, or two alignments.
@@ -52,6 +62,7 @@ align <- function(sequences, type = "global", residues = "autodetect",
 #' 'global' (penalized end gaps), 'semiglobal' (default; free end gaps) or
 #' local (highest scoring subalignment).
 #' @return a character matrix of aligned sequences.
+#' @references Soding...
 #' @examples
 #' x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
 #' y <- c("P", "A", "W", "H", "E", "A", "E")

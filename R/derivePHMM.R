@@ -25,7 +25,7 @@
 #' same length as the residue alphabet (i.e. 4 for nucleotides and 20 for
 #' amino acids) and with  corresponding names
 #' (i.e. A C D E F G H I K L M N P Q R S T V W Y for amino acids or
-#' a c g t for nucleotides). If \code{NULL}, background emission probabilities are
+#' A C G T for nucleotides). If \code{NULL}, background emission probabilities are
 #' generated from the alignment.
 #' @param qa an optional named 3 x 3 matrix of background transition probabilities with
 #' \code{dimnames(qa) = list(from = c('D', 'M', 'I'), to = c('D', 'M', 'I'))},
@@ -49,7 +49,7 @@
 #'
 derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
                    pseudocounts = "background", logspace = TRUE,
-                   qe = NULL, qa = NULL,
+                   qa = NULL, qe = NULL,
                    inserts = "threshold", threshold = 0.5,
                    lambda = 0, DI = TRUE){
   if(!(pseudocounts %in% c("background", "Laplace", "none"))){
@@ -60,23 +60,11 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
   n <- nrow(x)
   m <- ncol(x)
   states <- c("D", "M", "I")
-  gaps <- x == gapchar
-  if(identical(inserts, "threshold")){
-    inserts <- apply(gaps, 2, sum) > threshold * n
-  } else if(identical(inserts, "map")){
-    inserts <- !map(x, residues = residues, gapchar = gapchar, pseudocounts = pseudocounts)
-  } else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
-    stop("invalid inserts")
-  }
-  l <- sum(!inserts) # PHMM length (excluding B & E positions)
-  ### could potentially replace this with an Rcpp function
-  ecs <- apply(x[, !inserts], 2, tab, residues) # emission counts
-  dimnames(ecs) <- list(symbol = residues, position = 1:l)
+
   # background emission probabilities (qe)
   if(is.null(qe)){
     allecs <- apply(x, 2, tab, residues)
     allecs <- apply(allecs, 1, sum) + 1
-    # if(any(qe == 0)) qe <- qe + 1 ### removed and forced addition of Laplace pseudos
     qe <- allecs/sum(allecs)
   }else{
     if(!(is.vector(qe) & length(qe) == length(residues))) stop("qe invalid")
@@ -87,6 +75,23 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
     if(any(qe == 0)) warning("qe contains at least one zero-probabiliy")
     qe <- qe/sum(qe) #account for rounding errors
   }
+
+  # designate insert-columns
+  gaps <- x == gapchar
+  if(identical(inserts, "threshold")){
+    inserts <- apply(gaps, 2, sum) > threshold * n
+  } else if(identical(inserts, "map")){
+    inserts <- !map(x, residues = residues, gapchar = gapchar,
+                    pseudocounts = pseudocounts, qa = qa, qe = qe)
+  } else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
+    stop("invalid inserts argument")
+  }
+  l <- sum(!inserts) # PHMM length (excluding B & E positions)
+
+  # emission counts
+  ecs <- apply(x[, !inserts], 2, tab, residues)
+  dimnames(ecs) <- list(symbol = residues, position = 1:l)
+
   #transitions
   xtr <- matrix(nrow = n, ncol = m)
   insertsn <- matrix(rep(inserts, n), nrow = n, byrow = T)
@@ -96,26 +101,33 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
   xtr <- cbind(1L, xtr, 1L) # append begin and end match states
   tcs <- tab9C(xtr, modules = l + 2)
   transtotals <- apply(tcs, 1, sum)
+
   # background transition probs
   if(is.null(qa)){
-    transtotals <- transtotals + 1 # force addition of Laplace pseudos
+    transtotals <- transtotals + 1 # forced addition of Laplacian pseudos
     if(!DI) transtotals[c(3, 7)] <- 0
     qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
     dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
-    qa <- qa/apply(qa, 1, sum)
+    # qa <- qa/apply(qa, 1, sum)
+    qa <- qa/sum(qa)
   }else{
     if(!(is.matrix(qa) & all(dim(qa) == 3))) stop("qa must be a 3 x 3 matrix")
     if(all(qa <= 0)) qa <- exp(qa)
-    if(!all(round(apply(qa, 1, sum), 2) == 1)) stop("rows of qa matrix must sum to 1")
+    # if(!all(round(apply(qa, 1, sum), 2) == 1)) stop("rows of qa matrix must sum to 1")
+    if(round(sum(qa), 2) != 1) stop("elements of qa matrix must sum to 1")
     if(!DI & (qa[3, 1] != 0 | qa[1, 3] != 0)){
       stop("DI is set to FALSE but delete-insert transitions are assigned non-zero
             probabilities in qa matrix. Change DI to TRUE or change qa[3, 1] and
             qa[1, 3] to zero")
     }
-    qa <- qa/apply(qa, 1, sum) #account for rounding errors
+    # qa <- qa/apply(qa, 1, sum) #account for rounding errors
+    qa <- qa/sum(qa) #account for rounding errors
   }
+
   # transition and emission probability arrays A & E
-  transprops <- transtotals/sum(transtotals)
+
+  # transprops <- transtotals/sum(transtotals)
+  transprops <- as.vector(qa)
   notfromD <- c(rep(0, 3), rep(1, 6))
   nottoD <- rep(c(0, 1, 1), times = 3)
   if(pseudocounts == 'background'){
@@ -182,10 +194,9 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
 #' as match states (\code{TRUE}) and those assigned as inserts (\code{FALSE}).
 #' @references Durbin...
 #'
-map <- function(x, residues = "autodetect", gapchar = "-", pseudocounts = "background",
-                lambda = 0){
-  # x is a character matrix of aligned sequences
-  # returns a logical vector of match positions (inserts are marked FALSE)
+map <- function(x, residues = "autodetect", gapchar = "-",
+                pseudocounts = "background",
+                lambda = 0, qa = NULL, qe = NULL){
   if(!(pseudocounts %in% c("background", "Laplace", "none"))) {
     stop("invalid pseudocounts")
   }
@@ -194,26 +205,45 @@ map <- function(x, residues = "autodetect", gapchar = "-", pseudocounts = "backg
   residues <- alphabet(x, residues = residues, gapchar = gapchar)
   nres <- length(residues)
   S <- sigma <- c(0, rep(NA, L + 1))
-  # calculate Mj for j = 1 ... L + 1
   ecs <- apply(x, 2, tab, residues)
-  if(pseudocounts == "background"){
+  ### qa & qe checks?
+  if(is.null(qe)){
     allecs <- apply(ecs, 1, sum) + 1
     qe <- allecs/sum(allecs)
+  }
+  if(is.null(qa)){
+    gaps <- x == gapchar
+    inserts <- apply(gaps, 2, sum) > 0.5 * nrow(x)
+    xtr <- matrix(nrow = nrow(x), ncol = ncol(x))
+    insertsn <- matrix(rep(inserts, n), nrow = n, byrow = T)
+    xtr[gaps & !insertsn] <- 0L # Delete
+    xtr[!gaps & !insertsn] <- 1L # Match
+    xtr[!gaps & insertsn] <- 2L # Insert
+    xtr <- cbind(1L, xtr, 1L) # append begin and end match states
+    tcs <- tab9C(xtr, modules = sum(!inserts) + 2) #################################################
+    transtotals <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
+    #if(!DI) transtotals[c(3, 7)] <- 0
+    qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
+    dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
+    # qa <- qa/apply(qa, 1, sum)
+    qa <- qa/sum(qa)
+  }
+  # calculate Mj for j = 1 ... L + 1
+  if(pseudocounts == "background"){
     ecs2 <- ecs + qe * nres
-  }else if(pseudocounts == "Laplace"){
+  } else if(pseudocounts == "Laplace"){
     ecs2 <- ecs + 1
   } else if(pseudocounts == "none"){
     ecs2 <- ecs
-  } else stop("invalid pseudocounts")
+  } else stop("invalid pseudocounts argument")
   emtots <- apply(ecs2, 2, sum)
   term2 <- log(t(t(ecs2)/emtots))
   M <- apply(ecs * term2, 2, sum)
-  ### could speed this up a lot
+  ### could speed this bit up using sparse matrices
   M <- c(0, M, 0)
   # calculate Tij for j = 1 ... L + 1, -1 < i < j
   Tij <- Iij <- matrix(0, nrow = L + 2, ncol = L + 2)
   x2 <- cbind(residues[1], x, residues[1])
-  insprobs <- if(pseudocounts == "background") log(qe) else log(rep(1/nres, nres))
   for(j in 1:ncol(Tij)){
     for(i in 1:nrow(Tij)){
       if(i < j){
@@ -224,7 +254,7 @@ map <- function(x, residues = "autodetect", gapchar = "-", pseudocounts = "backg
           insres <- subalig[, 2:(salen - 1)][subalig[, 2:(salen - 1)] != gapchar]
           # inscounts = insres tabulated
           inscounts <- tab(insres, residues = residues)
-          Iij[i, j] <- sum(inscounts * insprobs)
+          Iij[i, j] <- sum(inscounts * log(qe))
         }
         satr <- matrix(nrow = n, ncol = salen) # subalignment as ternary
         rownames(satr) <- rownames(subalig) # not really necessary
@@ -238,12 +268,14 @@ map <- function(x, residues = "autodetect", gapchar = "-", pseudocounts = "backg
         cxy <- apply(cxy, 1, sum) # transition totals
         cxy <- matrix(cxy, nrow = 3, byrow = TRUE)
         dimnames(cxy) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
-        if(pseudocounts %in% c("background", "Laplace")){
+        if(pseudocounts == "background"){
+          cxy2 <- cxy + qa * 9
+        } else if(pseudocounts == "Laplace"){
           cxy2 <- cxy + 1
           ### not quite sure of best way to estimate these background transition freqs
           ### possibly using heuristic threshold method?
           ### also need DI option
-        } else if(pseudocounts == "none"){
+        } else{
           cxy2 <- cxy
         }
         axy <- cxy2/apply(cxy2, 1, sum)

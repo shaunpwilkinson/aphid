@@ -55,6 +55,8 @@ valid <- function(x){
   }
 }
 
+#' Detect if model parameters are in log space.
+#'
 logdetect <- function(x){
   if(inherits(x, "HMM")){
     if(all(x$A <= 0) & all(x$E <= 0)){
