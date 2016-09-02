@@ -199,7 +199,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
 #'
 #' @param ... further arguments to be passed to \code{Viterbi}.
 #'
-align2phmm <- function(sequences, model, ...){
+align2phmm <- function(sequences, model, gapchar = "-", ...){
   if(is.list(sequences)){
   }else if(is.vector(sequences, mode = "character")){
     sequences <- list(sequences)
@@ -210,7 +210,7 @@ align2phmm <- function(sequences, model, ...){
   colnames(out)[seq(2, 2 * model$size, by = 2)] <- 1:model$size
   for(i in 1:length(sequences)){
     alignment <- Viterbi(model, sequences[[i]], type = 'global', ...)
-    newrow <- rep("-", length(alignment$path))
+    newrow <- rep(gapchar, length(alignment$path))
     newrow[alignment$path > 1] <- sequences[[i]]
     inserts <- alignment$path == 3
     if(any(inserts)){
@@ -233,12 +233,12 @@ align2phmm <- function(sequences, model, ...){
       tuples <- rbind(c(FALSE, rep(TRUE, model$size)), rep(FALSE, model$size + 1))
     }
     indices <- as.vector(tuples)[-1]
-    newrow2 <- rep("-", 2 * model$size + 1)
+    newrow2 <- rep(gapchar, 2 * model$size + 1)
     names(newrow2) <-  c(rep(c("I", "M"), model$size), "I") #seq(0.5, x$size + 0.5, by = 0.5)
     newrow2[indices] <- newrow
     out[i,] <- newrow2
   }
-  discardcols <- apply(out, 2 ,function(v) all(v == "-"))
+  discardcols <- apply(out, 2 ,function(v) all(v == gapchar))
   matchcols <- c(FALSE, rep(c(TRUE, FALSE), model$size))
   out <- out[, matchcols | !discardcols]
   out <- as.list(as.data.frame(out, stringsAsFactors = F))
@@ -247,7 +247,7 @@ align2phmm <- function(sequences, model, ...){
     elengths <- sapply(ee, length)
     maxlen <- max(elengths)
     no.gapstoappend <- maxlen - elengths
-    appges <- lapply(no.gapstoappend, function(v) rep("-", v))
+    appges <- lapply(no.gapstoappend, function(v) rep(gapchar, v))
     res <- t(mapply(c, ee, appges))
     res
   }

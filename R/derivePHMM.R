@@ -55,6 +55,7 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
   if(!(pseudocounts %in% c("background", "Laplace", "none"))){
     stop("invalid pseudocounts argument")
   }
+  if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
   residues <- alphabet(x, residues = residues, gapchar = gapchar)
   nres <- length(residues)
   n <- nrow(x)
@@ -63,8 +64,9 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
 
   # background emission probabilities (qe)
   if(is.null(qe)){
-    allecs <- apply(x, 2, tab, residues)
-    allecs <- apply(allecs, 1, sum) + 1
+    allecs <- tab(x, residues = residues) + 1
+    #allecs <- apply(x, 2, tab, residues)
+    #allecs <- apply(allecs, 1, sum) + 1
     qe <- allecs/sum(allecs)
   }else{
     if(!(is.vector(qe) & length(qe) == length(residues))) stop("qe invalid")
@@ -220,9 +222,9 @@ map <- function(x, residues = "autodetect", gapchar = "-",
     xtr[!gaps & !insertsn] <- 1L # Match
     xtr[!gaps & insertsn] <- 2L # Insert
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
-    tcs <- tab9C(xtr, modules = sum(!inserts) + 2) #################################################
+    tcs <- tab9C(xtr, modules = sum(!inserts) + 2)
     transtotals <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
-    #if(!DI) transtotals[c(3, 7)] <- 0
+    #if(!DI) transtotals[c(3, 7)] <- 0 ### need to work out DI strategy
     qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
     dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
     # qa <- qa/apply(qa, 1, sum)

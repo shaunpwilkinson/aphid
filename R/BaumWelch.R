@@ -14,7 +14,8 @@
 #' Note that choosing the latter option increases the computational
 #' overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
 #' @param quiet logical argument indicating whether the iteration progress should
-#' be suppressed (TRUE) or printed to the console (FALSE; default).
+#' be printed to the console (\code{quiet = FALSE}; default) or suppressed
+#' (\code{quiet = TRUE}).
 #' @param pseudocounts used to account for the possible absence of certain transition
 #' and/or emission types in the training dataset.
 #' either \code{'Laplace'} (adds one of each possible transition and emission type to the
@@ -23,7 +24,10 @@
 #' as its second. If a list is supplied both matrices must have row and column names
 #' according to the residues (column names of emission matrix) and states
 #' (row and column names of the transition matrix and row names of the emission matrix).
-#' The first row and column of the transition matrix must be 'BeginEnd'.
+#' The first row and column of the transition matrix must be 'BeginEnd'. Background
+#' pseudocounts are recommended for small training sets,
+#' since Laplacian counts can overinflate insert and delete transition probabilities
+#' leading to convergence at suboptimal local maxima.
 #' @seealso \code{\link{deriveHMM}} and \code{\link{derivePHMM}} for
 #' maximum-likelihood parameter estimation when training sequence states are
 #' known.
@@ -31,7 +35,7 @@
 #'
 BaumWelch <- function(x, y, maxiter = 100, deltaLL = 1E-07,
                           logspace = "autodetect", quiet = FALSE,
-                          pseudocounts = "Laplace", DI = TRUE){
+                          pseudocounts = "background", DI = TRUE){
   UseMethod("BaumWelch")
 }
 
@@ -39,7 +43,7 @@ BaumWelch <- function(x, y, maxiter = 100, deltaLL = 1E-07,
 #' @rdname BaumWelch
 BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
                            logspace = "autodetect", quiet = FALSE,
-                           pseudocounts = "Laplace", DI = TRUE){
+                           pseudocounts = "background", DI = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   if(is.list(y)){
   }else if(is.vector(y, mode = "character")){
@@ -47,26 +51,63 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
   }else{
     stop("invalid y argument")
   }
+  ### need qa, qe etc check function(valid?)
+
   n <- length(y)
+  residues <- rownames(x$E)
+  states <- c("D", "M", "I")
+
   if(!logspace){
     x$E <- log(x$E)
     x$A <- log(x$A)
   }
+
   if(!is.null(x$qe)){
-    x$qe <- if(logspace) x$qe else log(x$qe)
+    if(!logspace) x$qe <- log(x$qe)
   }else{
-    x$qe <- log(rep(1/nrow(x$E), nrow(x$E)))
-    names(x$qe) <- rownames(x$E)
+    allecs <- tab(unlist(y), residues = residues) + 1
+    x$qe <- log(allecs/sum(allecs))
   }
-  residues <- rownames(x$E)
-  states <- c("D", "M", "I")
+
+  if(!is.null(x$qa)){
+    if(!logspace) x$qa <- log(x$qa)
+  } else{
+    alignment <- align2phmm(y, x, gapchar = "-")
+    gaps <- alignment == "-"
+    inserts <- apply(gaps, 2, sum) > 0.5 * n
+    xtr <- matrix(nrow = n, ncol = ncol(alignment))
+    insertsn <- matrix(rep(inserts, n), nrow = n, byrow = T)
+    xtr[gaps & !insertsn] <- 0L # Delete
+    xtr[!gaps & !insertsn] <- 1L # Match
+    xtr[!gaps & insertsn] <- 2L # Insert
+    xtr <- cbind(1L, xtr, 1L) # append begin and end match states
+    tcs <- tab9C(xtr, modules = sum(!inserts) + 2)
+    transtotals <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
+    if(!DI) transtotals[c(3, 7)] <- 0
+    qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
+    dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
+    # qa <- qa/apply(qa, 1, sum)
+    x$qa <- log(qa/sum(qa)) ### needs tidying up
+  }
+
+
+  # these just provide preformatted structures for the pseudocounts
   Apseudocounts <- x$A
   Epseudocounts <- x$E
   qepseudocounts <- x$qe
-  if(identical(pseudocounts, "Laplace")){
-    Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- 0.01
+  # don't need qa since not updated
+
+  if(identical(pseudocounts, "background")){
+    qepseudocounts <- exp(x$qe) * length(x$qe)
+    Epseudocounts[] <- rep(qepseudocounts, x$size)
+    qacounts <- exp(x$qa) * if(DI) 9 else 7
+    Apseudocounts[,,1] <- c(rep(qacounts[,1], x$size), rep(0, 3))
+    Apseudocounts[,,2] <- rep(qacounts[,2], x$size + 1)
+    Apseudocounts[,,3] <- rep(qacounts[,3], x$size + 1)
+    Apseudocounts[1, 1, ] <- 0
+  } else if(identical(pseudocounts, "Laplace")){
+    Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- 1
     Apseudocounts["D", "0", ] <- Apseudocounts[ , ncol(x$A), "D"] <- rep(0, 3)
-    if(!DI) Apseudocounts["D", , "I"] <- Apseudocounts["I", , "D"] <- 0
   } else if(identical(pseudocounts, "none")){
     Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- 0
   } else if(is.list(pseudocounts)){
@@ -76,6 +117,8 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
     Epseudocounts[] <- pseudocounts[[2]]
     qepseudocounts[] <- pseudocounts[[3]]
   } else stop("invalid 'pseudocounts' argument")
+  if(!DI) Apseudocounts["D", , "I"] <- Apseudocounts["I", , "D"] <- 0
+
   out <- x
   E <- out$E
   A <- out$A
@@ -95,11 +138,11 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
                              A["D", 2:(ncol(A[, , "D"]) - 1) , "D"],
                              A["D", ncol(A[, , "D"]), "M"]))
       }else{
-        forwj <- forward(out, yj, logspace = TRUE)
+        forwj <- forward(out, yj, logspace = TRUE, odds = FALSE)
         Rj <- forwj$array
         logPxj <- forwj$score
         tmplogPx[j] <- logPxj
-        backj <- backward(out, yj, logspace = TRUE)
+        backj <- backward(out, yj, logspace = TRUE, odds = FALSE)
         Bj <- backj$array
         for(k in 1:ncol(x$E)){ #modules
           for(a in seq_along(residues)){  #residue alphabet

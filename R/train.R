@@ -21,10 +21,11 @@ train <- function(x, y, maxiter = 100, logspace = "autodetect", quiet = FALSE,
 #' @rdname train
 train.PHMM <- function(x, y, maxiter = 100,
                        logspace = "autodetect", quiet = FALSE,
-                       pseudocounts = "Laplace",
+                       pseudocounts = "background",
                        fixqa = FALSE, fixqe = FALSE,
                        inserts = "threshold",
                        threshold = 0.5, lambda = 0, DI = TRUE){
+  if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   if(is.list(y)){
   } else if(is.vector(y, mode = "character")){
     y <- list(y)
@@ -33,7 +34,7 @@ train.PHMM <- function(x, y, maxiter = 100,
   states <- c("D", "M", "I")
   residues <- rownames(x$E)
   out <- x
-  if(identical(logspace, "autodetect")) logspace <- logdetect(x)
+### what if input model has no qe/qa?
   if(!logspace){
     out$E <- log(out$E)
     out$A <- log(out$A)
