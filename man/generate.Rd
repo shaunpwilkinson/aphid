@@ -6,12 +6,11 @@
 \alias{generate.PHMM}
 \title{Generate random sequences from a model.}
 \usage{
-generate(x, size, logspace = "autodetect", gapchar = "-", ternary = FALSE)
+generate(x, size, logspace = "autodetect", gapchar = "-")
 
 \method{generate}{HMM}(x, size, logspace = "autodetect")
 
-\method{generate}{PHMM}(x, size, logspace = "autodetect", gapchar = "-",
-  ternary = FALSE)
+\method{generate}{PHMM}(x, size, logspace = "autodetect", gapchar = "-")
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'}.}
@@ -29,11 +28,6 @@ overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the runnin
 
 \item{gapchar}{the character used to represent gaps in the output sequence
 (\code{generate.PHMM} only).}
-
-\item{ternary}{logical. If \code{TRUE} the "names" attribute of the output sequence will
-be returned in ternary format, with 0's representing delete states, 1's representing match
-states and 2's representing insert states. If \code{FALSE}, the hidden states are output as
-"D", "M", and "I", respectively. Only applicable for \code{generate.PHMM}.}
 }
 \value{
 a named character vector giving the sequence of residues emitted by the model,

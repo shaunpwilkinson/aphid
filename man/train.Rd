@@ -9,11 +9,12 @@
 train(x, y, maxiter = 100, logspace = "autodetect", quiet = FALSE,
   modelend = FALSE, pseudocounts = "Laplace", fixqa = FALSE,
   fixqe = FALSE, inserts = "threshold", threshold = 0.5, lambda = 0,
-  DI = TRUE)
+  DI = TRUE, ID = TRUE)
 
 \method{train}{PHMM}(x, y, maxiter = 100, logspace = "autodetect",
-  quiet = FALSE, pseudocounts = "Laplace", fixqa = FALSE, fixqe = FALSE,
-  inserts = "threshold", threshold = 0.5, lambda = 0, DI = TRUE)
+  quiet = FALSE, pseudocounts = "background", fixqa = FALSE,
+  fixqe = FALSE, inserts = "map", threshold = 0.5, lambda = 0,
+  DI = TRUE, ID = TRUE)
 
 \method{train}{HMM}(x, y, maxiter = 100, logspace = "autodetect",
   quiet = FALSE, modelend = FALSE, pseudocounts = "Laplace")

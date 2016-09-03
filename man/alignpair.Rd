@@ -2,7 +2,7 @@
 % Please edit documentation in R/align2.R
 \name{alignpair}
 \alias{alignpair}
-\title{Pairwise alignment of sequences and/or sequence alignments.}
+\title{Pairwise alignment of sequences and/or multiple sequence alignments.}
 \usage{
 alignpair(x, y, d = 8, e = 2, S = NULL, qe = NULL, type = "global",
   offset = -0.1, itertab = NULL, pseudocounts = "background",
@@ -35,5 +35,8 @@ y <- c("P", "A", "W", "H", "E", "A", "E")
 z <- align(x, y)
 alignpair(x, z)
 
+}
+\references{
+Soding...
 }
 

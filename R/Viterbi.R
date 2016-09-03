@@ -88,16 +88,14 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     fun <- Vectorize(function(a, b) logsum((Ex[, a] + Ey[, b]) - qe))
     Saa <- outer(1:n, 1:m, fun)
     if(type == "global"){
-      V[-1, 1, "MI"] <- cumsum(c(Ax["M", 1, "M"] + Ay["M", 1, "I"],
-                                 Ax["M", 2:n, "M"] + Ay["I", 1, "I"]))
+      V[-1, 1, "MI"] <- cumsum(c(Ax["MM", 1] + Ay["MI", 1], Ax["MM", 2:n] + Ay["II", 1]))
       P[-1, 1, "MI"] <- c(3, rep(1, n - 1))
-      V[-1, 1, "DG"] <- cumsum(c(Ax["M", 1, "D"], Ax["D", 2:n , "D"]))
+      V[-1, 1, "DG"] <- cumsum(c(Ax["MD", 1], Ax["DD", 2:n]))
       P[-1, 1, "DG"] <- c(3, rep(2, n - 1))
       V[1, 1, "MM"] <- 0
-      V[1, -1, "GD"] <- cumsum(c(Ay["M", 1, "D"], Ay["D", 2:m , "D"]))
+      V[1, -1, "GD"] <- cumsum(c(Ay["MD", 1], Ay["DD", 2:m]))
       P[1, -1, "GD"] <- c(3, rep(4, m - 1))
-      V[1, -1, "IM"] <- cumsum(c(Ax["M", 1, "I"] + Ay["M", 1, "M"],
-                                 Ax["I", 1, "I"] + Ay["M", 2:m, "M"]))
+      V[1, -1, "IM"] <- cumsum(c(Ax["MI", 1] + Ay["MM", 1], Ax["II", 1] + Ay["MM", 2:m]))
       P[1, -1, "IM"] <- c(3, rep(5, m - 1))
     }else{
       V[1, , "MM"] <- V[, 1, "MM"] <- 0
@@ -109,20 +107,20 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           i <- itertab[i, 1]
         }
         sij <- Saa[i, j] + offset
-        MIcdt <- c(V[i, j + 1, "MM"] + Ax["M", i, "M"] + Ay["M", j + 1, "I"],
-                   V[i, j + 1, "MI"] + Ax["M", i, "M"] + Ay["I", j + 1, "I"])
-        DGcdt <- c(V[i, j + 1, "MM"] + Ax["M", i, "D"],
-                   V[i, j + 1, "DG"] + Ax["D", i, "D"])
-        MMcdt <- c(V[i, j, "MI"] + Ax["M", i, "M"] + Ay["I", j, "M"] + sij,
-                   V[i, j, "DG"] + Ax["D", i, "M"] + Ay["M", j, "M"] + sij,
-                   V[i, j, "MM"] + Ax["M", i, "M"] + Ay["M", j, "M"] + sij,
-                   V[i, j, "GD"] + Ax["M", i, "M"] + Ay["D", j, "M"] + sij,
-                   V[i, j, "IM"] + Ax["I", i, "M"] + Ay["M", j, "M"] + sij,
+        MIcdt <- c(V[i, j + 1, "MM"] + Ax["MM", i] + Ay["MI", j + 1],
+                   V[i, j + 1, "MI"] + Ax["MM", i] + Ay["II", j + 1])
+        DGcdt <- c(V[i, j + 1, "MM"] + Ax["MD", i],
+                   V[i, j + 1, "DG"] + Ax["DD", i])
+        MMcdt <- c(V[i, j, "MI"] + Ax["MM", i] + Ay["IM", j] + sij,
+                   V[i, j, "DG"] + Ax["DM", i] + Ay["MM", j] + sij,
+                   V[i, j, "MM"] + Ax["MM", i] + Ay["MM", j] + sij,
+                   V[i, j, "GD"] + Ax["MM", i] + Ay["DM", j] + sij,
+                   V[i, j, "IM"] + Ax["IM", i] + Ay["MM", j] + sij,
                    if(type == "local") 0 else NULL)
-        GDcdt <- c(V[i + 1, j, "MM"] + Ay["M", j, "D"],
-                   V[i + 1, j, "GD"] + Ay["D", j, "D"])
-        IMcdt <- c(V[i + 1, j, "MM"] + Ax["M", i + 1, "I"] + Ay["M", j, "M"],
-                   V[i + 1, j, "IM"] + Ax["I", i + 1, "I"] + Ay["M", j, "M"])
+        GDcdt <- c(V[i + 1, j, "MM"] + Ay["MD", j],
+                   V[i + 1, j, "GD"] + Ay["DD", j])
+        IMcdt <- c(V[i + 1, j, "MM"] + Ax["MI", i + 1] + Ay["MM", j],
+                   V[i + 1, j, "IM"] + Ax["II", i + 1] + Ay["MM", j])
         MImax <- whichismax(MIcdt)
         DGmax <- whichismax(DGcdt)
         MMmax <- whichismax(MMcdt)
@@ -143,11 +141,11 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     path <- c()
     progression <- matrix(nrow = 2, ncol = 0)
     if(type == 'global'){
-      LLcdt <- c(V[n + 1, m + 1, "MI"] + Ax["M", n + 1, "M"] + Ay["I", m + 1, "M"],
-                 V[n + 1, m + 1, "DG"] + Ax["D", n + 1, "M"] + Ay["M", m + 1, "M"],
-                 V[n + 1, m + 1, "MM"] + Ax["M", n + 1, "M"] + Ay["M", m + 1, "M"],
-                 V[n + 1, m + 1, "GD"] + Ax["M", n + 1, "M"] + Ay["D", m + 1, "M"],
-                 V[n + 1, m + 1, "IM"] + Ax["I", n + 1, "M"] + Ay["M", m + 1, "M"])
+      LLcdt <- c(V[n + 1, m + 1, "MI"] + Ax["MM", n + 1] + Ay["IM", m + 1],
+                 V[n + 1, m + 1, "DG"] + Ax["DM", n + 1] + Ay["MM", m + 1],
+                 V[n + 1, m + 1, "MM"] + Ax["MM", n + 1] + Ay["MM", m + 1],
+                 V[n + 1, m + 1, "GD"] + Ax["MM", n + 1] + Ay["DM", m + 1],
+                 V[n + 1, m + 1, "IM"] + Ax["IM", n + 1] + Ay["MM", m + 1])
       LLptr <- whichismax(LLcdt)
       score <- LLcdt[LLptr]
       z <- c(n + 1, m + 1, LLptr)
@@ -207,8 +205,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     P[1, , 3] <- c(NA, 2, rep(3, m - 1))
     V[1, 1, 2] <- 0
     if(type == "global"){ #key: D = 1, M = 2, I = 3
-      V[-1, 1, 1] <- cumsum(c(0, A["D", 2:n, "D"])) + A["M", 1, "D"]
-      V[1, -1, 3] <- seq(from = A["M", 1, "I"], by = A["I", 1, "I"], length.out = m)
+      V[-1, 1, 1] <- cumsum(c(0, A["DD", 2:n])) + A["MD", 1]
+      V[1, -1, 3] <- seq(from = A["MI", 1], by = A["II", 1], length.out = m)
     }else{
       V[-1, 1, 1] <- V[1, -1, 3] <- 0 ### check this
     }
@@ -219,16 +217,16 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           i <- itertab[i, 1]
         }
         sij <- Saa[y[j], i] + offset
-        Dcdt <- c(V[i, j + 1, "D"] + A["D", i, "D"],
-                  V[i, j + 1, "M"] + A["M", i, "D"],
-                  V[i, j + 1, "I"] + A["I", i, "D"])
-        Mcdt <- c(V[i, j, "D"] + A["D", i, "M"] + sij,
-                  V[i, j, "M"] + A["M", i, "M"] + sij,
-                  V[i, j, "I"] + A["I", i, "M"] + sij,
+        Dcdt <- c(V[i, j + 1, "D"] + A["DD", i],
+                  V[i, j + 1, "M"] + A["MD", i],
+                  V[i, j + 1, "I"] + A["ID", i])
+        Mcdt <- c(V[i, j, "D"] + A["DM", i] + sij,
+                  V[i, j, "M"] + A["MM", i] + sij,
+                  V[i, j, "I"] + A["IM", i] + sij,
                   if(type == "local") 0 else NULL)
-        Icdt <- c(V[i + 1, j, "D"] + A["D", i + 1, "I"],
-                  V[i + 1, j, "M"] + A["M", i + 1, "I"],
-                  V[i + 1, j, "I"] + A["I", i + 1, "I"])
+        Icdt <- c(V[i + 1, j, "D"] + A["DI", i + 1],
+                  V[i + 1, j, "M"] + A["MI", i + 1],
+                  V[i + 1, j, "I"] + A["II", i + 1])
         Dmax <- whichismax(Dcdt)
         Mmax <- whichismax(Mcdt)
         Imax <- whichismax(Icdt)
@@ -243,9 +241,9 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     path <- c()
     progression <- c()
     if(type == 'global'){
-      LLcdt <- c(V[n + 1, m + 1, "D"] + A["D", n + 1, "M"],
-                 V[n + 1, m + 1, "M"] + A["M", n + 1, "M"],
-                 V[n + 1, m + 1, "I"] + A["I", n + 1, "M"])
+      LLcdt <- c(V[n + 1, m + 1, "D"] + A["DM", n + 1],
+                 V[n + 1, m + 1, "M"] + A["MM", n + 1],
+                 V[n + 1, m + 1, "I"] + A["IM", n + 1])
       LLptr <- whichismax(LLcdt)
       score <- LLcdt[LLptr]
       z <- c(n + 1, m + 1, LLptr)
@@ -254,9 +252,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         progression <- c(z[1], progression)
         z[3] <- P[z[1], z[2], z[3]]
         z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
-
       }
-      #alig <- trackback(z, condition ="!(z[1] == 1 & z[2] == 1)", P = P)
     }else if (type == 'semiglobal'){
       tmp <- V[, , "M"]
       tmp[1:n, 1:m] <- -Inf
@@ -266,7 +262,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       score <- V[z[1], z[2], z[3]]
       if(z[1] < n + 1){
         path <- rep(1, n + 1 - z[1])
-        progression <- z[1]:n + 1 # remember to subtract 1 of prog at end to acc for 0 row
+        progression <- z[1]:n + 1
       }else if(z[2] < m + 1){
         path <- rep(3, m + 1 - z[2])
         progression <- rep(n + 1, m + 1 - z[2])
@@ -299,7 +295,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     key <- "1 = delete, 2 = match, 3 = insert"
   }
-  progression <- progression - 1
+  progression <- progression - 1 #to account for 0 row
   res <- structure(list(score = score,
                         path = path,
                         progression = progression,

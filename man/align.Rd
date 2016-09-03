@@ -5,7 +5,7 @@
 \title{Multiple sequence alignment.}
 \usage{
 align(sequences, type = "global", residues = "autodetect", gapchar = "-",
-  DI = FALSE, ...)
+  DI = FALSE, ID = FALSE, refine = "Viterbi", quiet = FALSE, ...)
 }
 \arguments{
 \item{sequences}{a list of character vectors consisting of symbols from
@@ -19,6 +19,20 @@ detect rare residues that are not present in the alignment and thus will
 not assign them emission probabilities.}
 
 \item{gapchar}{the character used to represent gaps in the alignment matrix.}
+
+\item{DI}{logical indicating whether delete -> insert transitions should be allowed
+in the profile HMM. Defaults to FALSE, and not recommended for small training sets when
+\code{refine = "BaumWelch"} due
+to the tendency to converge to suboptimal local optima.}
+
+\item{ID}{logical indicating whether insert -> delete transitions should be allowed
+in the profile HMM. Defaults to FALSE, and similar to DI, not recommended for small
+training sets when \code{refine = "BaumWelch"} due
+to the tendency to converge to suboptimal local optima.}
+
+\item{refine}{the method used to refine the model following progressive alignment.
+Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
+Baum Welch parameter optimization (\code{refine = "BaumWelch"}).}
 }
 \description{
 \code{align} finds the optimal alignment for a list of sequences using a hybrid

@@ -16,10 +16,19 @@
 #' @param refine the method used to refine the model following progressive alignment.
 #' Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
 #' Baum Welch parameter optimization (\code{refine = "BaumWelch"}).
+#' @param DI logical indicating whether delete -> insert transitions should be allowed
+#' in the profile HMM. Defaults to FALSE, and not recommended for small training sets when
+#' \code{refine = "BaumWelch"} due
+#' to the tendency to converge to suboptimal local optima.
+#' @param ID logical indicating whether insert -> delete transitions should be allowed
+#' in the profile HMM. Defaults to FALSE, and similar to DI, not recommended for small
+#' training sets when \code{refine = "BaumWelch"} due
+#' to the tendency to converge to suboptimal local optima.
+#'
 #'
 align <- function(sequences, type = "global", residues = "autodetect",
-                  gapchar = "-", DI = FALSE, refine = "Viterbi",
-                  ...){
+                  gapchar = "-", DI = FALSE, ID = FALSE, refine = "Viterbi",
+                  quiet = TRUE, ...){
   if(!(is.list(sequences))) stop("invalid 'sequences' agrument")
   nsq <- length(sequences)
   if(is.null(attr(sequences, "names"))) names(sequences) <- paste0("SEQ", 1:nsq)
@@ -36,13 +45,15 @@ align <- function(sequences, type = "global", residues = "autodetect",
   newick <- gsub("\\(", "alignpair\\(", newick)
   if(type == 'semiglobal') newick <- gsub("\\)", ", type = 'semiglobal'\\)", newick)
   msa1 <- with(sequences, eval(parse(text = newick)))
-  omniphmm <- derivePHMM(msa1, DI = FALSE, pseudocounts = "background")
+  omniphmm <- derivePHMM(msa1, DI = DI, ID = ID, pseudocounts = "background")
   if(refine == "Viterbi"){
-    finalphmm <- train(omniphmm, sequences, maxiter = 300, DI = FALSE, inserts = "map")
+    finalphmm <- train(omniphmm, sequences, maxiter = 300, DI = DI, ID = ID,
+                       inserts = "map", quiet = quiet, ... = ...)
   }else if(refine == "BaumWelch"){
-    finalphmm <- BaumWelch(omniphmm, sequences, maxiter = 300, DI = FALSE)
+    finalphmm <- BaumWelch(omniphmm, sequences, maxiter = 300, DI = DI, ID = ID,
+                           quiet = quiet, ... = ...)
   } else if (refine == "none"){
-    return(omniphmm)
+    return(msa1)
   } else stop("argiument 'refine' must be either 'Viterbi', 'BaumWelch' or 'none'")
   align2phmm(sequences, model = finalphmm)
 }

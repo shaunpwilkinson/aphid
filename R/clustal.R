@@ -20,7 +20,7 @@ clustal <- function(x, quick = TRUE, pivot = FALSE, type = 'semiglobal'){
   seeds <- round(seq(from = 1, to = N, by = N/nseeds))
   seeds[length(seeds)] <- N
   ## distfun takes 2 character vectors and returns distance value
-  distfun <- if(quick) quickdist else function(x, y)
+  distfun <- if(quick) ktup else function(x, y)
     JC69(WilburLipman(x, y)$globalAlignment)$K
   if(pivot){
     outliers <- integer()

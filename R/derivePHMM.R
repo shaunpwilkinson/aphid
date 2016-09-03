@@ -51,17 +51,19 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
                    pseudocounts = "background", logspace = TRUE,
                    qa = NULL, qe = NULL,
                    inserts = "threshold", threshold = 0.5,
-                   lambda = 0, DI = TRUE){
+                   lambda = 0, DI = TRUE, ID = TRUE){
   if(!(pseudocounts %in% c("background", "Laplace", "none"))){
     stop("invalid pseudocounts argument")
   }
-  if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
+  ### include option to enter manually
+
+  if(!(is.matrix(x))) stop("invalid inout object type, x must be a matrix")
   residues <- alphabet(x, residues = residues, gapchar = gapchar)
   nres <- length(residues)
   n <- nrow(x)
   m <- ncol(x)
   states <- c("D", "M", "I")
-
+  transitions <- c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
   # background emission probabilities (qe)
   if(is.null(qe)){
     allecs <- tab(x, residues = residues) + 1
@@ -102,25 +104,29 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
   xtr[!gaps & insertsn] <- 2L # Insert
   xtr <- cbind(1L, xtr, 1L) # append begin and end match states
   tcs <- tab9C(xtr, modules = l + 2)
-  transtotals <- apply(tcs, 1, sum)
+  transtotals <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
 
   # background transition probs
   if(is.null(qa)){
-    transtotals <- transtotals + 1 # forced addition of Laplacian pseudos
-    if(!DI) transtotals[c(3, 7)] <- 0
-    qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
-    dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
+    if(!DI) transtotals["DI"] <- 0
+    if(!ID) transtotals["ID"] <- 0
+    #qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
+    #dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
     # qa <- qa/apply(qa, 1, sum)
-    qa <- qa/sum(qa)
+    qa <- transtotals/sum(transtotals)
   }else{
-    if(!(is.matrix(qa) & all(dim(qa) == 3))) stop("qa must be a 3 x 3 matrix")
+    # if(!(is.matrix(qa) & all(dim(qa) == 3))) stop("qa must be a 3 x 3 matrix")
+    if(!is.vector(qa) | length(qa) != 9) stop("qa must be a numeric vector of length 9")
     if(all(qa <= 0)) qa <- exp(qa)
     # if(!all(round(apply(qa, 1, sum), 2) == 1)) stop("rows of qa matrix must sum to 1")
-    if(round(sum(qa), 2) != 1) stop("elements of qa matrix must sum to 1")
-    if(!DI & (qa[3, 1] != 0 | qa[1, 3] != 0)){
-      stop("DI is set to FALSE but delete-insert transitions are assigned non-zero
-            probabilities in qa matrix. Change DI to TRUE or change qa[3, 1] and
-            qa[1, 3] to zero")
+    if(round(sum(qa), 2) != 1) stop("qa vector must sum to 1")
+    if(!DI & (qa[3] != 0)){
+      stop("DI is set to FALSE but delete -> insert transitions are assigned non-zero
+            probabilities in qa vector. Change DI to TRUE or change qa[3] to zero")
+    }
+    if(!ID & (qa[7] != 0)){
+      stop("ID is set to FALSE but insert -> delete transitions are assigned non-zero
+            probabilities in qa vector. Change ID to TRUE or change qa[7] to zero")
     }
     # qa <- qa/apply(qa, 1, sum) #account for rounding errors
     qa <- qa/sum(qa) #account for rounding errors
@@ -129,32 +135,33 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
   # transition and emission probability arrays A & E
 
   # transprops <- transtotals/sum(transtotals)
-  transprops <- as.vector(qa)
-  notfromD <- c(rep(0, 3), rep(1, 6))
-  nottoD <- rep(c(0, 1, 1), times = 3)
+  #transprops <- as.vector(qa)
+  #notfromD <- c(rep(0, 3), rep(1, 6))
+  #nottoD <- rep(c(0, 1, 1), times = 3)
   if(pseudocounts == 'background'){
     ecs <- ecs + qe * nres
-    tcs[, 2:l] <- tcs[, 2:l] + transprops * if(DI) 9 else 7
-    tcs[, 1] <- tcs[, 1] + transprops * notfromD * if(DI) 6 else 5 ### doesn't sum to 6 or 5
-    tcs[, l + 1] <- tcs[, l + 1] + transprops * nottoD * if(DI) 6 else 5 ### doesn't sum to 6 or 5
+    tcs <- tcs + qa * if(DI & ID) 9 else if (DI | ID) 8 else 7
+    # tcs[, 2:l] <- tcs[, 2:l] + transprops * if(DI) 9 else 7
+    # tcs[, 1] <- tcs[, 1] + transprops * notfromD * if(DI) 6 else 5
+    ### doesn't sum to 6 or 5
+    # tcs[, l + 1] <- tcs[, l + 1] + transprops * nottoD * if(DI) 6 else 5
+    ### doesn't sum to 6 or 5
   }else if(pseudocounts == 'Laplace'){
     ecs <- ecs + 1
-    tcs[, 2:l] <- tcs[, 2:l]  + 1
-    tcs[, 1] <- tcs[, 1] + notfromD
-    tcs[, l + 1] <- tcs[, l + 1] + nottoD
+    tcs <- tcs + 1
+    # tcs[, 2:l] <- tcs[, 2:l]  + 1
+    # tcs[, 1] <- tcs[, 1] + notfromD
+    # tcs[, l + 1] <- tcs[, l + 1] + nottoD
   }
-  if(!DI) tcs[3, ] <- tcs[7, ] <- 0
+  tcs[1:3, 1] <- tcs[c(1, 4, 7), l + 1] <- 0
+  if(!DI) tcs[3, ] <- 0
+  if(!ID) tcs[7, ] <- 0
   E <- t(t(ecs)/apply(ecs, 2, sum))
-  tps <- tcs ######
-  tps[1:3,] <- t(t(tcs[1:3,])/apply(tcs[1:3,], 2, sum))
-  tps[4:6,] <- t(t(tcs[4:6,])/apply(tcs[4:6,], 2, sum))
-  tps[7:9,] <- t(t(tcs[7:9,])/apply(tcs[7:9,], 2, sum))
-  tps[1:3, 1] <- rep(0, 3) # gets rid of NaNs caused by dividing by zero
-  A <- array(dim = c(3, l + 1, 3))
-  dimnames(A) <- list(from = states, 0:l, to = states)
-  A[, , 1] <- tps[c(1, 4, 7), ]
-  A[, , 2] <- tps[c(2, 5, 8), ]
-  A[, , 3] <- tps[c(3, 6, 9), ]
+  A <- t(tcs)
+  for(i in c(1, 4, 7)) A[, i:(i + 2)] <- A[, i:(i + 2)]/apply(A[, i:(i + 2)], 1, sum)
+  A[1, 1:3] <- 0 # gets rid of NaNs caused by dividing by zero
+  A <- t(A)
+
   inslens <- insertlengths(!inserts)
   #which alignment columns correspond to which model positions?
   alignment <- which(!inserts)
@@ -225,10 +232,10 @@ map <- function(x, residues = "autodetect", gapchar = "-",
     tcs <- tab9C(xtr, modules = sum(!inserts) + 2)
     transtotals <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
     #if(!DI) transtotals[c(3, 7)] <- 0 ### need to work out DI strategy
-    qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
-    dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
+    # qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
+    # dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
     # qa <- qa/apply(qa, 1, sum)
-    qa <- qa/sum(qa)
+    qa <- transtotals/sum(transtotals)
   }
   # calculate Mj for j = 1 ... L + 1
   if(pseudocounts == "background"){
@@ -245,7 +252,7 @@ map <- function(x, residues = "autodetect", gapchar = "-",
   M <- c(0, M, 0)
   # calculate Tij for j = 1 ... L + 1, -1 < i < j
   Tij <- Iij <- matrix(0, nrow = L + 2, ncol = L + 2)
-  x2 <- cbind(residues[1], x, residues[1])
+  x2 <- cbind(residues[1], x, residues[1]) # dummy match states at beginning and end
   for(j in 1:ncol(Tij)){
     for(i in 1:nrow(Tij)){
       if(i < j){
@@ -268,18 +275,17 @@ map <- function(x, residues = "autodetect", gapchar = "-",
         cxy <- tab9C(satr, modules = 2)
         # replace D -> in begin state w/ 0
         cxy <- apply(cxy, 1, sum) # transition totals
-        cxy <- matrix(cxy, nrow = 3, byrow = TRUE)
-        dimnames(cxy) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
+        # cxy <- matrix(cxy, nrow = 3, byrow = TRUE)
+        # dimnames(cxy) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
         if(pseudocounts == "background"){
           cxy2 <- cxy + qa * 9
         } else if(pseudocounts == "Laplace"){
           cxy2 <- cxy + 1
-          ### not quite sure of best way to estimate these background transition freqs
-          ### possibly using heuristic threshold method?
           ### also need DI option
         } else{
           cxy2 <- cxy
         }
+        cxy2 <- matrix(cxy2, 3, byrow = TRUE, dimnames = list(from = c("D", "M", "I"), to = c("D", "M", "I")))
         axy <- cxy2/apply(cxy2, 1, sum)
         Tij[i, j] <- sum(cxy * log(axy))
         ### note only 6 poss states in col 0 etc
@@ -292,7 +298,7 @@ map <- function(x, residues = "autodetect", gapchar = "-",
     sigma[j] <- whichismax(S[1:(j - 1)] + tmp[1:(j - 1), j])
     S[j] <- (S[1:(j - 1)] + tmp[1:(j - 1), j])[sigma[j]]
   }
-  res <- structure(rep(FALSE, L + 2), names = 0:(L + 1))
+  res <- structure(logical(L + 2), names = 0:(L + 1))
   res[L + 2] <- TRUE
   j <- sigma[L + 2]
   while(j > 0){

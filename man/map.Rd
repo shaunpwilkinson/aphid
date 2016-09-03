@@ -5,7 +5,7 @@
 \title{Optimal profile HMM construction.}
 \usage{
 map(x, residues = "autodetect", gapchar = "-",
-  pseudocounts = "background", lambda = 0)
+  pseudocounts = "background", lambda = 0, qa = NULL, qe = NULL)
 }
 \arguments{
 \item{x}{a character matrix of aligned sequences.}

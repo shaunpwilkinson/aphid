@@ -35,7 +35,7 @@
 #'
 BaumWelch <- function(x, y, maxiter = 100, deltaLL = 1E-07,
                           logspace = "autodetect", quiet = FALSE,
-                          pseudocounts = "background", DI = TRUE){
+                          pseudocounts = "background", DI = TRUE, ID = TRUE){
   UseMethod("BaumWelch")
 }
 
@@ -43,7 +43,7 @@ BaumWelch <- function(x, y, maxiter = 100, deltaLL = 1E-07,
 #' @rdname BaumWelch
 BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
                            logspace = "autodetect", quiet = FALSE,
-                           pseudocounts = "background", DI = TRUE){
+                           pseudocounts = "background", DI = TRUE, ID = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   if(is.list(y)){
   }else if(is.vector(y, mode = "character")){
@@ -56,6 +56,7 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
   n <- length(y)
   residues <- rownames(x$E)
   states <- c("D", "M", "I")
+  l <- x$size
 
   if(!logspace){
     x$E <- log(x$E)
@@ -83,31 +84,29 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
     tcs <- tab9C(xtr, modules = sum(!inserts) + 2)
     transtotals <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
-    if(!DI) transtotals[c(3, 7)] <- 0
-    qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
-    dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
+    if(!DI) transtotals[3] <- 0
+    if(!ID) transtotals[7] <- 0
+    # qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
+    # dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
     # qa <- qa/apply(qa, 1, sum)
-    x$qa <- log(qa/sum(qa)) ### needs tidying up
+    x$qa <- log(transtotals/sum(transtotals)) ### needs tidying up
   }
-
-
-  # these just provide preformatted structures for the pseudocounts
+  # these just provide preformatted containers for the pseudocounts
   Apseudocounts <- x$A
   Epseudocounts <- x$E
   qepseudocounts <- x$qe
-  # don't need qa since not updated
-
+  # don't need x$qa since not updated during iteration
   if(identical(pseudocounts, "background")){
     qepseudocounts <- exp(x$qe) * length(x$qe)
-    Epseudocounts[] <- rep(qepseudocounts, x$size)
-    qacounts <- exp(x$qa) * if(DI) 9 else 7
-    Apseudocounts[,,1] <- c(rep(qacounts[,1], x$size), rep(0, 3))
-    Apseudocounts[,,2] <- rep(qacounts[,2], x$size + 1)
-    Apseudocounts[,,3] <- rep(qacounts[,3], x$size + 1)
-    Apseudocounts[1, 1, ] <- 0
+    Epseudocounts[] <- rep(qepseudocounts, l)
+    qacounts <- exp(x$qa) * if(DI & ID) 9 else if (DI | ID) 8 else 7
+    Apseudocounts[] <- rep(qacounts, l + 1)
+    # Apseudocounts[,,1] <- c(rep(qacounts[,1], x$size), rep(0, 3))
+    # Apseudocounts[,,2] <- rep(qacounts[,2], x$size + 1)
+    # Apseudocounts[,,3] <- rep(qacounts[,3], x$size + 1)
+    # Apseudocounts[1, 1, ] <- 0
   } else if(identical(pseudocounts, "Laplace")){
     Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- 1
-    Apseudocounts["D", "0", ] <- Apseudocounts[ , ncol(x$A), "D"] <- rep(0, 3)
   } else if(identical(pseudocounts, "none")){
     Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- 0
   } else if(is.list(pseudocounts)){
@@ -117,8 +116,9 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
     Epseudocounts[] <- pseudocounts[[2]]
     qepseudocounts[] <- pseudocounts[[3]]
   } else stop("invalid 'pseudocounts' argument")
-  if(!DI) Apseudocounts["D", , "I"] <- Apseudocounts["I", , "D"] <- 0
-
+  Apseudocounts[1:3, 1] <- Apseudocounts[c(1, 4, 7), l + 1] <- 0
+  if(!DI) Apseudocounts["DI", ] <- 0
+  if(!ID) Apseudocounts["ID", ] <- 0
   out <- x
   E <- out$E
   A <- out$A
@@ -133,10 +133,10 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
       yj <- y[[j]]
       nj <- length(yj)
       if(nj == 0){
-        tmpA["D", 2:(ncol(tmpA) - 1), "D"] <- tmpA["D", 2:(ncol(tmpA) - 1), "D"] + 1
-        tmplogPx[j] <- sum(c(A["M", 1, "D"],
-                             A["D", 2:(ncol(A[, , "D"]) - 1) , "D"],
-                             A["D", ncol(A[, , "D"]), "M"]))
+        tmpA["DD", 2:(ncol(tmpA) - 1)] <- tmpA["DD", 2:(ncol(tmpA) - 1)] + 1
+        tmplogPx[j] <- sum(c(A["MD", 1],
+                             A["DD", 2:l],
+                             A["DM", l + 1]))
       }else{
         forwj <- forward(out, yj, logspace = TRUE, odds = FALSE)
         Rj <- forwj$array
@@ -144,7 +144,7 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
         tmplogPx[j] <- logPxj
         backj <- backward(out, yj, logspace = TRUE, odds = FALSE)
         Bj <- backj$array
-        for(k in 1:ncol(x$E)){ #modules
+        for(k in 1:l){ #modules
           for(a in seq_along(residues)){  #residue alphabet
             yjequalsa <- c(FALSE, yj == residues[a])
             if(any(yjequalsa)){
@@ -157,55 +157,52 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
             }
           }
         }
-        for(k in 1:(ncol(A[,,"M"]) - 1)){
+        for(k in 1:l){
           # all vectors length 1 or nj + 1 ( i = 0... L)
-          tmpA["D", k, "D"] <- tmpA["D", k, "D"] +
-            exp(logsum(Rj[k, , "D"] + A["D", k, "D"] + Bj[k + 1, ,"D"]) - logPxj) #d to d
-          tmpA["M", k, "D"] <- tmpA["M", k, "D"] +
-            exp(logsum(Rj[k, , "M"] + A["M", k, "D"] + Bj[k + 1, ,"D"]) - logPxj) #m to d
-          tmpA["I", k, "D"] <- tmpA["I", k, "D"] +
-            exp(logsum(Rj[k, , "I"] + A["I", k, "D"] + Bj[k + 1, ,"D"]) - logPxj) #i to d
-          tmpA["D", k, "M"] <- tmpA["D", k, "M"] +
-            exp(logsum(Rj[k, , "D"] + A["D", k, "M"] + c(E[yj, k], -Inf) +
-                         c(Bj[k + 1, -1,"M"], -Inf)) - logPxj) #d to m
-          tmpA["M", k, "M"] <- tmpA["M", k, "M"] +
-            exp(logsum(Rj[k, , "M"] + A["M", k, "M"] + c(E[yj, k], -Inf) +
-                         c(Bj[k + 1, -1,"M"], -Inf)) - logPxj) #m to m
-          tmpA["I", k, "M"] <- tmpA["I", k, "M"] +
-            exp(logsum(Rj[k, , "I"] + A["I", k, "M"] + c(E[yj, k], -Inf) +
-                         c(Bj[k + 1, -1,"M"], -Inf)) - logPxj) #i to m
-          tmpA["D", k, "I"] <- tmpA["D", k, "I"] +
-            exp(logsum(Rj[k, , "D"] + A["D", k, "I"] + c(qe[yj], -Inf) +
-                         c(Bj[k, -1, "I"], -Inf)) - logPxj) #d to i
-          tmpA["M", k, "I"] <- tmpA["M", k, "I"] +
-            exp(logsum(Rj[k, , "M"] + A["M", k, "I"] + c(qe[yj], -Inf) +
+          tmpA["DD", k] <- tmpA["DD", k] +
+            exp(logsum(Rj[k, , "D"] + A["DD", k] + Bj[k + 1, , "D"]) - logPxj) #d to d
+          tmpA["MD", k] <- tmpA["MD", k] +
+            exp(logsum(Rj[k, , "M"] + A["MD", k] + Bj[k + 1, , "D"]) - logPxj) #m to d
+          if(ID){
+            tmpA["ID", k] <- tmpA["ID", k] +
+              exp(logsum(Rj[k, , "I"] + A["ID", k] + Bj[k + 1, , "D"]) - logPxj) #i to d
+          }
+          tmpA["DM", k] <- tmpA["DM", k] + exp(logsum(Rj[k, , "D"] + A["DM", k] + c(E[yj, k], -Inf) +
+                         c(Bj[k + 1, -1, "M"], -Inf)) - logPxj) #d to m
+          tmpA["MM", k] <- tmpA["MM", k] + exp(logsum(Rj[k, , "M"] + A["MM", k] + c(E[yj, k], -Inf) +
+                         c(Bj[k + 1, -1, "M"], -Inf)) - logPxj) #m to m
+          tmpA["IM", k] <- tmpA["IM", k] + exp(logsum(Rj[k, , "I"] + A["IM", k] + c(E[yj, k], -Inf) +
+                         c(Bj[k + 1, -1, "M"], -Inf)) - logPxj) #i to m
+          if(DI){
+            tmpA["DI", k] <- tmpA["DI", k] + exp(logsum(Rj[k, , "D"] + A["DI", k] + c(qe[yj], -Inf) +
+                                                          c(Bj[k, -1, "I"], -Inf)) - logPxj) #d to i
+          }
+          tmpA["MI", k] <- tmpA["MI", k] + exp(logsum(Rj[k, , "M"] + A["MI", k] + c(qe[yj], -Inf) +
                          c(Bj[k, -1, "I"], -Inf)) - logPxj) #m to i
-          tmpA["I", k, "I"] <- tmpA["I", k, "I"] +
-            exp(logsum(Rj[k, , "I"] + A["I", k, "I"] + c(qe[yj], -Inf) +
+          tmpA["II", k] <- tmpA["II", k] + exp(logsum(Rj[k, , "I"] + A["II", k] + c(qe[yj], -Inf) +
                          c(Bj[k, -1, "I"], -Inf)) - logPxj) #i to i
         }
-        k <- ncol(A[,,"M"])
-        tmpA["D", k, "M"] <- tmpA["D", k, "M"] +
-          exp(Rj[k, nj + 1,"D"] + A["D", k, "M"] - logPxj)
-        tmpA["M", k, "M"] <- tmpA["M", k, "M"] +
-          exp(Rj[k, nj + 1,"M"] + A["M", k, "M"] - logPxj)
-        tmpA["I", k, "M"] <- tmpA["I", k, "M"] +
-          exp(Rj[k, nj + 1,"I"] + A["I", k, "M"] - logPxj)
-        tmpA["D", k, "I"] <- tmpA["D", k, "I"] +
-          exp(logsum(Rj[k, , "D"] + A["D", k, "I"] + c(qe[yj], -Inf) +
-                       c(Bj[k, -1, "I"], -Inf)) - logPxj) #d to i
-        tmpA["M", k, "I"] <- tmpA["M", k, "I"] +
-          exp(logsum(Rj[k, , "M"] + A["M", k, "I"] + c(qe[yj], -Inf) +
+        k <- l + 1
+        tmpA["DM", k] <- tmpA["DM", k] + exp(Rj[k, nj + 1,"D"] + A["DM", k] - logPxj)
+        tmpA["MM", k] <- tmpA["MM", k] + exp(Rj[k, nj + 1,"M"] + A["MM", k] - logPxj)
+        tmpA["IM", k] <- tmpA["IM", k] + exp(Rj[k, nj + 1,"I"] + A["IM", k] - logPxj)
+        if(DI){
+          tmpA["DI", k] <- tmpA["DI", k] + exp(logsum(Rj[k, , "D"] + A["DI", k] + c(qe[yj], -Inf) +
+                                                        c(Bj[k, -1, "I"], -Inf)) - logPxj) #d to i
+        }
+        tmpA["MI", k] <- tmpA["MI", k] + exp(logsum(Rj[k, , "M"] + A["MI", k] + c(qe[yj], -Inf) +
                        c(Bj[k, -1, "I"], -Inf)) - logPxj) #m to i
-        tmpA["I", k, "I"] <- tmpA["I", k, "I"] +
-          exp(logsum(Rj[k, , "I"] + A["I", k, "I"] + c(qe[yj], -Inf) +
+        tmpA["II", k] <- tmpA["II", k] + exp(logsum(Rj[k, , "I"] + A["II", k] + c(qe[yj], -Inf) +
                        c(Bj[k, -1, "I"], -Inf)) - logPxj)
       }
     }
     tmpE <- log(tmpE/apply(tmpE, 1, sum))
     tmpqe <- log(tmpqe/sum(tmpqe))
-    for(X in states) tmpA[X, , ] <- log(tmpA[X, , ]/apply(tmpA[X, , ], 1, sum))
-    tmpA["D", "0", ] <- rep(-Inf, 3) # replace NaNs generated when dividing by 0
+    tmpA <- t(tmpA)
+    for(X in c(1, 4, 7)) tmpA[, X:(X + 2)] <- log(tmpA[, X:(X + 2)]/apply(tmpA[, X:(X + 2)], 1, sum))
+    tmpA <- t(tmpA)
+    # for(X in states) tmpA[X, , ] <- log(tmpA[X, , ]/apply(tmpA[X, , ], 1, sum))
+    tmpA[1:3, 1] <- -Inf # replace NaNs generated when dividing by 0
     A <- tmpA
     E <- tmpE
     qe <- tmpqe
@@ -225,6 +222,7 @@ BaumWelch.PHMM <- function(x, y, maxiter = 100, deltaLL = 1E-07,
     }
     LL <- logPx
   }
+  stop("Failed to converge")
 }
 
 

@@ -14,7 +14,7 @@
 train <- function(x, y, maxiter = 100, logspace = "autodetect", quiet = FALSE,
                   modelend = FALSE, pseudocounts = "Laplace", fixqa = FALSE, fixqe = FALSE,
                   inserts = "threshold",
-                  threshold = 0.5, lambda = 0, DI = TRUE){
+                  threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE){
   UseMethod("train")
 }
 
@@ -23,8 +23,9 @@ train.PHMM <- function(x, y, maxiter = 100,
                        logspace = "autodetect", quiet = FALSE,
                        pseudocounts = "background",
                        fixqa = FALSE, fixqe = FALSE,
-                       inserts = "threshold",
-                       threshold = 0.5, lambda = 0, DI = TRUE){
+                       inserts = "map",
+                       threshold = 0.5, lambda = 0,
+                       DI = TRUE, ID = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   if(is.list(y)){
   } else if(is.vector(y, mode = "character")){
@@ -47,7 +48,8 @@ train.PHMM <- function(x, y, maxiter = 100,
     out <- derivePHMM(alignment, residues = residues, inserts = inserts,
                pseudocounts = pseudocounts, logspace = TRUE,
                qa = if(fixqa) out$qa else NULL,
-               qe = if(fixqe) out$qe else NULL) ### add others too
+               qe = if(fixqe) out$qe else NULL,
+               DI = DI, ID = ID) ### add others too, could just use ... = ...?
     newalig <- align2phmm(y, out, logspace = TRUE)
     if(!identical(alignment, newalig)){
       alignment <- newalig

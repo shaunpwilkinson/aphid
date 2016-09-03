@@ -4,7 +4,7 @@
 \alias{align2phmm}
 \title{Align sequences to a profile HMM.}
 \usage{
-align2phmm(sequences, model, ...)
+align2phmm(sequences, model, gapchar = "-", ...)
 }
 \arguments{
 \item{...}{further arguments to be passed to \code{Viterbi}.}

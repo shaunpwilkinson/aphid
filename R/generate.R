@@ -15,15 +15,11 @@
 #' overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
 #' @param gapchar the character used to represent gaps in the output sequence
 #' (\code{generate.PHMM} only).
-#' @param ternary logical. If \code{TRUE} the "names" attribute of the output sequence will
-#' be returned in ternary format, with 0's representing delete states, 1's representing match
-#' states and 2's representing insert states. If \code{FALSE}, the hidden states are output as
-#' "D", "M", and "I", respectively. Only applicable for \code{generate.PHMM}.
 #' @return a named character vector giving the sequence of residues emitted by the model,
 #' with "names" attribute representing the hidden states.
 #' @name generate
 #'
-generate <- function(x, size, logspace = "autodetect", gapchar = "-", ternary = FALSE){
+generate <- function(x, size, logspace = "autodetect", gapchar = "-"){
   UseMethod("generate")
 }
 
@@ -52,19 +48,19 @@ generate.HMM <- function (x, size, logspace = "autodetect"){
 }
 
 #' @rdname generate
-generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", ternary = FALSE){
+generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-"){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   A <- if(logspace) exp(x$A) else x$A
   E <- if(logspace) exp(x$E) else x$E
   qe <- if(logspace) exp(x$qe) else x$qe
   emitted <- character(size)
   hidden <- integer(size)
-  states <- if(ternary) 1:3 else c("D", "M", "I")
+  states <- c("D", "M", "I")
   position <- 0
-  state <- states[2]
+  state <- "M"
   counter <- 1
   while(counter <= size & position <= x$size){
-    state <- sample(states, size = 1, prob = A[state, paste(position), ])
+    state <- sample(states, size = 1, prob = A[paste0(state, states), paste(position)])
     if(state == states[2]){
       position <- position + 1
       if(position > x$size) break
@@ -80,7 +76,6 @@ generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", tern
   }
   emitted <- emitted[1:(counter - 1)]
   hidden <- hidden[1:(counter - 1)]
-  if(ternary) hidden <- hidden - 1
   names(emitted) <- hidden
   return(emitted)
 }

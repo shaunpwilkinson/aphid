@@ -5,8 +5,9 @@
 \title{Derive a profile HMM from a multiple sequence alignment.}
 \usage{
 derivePHMM(x, residues = "autodetect", gapchar = "-",
-  pseudocounts = "background", logspace = TRUE, qe = NULL, qa = NULL,
-  inserts = "threshold", threshold = 0.5, lambda = 0, DI = TRUE)
+  pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
+  inserts = "threshold", threshold = 0.5, lambda = 0, DI = TRUE,
+  ID = TRUE)
 }
 \arguments{
 \item{x}{a character matrix of aligned sequences.}
@@ -29,17 +30,17 @@ pseudocounts are automatically added.}
 \item{logspace}{logical indicating whether the emission and transition
 probability on the returned model should be logged.}
 
-\item{qe}{an optional named vector of background emission probabilities the
-same length as the residue alphabet (i.e. 4 for nucleotides and 20 for
-amino acids) and with  corresponding names
-(i.e. A C D E F G H I K L M N P Q R S T V W Y for amino acids or
-a c g t for nucleotides). If \code{NULL}, background emission probabilities are
-generated from the alignment.}
-
 \item{qa}{an optional named 3 x 3 matrix of background transition probabilities with
 \code{dimnames(qa) = list(from = c('D', 'M', 'I'), to = c('D', 'M', 'I'))},
 where M, I and D represent matches, inserts and deletions, respectively. If
 \code{NULL}, background transition probabilities are generated from the alignment.}
+
+\item{qe}{an optional named vector of background emission probabilities the
+same length as the residue alphabet (i.e. 4 for nucleotides and 20 for
+amino acids) and with  corresponding names
+(i.e. A C D E F G H I K L M N P Q R S T V W Y for amino acids or
+A C G T for nucleotides). If \code{NULL}, background emission probabilities are
+generated from the alignment.}
 
 \item{inserts}{model construction method. Either 'threshold' (default),'map',
 or if insert columns are to be specified manually, a logical vector of length ncol(x),

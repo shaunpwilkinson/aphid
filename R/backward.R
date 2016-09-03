@@ -51,20 +51,17 @@ backward.PHMM <- function (x, y, logspace = "autodetect",  odds = FALSE, type = 
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
     if(odds) E <- E - qe
-    B[n + 1, m + 1, ] <- A[ , n + 1, "M"]
+    B[n + 1, m + 1, ] <- A[c("DM", "MM", "IM"), n + 1]
     if(type == "global"){ #key: D = 1, M = 2, I = 3
      for(i in n:1) {
-       B[i, m + 1, "D"] <- B[i + 1, m + 1, "D"] + A["D", i, "D"]
-       B[i, m + 1, "M"] <- B[i + 1, m + 1, "D"] + A["M", i, "D"]
-       B[i, m + 1, "I"] <- B[i + 1, m + 1, "D"] + A["I", i, "D"]
+       B[i, m + 1, "D"] <- B[i + 1, m + 1, "D"] + A["DD", i]
+       B[i, m + 1, "M"] <- B[i + 1, m + 1, "D"] + A["MD", i]
+       B[i, m + 1, "I"] <- B[i + 1, m + 1, "D"] + A["ID", i]
       }
      for(j in m:1) {
-       B[n + 1, j, "D"] <- B[n + 1, j + 1, "I"] + A["D", n + 1, "I"] +
-         if(odds) 0 else qe[y[j]]
-       B[n + 1, j, "M"] <- B[n + 1, j + 1, "I"] + A["M", n + 1, "I"] +
-         if(odds) 0 else qe[y[j]]
-       B[n + 1, j, "I"] <- B[n + 1, j + 1, "I"] + A["I", n + 1, "I"] +
-         if(odds) 0 else qe[y[j]]
+       B[n + 1, j, "D"] <- B[n + 1, j + 1, "I"] + A["DI", n + 1] + if(odds) 0 else qe[y[j]]
+       B[n + 1, j, "M"] <- B[n + 1, j + 1, "I"] + A["MI", n + 1] + if(odds) 0 else qe[y[j]]
+       B[n + 1, j, "I"] <- B[n + 1, j + 1, "I"] + A["II", n + 1] + if(odds) 0 else qe[y[j]]
       }
     }else{
       # B[-1, 1, 1] <- B[1, -1, 3] <- 0 ### check this
@@ -72,15 +69,15 @@ backward.PHMM <- function (x, y, logspace = "autodetect",  odds = FALSE, type = 
     for(i in n:1){
       for(j in m:1){
         sij <- E[y[j], i]
-        Dcdt <- c(B[i + 1, j, "D"] + A["D", i, "D"],
-                  B[i + 1, j + 1, "M"] + A["D", i, "M"] + sij,
-                  B[i, j + 1, "I"] + A["D", i, "I"] + if(odds) 0 else qe[y[j]])
-        Mcdt <- c(B[i + 1, j, "D"] + A["M", i, "D"],
-                  B[i + 1, j + 1, "M"] + A["M", i, "M"] + sij,
-                  B[i, j + 1, "I"] + A["M", i, "I"] + if(odds) 0 else qe[y[j]])
-        Icdt <- c(B[i + 1, j, "D"] + A["I", i, "D"],
-                  B[i + 1, j + 1, "M"] + A["I", i, "M"] + sij,
-                  B[i, j + 1, "I"] + A["I", i, "I"] + if(odds) 0 else qe[y[j]])
+        Dcdt <- c(B[i + 1, j, "D"] + A["DD", i],
+                  B[i + 1, j + 1, "M"] + A["DM", i] + sij,
+                  B[i, j + 1, "I"] + A["DI", i] + if(odds) 0 else qe[y[j]])
+        Mcdt <- c(B[i + 1, j, "D"] + A["MD", i],
+                  B[i + 1, j + 1, "M"] + A["MM", i] + sij,
+                  B[i, j + 1, "I"] + A["MI", i] + if(odds) 0 else qe[y[j]])
+        Icdt <- c(B[i + 1, j, "D"] + A["ID", i],
+                  B[i + 1, j + 1, "M"] + A["IM", i] + sij,
+                  B[i, j + 1, "I"] + A["II", i] + if(odds) 0 else qe[y[j]])
         B[i, j, "D"] <- logsum(Dcdt)
         B[i, j, "M"] <- logsum(Mcdt)
         B[i, j, "I"] <- logsum(Icdt)

@@ -52,34 +52,33 @@ forward.PHMM <- function (x, y, logspace = "autodetect", odds = FALSE, type = "g
     if(type == "global"){ #key: D = 1, M = 2, I = 3
       # R[-1, 1, 1] <- cumsum(c(0, A["D", 2:n, "D"])) + A["M", 1, "D"]
       # R[1, -1, 3] <- seq(from = A["M", 1, "I"], by = A["I", 1, "I"], length.out = m)
-      R[2, 1, "D"] <- A["M", 1, "D"]
-      for(i in 2:n) R[i + 1, 1, "D"] <- R[i, 1, "D"] + A["D", i, "D"]
-      R[1, 2, "I"] <- A["M", 1, "I"] + if(odds) 0 else qe[y[1]]
-      for(j in 2:m) R[1, j + 1, "I"] <- R[1, j, "I"] + A["I", 1, "I"] +
-        if(odds) 0 else qe[y[j]]
+      R[2, 1, "D"] <- A["MD", 1]
+      for(i in 2:n) R[i + 1, 1, "D"] <- R[i, 1, "D"] + A["DD", i]
+      R[1, 2, "I"] <- A["MI", 1] + if(odds) 0 else qe[y[1]]
+      for(j in 2:m) R[1, j + 1, "I"] <- R[1, j, "I"] + A["II", 1] + if(odds) 0 else qe[y[j]]
     }else{
-      R[-1, 1, 1] <- R[1, -1, 3] <- 0 ### check this
+      R[-1, 1, 1] <- R[1, -1, 3] <- 0 ### needs checking
     }
     for(i in 1:n){
       for(j in 1:m){
         sij <- E[y[j], i]
-        Dcdt <- c(R[i, j + 1, "D"] + A["D", i, "D"],
-                  R[i, j + 1, "M"] + A["M", i, "D"],
-                  R[i, j + 1, "I"] + A["I", i, "D"])
-        Mcdt <- c(R[i, j, "D"] + A["D", i, "M"],
-                  R[i, j, "M"] + A["M", i, "M"],
-                  R[i, j, "I"] + A["I", i, "M"])
-        Icdt <- c(R[i + 1, j, "D"] + A["D", i + 1, "I"],
-                  R[i + 1, j, "M"] + A["M", i + 1, "I"],
-                  R[i + 1, j, "I"] + A["I", i + 1, "I"])
+        Dcdt <- c(R[i, j + 1, "D"] + A["DD", i],
+                  R[i, j + 1, "M"] + A["MD", i],
+                  R[i, j + 1, "I"] + A["ID", i])
+        Mcdt <- c(R[i, j, "D"] + A["DM", i],
+                  R[i, j, "M"] + A["MM", i],
+                  R[i, j, "I"] + A["IM", i])
+        Icdt <- c(R[i + 1, j, "D"] + A["DI", i + 1],
+                  R[i + 1, j, "M"] + A["MI", i + 1],
+                  R[i + 1, j, "I"] + A["II", i + 1])
         R[i + 1, j + 1, "D"] <- logsum(Dcdt)
         R[i + 1, j + 1, "M"] <- logsum(Mcdt) + sij
         R[i + 1, j + 1, "I"] <- logsum(Icdt) + if(odds) 0 else qe[y[j]]
       }
     }
-    LLcdt <- c(R[n + 1, m + 1, "M"] + A["M", n + 1, "M"],
-               R[n + 1, m + 1, "I"] + A["I", n + 1, "M"],
-               R[n + 1, m + 1, "D"] + A["D", n + 1, "M"])
+    LLcdt <- c(R[n + 1, m + 1, "M"] + A["MM", n + 1],
+               R[n + 1, m + 1, "I"] + A["IM", n + 1],
+               R[n + 1, m + 1, "D"] + A["DM", n + 1])
     score <- logsum(LLcdt)
     res <- structure(list(score = score, array = R, odds = odds),
                      class = 'fullprob')

@@ -7,11 +7,11 @@
 \title{Iterative estimation of model parameters.}
 \usage{
 BaumWelch(x, y, maxiter = 100, deltaLL = 1e-07, logspace = "autodetect",
-  quiet = FALSE, pseudocounts = "Laplace", DI = TRUE)
+  quiet = FALSE, pseudocounts = "background", DI = TRUE, ID = TRUE)
 
 \method{BaumWelch}{PHMM}(x, y, maxiter = 100, deltaLL = 1e-07,
-  logspace = "autodetect", quiet = FALSE, pseudocounts = "Laplace",
-  DI = TRUE)
+  logspace = "autodetect", quiet = FALSE, pseudocounts = "background",
+  DI = TRUE, ID = TRUE)
 
 \method{BaumWelch}{HMM}(x, y, maxiter = 100, deltaLL = 1e-07,
   logspace = "autodetect", quiet = FALSE, modelend = FALSE,
@@ -35,7 +35,8 @@ Note that choosing the latter option increases the computational
 overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
 
 \item{quiet}{logical argument indicating whether the iteration progress should
-be suppressed (TRUE) or printed to the console (FALSE; default).}
+be printed to the console (\code{quiet = FALSE}; default) or suppressed
+(\code{quiet = TRUE}).}
 
 \item{pseudocounts}{used to account for the possible absence of certain transition
 and/or emission types in the training dataset.
@@ -45,7 +46,10 @@ transition pseudocounts as its first element and a matrix of emission pseudocoun
 as its second. If a list is supplied both matrices must have row and column names
 according to the residues (column names of emission matrix) and states
 (row and column names of the transition matrix and row names of the emission matrix).
-The first row and column of the transition matrix must be 'BeginEnd'.}
+The first row and column of the transition matrix must be 'BeginEnd'. Background
+pseudocounts are recommended for small training sets,
+since Laplacian counts can overinflate insert and delete transition probabilities
+leading to convergence at suboptimal local maxima.}
 }
 \description{
 \code{BaumWelch} uses a special case of the expectation-maximization (EM) algorithm

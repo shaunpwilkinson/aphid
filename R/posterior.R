@@ -14,9 +14,9 @@ posterior.HMM <- function(x, y, logspace = "autodetect"){
   n <- length(y)
   states <- rownames(x$E)
   H <- length(states)
-  back <- backward(x, y, logspace = logspace, odds = FALSE)
+  back <- backward(x, y, logspace = logspace)
   B <- back$array
-  forw <- forward(x, y, logspace = logspace, odds = FALSE)
+  forw <- forward(x, y, logspace = logspace)
   R <- forw$array
   logPx <- forw$score
   postprobs <- exp(R + B - logPx)
