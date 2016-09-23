@@ -5,6 +5,10 @@ ViterbiC <- function(x, y, qe = NULL, logspace = FALSE,
   UseMethod("ViterbiC")
 }
 
+kdist <- function(x, k = 5, asmatrix = FALSE){
+  UseMethod("kdist")
+}
+
 
 posterior <- function(x, obs){
   UseMethod("posterior")

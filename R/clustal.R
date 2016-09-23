@@ -12,7 +12,7 @@
 #' 'global' (penalized end gaps) or 'semiglobal' (default; free end gaps).
 #' @return a character matrix of aligned sequences.
 #'
-clustal <- function(x, quick = TRUE, pivot = FALSE, type = 'semiglobal'){
+clustalo <- function(x, quick = TRUE, pivot = FALSE, type = 'semiglobal'){
   # x is a list of sequences
   x <- x[order(lengths(x))]
   N <- length(x)
@@ -20,7 +20,7 @@ clustal <- function(x, quick = TRUE, pivot = FALSE, type = 'semiglobal'){
   seeds <- round(seq(from = 1, to = N, by = N/nseeds))
   seeds[length(seeds)] <- N
   ## distfun takes 2 character vectors and returns distance value
-  distfun <- if(quick) ktup else function(x, y)
+  distfun <- if(quick) kmer else function(x, y)
     JC69(WilburLipman(x, y)$globalAlignment)$K
   if(pivot){
     outliers <- integer()

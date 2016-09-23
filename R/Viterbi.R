@@ -48,7 +48,23 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          itertab = NULL){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
-  pp <- inherits(y, 'PHMM')
+  pp <- inherits(y, "PHMM")
+  pd <- mode(y) == "raw"
+  if(pd){
+    x$E <- x$E[order(rownames(x$E)),]
+    if(!(identical(rownames(x$E), c("a", "c", "g", "t")) |
+         identical(rownames(x$E), c("A", "C", "G", "T")))){
+      stop("invalid model, residue alphabet does not correspond to
+           nucleotide alphabet")
+    }
+    if(is.matrix(y)){
+      if(nrow(y) == 1) {
+        y <- as.vector(y)
+      } else {
+        stop("Viterbi can only process one sequence at a time")
+      }
+    }
+  }
   n <- ncol(x$E)
   m <- if(pp) ncol(y$E) else length(y)
   states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
@@ -216,7 +232,11 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           j <- itertab[i, 2]
           i <- itertab[i, 1]
         }
-        sij <- Saa[y[j], i] + offset
+        if(pd){
+          sij <- DNAprobC(y[j], Saa[, i]) + offset
+        } else{
+          sij <- Saa[y[j], i] + offset
+        }
         Dcdt <- c(V[i, j + 1, "D"] + A["DD", i],
                   V[i, j + 1, "M"] + A["MD", i],
                   V[i, j + 1, "I"] + A["ID", i])

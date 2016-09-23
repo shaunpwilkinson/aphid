@@ -29,13 +29,13 @@
 align <- function(sequences, type = "global", residues = "autodetect",
                   gapchar = "-", DI = FALSE, ID = FALSE, refine = "Viterbi",
                   quiet = TRUE, ...){
-  if(!(is.list(sequences))) stop("invalid 'sequences' agrument")
+  if(!(is.list(sequences))) stop("invalid 'sequences' argument")
   nsq <- length(sequences)
   if(is.null(attr(sequences, "names"))) names(sequences) <- paste0("SEQ", 1:nsq)
   # seqlengths <- sapply(sequences, length)
   # nmodules <- round(mean(seqlengths))
   residues <- alphabet(sequences, residues = residues, gapchar = gapchar)
-  fun <- Vectorize(function(i, j) ktup(sequences[[i]], sequences[[j]]))
+  fun <- Vectorize(function(i, j) kmer(sequences[[i]], sequences[[j]]))
   qds <- outer(1:nsq, 1:nsq, fun)
   ### need to speed this up in C++
   dimnames(qds) <- list(names(sequences),names(sequences))

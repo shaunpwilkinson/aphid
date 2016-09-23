@@ -23,6 +23,14 @@ ViterbiC.PHMM <- function(x, y, logspace = FALSE) {
     .Call('profile_ViterbiPHMM', PACKAGE = 'profile', x, y, logspace)
 }
 
+kdist.default <- function(x, k = 5L, asmatrix = FALSE) {
+    .Call('profile_kdist', PACKAGE = 'profile', x, k, asmatrix)
+}
+
+kdist.DNAbin <- function(x, k = 5L, asmatrix = FALSE) {
+    .Call('profile_kdistDNA', PACKAGE = 'profile', x, k, asmatrix)
+}
+
 #' Full log probability of sequence given model.
 #'
 #' Implementation of the forward algorithm to caluclate the full (log) probability
@@ -45,7 +53,11 @@ returnmod <- function(x) {
     .Call('profile_returnmod', PACKAGE = 'profile', x)
 }
 
-tab9C <- function(x, modules) {
-    .Call('profile_tab9C', PACKAGE = 'profile', x, modules)
+tab9C <- function(x, seqweights) {
+    .Call('profile_tab9C', PACKAGE = 'profile', x, seqweights)
+}
+
+DNAprobC <- function(a, probs) {
+    .Call('profile_DNAprobC', PACKAGE = 'profile', a, probs)
 }
 

@@ -4,11 +4,16 @@
 \alias{map}
 \title{Optimal profile HMM construction.}
 \usage{
-map(x, residues = "autodetect", gapchar = "-",
+map(x, seqweights = 1, residues = "autodetect", gapchar = "-",
   pseudocounts = "background", lambda = 0, qa = NULL, qe = NULL)
 }
 \arguments{
 \item{x}{a character matrix of aligned sequences.}
+
+\item{seqweights}{integer 1 or numeric vector of sequence weights used to
+derive the emission and trasnision counts. The sum of these weights should
+be equal to the number of
+sequences in the alignment.}
 
 \item{residues}{one of the character strings 'autodetect' (default), aminos' or
 'bases', or a case sensitive character vector specifying the residue

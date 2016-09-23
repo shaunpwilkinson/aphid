@@ -4,7 +4,7 @@
 \alias{derivePHMM}
 \title{Derive a profile HMM from a multiple sequence alignment.}
 \usage{
-derivePHMM(x, residues = "autodetect", gapchar = "-",
+derivePHMM(x, seqweights = 1, residues = "autodetect", gapchar = "-",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   inserts = "threshold", threshold = 0.5, lambda = 0, DI = TRUE,
   ID = TRUE)
@@ -12,9 +12,15 @@ derivePHMM(x, residues = "autodetect", gapchar = "-",
 \arguments{
 \item{x}{a character matrix of aligned sequences.}
 
-\item{residues}{one of the character strings 'autodetect' (default), aminos' or
-'bases', or a case sensitive character vector specifying the residue
-alphabet. Specifying the symbol type ('aminos' or 'bases') can increase speed
+\item{seqweights}{integer 1 or numeric vector of sequence weights used to
+derive the model. The sum of these weights should be equal to the number of
+sequences in the alignment.}
+
+\item{residues}{one of the character strings 'autodetect' (default),
+'AA' (amino acids) or
+'DNA' (A, C, G, and T), or a case sensitive character vector specifying the
+residue
+alphabet. Specifying the residue alphabet (i.e 'DNA' or 'AA') can increase speed
 for larger alignments. Note that setting \code{residues = 'autodetect'} will not
 detect rare residues that are not present in the alignment and thus will
 not assign them emission probabilities.}

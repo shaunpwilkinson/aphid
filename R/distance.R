@@ -1,6 +1,6 @@
 #' Pairwise distance calculation.
 #'
-ktup <- function(x, y, k = 4, correct = TRUE){
+kmer <- function(x, y, k = 5, correct = TRUE){
   N1 <- length(x)
   N2 <- length(y)
   n2q <- function(v) switch(v, 'a' = 0, '88' = 0, 'c' = 1, '28' = 1,
@@ -29,6 +29,22 @@ ktup <- function(x, y, k = 4, correct = TRUE){
   return(dis)
 }
 
+
+E04 <- function(x){
+  # x is a list of unaligned sequences
+  # returns an object of class 'dist', calculated by Edgar 2004 k-tuple distance measure
+  nseq <- length(x)
+  res <- matrix(nrow = nseq, ncol = nseq)
+  for(i in 1:nseq){
+    for(j in 1:nseq){
+      if(i > j){
+        N1 <- length(x[[i]])
+        N2 <- length(x[[j]])
+
+      }
+    }
+  }
+}
 
 
 JC69 <- function(x, fivecharstates = TRUE){

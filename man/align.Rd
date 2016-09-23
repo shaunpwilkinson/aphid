@@ -5,7 +5,7 @@
 \title{Multiple sequence alignment.}
 \usage{
 align(sequences, type = "global", residues = "autodetect", gapchar = "-",
-  DI = FALSE, ID = FALSE, refine = "Viterbi", quiet = FALSE, ...)
+  DI = FALSE, ID = FALSE, refine = "Viterbi", quiet = TRUE, ...)
 }
 \arguments{
 \item{sequences}{a list of character vectors consisting of symbols from

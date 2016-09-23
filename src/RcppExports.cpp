@@ -31,6 +31,32 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// kdist
+NumericVector kdist(List x, int k, bool asmatrix);
+RcppExport SEXP profile_kdist(SEXP xSEXP, SEXP kSEXP, SEXP asmatrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< bool >::type asmatrix(asmatrixSEXP);
+    __result = Rcpp::wrap(kdist(x, k, asmatrix));
+    return __result;
+END_RCPP
+}
+// kdistDNA
+NumericVector kdistDNA(List x, int k, bool asmatrix);
+RcppExport SEXP profile_kdistDNA(SEXP xSEXP, SEXP kSEXP, SEXP asmatrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< bool >::type asmatrix(asmatrixSEXP);
+    __result = Rcpp::wrap(kdistDNA(x, k, asmatrix));
+    return __result;
+END_RCPP
+}
 // logsum
 double logsum(NumericVector x);
 RcppExport SEXP profile_logsum(SEXP xSEXP) {
@@ -80,14 +106,26 @@ BEGIN_RCPP
 END_RCPP
 }
 // tab9C
-IntegerMatrix tab9C(IntegerMatrix x, int modules);
-RcppExport SEXP profile_tab9C(SEXP xSEXP, SEXP modulesSEXP) {
+NumericMatrix tab9C(IntegerMatrix x, NumericVector seqweights);
+RcppExport SEXP profile_tab9C(SEXP xSEXP, SEXP seqweightsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< IntegerMatrix >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type modules(modulesSEXP);
-    __result = Rcpp::wrap(tab9C(x, modules));
+    Rcpp::traits::input_parameter< NumericVector >::type seqweights(seqweightsSEXP);
+    __result = Rcpp::wrap(tab9C(x, seqweights));
+    return __result;
+END_RCPP
+}
+// DNAprobC
+double DNAprobC(RawVector a, NumericVector probs);
+RcppExport SEXP profile_DNAprobC(SEXP aSEXP, SEXP probsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< RawVector >::type a(aSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type probs(probsSEXP);
+    __result = Rcpp::wrap(DNAprobC(a, probs));
     return __result;
 END_RCPP
 }

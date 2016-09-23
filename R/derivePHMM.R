@@ -7,9 +7,14 @@
 #' (https://compbio.soe.ucsc.edu/sam.html).
 #'
 #' @param x a character matrix of aligned sequences.
-#' @param residues one of the character strings 'autodetect' (default), aminos' or
-#' 'bases', or a case sensitive character vector specifying the residue
-#' alphabet. Specifying the symbol type ('aminos' or 'bases') can increase speed
+#' @param seqweights integer 1 or numeric vector of sequence weights used to
+#' derive the model. The sum of these weights should be equal to the number of
+#' sequences in the alignment.
+#' @param residues one of the character strings 'autodetect' (default),
+#' 'AA' (amino acids) or
+#' 'DNA' (A, C, G, and T), or a case sensitive character vector specifying the
+#' residue
+#' alphabet. Specifying the residue alphabet (i.e 'DNA' or 'AA') can increase speed
 #' for larger alignments. Note that setting \code{residues = 'autodetect'} will not
 #' detect rare residues that are not present in the alignment and thus will
 #' not assign them emission probabilities.
@@ -47,54 +52,71 @@
 #' Only applicable for \code{inserts = "map"}.
 #' @references Durbin..
 #'
-derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
-                   pseudocounts = "background", logspace = TRUE,
-                   qa = NULL, qe = NULL,
-                   inserts = "threshold", threshold = 0.5,
-                   lambda = 0, DI = TRUE, ID = TRUE){
+derivePHMM <- function(x, seqweights = 1, residues = "autodetect",
+                       gapchar = "-", pseudocounts = "background",
+                       logspace = TRUE, qa = NULL, qe = NULL,
+                       inserts = "threshold", threshold = 0.5,
+                       lambda = 0, DI = TRUE, ID = TRUE){
   if(!(pseudocounts %in% c("background", "Laplace", "none"))){
     stop("invalid pseudocounts argument")
   }
   ### include option to enter manually
-
-  if(!(is.matrix(x))) stop("invalid inout object type, x must be a matrix")
+  if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
+  DNA <- inherits(x, "DNAbin")
+  if(DNA) gapchar <- as.raw(4)
   residues <- alphabet(x, residues = residues, gapchar = gapchar)
   nres <- length(residues)
   n <- nrow(x)
   m <- ncol(x)
   states <- c("D", "M", "I")
   transitions <- c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
+  if(identical(seqweights, 1)) {
+    seqweights <- rep(1, n)
+  }else{
+    if(round(sum(seqweights), 2) != n){
+      if(round(sum(seqweights), 2) == 1){
+        seqweights <- seqweights * n
+      }else stop("invalid seqweights argument")
+    }
+  }
+  if(length(seqweights) != n) stop("invalid seqweights argument")
   # background emission probabilities (qe)
   if(is.null(qe)){
-    allecs <- tab(x, residues = residues) + 1
-    #allecs <- apply(x, 2, tab, residues)
-    #allecs <- apply(allecs, 1, sum) + 1
-    qe <- allecs/sum(allecs)
+    if(DNA){
+      allecs <- apply(x, 2, tabDNA, ambiguities = TRUE, seqweights = seqweights)
+    } else{
+      allecs <- apply(x, 2, tab, residues = residues, seqweights = seqweights)
+    }
+    allecs <- apply(allecs, 1, sum)
+    qe <- (allecs + 1)/sum(allecs + 1)
   }else{
     if(!(is.vector(qe) & length(qe) == length(residues))) stop("qe invalid")
     if(is.null(names(qe))) stop("qe argument is missing names attribute")
     if(!(identical(names(qe), residues))) stop("qe names must match residues")
     if(all(qe <= 0)) qe <- exp(qe)
-    if(!(round(sum(qe), 2) == 1)) stop("background emission probs (qe) must sum to 1")
-    if(any(qe == 0)) warning("qe contains at least one zero-probabiliy")
+    if(!(round(sum(qe), 2) == 1)) stop("background emissions (qe) must sum to 1")
+    if(any(qe == 0)) warning("at least one background emission probability is zero")
     qe <- qe/sum(qe) #account for rounding errors
   }
-
   # designate insert-columns
   gaps <- x == gapchar
+  gapweights <- gaps * seqweights
   if(identical(inserts, "threshold")){
-    inserts <- apply(gaps, 2, sum) > threshold * n
+    inserts <- apply(gapweights, 2, sum) > threshold * n
   } else if(identical(inserts, "map")){
-    inserts <- !map(x, residues = residues, gapchar = gapchar,
+    inserts <- !map(x, residues = residues, gapchar = gapchar, seqweights = seqweights,
                     pseudocounts = pseudocounts, qa = qa, qe = qe)
   } else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
     stop("invalid inserts argument")
   }
   l <- sum(!inserts) # PHMM length (excluding B & E positions)
-
   # emission counts
-  ecs <- apply(x[, !inserts], 2, tab, residues)
-  dimnames(ecs) <- list(symbol = residues, position = 1:l)
+  if(DNA){
+    ecs <- apply(x[, !inserts], 2, tabDNA, ambiguities = TRUE, seqweights = seqweights)
+  }else{
+    ecs <- apply(x[, !inserts], 2, tab, residues = residues, seqweights = seqweights)
+  }
+  dimnames(ecs) <- list(residue = residues, position = 1:l)
 
   #transitions
   xtr <- matrix(nrow = n, ncol = m)
@@ -103,49 +125,34 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
   xtr[!gaps & !insertsn] <- 1L # Match
   xtr[!gaps & insertsn] <- 2L # Insert
   xtr <- cbind(1L, xtr, 1L) # append begin and end match states
-  tcs <- tab9C(xtr, modules = l + 2)
-  transtotals <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
+  tcs <- tab9C(xtr, seqweights = seqweights)
+  alltcs <- apply(tcs, 1, sum) # forced addition of Laplacian pseudos
 
   # background transition probs
   if(is.null(qa)){
-    if(!DI) transtotals["DI"] <- 0
-    if(!ID) transtotals["ID"] <- 0
-    #qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
-    #dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
-    # qa <- qa/apply(qa, 1, sum)
-    qa <- transtotals/sum(transtotals)
+    if(!DI) alltcs["DI"] <- 0
+    if(!ID) alltcs["ID"] <- 0
+    qa <- (alltcs + 1)/sum(alltcs + 1)
   }else{
-    # if(!(is.matrix(qa) & all(dim(qa) == 3))) stop("qa must be a 3 x 3 matrix")
     if(!is.vector(qa) | length(qa) != 9) stop("qa must be a numeric vector of length 9")
     if(all(qa <= 0)) qa <- exp(qa)
-    # if(!all(round(apply(qa, 1, sum), 2) == 1)) stop("rows of qa matrix must sum to 1")
     if(round(sum(qa), 2) != 1) stop("qa vector must sum to 1")
     if(!DI & (qa[3] != 0)){
       stop("DI is set to FALSE but delete -> insert transitions are assigned non-zero
-            probabilities in qa vector. Change DI to TRUE or change qa[3] to zero")
+            probabilities in qa vector. Change DI to TRUE or change qa['DI'] to zero")
     }
     if(!ID & (qa[7] != 0)){
       stop("ID is set to FALSE but insert -> delete transitions are assigned non-zero
-            probabilities in qa vector. Change ID to TRUE or change qa[7] to zero")
+            probabilities in qa vector. Change ID to TRUE or change qa['ID'] to zero")
     }
     # qa <- qa/apply(qa, 1, sum) #account for rounding errors
     qa <- qa/sum(qa) #account for rounding errors
   }
 
   # transition and emission probability arrays A & E
-
-  # transprops <- transtotals/sum(transtotals)
-  #transprops <- as.vector(qa)
-  #notfromD <- c(rep(0, 3), rep(1, 6))
-  #nottoD <- rep(c(0, 1, 1), times = 3)
   if(pseudocounts == 'background'){
     ecs <- ecs + qe * nres
-    tcs <- tcs + qa * if(DI & ID) 9 else if (DI | ID) 8 else 7
-    # tcs[, 2:l] <- tcs[, 2:l] + transprops * if(DI) 9 else 7
-    # tcs[, 1] <- tcs[, 1] + transprops * notfromD * if(DI) 6 else 5
-    ### doesn't sum to 6 or 5
-    # tcs[, l + 1] <- tcs[, l + 1] + transprops * nottoD * if(DI) 6 else 5
-    ### doesn't sum to 6 or 5
+    tcs <- tcs + qa * (7 + sum(c(DI, ID)))
   }else if(pseudocounts == 'Laplace'){
     ecs <- ecs + 1
     tcs <- tcs + 1
@@ -185,6 +192,10 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
 #' outlined in Durbin et al. (1998).
 #'
 #' @param x a character matrix of aligned sequences.
+#' @param seqweights integer 1 or numeric vector of sequence weights used to
+#' derive the emission and trasnision counts. The sum of these weights should
+#' be equal to the number of
+#' sequences in the alignment.
 #' @param residues one of the character strings 'autodetect' (default), aminos' or
 #' 'bases', or a case sensitive character vector specifying the residue
 #' alphabet. Specifying the symbol type ('aminos' or 'bases') can increase speed
@@ -203,100 +214,156 @@ derivePHMM <- function(x, residues = "autodetect", gapchar = "-",
 #' as match states (\code{TRUE}) and those assigned as inserts (\code{FALSE}).
 #' @references Durbin...
 #'
-map <- function(x, residues = "autodetect", gapchar = "-",
-                pseudocounts = "background",
+map <- function(x, seqweights = 1, residues = "autodetect",
+                gapchar = "-", pseudocounts = "background",
                 lambda = 0, qa = NULL, qe = NULL){
   if(!(pseudocounts %in% c("background", "Laplace", "none"))) {
     stop("invalid pseudocounts")
   }
   L <- ncol(x)
   n <- nrow(x)
+  DNA <- inherits(x, "DNAbin")
+  if(DNA) gapchar = as.raw(4)
   residues <- alphabet(x, residues = residues, gapchar = gapchar)
   nres <- length(residues)
+  transitions = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
   S <- sigma <- c(0, rep(NA, L + 1))
-  ecs <- apply(x, 2, tab, residues)
-  ### qa & qe checks?
-  if(is.null(qe)){
-    allecs <- apply(ecs, 1, sum) + 1
-    qe <- allecs/sum(allecs)
+  if(identical(seqweights, 1)) {
+    seqweights <- rep(1, n)
+  }else{
+    if(round(sum(seqweights), 2) != n){
+      if(round(sum(seqweights), 2) == 1){
+        seqweights <- seqweights * n
+      }else stop("invalid seqweights argument")
+    }
   }
-  if(is.null(qa)){
-    gaps <- x == gapchar
-    inserts <- apply(gaps, 2, sum) > 0.5 * nrow(x)
+  if(length(seqweights) != n) stop("invalid seqweights argument")
+  ecs <- if(DNA) apply(x, 2, tabDNA, TRUE, seqweights) else
+    apply(x, 2, tab, residues, seqweights)
+  # ecs <- t(t(ecs) * seqweights)
+  allecs <- apply(ecs, 1, sum)
+  if(is.null(qe)) {
+    qe <- log((allecs + 1)/sum(allecs + 1))
+  }else if(all(qe >= 0 & qe <= 1) & round(sum(qe), 2) == 1){
+    qe <- log(qe)
+  } else if(all(qe <= 0) & round(sum(exp(qe)), 2) == 1){
+    # qe <- qe
+  } else stop("invalid qe argument")
+  gaps <- x == gapchar
+  #if(!DI) alltcs[c(3, 7)] <- 0 ### need to work out DI strategy
+  if(is.null(qa)) {
+    gapweights <- gaps * seqweights
+    inserts <- apply(gapweights, 2, sum) > 0.5 * nrow(x)
     xtr <- matrix(nrow = nrow(x), ncol = ncol(x))
     insertsn <- matrix(rep(inserts, n), nrow = n, byrow = T)
     xtr[gaps & !insertsn] <- 0L # Delete
     xtr[!gaps & !insertsn] <- 1L # Match
     xtr[!gaps & insertsn] <- 2L # Insert
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
-    tcs <- tab9C(xtr, modules = sum(!inserts) + 2)
-    transtotals <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
-    #if(!DI) transtotals[c(3, 7)] <- 0 ### need to work out DI strategy
-    # qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
-    # dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
-    # qa <- qa/apply(qa, 1, sum)
-    qa <- transtotals/sum(transtotals)
-  }
+    tcs <- tab9C(xtr, seqweights) # modules = sum(!inserts) + 2)
+    alltcs <- apply(tcs, 1, sum)
+    qa <- log((alltcs + 1)/sum(alltcs + 1)) # force addition of Laplace pseudos
+  }else if(all(qa >= 0 & qa <= 1) & round(sum(qa), 2) == 1){
+    qa <- log(qa)
+  } else if(all(qa <= 0) & round(sum(exp(qa)), 2) == 1){
+    # qa <- qa
+  } else stop("invalid qa argument")
   # calculate Mj for j = 1 ... L + 1
   if(pseudocounts == "background"){
-    ecs2 <- ecs + qe * nres
+    ecs2 <- ecs + exp(qe) * nres
   } else if(pseudocounts == "Laplace"){
     ecs2 <- ecs + 1
   } else if(pseudocounts == "none"){
     ecs2 <- ecs
   } else stop("invalid pseudocounts argument")
-  emtots <- apply(ecs2, 2, sum)
-  term2 <- log(t(t(ecs2)/emtots))
+  term2 <- t(t(ecs2)/apply(ecs2, 2, sum))
+  term2[ecs != 0] <- log(term2[ecs != 0]) # increase speed for conserved alignments
   M <- apply(ecs * term2, 2, sum)
-  ### could speed this bit up using sparse matrices
   M <- c(0, M, 0)
   # calculate Tij for j = 1 ... L + 1, -1 < i < j
   Tij <- Iij <- matrix(0, nrow = L + 2, ncol = L + 2)
-  x2 <- cbind(residues[1], x, residues[1]) # dummy match states at beginning and end
-  for(j in 1:ncol(Tij)){
-    for(i in 1:nrow(Tij)){
-      if(i < j){
-        salen <- j - i + 1 # sub-alignment length
-        subalig <- x2[, i:j, drop = FALSE]
-        if(salen > 2){
-          #insres = vector of all residues emitted while in the insert state
-          insres <- subalig[, 2:(salen - 1)][subalig[, 2:(salen - 1)] != gapchar]
-          # inscounts = insres tabulated
-          inscounts <- tab(insres, residues = residues)
-          Iij[i, j] <- sum(inscounts * log(qe))
+  notgaps <- cbind(TRUE, !gaps, TRUE) # logical matrix, ncol = L + 2, nrow = n
+  ivec <- 1:(L + 1)
+  jvec <- (L + 2):2 ###
+  no.insertsi <- apply(!gaps, 1, sum) * seqweights
+  allecsi <- allecs # sum(allecsi) == sum(no.insertsi)
+  alltcsi <- structure(numeric(9), names = transitions) # empty container
+  alltcsi["MM"] <- sum(seqweights[no.insertsi == 0]) # number of blank sequences
+  alltcsi[c("MI", "IM")] <- n - alltcsi["MM"]
+  alltcsi["II"] <- sum(allecs) - alltcsi["MI"] # equiv to sum(no.insertsi) - alltcsi["IM"], etc
+  alphaxy <- if(pseudocounts == "background") exp(qa) * 9 else rep(1, 9)
+  for(i in ivec){
+    no.insertsj <- no.insertsi # numeric, length n
+    allecsj <- allecsi # numeric, length nres (would be integer but for ambigs)
+    alltcsj <- alltcsi # integer, length 9
+    for(j in jvec){
+      #print(i); print(j); print(alltcsj)
+      cxy <- alltcsj + alphaxy
+      axy <- cxy/c(rep(sum(cxy[1:3]), 3), rep(sum(cxy[4:6]), 3), rep(sum(cxy[7:9]), 3))
+      Tij[i, j] <- sum(cxy * log(axy))
+      if(j - i > 1){
+        Iij[i, j] <- sum(allecsj * qe)
+        #now update
+        allecsj <- allecsj - ecs[, j - 2]
+        no.insertsj <- no.insertsj - notgaps[, j - 1] * seqweights
+        zeroinserts <- round(no.insertsj, 5) == 0 # logical, length n
+        if(any(zeroinserts)){
+          alltcsj["DD"] <- sum(seqweights[!notgaps[, i] & !notgaps[, j - 1] & zeroinserts])
+          alltcsj["DM"] <- sum(seqweights[!notgaps[, i] & notgaps[, j - 1] & zeroinserts])
+          alltcsj["MD"] <- sum(seqweights[notgaps[, i] & !notgaps[, j - 1] & zeroinserts])
+          alltcsj["MM"] <- sum(seqweights[notgaps[, i] & notgaps[, j - 1] & zeroinserts])
+          alltcsj["DI"] <- sum(seqweights[!notgaps[, i] & !zeroinserts])
+          alltcsj["MI"] <- sum(seqweights[notgaps[, i] & !zeroinserts])
+          alltcsj["ID"] <- sum(seqweights[!notgaps[, j - 1] & !zeroinserts])
+          alltcsj["IM"] <- sum(seqweights[notgaps[, j - 1] & !zeroinserts])
+          # equiv to (alltcsj["ID"] + alltcsj["IM"])
+        }else{
+          alltcsj[c("DD", "DM", "MD", "MM")] <- 0
+          alltcsj["DI"] <- sum(seqweights[!notgaps[, i]])
+          alltcsj["MI"] <- sum(seqweights[notgaps[, i]])
+          alltcsj["ID"] <- sum(seqweights[!notgaps[, j - 1]])
+          alltcsj["IM"] <- sum(seqweights[notgaps[, j - 1]])
         }
-        satr <- matrix(nrow = n, ncol = salen) # subalignment as ternary
-        rownames(satr) <- rownames(subalig) # not really necessary
-        satr[, 1][subalig[, 1] != gapchar] <- 1L
-        satr[, 1][subalig[, 1] == gapchar] <- 0L
-        satr[, salen][subalig[, salen] != gapchar] <- 1L
-        satr[, salen][subalig[, salen] == gapchar] <- 0L
-        if(salen > 2) satr[, 2:(salen - 1)][subalig[, 2:(salen - 1)] != gapchar] <- 2L
-        cxy <- tab9C(satr, modules = 2)
-        # replace D -> in begin state w/ 0
-        cxy <- apply(cxy, 1, sum) # transition totals
-        # cxy <- matrix(cxy, nrow = 3, byrow = TRUE)
-        # dimnames(cxy) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
-        if(pseudocounts == "background"){
-          cxy2 <- cxy + qa * 9
-        } else if(pseudocounts == "Laplace"){
-          cxy2 <- cxy + 1
-          ### also need DI option
-        } else{
-          cxy2 <- cxy
-        }
-        cxy2 <- matrix(cxy2, 3, byrow = TRUE, dimnames = list(from = c("D", "M", "I"), to = c("D", "M", "I")))
-        axy <- cxy2/apply(cxy2, 1, sum)
-        Tij[i, j] <- sum(cxy * log(axy))
-        ### note only 6 poss states in col 0 etc
+        alltcsj["II"] <- sum(no.insertsj) - (alltcsj["DI"] + alltcsj["MI"])
+      }else{
+        alltcsj["DD"] <- sum(seqweights[!notgaps[, i] & !notgaps[, j - 1]])
+        alltcsj["DM"] <- sum(seqweights[!notgaps[, i] & notgaps[, j - 1]])
+        alltcsj["MD"] <- sum(seqweights[notgaps[, i] & !notgaps[, j - 1]])
+        alltcsj["MM"] <- sum(seqweights[notgaps[, i] & notgaps[, j - 1]])
+        alltcsj[c("DI", "MI", "ID", "IM", "II")] <- 0
       }
     }
+    if(i < L + 1){
+      allecsi <- allecsi - ecs[, i]
+      no.insertsi <- no.insertsi - notgaps[, i + 1] * seqweights
+      zeroinserts <- round(no.insertsi, 5) == 0
+      alltcsi[c("DD", "MD", "ID")] <- 0
+      if(any(zeroinserts)){
+        alltcsi["DM"] <- sum(seqweights[!notgaps[, i + 1] & zeroinserts])
+        alltcsi["MM"] <- sum(seqweights[notgaps[, i + 1] & zeroinserts])
+        alltcsi["DI"] <- sum(seqweights[!notgaps[, i + 1] & !zeroinserts])
+        alltcsi["MI"] <- sum(seqweights[notgaps[, i + 1] & !zeroinserts])
+        alltcsi["IM"] <- sum(seqweights[!zeroinserts])
+      }else{
+        alltcsi[c("DM", "MM")] <- 0
+        alltcsi["DI"] <- sum(seqweights[!notgaps[, i + 1]])
+        alltcsi["MI"] <- n - alltcsi["DI"] # sum(seqweights[notgaps[, i + 1]])
+        alltcsi["IM"] <- n
+      }
+      alltcsi["II"] <- sum(no.insertsi) - alltcsi["IM"] ### because alltcsi["ID"] = 0
+    }else{
+      alltcsi[c("DD", "DI", "MD", "MI", "ID", "IM", "II")] <- 0
+      alltcsi["DM"] <- sum(seqweights[!notgaps[, i + 1]])
+      alltcsi["MM"] <- n - alltcsi["DM"]
+    }
+    jvec <- jvec[-length(jvec)] # gives upper.tri
   }
-  tmp <- t(t(Tij + Iij) + M + lambda)
-  tmp[lower.tri(tmp, diag = TRUE)] <- NA
+  #tmp <- t(t(Tij + Iij) + M + lambda)
+  #tmp[lower.tri(tmp, diag = TRUE)] <- NA
   for(j in 2:(L + 2)){
-    sigma[j] <- whichismax(S[1:(j - 1)] + tmp[1:(j - 1), j])
-    S[j] <- (S[1:(j - 1)] + tmp[1:(j - 1), j])[sigma[j]]
+    tmp <- S[1:(j - 1)] + Tij[1:(j - 1), j] + Iij[1:(j - 1), j] + M[j] + lambda
+    sigma[j] <- whichismax(tmp)#tmp[1:(j - 1), j])
+    S[j] <- tmp[sigma[j]] #tmp[1:(j - 1), j])[sigma[j]]
   }
   res <- structure(logical(L + 2), names = 0:(L + 1))
   res[L + 2] <- TRUE

@@ -32,13 +32,29 @@ backward.PHMM <- function (x, y, logspace = "autodetect",  odds = FALSE, type = 
   if(type %in% c('semiglobal','local'))
     stop("semiglobal and local models are not supported in this version")
   pp <- inherits(y, 'PHMM')
+  pd <- mode(y) == "raw"
+  if(pd){
+    x$E <- x$E[order(rownames(x$E)),]
+    if(!(identical(rownames(x$E), c("a", "c", "g", "t")) |
+         identical(rownames(x$E), c("A", "C", "G", "T")))){
+      stop("invalid model, residue alphabet does not correspond to
+           nucleotide alphabet")
+    }
+    if(is.matrix(y)){
+      if(nrow(y) == 1) {
+        y <- as.vector(y)
+      } else {
+        stop("backward algorithm can only process one sequence at a time")
+      }
+    }
+  }
   n <- ncol(x$E)
   m <- if(pp) ncol(y$E) else length(y)
   states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
   B <- array(-Inf, dim = c(n + 1, m + 1, length(states)))
   dimnames(B) <- list(x = 0:n, y = 0:m, state = states)
   if(pp){
-    stop("backward algorithm for PHMM vs PHMM not supported yet")
+    stop("PHMM/PHMM backward algorithm not implemented in this version")
     #
     #
   }else{
@@ -48,6 +64,7 @@ backward.PHMM <- function (x, y, logspace = "autodetect",  odds = FALSE, type = 
       qe <- log(rep(1/nrow(x$E), nrow(x$E)))
       names(qe) <- rownames(x$E)
     }
+    qey <- if(odds) rep(0, m) else if(pd) sapply(y, DNAprobC, qe) else qe[y]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
     if(odds) E <- E - qe
@@ -59,25 +76,25 @@ backward.PHMM <- function (x, y, logspace = "autodetect",  odds = FALSE, type = 
        B[i, m + 1, "I"] <- B[i + 1, m + 1, "D"] + A["ID", i]
       }
      for(j in m:1) {
-       B[n + 1, j, "D"] <- B[n + 1, j + 1, "I"] + A["DI", n + 1] + if(odds) 0 else qe[y[j]]
-       B[n + 1, j, "M"] <- B[n + 1, j + 1, "I"] + A["MI", n + 1] + if(odds) 0 else qe[y[j]]
-       B[n + 1, j, "I"] <- B[n + 1, j + 1, "I"] + A["II", n + 1] + if(odds) 0 else qe[y[j]]
+       B[n + 1, j, "D"] <- B[n + 1, j + 1, "I"] + A["DI", n + 1] + qey[j]
+       B[n + 1, j, "M"] <- B[n + 1, j + 1, "I"] + A["MI", n + 1] + qey[j]
+       B[n + 1, j, "I"] <- B[n + 1, j + 1, "I"] + A["II", n + 1] + qey[j]
       }
     }else{
       # B[-1, 1, 1] <- B[1, -1, 3] <- 0 ### check this
     }
     for(i in n:1){
       for(j in m:1){
-        sij <- E[y[j], i]
+        sij <- if(pd) DNAprobC(y[j], E[, i]) else E[y[j], i]
         Dcdt <- c(B[i + 1, j, "D"] + A["DD", i],
                   B[i + 1, j + 1, "M"] + A["DM", i] + sij,
-                  B[i, j + 1, "I"] + A["DI", i] + if(odds) 0 else qe[y[j]])
+                  B[i, j + 1, "I"] + A["DI", i] + qey[j])
         Mcdt <- c(B[i + 1, j, "D"] + A["MD", i],
                   B[i + 1, j + 1, "M"] + A["MM", i] + sij,
-                  B[i, j + 1, "I"] + A["MI", i] + if(odds) 0 else qe[y[j]])
+                  B[i, j + 1, "I"] + A["MI", i] + qey[j])
         Icdt <- c(B[i + 1, j, "D"] + A["ID", i],
                   B[i + 1, j + 1, "M"] + A["IM", i] + sij,
-                  B[i, j + 1, "I"] + A["II", i] + if(odds) 0 else qe[y[j]])
+                  B[i, j + 1, "I"] + A["II", i] + qey[j])
         B[i, j, "D"] <- logsum(Dcdt)
         B[i, j, "M"] <- logsum(Mcdt)
         B[i, j, "I"] <- logsum(Icdt)

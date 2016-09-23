@@ -18,24 +18,42 @@
 #' are not currently supported in this version.
 #' @name forward
 
-forward <- function(x, y, logspace = "autodetect", odds = FALSE, type = "global"){
+forward <- function(x, y, logspace = "autodetect", odds = FALSE,
+                    type = "global"){
   UseMethod("forward")
 }
 
 #' @rdname forward
-forward.PHMM <- function (x, y, logspace = "autodetect", odds = FALSE, type = "global"){
+forward.PHMM <- function (x, y, logspace = "autodetect", odds = FALSE,
+                          type = "global"){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
   if(type %in% c('semiglobal','local'))
     stop("semiglobal and local models are not supported in this version")
   pp <- inherits(y, 'PHMM')
+  pd <- mode(y) == "raw"
+  if(pd){
+    x$E <- x$E[order(rownames(x$E)),]
+    if(!(identical(rownames(x$E), c("a", "c", "g", "t")) |
+         identical(rownames(x$E), c("A", "C", "G", "T")))){
+      stop("invalid model, residue alphabet does not correspond to
+           nucleotide alphabet")
+    }
+    if(is.matrix(y)){
+      if(nrow(y) == 1) {
+        y <- as.vector(y)
+      } else {
+        stop("forward algorithm can only process one sequence at a time")
+      }
+    }
+  }
   n <- ncol(x$E)
   m <- if(pp) ncol(y$E) else length(y)
   states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
   R <- array(-Inf, dim = c(n + 1, m + 1, length(states)))
   dimnames(R) <- list(x = 0:n, y = 0:m, state = states)
   if(pp){
-    stop("PHMM vs PHMM forward algorithm is not supported yet")
+    stop("PHMM/PHMM forward algorithm not implemented in this version")
     #
     #
   }else{
@@ -45,6 +63,7 @@ forward.PHMM <- function (x, y, logspace = "autodetect", odds = FALSE, type = "g
       qe <- log(rep(1/nrow(x$E), nrow(x$E)))
       names(qe) <- rownames(x$E)
     }
+    qey <- if(odds) rep(0, m) else if(pd) sapply(y, DNAprobC, qe) else qe[y]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
     if(odds) E <- E - qe
@@ -54,14 +73,16 @@ forward.PHMM <- function (x, y, logspace = "autodetect", odds = FALSE, type = "g
       # R[1, -1, 3] <- seq(from = A["M", 1, "I"], by = A["I", 1, "I"], length.out = m)
       R[2, 1, "D"] <- A["MD", 1]
       for(i in 2:n) R[i + 1, 1, "D"] <- R[i, 1, "D"] + A["DD", i]
-      R[1, 2, "I"] <- A["MI", 1] + if(odds) 0 else qe[y[1]]
-      for(j in 2:m) R[1, j + 1, "I"] <- R[1, j, "I"] + A["II", 1] + if(odds) 0 else qe[y[j]]
+      R[1, 2, "I"] <- A["MI", 1] + qey[1]
+      for(j in 2:m) {
+        R[1, j + 1, "I"] <- R[1, j, "I"] + A["II", 1] + qey[j]
+      }
     }else{
       R[-1, 1, 1] <- R[1, -1, 3] <- 0 ### needs checking
     }
     for(i in 1:n){
       for(j in 1:m){
-        sij <- E[y[j], i]
+        sij <- if(pd) DNAprobC(y[j], E[, i]) else E[y[j], i]
         Dcdt <- c(R[i, j + 1, "D"] + A["DD", i],
                   R[i, j + 1, "M"] + A["MD", i],
                   R[i, j + 1, "I"] + A["ID", i])
@@ -73,7 +94,7 @@ forward.PHMM <- function (x, y, logspace = "autodetect", odds = FALSE, type = "g
                   R[i + 1, j, "I"] + A["II", i + 1])
         R[i + 1, j + 1, "D"] <- logsum(Dcdt)
         R[i + 1, j + 1, "M"] <- logsum(Mcdt) + sij
-        R[i + 1, j + 1, "I"] <- logsum(Icdt) + if(odds) 0 else qe[y[j]]
+        R[i + 1, j + 1, "I"] <- logsum(Icdt) + qey[j]
       }
     }
     LLcdt <- c(R[n + 1, m + 1, "M"] + A["MM", n + 1],

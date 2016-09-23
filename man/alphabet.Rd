@@ -13,7 +13,7 @@ and/or vectors}
 \description{
 \code{"alphabet"} performs checks on the format of the "residues" argument
 to be passed to a variety of other functions. Single-element string arguments
-such as "bases" and "aminos" are
+such as "DNA" and "AA" are
 converted to their respective alphabet in a character vector format.
 }
 
