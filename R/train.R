@@ -12,8 +12,9 @@
 #' @references Durbin...
 #'
 train <- function(x, y, maxiter = 100, logspace = "autodetect", quiet = FALSE,
-                  modelend = FALSE, pseudocounts = "Laplace", fixqa = FALSE, fixqe = FALSE,
-                  inserts = "threshold",
+                  modelend = FALSE, pseudocounts = "Laplace", gapchar = "-",
+                  fixqa = FALSE, fixqe = FALSE,
+                  inserts = "map",
                   threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE){
   UseMethod("train")
 }
@@ -21,16 +22,52 @@ train <- function(x, y, maxiter = 100, logspace = "autodetect", quiet = FALSE,
 #' @rdname train
 train.PHMM <- function(x, y, maxiter = 100,
                        logspace = "autodetect", quiet = FALSE,
-                       pseudocounts = "background",
+                       pseudocounts = "background", gapchar = "-",
                        fixqa = FALSE, fixqe = FALSE,
                        inserts = "map",
                        threshold = 0.5, lambda = 0,
                        DI = TRUE, ID = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
+  #note changes here also need apply to align2phmm
+  DNA <- inherits(y, "DNAbin")
+  if(DNA) gapchar <- as.raw(4)
   if(is.list(y)){
-  } else if(is.vector(y, mode = "character")){
-    y <- list(y)
-  } else stop("invalid y argument")
+  }else if(DNA){
+    if(is.matrix(y)){
+      nseq <- nrow(y)
+      seqnames <- rownames(y)
+      tmp <- structure(vector(mode = "list", length = nseq), class = "DNAbin")
+      for(i in 1: nseq){
+        seqi <- as.vector(y[i, ])
+        tmp[[i]] <- seqi[seqi != gapchar]
+      }
+      names(tmp) <- seqnames
+    }else{
+      tmp <- structure(list(y), class = "DNAbin")
+      names(tmp) <- deparse(substitute(y))
+    }
+    y <- tmp
+  }else if(is.matrix(y)){
+    if(mode(y[1, 1]) != "character") stop("invalid mode")
+    nseq <- nrow(y)
+    seqnames <- rownames(y)
+    tmp <- structure(vector(mode = "list", length = nseq), class = "DNAbin")
+    for(i in 1: nseq){
+      seqi <- as.vector(y[i, ])
+      tmp[[i]] <- seqi[seqi != gapchar]
+    }
+    names(tmp) <- seqnames
+    y <- tmp
+  }else if(is.null(dim(y))){
+    if(mode(y) == "character"){
+      y <- list(y)
+      names(y) <- deparse(substitute(y))
+    }else stop("invalid mode")
+  }else stop("invalid 'y' argument")
+  # if(is.list(y)){
+  # } else if(is.vector(y, mode = "character") | inherits(sequences, "DNAbin")){ ##neds fixing
+  #   y <- list(y)
+  # } else stop("invalid y argument")
   n <- length(y)
   states <- c("D", "M", "I")
   residues <- rownames(x$E)

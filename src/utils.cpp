@@ -21,11 +21,14 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 NumericMatrix tab9C(IntegerMatrix x, NumericVector seqweights){
+  // x is a ternary matrix with ncol = phmm length + 2
+  // length of seqweights should be same as nrow(x)
   if(x.nrow() != seqweights.size()){
     throw Rcpp::exception("length of seqweights vector should equal number of sequences");
   }
   int modules = 0;
-  for(int i = 0; i < x.ncol(); i++) if((x(1, i) == 0) | (x(1, i) == 1)) modules++;
+  for(int i = 0; i < x.ncol(); i++) if((x(0, i) == 0) | (x(0, i) == 1)) modules++;
+  // modules is the total number of modules in the model including begin and end states
   NumericMatrix out(9, modules - 1);
   CharacterVector transtype = CharacterVector::create("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II");
   IntegerVector tmp = seq(0, modules - 2);
@@ -63,7 +66,7 @@ NumericMatrix tab9C(IntegerMatrix x, NumericVector seqweights){
 
 // [[Rcpp::export]]
 double DNAprobC(RawVector a, NumericVector probs){
-  // a is a raw byte in format suggested by Paradis (2007)
+  // a is a raw byte in format of Paradis (2007)
   // probs is a 4-element numeric vector of probabilities for the set {a,c,g,t}
   if(probs.size() != 4){
     throw Rcpp::exception("probs argument must be a numeric vector of length 4");

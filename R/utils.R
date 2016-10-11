@@ -141,12 +141,14 @@ logdetect <- function(x){
   } else stop("x must be an object of class 'HMM' or 'PHMM'")
 }
 
-DNAprob <- function(a, probs){
+probDNA <- function(a, probs = rep(0.25, 4)){
   # a is a raw byte in Paradis (2007) format
   # probs is a 4-element numeric vector of probabilities for the set {a,c,g,t}
   # returns the weighted average probability
   if(a <= 4){
     stop("Input sequence contains gaps or unknown characters")
+  }else if(length(probs) != 4){
+    stop("Vector of probabilities should be of length 4")
   }else{
     if((a & as.raw(55)) == as.raw(0)){ # is purine?
       if(a == 136){
@@ -164,7 +166,15 @@ DNAprob <- function(a, probs){
       } else{
         mean(probs[c(2, 4)]) # A or G  ### what if probs are logged??
       }
-    } else if(a == 224){
+    } else if(a == 160){
+      mean(probs[1:2])# M (A or C)
+    }else if(a == 144){
+      mean(probs[c(1, 4)])# W (A or T)
+    }else if(a == 96){
+      mean(probs[2:3])# S (G or C)
+    }else if(a == 80){
+      mean(probs[3:4])# K (G or T)
+    }else if(a == 224){
       mean(probs[-4]) # V (A or C or G)
     } else if(a == 176){
       mean(probs[-3]) # H (A or C or T)
@@ -184,7 +194,7 @@ disambiguate <- function(a, probs = rep(0.25, 4)){
   # a is a raw byte in Paradis (2007) format
   # probs is a 4-element numeric vector of background probabilities for the set {a,c,g,t}
   # returns a sampled base
-  if(a <= 4){
+  if(a == 2 | a == 4){
     stop("Input sequence contains gaps or unknown characters")
   }else{
     if((a & as.raw(55)) == as.raw(0)){ # is purine?
@@ -200,7 +210,19 @@ disambiguate <- function(a, probs = rep(0.25, 4)){
         return(a) # known base C or T
       }
       # a,c,g,t = 136, 40, 72, 24
-    } else if(a == 224){ # V (A or C or G)
+    }else if(a == 160){
+      sample(as.raw(c(136, 40)), size = 1, prob = probs[1:2])
+      # M (A or C)
+    }else if(a == 144){
+      sample(as.raw(c(136, 24)), size = 1, prob = probs[c(1, 4)])
+      # W (A or T)
+    }else if(a == 96){
+      sample(as.raw(c(40, 72)), size = 1, prob = probs[2:3])
+      # S (G or C)
+    }else if(a == 80){
+      sample(as.raw(c(72, 24)), size = 1, prob = probs[3:4])
+      # K (G or T)
+    }else if(a == 224){ # V (A or C or G)
       sample(as.raw(c(136, 40, 72)), size = 1, prob = probs[-4])
     } else if(a == 176){
       sample(as.raw(c(136, 40, 24)), size = 1, prob = probs[-3]) # H (A or C or T)
@@ -214,15 +236,23 @@ disambiguate <- function(a, probs = rep(0.25, 4)){
   }
 }
 
-decimal.DNAbin <- function(x){
-  # x is a short DNABIN vector
-  # returns a numeric matrix with decimal pointers in col 1 and their probabilities in col 2
-  xlen <- length(x)
-  out <- matrix(nrow = 1, ncol = 2)
-  if(all((x & as.raw(8)) == 8)){
 
-  }
+
+as.ternary.DNAbin <- function(x){
+  fun <- function(v){
+    # v is a raw vector
+    attr(v, "class") <- NULL 
+    tmp <- attributes(v)
+    resv <- rep(NA, length(v))
+    ambigs <- (v & as.raw(8)) != 8
+    if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate)
+    resv[v == 136] <- 0
+    resv[v == 40] <- 1
+    resv[v == 72] <- 2
+    resv[v == 24] <- 3
+    attributes(resv) <- tmp
+    resv
+  } 
+  if(is.list(x)) lapply(x, fun) else fun(x)
 }
-
-
-
+  

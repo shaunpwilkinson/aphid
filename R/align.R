@@ -81,33 +81,64 @@ align <- function(sequences, type = "global", residues = "autodetect",
 #' alignpair(x, z)
 #'
 alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
-                      type = "global",
+                      type = "semiglobal",
                       offset = -0.1, itertab = NULL, pseudocounts = "background",
                       residues = "autodetect", gapchar = "-"){
-  if(is.vector(x) & is.vector(y)){
-    alig <- Viterbi(x, y, d = d, e = e, S = S, type = type,
-                    itertab = itertab)#, offset = offset) ###not necessary for vec vs vec
+  if(inherits(x, "DNAbin")){
+    if(!inherits(y, "DNAbin")) stop("class(x) and class(y) must match")
+    gapchar <- as.raw(4)
+    if(is.list(x)){
+      if(length(x) == 1){
+        #xnames <- names(x) # cache names for result rownames
+        #tmp <- attributes(x)[]
+        x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
+        class(x) <- "DNAbin"
+        #attributes(x) <- tmp
+      }else stop("Invalid input: multi-sequence list")
+    }
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+        class(y) <- "DNAbin"
+        #tmp <- attributes(y)
+        #y <- y[[1]]
+        #attributes(y) <- tmp
+      }else stop("Invalid input: multi-sequence list")
+    }
+    DNA <- TRUE
+  }else {
+    if(!is.matrix(x)){
+      x <- matrix(x, nrow = 1, dimnames = list(deparse(substitute(x)), NULL))
+    }
+    if(!is.matrix(y)){
+      y <- matrix(y, nrow = 1, dimnames = list(deparse(substitute(y)), NULL))
+    }
+    DNA <- FALSE
+  }
+  #if(is.list(x) | is.list(y)) stop("invalid arguments provided for x and or y")
+  if(nrow(x) == 1 & nrow(y) == 1){
+    alig <- Viterbi(x, y, d = d, e = e, S = S, type = type, itertab = itertab)
+    #, offset = offset) ###not necessary for vec vs vec
     xind <- yind <- alig$path
     xind[alig$path != 3] <- 1:length(x)
     xind[alig$path == 3] <- 0
-    newx <- c(gapchar, x)[xind + 1]
+    newx <- c(gapchar, as.vector(x))[xind + 1]
     yind[alig$path != 1] <- 1:length(y)
     yind[alig$path == 1] <- 0
-    newy <- c(gapchar, y)[yind + 1]
+    newy <- c(gapchar, as.vector(y))[yind + 1]
     res <- rbind(newx, newy)
-    rownames(res) <- c(deparse(substitute(x)), deparse(substitute(y)))
+    rownames(res) <- c(rownames(x), rownames(y))
+    if(DNA) class(res) <- "DNAbin"
     return(res)
-  }else if((is.matrix(x) & is.vector(y)) | (is.vector(x) & is.matrix(y))){ ###also need option to flip
-    vm <- is.vector(x) & is.matrix(y)
-    if(vm){
-      tmp1 <- deparse(substitute(x))
-      tmp2 <- x
+  }else if(sum(c(nrow(x) == 1, nrow(y) == 1)) == 1){
+    if(nrow(x) == 1){
+      tmp <- x
       x <- y
-      y <- tmp2
-    }else{
-      tmp1 <- deparse(substitute(y))
+      y <- tmp
+      rm(tmp) # the old switcharoo
     }
-    if(identical(residues, "autodetect")) residues <- sort(unique(c(as.vector(x), y)))
+    #if(identical(residues, "autodetect")) residues <- sort(unique(c(as.vector(x), y)))
+    residues <- alphabet(x, residues = residues, gapchar = gapchar)
     n <- nrow(x)
     z <- derivePHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     l <- z$size
@@ -140,10 +171,10 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
       newy <- insertgaps(newy, ygps, ygls, gapchar = gapchar)
     }
     res <- rbind(newx, newy)
-    rownames(res)[n + 1] <- tmp1
+    #rownames(res)[n + 1] <- tmp1
     return(res)
-  }else if(is.matrix(x) & is.matrix(y)){
-    if(identical(residues, "autodetect")) residues <- sort(unique(c(as.vector(x), as.vector(y))))
+  }else if(nrow(x) > 1 & nrow(y) > 1){
+    residues <- alphabet(x, residues = residues, gapchar = gapchar)
     nx <- nrow(x)
     ny <- nrow(y)
     zx <- derivePHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
@@ -211,18 +242,59 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
 #' @param ... further arguments to be passed to \code{Viterbi}.
 #'
 align2phmm <- function(sequences, model, gapchar = "-", ...){
+  #note changes here also need apply to 'train'
+  DNA <- inherits(sequences, "DNAbin")
+  if(DNA) gapchar <- as.raw(4)
   if(is.list(sequences)){
-  }else if(is.vector(sequences, mode = "character")){
-    sequences <- list(sequences)
+  }else if(DNA){
+    if(is.matrix(sequences)){
+      nseq <- nrow(sequences)
+      seqnames <- rownames(sequences)
+      tmp <- structure(vector(mode = "list", length = nseq), class = "DNAbin")
+      for(i in 1: nseq){
+        seqi <- as.vector(sequences[i, ])
+        tmp[[i]] <- seqi[seqi != gapchar]
+      }
+      names(tmp) <- seqnames
+    }else{
+      tmp <- structure(list(sequences), class = "DNAbin")
+      names(tmp) <- deparse(substitute(sequences))
+    }
+    sequences <- tmp
+  }else if(is.matrix(sequences)){
+    if(mode(sequences[1, 1]) != "character") stop("invalid mode")
+    nseq <- nrow(sequences)
+    seqnames <- rownames(sequences)
+    tmp <- structure(vector(mode = "list", length = nseq), class = "DNAbin")
+    for(i in 1: nseq){
+      seqi <- as.vector(sequences[i, ])
+      tmp[[i]] <- seqi[seqi != gapchar]
+    }
+    names(tmp) <- seqnames
+    sequences <- tmp
+  }else if(is.null(dim(sequences))){
+    if(mode(sequences) == "character"){
+      sequences <- list(sequences)
+      names(sequences) <- deparse(substitute(sequences))
+      }else stop("invalid mode")
   }else stop("invalid 'sequences' argument")
+  #
+  #out <- vector(length(sequences) * (2 * model$size + 1),
+  #              mode = if(DNA) "raw" else "character")
+  #out <- matrix(out, nrow = length(sequences))
   out <- matrix(nrow = length(sequences), ncol = 2 * model$size + 1)
   rownames(out) <- attr(sequences, "names")
   colnames(out) <- rep("I", 2 * model$size + 1)
   colnames(out)[seq(2, 2 * model$size, by = 2)] <- 1:model$size
   for(i in 1:length(sequences)){
-    alignment <- Viterbi(model, sequences[[i]], type = 'global', ...)
-    newrow <- rep(gapchar, length(alignment$path))
-    newrow[alignment$path > 1] <- sequences[[i]]
+    alignment <- Viterbi(model, sequences[i], type = 'global', ...)
+    if(DNA){
+      newrow <- rep("-", length(alignment$path))
+      newrow[alignment$path > 1] <- ape::as.character.DNAbin(sequences[[i]])
+    }else{
+      newrow <- rep(gapchar, length(alignment$path))
+      newrow[alignment$path > 1] <- sequences[[i]]
+    }
     inserts <- alignment$path == 3
     if(any(inserts)){
       itp <- apply(rbind(c(F, inserts), c(inserts, F)), 2, decimal, 2)
@@ -244,14 +316,14 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
       tuples <- rbind(c(FALSE, rep(TRUE, model$size)), rep(FALSE, model$size + 1))
     }
     indices <- as.vector(tuples)[-1]
-    newrow2 <- rep(gapchar, 2 * model$size + 1)
-    names(newrow2) <-  c(rep(c("I", "M"), model$size), "I") #seq(0.5, x$size + 0.5, by = 0.5)
+    newrow2 <- rep(if(DNA) "-" else gapchar, 2 * model$size + 1)
+    names(newrow2) <- c(rep(c("I", "M"), model$size), "I") #seq(0.5, x$size + 0.5, by = 0.5)
     newrow2[indices] <- newrow
     out[i,] <- newrow2
   }
-  discardcols <- apply(out, 2 ,function(v) all(v == gapchar))
+  discardcols <- apply(out, 2 ,function(v) all(v == if(DNA) "-" else gapchar))
   matchcols <- c(FALSE, rep(c(TRUE, FALSE), model$size))
-  out <- out[, matchcols | !discardcols]
+  out <- out[, matchcols | !discardcols, drop = FALSE]
   out <- as.list(as.data.frame(out, stringsAsFactors = F))
   fun <- function(e){
     ee <- strsplit(e, split = "")
@@ -263,9 +335,14 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
     res
   }
   out[names(out) == "I"] <- lapply(out[names(out) == "I"], fun)
-  out <- as.matrix(as.data.frame(out, stringsAsFactors = F, optional = T))
-  inserts <- sapply(colnames(out), function(v) grepl("I", v))
-  colnames(out)[inserts] <- "I"
-  rownames(out) <- names(sequences)
-  return(out)
+  #res <- matrix(unlist(out), nrow = length(sequences))
+  res <- as.matrix(as.data.frame(out, stringsAsFactors = F, optional = T))
+  #res <- matrix(gapchar, nrow = nrow(out), ncol = ncol(out))
+  #for(i in 1:length(sequences)) res[i, ] <- out[i, ]
+  #res[] <- out[]
+  inserts <- sapply(colnames(res), function(v) grepl("I", v))
+  colnames(res)[inserts] <- "I"
+  rownames(res) <- names(sequences)
+  if(DNA) res <- as.DNAbin(res)
+  return(res)
 }

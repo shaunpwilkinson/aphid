@@ -53,6 +53,7 @@ insertgaps <- function(x, positions, lengths, gapchar = "-"){
   if(length(lengths) != length(positions)){
     stop("arguments 'lengths' and 'positions' should of be equal length")
   }
+  if(length(lengths) == 0) return(x)
   #positions: vector, which matrix columns should the gaps be inserted after?
   # (can include zero)
   #lengths: vector, how long is each gap?
@@ -69,7 +70,8 @@ insertgaps <- function(x, positions, lengths, gapchar = "-"){
   indices <- as.numeric(notgap)
   indices[notgap] <- 1:m
   indices <- indices + 1
-  res <- cbind(rep(gapchar, n), x, deparse.level = 0)[, indices]
+  gapcol <- matrix(rep(gapchar, n), ncol = 1, dimnames = list(rownames(x), NULL))
+  res <- cbind(gapcol, x, deparse.level = 0)[, indices]
   if(xisvec) res <- as.vector(res)
   return(res)
 }

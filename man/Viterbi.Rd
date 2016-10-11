@@ -2,6 +2,7 @@
 % Please edit documentation in R/Viterbi.R
 \name{Viterbi}
 \alias{Viterbi}
+\alias{Viterbi.DNAbin}
 \alias{Viterbi.HMM}
 \alias{Viterbi.PHMM}
 \alias{Viterbi.default}
@@ -14,6 +15,9 @@ Viterbi(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal",
   type = "semiglobal", offset = -0.1, itertab = NULL)
 
 \method{Viterbi}{HMM}(x, y, logspace = "autodetect")
+
+\method{Viterbi}{DNAbin}(x, y, type = "semiglobal", d = 8, e = 2,
+  S = NULL, itertab = NULL, offset = 0)
 
 \method{Viterbi}{default}(x, y, type = "semiglobal", d = 8, e = 2,
   S = NULL, itertab = NULL, offset = 0)
