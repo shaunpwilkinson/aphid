@@ -1,4 +1,4 @@
-#' Iterative estimation of model parameters.
+#' Iterative refinement of model parameters.
 #'
 #' Update model parameters using a list of training sequences. Methods available include
 #' Viterbi training (also known as the segmental K-means algorithm (Juang & Rabiner 1990)),
@@ -52,7 +52,6 @@ train <- function(x, y, method = "Viterbi", maxiter = 100, logspace = "autodetec
   UseMethod("train")
 }
 
-#' @rdname train
 train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
                        logspace = "autodetect", quiet = FALSE, deltaLL = 1E-07,
                        pseudocounts = "background", gapchar = "-",
@@ -296,7 +295,6 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
 }
 
 
-#' @rdname train
 train.HMM <- function(x, y, method = "Viterbi", maxiter = 100, deltaLL = 1E-07,
                       logspace = "autodetect", quiet = FALSE, modelend = FALSE,
                       pseudocounts = "Laplace"){
