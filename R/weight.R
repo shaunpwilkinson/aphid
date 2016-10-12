@@ -7,11 +7,11 @@
 #' @param x an object of class \code{"dendrogram"}.
 #' @param method a character string indicating the weighting method to be used.
 #' Currently only that of Gerstein et al. (1994) is supported
-#' (\code{method = "Gerstein}).
+#' (\code{method = "Gerstein"}).
 #' @return a named vector of weights, the sum of which is equal to
 #' the total number of sequences.
-#' @examples den <-  read.dendrogram"(A:1,((B:0.5,C:0.2):0.2,(D:0.4,E:0.3):0.25):0.1);"
-#' weight(den).
+#' @examples den <- read.dendrogram(text = "(A:1,((B:0.5,C:0.2):0.2,(D:0.4,E:0.3):0.25):0.1);")
+#' seqweights <- weight(den)
 #'
 weight <- function(x, method = "Gerstein"){
   if(!identical(method, "Gerstein")) stop("Only Gerstein et al. 1994 method supported")

@@ -9,10 +9,10 @@ read.dendrogram(file = "", text = NULL, strip.edges = FALSE, ...)
 \arguments{
 \item{file}{the name of the file to read the data from.}
 
-\item{text}{character string: if a text argument is provided instead of a 
+\item{text}{character string: if a text argument is provided instead of a
 file path then data are read from the value of text via a text connection.}
 
-\item{strip.edges}{a logical value indicating whether edge weights 
+\item{strip.edges}{a logical value indicating whether edge weights
 provided in the Newick string should be ignored.}
 
 \item{...}{further arguments to be passed to \code{scan}.}
@@ -21,17 +21,17 @@ provided in the Newick string should be ignored.}
 an object of class \code{"dendrogram"}.
 }
 \description{
-Reads a file or character string in Newick (New Hampshire) format into 
+Reads a file or character string in Newick (New Hampshire) format into
 an object of class \code{dendrogram}.
 }
 \examples{
 mynewick <- "(A:1,(B:0.5,C:0.2):0.6);"
 mydendrogram <- read.dendrogram(text = mynewick)
-plot(mydendrogram) 
+plot(mydendrogram)
 
 }
 \seealso{
-\code{\link{write.dendrogram}} to write an object of 
+\code{\link{write.dendrogram}} to write an object of
 class \code{"dendrogram"} to a text string.
 }
 

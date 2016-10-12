@@ -6,13 +6,14 @@
 \alias{train.PHMM}
 \title{Viterbi training.}
 \usage{
-train(x, y, maxiter = 100, logspace = "autodetect", quiet = FALSE,
-  modelend = FALSE, pseudocounts = "Laplace", fixqa = FALSE,
-  fixqe = FALSE, inserts = "threshold", threshold = 0.5, lambda = 0,
-  DI = TRUE, ID = TRUE)
+train(x, y, method = "Viterbi", maxiter = 100, logspace = "autodetect",
+  quiet = FALSE, deltaLL = 1e-07, modelend = FALSE,
+  pseudocounts = "Laplace", gapchar = "-", fixqa = FALSE, fixqe = FALSE,
+  inserts = "map", threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE)
 
-\method{train}{PHMM}(x, y, maxiter = 100, logspace = "autodetect",
-  quiet = FALSE, pseudocounts = "background", fixqa = FALSE,
+\method{train}{PHMM}(x, y, method = "Viterbi", maxiter = 100,
+  logspace = "autodetect", quiet = FALSE, deltaLL = 1e-07,
+  pseudocounts = "background", gapchar = "-", fixqa = FALSE,
   fixqe = FALSE, inserts = "map", threshold = 0.5, lambda = 0,
   DI = TRUE, ID = TRUE)
 
