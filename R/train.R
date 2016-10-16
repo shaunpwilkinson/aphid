@@ -44,7 +44,8 @@
 #' IEEE transactions on Acoustics,
 #' Speech...
 #' @references Durbin...
-#' @name BaumWelch
+#' @name train
+#'
 train <- function(x, y, method = "Viterbi", maxiter = 100, logspace = "autodetect",
                   quiet = FALSE, deltaLL = 1E-07, modelend = FALSE, pseudocounts = "Laplace",
                   gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
@@ -52,6 +53,7 @@ train <- function(x, y, method = "Viterbi", maxiter = 100, logspace = "autodetec
   UseMethod("train")
 }
 
+#' @rdname train
 train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
                        logspace = "autodetect", quiet = FALSE, deltaLL = 1E-07,
                        pseudocounts = "background", gapchar = "-",
@@ -95,10 +97,6 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
       names(y) <- deparse(substitute(y))
     }else stop("invalid mode")
   }else stop("invalid 'y' argument")
-  # if(is.list(y)){
-  # } else if(is.vector(y, mode = "character") | inherits(sequences, "DNAbin")){ ##neds fixing
-  #   y <- list(y)
-  # } else stop("invalid y argument")
   n <- length(y)
   states <- c("D", "M", "I")
   residues <- rownames(x$E)
@@ -126,17 +124,12 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
     xtr[!gaps & insertsn] <- 2L # Insert
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
     tcs <- tab9C(xtr, modules = sum(!inserts) + 2)
-    transtotals <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
+    transtotals <- apply(tcs, 1, sum) + 1 # force addition of Laplacian pseudos
     if(!DI) transtotals[3] <- 0
     if(!ID) transtotals[7] <- 0
-    # qa <- matrix(transtotals, nrow = 3, byrow = TRUE)
-    # dimnames(qa) <- list(from = c("D", "M", "I"), to = c("D", "M", "I"))
-    # qa <- qa/apply(qa, 1, sum)
     x$qa <- log(transtotals/sum(transtotals)) ### needs tidying up
   }
-
   out <- x
-
   if(method  == "Viterbi"){
     alignment <- align2phmm(y, out, logspace = TRUE)
     for(i in 1:maxiter){
@@ -177,16 +170,17 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
     } else if(identical(pseudocounts, "none")){
       Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- 0
     } else if(is.list(pseudocounts)){
-      stopifnot(length(pseudocounts == 3))
+      stopifnot(length(pseudocounts) == 3)
+      stopifnot(identical(dim(pseudocounts[[1]]), dim(x$A)))
+      stopifnot(identical(dim(pseudocounts[[2]]), dim(x$E)))
+      stopifnot(identical(length(pseudocounts[[3]]), length(x$qe)))
       Apseudocounts[] <- pseudocounts[[1]]
-      ### check for DI conflict
       Epseudocounts[] <- pseudocounts[[2]]
       qepseudocounts[] <- pseudocounts[[3]]
     } else stop("invalid 'pseudocounts' argument")
     Apseudocounts[1:3, 1] <- Apseudocounts[c(1, 4, 7), l + 1] <- 0
     if(!DI) Apseudocounts["DI", ] <- 0
     if(!ID) Apseudocounts["ID", ] <- 0
-
     E <- out$E
     A <- out$A
     qe <- out$qe
@@ -234,8 +228,11 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
               tmpA["ID", k] <- tmpA["ID", k] +
                 exp(logsum(Rj[k, , "I"] + A["ID", k] + Bj[k + 1, , "D"]) - logPxj) #i to d
             }
-            tmpA["DM", k] <- tmpA["DM", k] + exp(logsum(Rj[k, , "D"] + A["DM", k] + c(E[yj, k], -Inf) +
-                                                          c(Bj[k + 1, -1, "M"], -Inf)) - logPxj) #d to m
+            tmpA["DM", k] <- tmpA["DM", k] + exp(logsum(Rj[k, , "D"] +
+                                                          A["DM", k] +
+                                                          c(E[yj, k], -Inf) +
+                                                          c(Bj[k + 1, -1, "M"], -Inf))
+                                                 - logPxj) #d to m
             tmpA["MM", k] <- tmpA["MM", k] + exp(logsum(Rj[k, , "M"] + A["MM", k] + c(E[yj, k], -Inf) +
                                                           c(Bj[k + 1, -1, "M"], -Inf)) - logPxj) #m to m
             tmpA["IM", k] <- tmpA["IM", k] + exp(logsum(Rj[k, , "I"] + A["IM", k] + c(E[yj, k], -Inf) +
@@ -294,7 +291,7 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
 
 }
 
-
+#' @rdname train
 train.HMM <- function(x, y, method = "Viterbi", maxiter = 100, deltaLL = 1E-07,
                       logspace = "autodetect", quiet = FALSE, modelend = FALSE,
                       pseudocounts = "Laplace"){
@@ -346,7 +343,9 @@ train.HMM <- function(x, y, method = "Viterbi", maxiter = 100, deltaLL = 1E-07,
     } else if(identical(pseudocounts, "none")){
       AApseudocounts[] <- Epseudocounts[] <- 0
     } else if(is.list(pseudocounts)){
-      stopifnot(length(pseudocounts == 2))
+      stopifnot(length(pseudocounts) == 2)
+      stopifnot(identical(dim(pseudocounts[[1]]), dim(x$A)))
+      stopifnot(identical(dim(pseudocounts[[2]]), dim(x$E)))
       Apseudocounts[] <- pseudocounts[[1]]
       Epseudocounts[] <- pseudocounts[[2]]
     } else stop("invalid 'pseudocounts' argument")

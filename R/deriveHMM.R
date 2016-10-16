@@ -36,7 +36,6 @@ deriveHMM <- function(x, residues = 'auto', states = 'auto', modelend = FALSE,
                       pseudocounts = "Laplace", logspace = FALSE){
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
-  #check list of named vectors
   # includes start and or end states?
   namesok <- all(sapply(x, function(y) !is.null(names(y))  | length(y) == 0))
   if(!(namesok)) stop("all elements of x must be named vectors")

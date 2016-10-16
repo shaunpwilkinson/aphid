@@ -7,10 +7,11 @@
 \alias{forward.default}
 \title{Forward algorithm.}
 \usage{
-forward(x, y, logspace = "autodetect", odds = FALSE, type = "global")
+forward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
+  type = "global", DI = TRUE, ID = TRUE)
 
-\method{forward}{PHMM}(x, y, logspace = "autodetect", odds = FALSE,
-  type = "global")
+\method{forward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
+  odds = TRUE, type = "global", DI = TRUE, ID = TRUE)
 
 \method{forward}{HMM}(x, y, logspace = "autodetect")
 
@@ -30,10 +31,19 @@ if the probabilities are in log space, returning an error if inconsistencies are
 Note that choosing the latter option increases the computational
 overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
 
+\item{odds}{logical indicating whether the scores in th edynamic programming matrix
+should be odds ratios (TRUE; default) or full (log) probabilities.}
+
 \item{type}{character string indicating whether insert and delete states
 at the beginning and end of the path should count towards the final score
 ('global'; default). Note that semiglobal and local models
 are not currently supported in this version.}
+
+\item{DI}{logical. should delete-insert transitions be allowed? Only applicable for
+objects of class \code{"PHMM"}.}
+
+\item{ID}{logical. should insert-delete transitions be allowed? Only applicable for
+objects of class \code{"PHMM"}.}
 }
 \description{
 Forward algorithm for calculating the full log-odds

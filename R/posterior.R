@@ -1,4 +1,6 @@
-#' Posterior probability of a sequence given a model.
+#' Posterior decoding.
+#'
+#' Calculates the posterior probability of a sequence given a model.
 #'
 #' @param x an object of class \code{'HMM'} or \code{'PHMM'}.
 #' @param y a character vector...

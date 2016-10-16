@@ -34,7 +34,7 @@ align <- function(sequences, type = "global", residues = "autodetect",
   if(is.null(attr(sequences, "names"))) names(sequences) <- paste0("SEQ", 1:nsq)
   # seqlengths <- sapply(sequences, length)
   # nmodules <- round(mean(seqlengths))
-  residues <- alphabet(sequences, residues = residues, gapchar = gapchar)
+  residues <- alphadetect(sequences, residues = residues, gapchar = gapchar)
   fun <- Vectorize(function(i, j) kmer(sequences[[i]], sequences[[j]]))
   qds <- outer(1:nsq, 1:nsq, fun)
   ### need to speed this up in C++
@@ -45,16 +45,18 @@ align <- function(sequences, type = "global", residues = "autodetect",
   newick <- gsub("\\(", "alignpair\\(", newick)
   if(type == 'semiglobal') newick <- gsub("\\)", ", type = 'semiglobal'\\)", newick)
   msa1 <- with(sequences, eval(parse(text = newick)))
-  omniphmm <- derivePHMM(msa1, DI = DI, ID = ID, pseudocounts = "background")
+  omniphmm <- derivePHMM(msa1, DI = DI, ID = ID, pseudocounts = "background") ### inserts = map?
   if(refine == "Viterbi"){
-    finalphmm <- train(omniphmm, sequences, maxiter = 300, DI = DI, ID = ID,
+    finalphmm <- train(omniphmm, sequences, method = refine,
+                       maxiter = 300, DI = DI, ID = ID,
                        inserts = "map", quiet = quiet, ... = ...)
   }else if(refine == "BaumWelch"){
-    finalphmm <- BaumWelch(omniphmm, sequences, maxiter = 300, DI = DI, ID = ID,
-                           quiet = quiet, ... = ...)
+    finalphmm <- train(omniphmm, sequences, method = refine,
+                       maxiter = 300, DI = DI, ID = ID,
+                       quiet = quiet, ... = ...) ### condense
   } else if (refine == "none"){
     return(msa1)
-  } else stop("argiument 'refine' must be either 'Viterbi', 'BaumWelch' or 'none'")
+  } else stop("argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none'")
   align2phmm(sequences, model = finalphmm)
 }
 
@@ -138,7 +140,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
       rm(tmp) # the old switcharoo
     }
     #if(identical(residues, "autodetect")) residues <- sort(unique(c(as.vector(x), y)))
-    residues <- alphabet(x, residues = residues, gapchar = gapchar)
+    residues <- alphadetect(x, residues = residues, gapchar = gapchar)
     n <- nrow(x)
     z <- derivePHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     l <- z$size
@@ -174,7 +176,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     #rownames(res)[n + 1] <- tmp1
     return(res)
   }else if(nrow(x) > 1 & nrow(y) > 1){
-    residues <- alphabet(x, residues = residues, gapchar = gapchar)
+    residues <- alphadetect(x, residues = residues, gapchar = gapchar)
     nx <- nrow(x)
     ny <- nrow(y)
     zx <- derivePHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)

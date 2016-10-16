@@ -2,7 +2,7 @@
 % Please edit documentation in R/posterior.R
 \name{posterior.HMM}
 \alias{posterior.HMM}
-\title{Posterior probability of a sequence given a model.}
+\title{Posterior decoding.}
 \usage{
 \method{posterior}{HMM}(x, y, logspace = "autodetect")
 }
@@ -19,6 +19,6 @@ Note that choosing the latter option increases the computational
 overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
 }
 \description{
-Posterior probability of a sequence given a model.
+Calculates the posterior probability of a sequence given a model.
 }
 

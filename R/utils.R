@@ -13,14 +13,14 @@ whichismax <- function(v){
 
 #' Detect residue alphabet.
 #'
-#' \code{"alphabet"} performs checks on the format of the "residues" argument
+#' \code{"alphadetect"} performs checks on the format of the "residues" argument
 #' to be passed to a variety of other functions. Single-element string arguments
 #' such as "DNA" and "AA" are
 #' converted to their respective alphabet in a character vector format.
 #' @param sequences a character matrix or vector, or a list of character matrices
 #' and/or vectors
 #'
-alphabet <- function(sequences, residues = "autodetect", gapchar = "-"){
+alphadetect <- function(sequences, residues = "autodetect", gapchar = "-"){
   if(inherits(sequences, "DNAbin") | identical(residues, "DNA")){
     residues <- c("A", "C", "G", "T")
   } else if(inherits(sequences, "AAbin") | identical(residues, "AA")){
@@ -241,7 +241,7 @@ disambiguate <- function(a, probs = rep(0.25, 4)){
 as.ternary.DNAbin <- function(x){
   fun <- function(v){
     # v is a raw vector
-    attr(v, "class") <- NULL 
+    attr(v, "class") <- NULL
     tmp <- attributes(v)
     resv <- rep(NA, length(v))
     ambigs <- (v & as.raw(8)) != 8
@@ -252,7 +252,22 @@ as.ternary.DNAbin <- function(x){
     resv[v == 24] <- 3
     attributes(resv) <- tmp
     resv
-  } 
+  }
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
-  
+
+
+JC69 <- function(x, fivecharstates = TRUE){
+  if(!fivecharstates) x <- x[, x[1,] != "-" & x[2,] != "-"]
+  d <- sum(x[1,] != x[2,])/ncol(x)
+  if(fivecharstates){
+    if(!(d < 0.8)) stop("fraction of differing sites should not exceed 4/5")
+    K <- (-4/5) * log(1 - ((5 * d)/ 4))
+    VarK <- d * (1 - d)/(n * ((1 - ((5/4) * d))^2))
+  }else{
+    if(!(d < 0.75)) stop("fraction of differing sites should not exceed 3/4")
+    K <- (-3/4) * log(1 - ((4 * d)/ 3))
+    VarK <- d * (1 - d)/(n * ((1 - ((4/3) * d))^2))
+  }
+  list(K = K, VarK = VarK)
+}

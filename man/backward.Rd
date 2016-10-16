@@ -6,10 +6,11 @@
 \alias{backward.PHMM}
 \title{Backward algorithm.}
 \usage{
-backward(x, y, logspace = "autodetect", odds = FALSE, type = "global")
+backward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
+  type = "global", DI = TRUE, ID = TRUE)
 
-\method{backward}{PHMM}(x, y, logspace = "autodetect", odds = FALSE,
-  type = "global")
+\method{backward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
+  odds = TRUE, type = "global", DI = TRUE, ID = TRUE)
 
 \method{backward}{HMM}(x, y, logspace = "autodetect")
 }
@@ -26,7 +27,8 @@ if the probabilities are in log space, returning an error if inconsistencies are
 Note that choosing the latter option increases the computational
 overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
 
-\item{odds}{logical indicating whether the full (log) probability is required
+\item{odds}{logical indicating whether the scores in th edynamic programming matrix
+should be odds ratios (TRUE; default) or full (log) probabilities.
 (\code{FALSE}; default) or if the log-odds score should be returned
 (\code{TRUE}).}
 
@@ -34,6 +36,12 @@ overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the runnin
 at the beginning and end of the path should count towards the final score
 ('global'; default). Note that semiglobal and local models
 are not currently supported in this version.}
+
+\item{DI}{logical. should delete-insert transitions be allowed? Only applicable for
+objects of class \code{"PHMM"}.}
+
+\item{ID}{logical. should insert-delete transitions be allowed? Only applicable for
+objects of class \code{"PHMM"}.}
 }
 \description{
 Backward algorithm for calculating the full (log) probability
