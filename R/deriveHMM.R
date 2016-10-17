@@ -1,7 +1,7 @@
 #' Derive a HMM from training sequences.
 #'
 #' \code{deriveHMM} calculates the maximum likelihood hidden Markov model from
-#' a list of training sequences, each a vector of emitted residues named according
+#' a list of training sequences, each a vector of residues named according
 #' the state from which they were emitted.
 #'
 #' @param x a list of named character vectors representing residue emissions
