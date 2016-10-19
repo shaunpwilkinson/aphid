@@ -53,6 +53,18 @@ returnmod <- function(x) {
     .Call('profile_returnmod', PACKAGE = 'profile', x)
 }
 
+#' Count transition frequencies.
+#'
+#' Summation of transition frequencies in an integer vector.
+#'
+#' @param x an integer vector.
+#' @param numbersystem an integer representing the numbering system of the input vector,
+#' 2 for binary, 3 for ternary, etc.
+#'
+transcount <- function(x, numbersystem) {
+    .Call('profile_transcount', PACKAGE = 'profile', x, numbersystem)
+}
+
 tab9C <- function(x, seqweights) {
     .Call('profile_tab9C', PACKAGE = 'profile', x, seqweights)
 }

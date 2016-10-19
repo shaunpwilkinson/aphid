@@ -41,7 +41,7 @@ The first row and column of the transition matrix must be 'BeginEnd'.}
 }
 \description{
 \code{deriveHMM} calculates the maximum likelihood hidden Markov model from
-a list of training sequences, each a vector of emitted residues named according
+a list of training sequences, each a vector of residues named according
 the state from which they were emitted.
 }
 

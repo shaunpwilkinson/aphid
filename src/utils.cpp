@@ -2,17 +2,37 @@
 using namespace Rcpp;
 
 
-// this is actually slower than the R version for small numbers of residues
-// IntegerVector tab(CharacterVector v, CharacterVector residues){
-//   IntegerVector out(residues.size());
-//   for(int i = 0; i < residues.size(); i++){
-//     for(int j = 0; j < v.size(); j++){
-//       if(v[j] == residues[i]) out[i]++;
-//     }
-//   }
-//   out.attr("names") = residues;
-//   return(out);
-// }
+//' Count transition frequencies.
+//'
+//' Summation of transition frequencies in an integer vector.
+//'
+//' @param x an integer vector.
+//' @param numbersystem an integer representing the numbering system of the input vector,
+//' 2 for binary, 3 for ternary, etc.
+//'
+// [[Rcpp::export]]
+IntegerVector transitioncount(IntegerVector x, int numbersystem){
+  int newnumsys = pow(numbersystem, 2);
+  IntegerVector guide = seq(0, newnumsys - 1);
+  guide.attr("dim") = IntegerVector::create(numbersystem, numbersystem);
+  IntegerVector out(newnumsys);
+  for(int i = 1; i < x.size(); i++) out[guide(x[i], x[i - 1])]++;
+  out.attr("dim") = IntegerVector::create(numbersystem, numbersystem);
+  return(out);
+}
+
+
+// [[Rcpp::export]]
+IntegerVector emissioncount(IntegerVector states, int statenumbersystem,
+                            IntegerVector residues, int resnumbersystem){
+  int newnumsys = statenumbersystem * resnumbersystem;
+  IntegerVector guide = seq(0, newnumsys - 1);
+  guide.attr("dim") = IntegerVector::create(statenumbersystem, resnumbersystem);
+  IntegerVector out(newnumsys);
+  for(int i = 0; i < states.size(); i++) out[guide(states[i], residues[i])]++;
+  out.attr("dim") = IntegerVector::create(statenumbersystem, resnumbersystem);
+  return(out);
+}
 
 
 // elements of x can be 0, 1, 2, or NA

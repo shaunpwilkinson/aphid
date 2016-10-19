@@ -105,6 +105,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// transcount
+IntegerVector transcount(IntegerVector x, int numbersystem);
+RcppExport SEXP profile_transcount(SEXP xSEXP, SEXP numbersystemSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type numbersystem(numbersystemSEXP);
+    rcpp_result_gen = Rcpp::wrap(transcount(x, numbersystem));
+    return rcpp_result_gen;
+END_RCPP
+}
 // tab9C
 NumericMatrix tab9C(IntegerMatrix x, NumericVector seqweights);
 RcppExport SEXP profile_tab9C(SEXP xSEXP, SEXP seqweightsSEXP) {
