@@ -4,7 +4,7 @@
 \alias{alphadetect}
 \title{Detect residue alphabet.}
 \usage{
-alphadetect(sequences, residues = "autodetect", gapchar = "-")
+alphadetect(sequences, residues = NULL, gapchar = "-")
 }
 \arguments{
 \item{sequences}{a character matrix or vector, or a list of character matrices

@@ -7,9 +7,13 @@
 align2phmm(sequences, model, gapchar = "-", ...)
 }
 \arguments{
-\item{...}{further arguments to be passed to \code{Viterbi}.}
+\item{sequences}{a list of ...}
+
+\item{model}{an object of class \code{"PHMM"}}
+
+\item{...}{further arguments to be passed to \code{"Viterbi"}.}
 }
 \description{
-Align sequences to a profile HMM.
+Blah blah
 }
 

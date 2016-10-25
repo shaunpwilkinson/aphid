@@ -4,33 +4,33 @@
 \alias{deriveHMM}
 \title{Derive a HMM from training sequences.}
 \usage{
-deriveHMM(x, residues = "auto", states = "auto", modelend = FALSE,
-  pseudocounts = "Laplace", logspace = FALSE)
+deriveHMM(x, residues = NULL, states = NULL, modelend = FALSE,
+  pseudocounts = "background", logspace = FALSE)
 }
 \arguments{
 \item{x}{a list of named character vectors representing residue emissions
-from the model. The 'names' rattribute should represent the hidden state
+from the model. The 'names' attribute should represent the hidden state
 that each residue was emitted from.}
 
-\item{residues}{either \code{'auto'} (default), or a case
-sensitive character vector matching the alphabet of residues
-emitted by the model. Specifying the residue alphabet can increase speed
-for larger training datasets. Note that setting \code{residues = 'auto'} will not
-detect rare residues that are not present in the training data and thus will
-not assign them emission probabilities. These should match or be a superset of
-the unique residues present in the list of training sequences.}
+\item{residues}{either NULL (default; emitted residues are automatically
+detected from the input sequences), or a case sensitive character vector specifying the
+residue alphabet (e.g. A, C, G, T for DNA).
+Note that the former option can be slow for large sequence lists;
+therefore specifying the residue alphabet can increase speed in these cases.
+Also note that the default setting \code{residues = NULL} will not
+detect rare residues that are not present in the input sequences, and thus will
+not assign them emission probabilities.}
 
-\item{states}{either \code{'auto'} (default), or a case sensitive character
-vector matching the hidden states. These should match or be a superset of
-the unique states provided in the 'names' attributes in
-the list of training
-sequences.}
+\item{states}{either NULL (default; states are automatically detected from the 'names'
+attributes of the input sequences), or a case sensitive character
+vector matching the hidden states (these should match or be a superset of
+the unique states provided in the 'names' attributes in the input sequences).}
 
 \item{modelend}{logical indicating whether transitions to the 'end' state should be
 modeled. Defaults to FALSE.}
 
 \item{pseudocounts}{used to account for the possible absence of certain transition
-and/or emission types in the training dataset.
+and/or emission types in the input sequences.
 either \code{'Laplace'} (adds one of each possible transition and emission type to the
 training dataset; default), \code{'none'}, or a two-element list containing a matrix of
 transition pseudocounts as its first element and a matrix of emission pseudocounts

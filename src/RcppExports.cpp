@@ -94,6 +94,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// mapC
+LogicalVector mapC(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts, NumericVector seqweights, NumericVector qe, double lambda);
+RcppExport SEXP profile_mapC(SEXP ecsSEXP, SEXP notgapsSEXP, SEXP pseudocountsSEXP, SEXP seqweightsSEXP, SEXP qeSEXP, SEXP lambdaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type ecs(ecsSEXP);
+    Rcpp::traits::input_parameter< LogicalMatrix >::type notgaps(notgapsSEXP);
+    Rcpp::traits::input_parameter< List >::type pseudocounts(pseudocountsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type seqweights(seqweightsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type qe(qeSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    rcpp_result_gen = Rcpp::wrap(mapC(ecs, notgaps, pseudocounts, seqweights, qe, lambda));
+    return rcpp_result_gen;
+END_RCPP
+}
 // returnmod
 List returnmod(List x);
 RcppExport SEXP profile_returnmod(SEXP xSEXP) {
@@ -105,15 +121,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// transcount
-IntegerVector transcount(IntegerVector x, int numbersystem);
-RcppExport SEXP profile_transcount(SEXP xSEXP, SEXP numbersystemSEXP) {
+// transitioncount
+IntegerVector transitioncount(IntegerVector x, int numbersystem);
+RcppExport SEXP profile_transitioncount(SEXP xSEXP, SEXP numbersystemSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
     Rcpp::traits::input_parameter< int >::type numbersystem(numbersystemSEXP);
-    rcpp_result_gen = Rcpp::wrap(transcount(x, numbersystem));
+    rcpp_result_gen = Rcpp::wrap(transitioncount(x, numbersystem));
+    return rcpp_result_gen;
+END_RCPP
+}
+// emissioncount
+IntegerVector emissioncount(IntegerVector states, int statenumbersystem, IntegerVector residues, int resnumbersystem);
+RcppExport SEXP profile_emissioncount(SEXP statesSEXP, SEXP statenumbersystemSEXP, SEXP residuesSEXP, SEXP resnumbersystemSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< int >::type statenumbersystem(statenumbersystemSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type residues(residuesSEXP);
+    Rcpp::traits::input_parameter< int >::type resnumbersystem(resnumbersystemSEXP);
+    rcpp_result_gen = Rcpp::wrap(emissioncount(states, statenumbersystem, residues, resnumbersystem));
     return rcpp_result_gen;
 END_RCPP
 }

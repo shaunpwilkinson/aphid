@@ -4,25 +4,28 @@
 \alias{map}
 \title{Optimal profile HMM construction.}
 \usage{
-map(x, seqweights = 1, residues = "autodetect", gapchar = "-",
+map(x, seqweights = NULL, residues = NULL, gapchar = "-",
   pseudocounts = "background", lambda = 0, qa = NULL, qe = NULL)
 }
 \arguments{
 \item{x}{a character matrix of aligned sequences.}
 
-\item{seqweights}{integer 1 or numeric vector of sequence weights used to
-derive the emission and trasnision counts. The sum of these weights should
-be equal to the number of
-sequences in the alignment.}
+\item{seqweights}{either NULL (default; all sequences are given a weight of 1)
+or a numeric vector of sequence weights used to
+derive the model. The sum of these weights should be equal to the number of
+sequences in the alignment, so that mean(seqweights) = 1.}
 
-\item{residues}{one of the character strings 'autodetect' (default), aminos' or
-'bases', or a case sensitive character vector specifying the residue
-alphabet. Specifying the symbol type ('aminos' or 'bases') can increase speed
-for larger alignments. Note that setting \code{residues = 'autodetect'} will not
-detect rare residues that are not present in the alignment and thus will
+\item{residues}{either NULL (default; emitted residues are automatically
+detected from the alignment), or a case sensitive character vector specifying the
+residue alphabet (e.g. A, C, G, T for DNA).
+Note that the former option can be slow for large character matrices;
+therefore specifying the residue alphabet can increase speed in these cases.
+Also note that the default setting \code{residues = NULL} will not
+detect rare residues that are not present in the alignment, and thus will
 not assign them emission probabilities.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix.}
+\item{gapchar}{the character used to represent gaps in the alignment matrix.
+Not required for \code{"DNAbin"} or \code{"AAbin"} objects.}
 
 \item{pseudocounts}{the method used to account for the possible absence of certain
 character states in the alignment. Currently only \code{"Laplace"},

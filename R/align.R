@@ -7,11 +7,13 @@
 #' @param sequences a list of character vectors consisting of symbols from
 #' the residue alphabet
 #' @param gapchar the character used to represent gaps in the alignment matrix.
-#' @param residues one of the character strings "autodetect" (default), "aminos" or
-#' "bases", or a case sensitive character vector matching the residue
-#' alphabet. Specifying the symbol type ('aminos' or 'bases') can increase speed
-#' for larger alignments. Note that setting \code{residues = "autodetect"} will not
-#' detect rare residues that are not present in the alignment and thus will
+#' @param residues either NULL (default; emitted residues are automatically
+#' detected from the list of sequences), or a case sensitive character vector specifying the
+#' residue alphabet (e.g. c(A, C, G, T) for DNA).
+#' Note that the former option can be slow for large lists of character vectors;
+#' therefore specifying the residue alphabet can increase speed in these cases.
+#' Also note that the default setting \code{residues = NULL} will not
+#' detect rare residues that are not present in the sequence list, and thus will
 #' not assign them emission probabilities.
 #' @param refine the method used to refine the model following progressive alignment.
 #' Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
@@ -26,7 +28,7 @@
 #' to the tendency to converge to suboptimal local optima.
 #'
 #'
-align <- function(sequences, type = "global", residues = "autodetect",
+align <- function(sequences, type = "global", residues = NULL,
                   gapchar = "-", DI = FALSE, ID = FALSE, refine = "Viterbi",
                   quiet = TRUE, ...){
   if(!(is.list(sequences))) stop("invalid 'sequences' argument")
@@ -74,6 +76,14 @@ align <- function(sequences, type = "global", residues = "autodetect",
 #' @param type a character string specifying whether the alignment should be
 #' 'global' (penalized end gaps), 'semiglobal' (default; free end gaps) or
 #' local (highest scoring subalignment).
+#' @param residues either NULL (default; emitted residues are automatically
+#' detected from the input sequences), or a case sensitive character vector specifying the
+#' residue alphabet (e.g. c(A, C, G, T) for DNA).
+#' Note that the former option can be slow for large character vectors;
+#' therefore specifying the residue alphabet can increase speed in these cases.
+#' Also note that the default setting \code{residues = NULL} will not
+#' detect rare residues that are not present in the input sequences, and thus will
+#' not assign them emission probabilities.
 #' @return a character matrix of aligned sequences.
 #' @references Soding...
 #' @examples
@@ -241,7 +251,11 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
 
 #' Align sequences to a profile HMM.
 #'
-#' @param ... further arguments to be passed to \code{Viterbi}.
+#' Blah blah
+#'
+#' @param sequences a list of ...
+#' @param model an object of class \code{"PHMM"}
+#' @param ... further arguments to be passed to \code{"Viterbi"}.
 #'
 align2phmm <- function(sequences, model, gapchar = "-", ...){
   #note changes here also need apply to 'train'

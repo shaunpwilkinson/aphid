@@ -7,21 +7,20 @@
 #' @param x a list of named character vectors representing residue emissions
 #' from the model. The 'names' attribute should represent the hidden state
 #' that each residue was emitted from.
-#' @param residues one of the character strings 'autodetect' (default),
-#' 'AA' (amino acids) or
-#' 'DNA' (A, C, G, and T), or a case sensitive character vector specifying the
-#' residue alphabet. Specifying the residue alphabet (i.e 'DNA' or 'AA') can increase speed
-#' for larger training datasets. Note that setting \code{residues = 'autodetect'} will not
-#' detect rare residues that are not present in the training sequences and thus will
-#' not assign them emission probabilities. The residues argument should match or be a
-#' superset of those in the list of training sequences.
-#' @param states either \code{'autodetect'} (default), or a case sensitive character
-#' vector matching the hidden states. These should match or be a superset of
-#' the unique states provided in the 'names' attributes in
-#' the list of training
-#' sequences.
+#' @param residues either NULL (default; emitted residues are automatically
+#' detected from the input sequences), or a case sensitive character vector specifying the
+#' residue alphabet (e.g. A, C, G, T for DNA).
+#' Note that the former option can be slow for large sequence lists;
+#' therefore specifying the residue alphabet can increase speed in these cases.
+#' Also note that the default setting \code{residues = NULL} will not
+#' detect rare residues that are not present in the input sequences, and thus will
+#' not assign them emission probabilities.
+#' @param states either NULL (default; states are automatically detected from the 'names'
+#' attributes of the input sequences), or a case sensitive character
+#' vector matching the hidden states (these should match or be a superset of
+#' the unique states provided in the 'names' attributes in the input sequences).
 #' @param pseudocounts used to account for the possible absence of certain transition
-#' and/or emission types in the training dataset.
+#' and/or emission types in the input sequences.
 #' either \code{'Laplace'} (adds one of each possible transition and emission type to the
 #' training dataset; default), \code{'none'}, or a two-element list containing a matrix of
 #' transition pseudocounts as its first element and a matrix of emission pseudocounts
@@ -33,7 +32,7 @@
 #' modeled. Defaults to FALSE.
 #'
 
-deriveHMM <- function(x, residues = 'autodetect', states = 'autodetect', modelend = FALSE,
+deriveHMM <- function(x, residues = NULL, states = NULL, modelend = FALSE,
                       pseudocounts = "background", logspace = FALSE){
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
@@ -41,7 +40,7 @@ deriveHMM <- function(x, residues = 'autodetect', states = 'autodetect', modelen
   namesok <- all(sapply(x, function(y) !is.null(names(y))  | length(y) == 0))
   if(!(namesok)) stop("all elements of x must be named vectors")
   residues <- alphadetect(x, residues = residues)
-  if(identical(states, "autodetect")) states <- alphadetect(lapply(x, names))
+  if(is.null(states)) states <- alphadetect(lapply(x, names))
   if(states[1] != "BeginEnd") states <- c("BeginEnd", states)
   nres <- length(residues)
   nstates <- length(states)

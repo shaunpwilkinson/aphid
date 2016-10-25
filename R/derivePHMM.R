@@ -7,18 +7,20 @@
 #' (https://compbio.soe.ucsc.edu/sam.html).
 #'
 #' @param x a character matrix of aligned sequences.
-#' @param seqweights integer 1 or numeric vector of sequence weights used to
+#' @param seqweights either NULL (default; all sequences are given a weight of 1)
+#' or a numeric vector of sequence weights used to
 #' derive the model. The sum of these weights should be equal to the number of
-#' sequences in the alignment.
-#' @param residues one of the character strings 'autodetect' (default),
-#' 'AA' (amino acids) or
-#' 'DNA' (A, C, G, and T), or a case sensitive character vector specifying the
-#' residue
-#' alphabet. Specifying the residue alphabet (i.e 'DNA' or 'AA') can increase speed
-#' for larger alignments. Note that setting \code{residues = 'autodetect'} will not
-#' detect rare residues that are not present in the alignment and thus will
+#' sequences in the alignment, so that mean(seqweights) = 1.
+#' @param residues either NULL (default; emitted residues are automatically
+#' detected from the alignment), or a case sensitive character vector specifying the
+#' residue alphabet (e.g. A, C, G, T for DNA).
+#' Note that the former option can be slow for large character matrices;
+#' therefore specifying the residue alphabet can increase speed in these cases.
+#' Also note that the default setting \code{residues = NULL} will not
+#' detect rare residues that are not present in the alignment, and thus will
 #' not assign them emission probabilities.
 #' @param gapchar the character used to represent gaps in the alignment matrix.
+#' Not required for \code{"DNAbin"} or \code{"AAbin"} objects.
 #' @param pseudocounts the method used to account for the possible absence of certain
 #' character states in the alignment. Currently only \code{"Laplace"}
 #' and \code{"background"} are supported. If \code{pseudocounts = "background"} and
@@ -52,15 +54,11 @@
 #' Only applicable for \code{inserts = "map"}.
 #' @references Durbin..
 #'
-derivePHMM <- function(x, seqweights = 1, residues = "autodetect",
+derivePHMM <- function(x, seqweights = NULL, residues = NULL,
                        gapchar = "-", pseudocounts = "background",
                        logspace = TRUE, qa = NULL, qe = NULL,
-                       inserts = "threshold", threshold = 0.5,
+                       inserts = "map", threshold = 0.5,
                        lambda = 0, DI = TRUE, ID = TRUE){
-  if(!(pseudocounts %in% c("background", "Laplace", "none"))){
-    stop("invalid pseudocounts argument")
-  }
-  ### include option to enter manually
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
   DNA <- inherits(x, "DNAbin")
   if(DNA) gapchar <- as.raw(4)
@@ -70,7 +68,7 @@ derivePHMM <- function(x, seqweights = 1, residues = "autodetect",
   m <- ncol(x)
   states <- c("D", "M", "I")
   transitions <- c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
-  if(identical(seqweights, 1)) {
+  if(is.null(seqweights)){
     seqweights <- rep(1, n)
   }else{
     if(round(sum(seqweights), 2) != n){
@@ -148,27 +146,39 @@ derivePHMM <- function(x, seqweights = 1, residues = "autodetect",
     # qa <- qa/apply(qa, 1, sum) #account for rounding errors
     qa <- qa/sum(qa) #account for rounding errors
   }
+  # convert pseudocounts arg to list of vectors if necessary
+  if(is.list(pseudocounts)){
+    if(!all(c("A", "E") %in% names(pseudocounts))){
+      stop("pseudocounts list is missing
+           named vectors 'A' (transition pseudocounts) and/or 'E'
+           (emission pseudocounts)")
+    }
+  }else if(identical(pseudocounts, "background")){
+    pseudocounts <- list(A = exp(qa) * (7 + sum(c(DI, ID))), E = exp(qe) * nres)
+  }else if(identical(pseudocounts, "Laplace")){
+    pseudocounts <- list(A = c(1,1,DI,1,1,1,ID,1,1), E = rep(1, nres))
+  }else if(identical(pseudocounts, "none")){
+    pseudocounts <- list(A = rep(0, 9), E = rep(0, nres))
+  }else stop("invalid pseudocounts argument")
 
   # transition and emission probability arrays A & E
-  if(pseudocounts == 'background'){
-    ecs <- ecs + qe * nres
-    tcs <- tcs + qa * (7 + sum(c(DI, ID)))
-  }else if(pseudocounts == 'Laplace'){
-    ecs <- ecs + 1
-    tcs <- tcs + 1
-    # tcs[, 2:l] <- tcs[, 2:l]  + 1
-    # tcs[, 1] <- tcs[, 1] + notfromD
-    # tcs[, l + 1] <- tcs[, l + 1] + nottoD
-  }
+  # if(pseudocounts == 'background'){
+  #   ecs <- ecs + qe * nres
+  #   tcs <- tcs + qa * (7 + sum(c(DI, ID)))
+  # }else if(pseudocounts == 'Laplace'){
+  #   ecs <- ecs + 1
+  #   tcs <- tcs + 1
+  # }
+  ecs <- ecs + pseudocounts$E
+  tcs <- tcs + pseudocounts$A
   tcs[1:3, 1] <- tcs[c(1, 4, 7), l + 1] <- 0
   if(!DI) tcs[3, ] <- 0
   if(!ID) tcs[7, ] <- 0
   E <- t(t(ecs)/apply(ecs, 2, sum))
   A <- t(tcs)
   for(i in c(1, 4, 7)) A[, i:(i + 2)] <- A[, i:(i + 2)]/apply(A[, i:(i + 2)], 1, sum)
-  A[1, 1:3] <- 0 # gets rid of NaNs caused by dividing by zero
+  A[1, 1:3] <- 0 # gets rid of NaNs caused by division by zero
   A <- t(A)
-
   inslens <- insertlengths(!inserts)
   #which alignment columns correspond to which model positions?
   alignment <- which(!inserts)
@@ -192,17 +202,20 @@ derivePHMM <- function(x, seqweights = 1, residues = "autodetect",
 #' outlined in Durbin et al. (1998).
 #'
 #' @param x a character matrix of aligned sequences.
-#' @param seqweights integer 1 or numeric vector of sequence weights used to
-#' derive the emission and trasnision counts. The sum of these weights should
-#' be equal to the number of
-#' sequences in the alignment.
-#' @param residues one of the character strings 'autodetect' (default), aminos' or
-#' 'bases', or a case sensitive character vector specifying the residue
-#' alphabet. Specifying the symbol type ('aminos' or 'bases') can increase speed
-#' for larger alignments. Note that setting \code{residues = 'autodetect'} will not
-#' detect rare residues that are not present in the alignment and thus will
+#' @param seqweights either NULL (default; all sequences are given a weight of 1)
+#' or a numeric vector of sequence weights used to
+#' derive the model. The sum of these weights should be equal to the number of
+#' sequences in the alignment, so that mean(seqweights) = 1.
+#' @param residues either NULL (default; emitted residues are automatically
+#' detected from the alignment), or a case sensitive character vector specifying the
+#' residue alphabet (e.g. A, C, G, T for DNA).
+#' Note that the former option can be slow for large character matrices;
+#' therefore specifying the residue alphabet can increase speed in these cases.
+#' Also note that the default setting \code{residues = NULL} will not
+#' detect rare residues that are not present in the alignment, and thus will
 #' not assign them emission probabilities.
 #' @param gapchar the character used to represent gaps in the alignment matrix.
+#' Not required for \code{"DNAbin"} or \code{"AAbin"} objects.
 #' @param pseudocounts the method used to account for the possible absence of certain
 #' character states in the alignment. Currently only \code{"Laplace"},
 #'\code{"background"} and \code{"none"} are supported. If \code{pseudocounts = "background"} and
@@ -214,12 +227,9 @@ derivePHMM <- function(x, seqweights = 1, residues = "autodetect",
 #' as match states (\code{TRUE}) and those assigned as inserts (\code{FALSE}).
 #' @references Durbin...
 #'
-map <- function(x, seqweights = 1, residues = "autodetect",
+map <- function(x, seqweights = NULL, residues = NULL,
                 gapchar = "-", pseudocounts = "background",
                 lambda = 0, qa = NULL, qe = NULL){
-  if(!(pseudocounts %in% c("background", "Laplace", "none"))) {
-    stop("invalid pseudocounts")
-  }
   L <- ncol(x)
   n <- nrow(x)
   DNA <- inherits(x, "DNAbin")
@@ -228,7 +238,7 @@ map <- function(x, seqweights = 1, residues = "autodetect",
   nres <- length(residues)
   transitions = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
   S <- sigma <- c(0, rep(NA, L + 1))
-  if(identical(seqweights, 1)) {
+  if(is.null(seqweights)){
     seqweights <- rep(1, n)
   }else{
     if(round(sum(seqweights), 2) != n){
@@ -238,8 +248,11 @@ map <- function(x, seqweights = 1, residues = "autodetect",
     }
   }
   if(length(seqweights) != n) stop("invalid seqweights argument")
-  ecs <- if(DNA) apply(x, 2, tabDNA, TRUE, seqweights) else
-    apply(x, 2, tab, residues, seqweights)
+  if(DNA){
+    ecs <- apply(x, 2, tabDNA, ambiguities = TRUE, seqweights = seqweights)
+  }else{
+    ecs <- apply(x, 2, tab, residues = residues, seqweights = seqweights)
+  }
   # ecs <- t(t(ecs) * seqweights)
   allecs <- apply(ecs, 1, sum)
   if(is.null(qe)) {
@@ -250,6 +263,7 @@ map <- function(x, seqweights = 1, residues = "autodetect",
     # qe <- qe
   } else stop("invalid qe argument")
   gaps <- x == gapchar
+  notgaps <- cbind(TRUE, !gaps, TRUE)
   #if(!DI) alltcs[c(3, 7)] <- 0 ### need to work out DI strategy
   if(is.null(qa)) {
     gapweights <- gaps * seqweights
@@ -269,110 +283,96 @@ map <- function(x, seqweights = 1, residues = "autodetect",
     # qa <- qa
   } else stop("invalid qa argument")
   # calculate Mj for j = 1 ... L + 1
-  if(pseudocounts == "background"){
-    ecs2 <- ecs + exp(qe) * nres
-  } else if(pseudocounts == "Laplace"){
-    ecs2 <- ecs + 1
-  } else if(pseudocounts == "none"){
-    ecs2 <- ecs
-  } else stop("invalid pseudocounts argument")
-  term2 <- t(t(ecs2)/apply(ecs2, 2, sum))
-  term2[ecs != 0] <- log(term2[ecs != 0]) # increase speed for conserved alignments
-  M <- apply(ecs * term2, 2, sum)
-  M <- c(0, M, 0)
-  # calculate Tij for j = 1 ... L + 1, -1 < i < j
-  Tij <- Iij <- matrix(0, nrow = L + 2, ncol = L + 2)
-  notgaps <- cbind(TRUE, !gaps, TRUE) # logical matrix, ncol = L + 2, nrow = n
-  ivec <- 1:(L + 1)
-  jvec <- (L + 2):2 ###
-  no.insertsi <- apply(!gaps, 1, sum) * seqweights
-  allecsi <- allecs # sum(allecsi) == sum(no.insertsi)
-  alltcsi <- structure(numeric(9), names = transitions) # empty container
-  alltcsi["MM"] <- sum(seqweights[no.insertsi == 0]) # number of blank sequences
-  alltcsi[c("MI", "IM")] <- n - alltcsi["MM"]
-  alltcsi["II"] <- sum(allecs) - alltcsi["MI"] # equiv to sum(no.insertsi) - alltcsi["IM"], etc
-  alphaxy <- if(pseudocounts == "background") exp(qa) * 9 else rep(1, 9)
-  for(i in ivec){
-    no.insertsj <- no.insertsi # numeric, length n
-    allecsj <- allecsi # numeric, length nres (would be integer but for ambigs)
-    alltcsj <- alltcsi # integer, length 9
-    for(j in jvec){
-      #print(i); print(j); print(alltcsj)
-      cxy <- alltcsj + alphaxy
-      axy <- cxy/c(rep(sum(cxy[1:3]), 3), rep(sum(cxy[4:6]), 3), rep(sum(cxy[7:9]), 3))
-      Tij[i, j] <- sum(cxy * log(axy))
-      if(j - i > 1){
-        Iij[i, j] <- sum(allecsj * qe)
-        #now update
-        allecsj <- allecsj - ecs[, j - 2]
-        no.insertsj <- no.insertsj - notgaps[, j - 1] * seqweights
-        zeroinserts <- round(no.insertsj, 5) == 0 # logical, length n
-        if(any(zeroinserts)){
-          alltcsj["DD"] <- sum(seqweights[!notgaps[, i] & !notgaps[, j - 1] & zeroinserts])
-          alltcsj["DM"] <- sum(seqweights[!notgaps[, i] & notgaps[, j - 1] & zeroinserts])
-          alltcsj["MD"] <- sum(seqweights[notgaps[, i] & !notgaps[, j - 1] & zeroinserts])
-          alltcsj["MM"] <- sum(seqweights[notgaps[, i] & notgaps[, j - 1] & zeroinserts])
-          alltcsj["DI"] <- sum(seqweights[!notgaps[, i] & !zeroinserts])
-          alltcsj["MI"] <- sum(seqweights[notgaps[, i] & !zeroinserts])
-          alltcsj["ID"] <- sum(seqweights[!notgaps[, j - 1] & !zeroinserts])
-          alltcsj["IM"] <- sum(seqweights[notgaps[, j - 1] & !zeroinserts])
-          # equiv to (alltcsj["ID"] + alltcsj["IM"])
-        }else{
-          alltcsj[c("DD", "DM", "MD", "MM")] <- 0
-          alltcsj["DI"] <- sum(seqweights[!notgaps[, i]])
-          alltcsj["MI"] <- sum(seqweights[notgaps[, i]])
-          alltcsj["ID"] <- sum(seqweights[!notgaps[, j - 1]])
-          alltcsj["IM"] <- sum(seqweights[notgaps[, j - 1]])
-        }
-        alltcsj["II"] <- sum(no.insertsj) - (alltcsj["DI"] + alltcsj["MI"])
-      }else{
-        alltcsj["DD"] <- sum(seqweights[!notgaps[, i] & !notgaps[, j - 1]])
-        alltcsj["DM"] <- sum(seqweights[!notgaps[, i] & notgaps[, j - 1]])
-        alltcsj["MD"] <- sum(seqweights[notgaps[, i] & !notgaps[, j - 1]])
-        alltcsj["MM"] <- sum(seqweights[notgaps[, i] & notgaps[, j - 1]])
-        alltcsj[c("DI", "MI", "ID", "IM", "II")] <- 0
-      }
+
+  # convert pseudocounts arg to list of vectors if necessary
+  if(is.list(pseudocounts)){
+    if(!names(pseudocounts)[1] == "A"){
+      stop("first element of pseudocounts list should be named 'A' and
+           be a vector of length 9 (corresponding to pseudocount values
+           for DD, DM, DI, MD, MM, MI, ID, IM, II transitions, respectively)")
     }
-    if(i < L + 1){
-      allecsi <- allecsi - ecs[, i]
-      no.insertsi <- no.insertsi - notgaps[, i + 1] * seqweights
-      zeroinserts <- round(no.insertsi, 5) == 0
-      alltcsi[c("DD", "MD", "ID")] <- 0
-      if(any(zeroinserts)){
-        alltcsi["DM"] <- sum(seqweights[!notgaps[, i + 1] & zeroinserts])
-        alltcsi["MM"] <- sum(seqweights[notgaps[, i + 1] & zeroinserts])
-        alltcsi["DI"] <- sum(seqweights[!notgaps[, i + 1] & !zeroinserts])
-        alltcsi["MI"] <- sum(seqweights[notgaps[, i + 1] & !zeroinserts])
-        alltcsi["IM"] <- sum(seqweights[!zeroinserts])
-      }else{
-        alltcsi[c("DM", "MM")] <- 0
-        alltcsi["DI"] <- sum(seqweights[!notgaps[, i + 1]])
-        alltcsi["MI"] <- n - alltcsi["DI"] # sum(seqweights[notgaps[, i + 1]])
-        alltcsi["IM"] <- n
-      }
-      alltcsi["II"] <- sum(no.insertsi) - alltcsi["IM"] ### because alltcsi["ID"] = 0
-    }else{
-      alltcsi[c("DD", "DI", "MD", "MI", "ID", "IM", "II")] <- 0
-      alltcsi["DM"] <- sum(seqweights[!notgaps[, i + 1]])
-      alltcsi["MM"] <- n - alltcsi["DM"]
+    if(!names(pseudocounts)[2] == "E"){
+      stop("second element of pseudocounts list should be named 'E' and
+           be a vector the same length as the size of the residue alphabet
+          (e.g. 4 for DNA, 20 for amino acids)")
     }
-    jvec <- jvec[-length(jvec)] # gives upper.tri
-  }
-  #tmp <- t(t(Tij + Iij) + M + lambda)
-  #tmp[lower.tri(tmp, diag = TRUE)] <- NA
-  for(j in 2:(L + 2)){
-    tmp <- S[1:(j - 1)] + Tij[1:(j - 1), j] + Iij[1:(j - 1), j] + M[j] + lambda
-    sigma[j] <- whichismax(tmp)#tmp[1:(j - 1), j])
-    S[j] <- tmp[sigma[j]] #tmp[1:(j - 1), j])[sigma[j]]
-  }
-  res <- structure(logical(L + 2), names = 0:(L + 1))
-  res[L + 2] <- TRUE
-  j <- sigma[L + 2]
-  while(j > 0){
-    res[j] <- TRUE
-    j <- sigma[j]
-  }
-  res <- res[-(c(1, L + 2))]
+  }else if(identical(pseudocounts, "background")){
+    pseudocounts <- list(A = exp(qa) * 9, E = exp(qe) * nres)
+  }else if(identical(pseudocounts, "Laplace")){
+    pseudocounts <- list(A = rep(1, 9), E = rep(1, nres))
+  }else if(identical(pseudocounts, "none")){
+    pseudocounts <- list(A = rep(0, 9), E = rep(0, nres))
+  }else stop("invalid pseudocounts argument")
+
+  res <- mapC(ecs, notgaps, pseudocounts, seqweights, qe, lambda)
+
+#   ecs2 <- ecs + pseudocounts$E
+#   term2 <- t(t(ecs2)/apply(ecs2, 2, sum))
+#   term2[ecs != 0] <- log(term2[ecs != 0]) # increase speed for conserved alignments
+#   M <- apply(ecs * term2, 2, sum)
+#   M <- c(0, M, 0)
+#   ecsj <- structure(numeric(nres), names = residues)
+#   tcsij <- structure(numeric(9), names = transitions)
+#   icsj <- structure(numeric(n), names = rownames(x)) #insert counts
+#   #alphaxy <- if(pseudocounts == "background") exp(qa) * 9 else rep(1, 9)
+#   for(j in 2:(L + 2)){
+#     tau <- iota <- numeric(j - 1)
+#     ecsij <- ecsj
+#     icsij <- icsj
+#     for(i in 1:(j - 1)){
+#       if(i < j - 1){
+#         iota[i] <- sum(ecsij * qe)
+#         ecsij <- ecsij - ecs[, i]
+#         zeroinserts <- icsij < 0.00001
+#         if(any(zeroinserts)){
+#           tcsij[1] <- sum(seqweights[!notgaps[, i] & !notgaps[, j] & zeroinserts]) #DD
+#           tcsij[2] <- sum(seqweights[!notgaps[, i] & notgaps[, j] & zeroinserts]) #DM
+#           tcsij[4] <- sum(seqweights[notgaps[, i] & !notgaps[, j] & zeroinserts]) #MD
+#           tcsij[5] <- sum(seqweights[notgaps[, i] & notgaps[, j] & zeroinserts]) #MM
+#           tcsij[3] <- sum(seqweights[!notgaps[, i] & !zeroinserts]) #DI
+#           tcsij[6] <- sum(seqweights[notgaps[, i] & !zeroinserts]) #MI
+#           tcsij[7] <- sum(seqweights[!notgaps[, j] & !zeroinserts]) #ID
+#           tcsij[8] <- sum(seqweights[notgaps[, j] & !zeroinserts]) #IM
+#         }else{
+#           tcsij[c(1, 2, 4, 5)] <- 0
+#           tcsij[3] <- sum(seqweights[!notgaps[, i]])
+#           tcsij[6] <- sum(seqweights[notgaps[, i]])
+#           tcsij[7] <- sum(seqweights[!notgaps[, j]])
+#           tcsij[8] <- sum(seqweights[notgaps[, j]])
+#         }
+#         tcsij[9] <- sum(icsij) - (tcsij[3] + tcsij[6]) #II
+#         icsij <- icsij - notgaps[, i + 1] * seqweights # ends up as vec of zeros at end of each i cycle
+#       }else{
+#         tcsij[1] <- sum(seqweights[!notgaps[, i] & !notgaps[, j]]) #DD
+#         tcsij[2] <- sum(seqweights[!notgaps[, i] & notgaps[, j]]) #DM
+#         tcsij[3] <- 0 #DI
+#         tcsij[4] <- sum(seqweights[notgaps[, i] & !notgaps[, j]]) #MD
+#         tcsij[5] <- sum(seqweights[notgaps[, i] & notgaps[, j]]) #MM
+#         tcsij[6] <- 0 #MI
+#         tcsij[7] <- 0 #ID
+#         tcsij[8] <- 0 #IM
+#         tcsij[9] <- 0 #II
+#       }
+#       cxy <- tcsij + pseudocounts$A
+#       axy <- cxy/c(rep(sum(cxy[1:3]), 3), rep(sum(cxy[4:6]), 3), rep(sum(cxy[7:9]), 3))
+#       tau[i] <- sum(cxy * log(axy))
+#     }
+#     if(j < L + 2){
+#       ecsj <- ecsj + ecs[, j - 1]
+#       icsj <- icsj + seqweights * notgaps[, j]
+#     }
+#     tmp <- S[1:(j - 1)] + tau + iota + M[j] + lambda
+#     sigma[j] <- whichismax(tmp)
+#     S[j] <- tmp[sigma[j]]
+#   }
+#   res <- structure(logical(L + 2), names = 0:(L + 1))
+#   res[L + 2] <- TRUE
+#   j <- sigma[L + 2]
+#   while(j > 0){
+#     res[j] <- TRUE
+#     j <- sigma[j]
+#   }
+#   res <- res[-(c(1, L + 2))]
   return(res)
 }
 

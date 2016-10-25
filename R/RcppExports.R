@@ -49,6 +49,10 @@ backwardC <- function(x, y, logspace = FALSE) {
     .Call('profile_backwardC', PACKAGE = 'profile', x, y, logspace)
 }
 
+mapC <- function(ecs, notgaps, pseudocounts, seqweights, qe, lambda = 0) {
+    .Call('profile_mapC', PACKAGE = 'profile', ecs, notgaps, pseudocounts, seqweights, qe, lambda)
+}
+
 returnmod <- function(x) {
     .Call('profile_returnmod', PACKAGE = 'profile', x)
 }
@@ -61,8 +65,12 @@ returnmod <- function(x) {
 #' @param numbersystem an integer representing the numbering system of the input vector,
 #' 2 for binary, 3 for ternary, etc.
 #'
-transcount <- function(x, numbersystem) {
-    .Call('profile_transcount', PACKAGE = 'profile', x, numbersystem)
+transitioncount <- function(x, numbersystem) {
+    .Call('profile_transitioncount', PACKAGE = 'profile', x, numbersystem)
+}
+
+emissioncount <- function(states, statenumbersystem, residues, resnumbersystem) {
+    .Call('profile_emissioncount', PACKAGE = 'profile', states, statenumbersystem, residues, resnumbersystem)
 }
 
 tab9C <- function(x, seqweights) {

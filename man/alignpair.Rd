@@ -21,6 +21,15 @@ scored as 1 and mismatches as -1.}
 \item{type}{a character string specifying whether the alignment should be
 'global' (penalized end gaps), 'semiglobal' (default; free end gaps) or
 local (highest scoring subalignment).}
+
+\item{residues}{either NULL (default; emitted residues are automatically
+detected from the input sequences), or a case sensitive character vector specifying the
+residue alphabet (e.g. c(A, C, G, T) for DNA).
+Note that the former option can be slow for large character vectors;
+therefore specifying the residue alphabet can increase speed in these cases.
+Also note that the default setting \code{residues = NULL} will not
+detect rare residues that are not present in the input sequences, and thus will
+not assign them emission probabilities.}
 }
 \value{
 a character matrix of aligned sequences.

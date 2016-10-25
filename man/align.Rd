@@ -4,18 +4,20 @@
 \alias{align}
 \title{Multiple sequence alignment.}
 \usage{
-align(sequences, type = "global", residues = "autodetect", gapchar = "-",
+align(sequences, type = "global", residues = NULL, gapchar = "-",
   DI = FALSE, ID = FALSE, refine = "Viterbi", quiet = TRUE, ...)
 }
 \arguments{
 \item{sequences}{a list of character vectors consisting of symbols from
 the residue alphabet}
 
-\item{residues}{one of the character strings "autodetect" (default), "aminos" or
-"bases", or a case sensitive character vector matching the residue
-alphabet. Specifying the symbol type ('aminos' or 'bases') can increase speed
-for larger alignments. Note that setting \code{residues = "autodetect"} will not
-detect rare residues that are not present in the alignment and thus will
+\item{residues}{either NULL (default; emitted residues are automatically
+detected from the list of sequences), or a case sensitive character vector specifying the
+residue alphabet (e.g. c(A, C, G, T) for DNA).
+Note that the former option can be slow for large lists of character vectors;
+therefore specifying the residue alphabet can increase speed in these cases.
+Also note that the default setting \code{residues = NULL} will not
+detect rare residues that are not present in the sequence list, and thus will
 not assign them emission probabilities.}
 
 \item{gapchar}{the character used to represent gaps in the alignment matrix.}

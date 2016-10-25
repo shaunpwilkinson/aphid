@@ -20,19 +20,19 @@ whichismax <- function(v){
 #' @param sequences a character matrix or vector, or a list of character matrices
 #' and/or vectors
 #'
-alphadetect <- function(sequences, residues = "autodetect", gapchar = "-"){
+alphadetect <- function(sequences, residues = NULL, gapchar = "-"){
   if(inherits(sequences, "DNAbin") | identical(residues, "DNA")){
     residues <- c("A", "C", "G", "T")
   } else if(inherits(sequences, "AAbin") | identical(residues, "AA")){
     residues <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
   }
-  else if(identical(residues, "autodetect")) {
+  else if(is.null(residues)){
     residues <- sort(unique(as.vector(unlist(sequences))))
     residues <- residues[residues != gapchar]
   }else{
     residues <- residues[residues != gapchar]
   }
-  if(!(length(residues) > 1 & mode(residues) == "character")) {
+  if(!(length(residues) > 1 & mode(residues) == "character")){
     stop("invalid residues argument")
   }
   return(residues)
@@ -46,6 +46,7 @@ tab <- function(v, residues, seqweights = 1){
   for(i in residues) res[i] <- sum(seqweights[v == i], na.rm = TRUE)
   return(res)
 }
+
 #-------------------------------------------------------------------------------------------
 # x is a DNAbin vector
 tabDNA <- function(x, ambiguities = FALSE, seqweights = 1){

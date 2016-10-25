@@ -8,13 +8,13 @@ WilburLipman(x, y, k = 4, w = 10, threshold = 5)
 }
 \arguments{
 \item{threshold}{the number of standard deviations above the mean
-number of k-tuple matches 
-for all diagonals with k-tuple matches for a diagonal to be be considered 
+number of k-tuple matches
+for all diagonals with k-tuple matches for a diagonal to be be considered
 significant...}
 }
 \description{
-Implement the algorithm of Wilbur & Lipman (1983) to define windowspace for 
-downstream dynammic programming applications such as the Viterbi, forward and 
+Implement the algorithm of Wilbur & Lipman (1983) to define windowspace for
+downstream dynammic programming applications such as the Viterbi, forward and
 backward algorithms.
 }
 
