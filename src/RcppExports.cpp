@@ -5,6 +5,24 @@
 
 using namespace Rcpp;
 
+// Viterbidefault
+List Viterbidefault(IntegerVector x, IntegerVector y, int type, double d, double e, NumericMatrix S, LogicalMatrix itertab, double offset);
+RcppExport SEXP profile_Viterbidefault(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP dSEXP, SEXP eSEXP, SEXP SSEXP, SEXP itertabSEXP, SEXP offsetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< double >::type d(dSEXP);
+    Rcpp::traits::input_parameter< double >::type e(eSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type S(SSEXP);
+    Rcpp::traits::input_parameter< LogicalMatrix >::type itertab(itertabSEXP);
+    Rcpp::traits::input_parameter< double >::type offset(offsetSEXP);
+    rcpp_result_gen = Rcpp::wrap(Viterbidefault(x, y, type, d, e, S, itertab, offset));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ViterbiHMM
 List ViterbiHMM(List x, CharacterVector y, bool logspace);
 RcppExport SEXP profile_ViterbiHMM(SEXP xSEXP, SEXP ySEXP, SEXP logspaceSEXP) {
@@ -156,6 +174,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerMatrix >::type x(xSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type seqweights(seqweightsSEXP);
     rcpp_result_gen = Rcpp::wrap(tab9C(x, seqweights));
+    return rcpp_result_gen;
+END_RCPP
+}
+// DNA2pentadecimal
+IntegerVector DNA2pentadecimal(RawVector x);
+RcppExport SEXP profile_DNA2pentadecimal(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< RawVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(DNA2pentadecimal(x));
     return rcpp_result_gen;
 END_RCPP
 }

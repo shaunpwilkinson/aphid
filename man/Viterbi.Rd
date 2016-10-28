@@ -2,7 +2,6 @@
 % Please edit documentation in R/Viterbi.R
 \name{Viterbi}
 \alias{Viterbi}
-\alias{Viterbi.DNAbin}
 \alias{Viterbi.HMM}
 \alias{Viterbi.PHMM}
 \alias{Viterbi.default}
@@ -10,19 +9,17 @@
 \usage{
 Viterbi(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal",
   odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, itertab = NULL,
-  DI = TRUE, ID = TRUE)
+  DI = TRUE, ID = TRUE, cpp = TRUE)
 
 \method{Viterbi}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
   type = "semiglobal", odds = TRUE, offset = 0, itertab = NULL,
-  DI = TRUE, ID = TRUE)
+  DI = TRUE, ID = TRUE, cpp = TRUE)
 
-\method{Viterbi}{HMM}(x, y, logspace = "autodetect")
-
-\method{Viterbi}{DNAbin}(x, y, type = "semiglobal", d = 8, e = 2,
-  S = NULL, itertab = NULL, offset = 0)
+\method{Viterbi}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
 
 \method{Viterbi}{default}(x, y, type = "semiglobal", d = 8, e = 2,
-  S = NULL, itertab = NULL, offset = 0)
+  residues = NULL, gapchar = "-", S = NULL, itertab = NULL,
+  offset = 0, cpp = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{HMM} or \code{PHMM}, or a character vector.}

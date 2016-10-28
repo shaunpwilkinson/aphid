@@ -99,6 +99,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
   if(inherits(x, "DNAbin")){
     if(!inherits(y, "DNAbin")) stop("class(x) and class(y) must match")
     gapchar <- as.raw(4)
+    # changes here need also apply in alignpair
     if(is.list(x)){
       if(length(x) == 1){
         #xnames <- names(x) # cache names for result rownames

@@ -4,8 +4,11 @@
 \alias{ViterbiC}
 \alias{ViterbiC.HMM}
 \alias{ViterbiC.PHMM}
+\alias{ViterbiC.default}
 \title{Optimal path of sequence through model.}
 \usage{
+\method{ViterbiC}{default}(x, y, type, d, e, S, itertab, offset)
+
 \method{ViterbiC}{HMM}(x, y, logspace = FALSE)
 
 \method{ViterbiC}{PHMM}(x, y, logspace = FALSE)

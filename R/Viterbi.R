@@ -43,14 +43,14 @@
 #'
 Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal",
                     odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, itertab = NULL,
-                    DI = TRUE, ID = TRUE){
+                    DI = TRUE, ID = TRUE, cpp = TRUE){
   UseMethod("Viterbi")
 }
 
 #' @rdname Viterbi
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "semiglobal", odds = TRUE, offset = 0,
-                         itertab = NULL, DI = TRUE, ID = TRUE){
+                         itertab = NULL, DI = TRUE, ID = TRUE, cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
   pp <- inherits(y, "PHMM")
@@ -60,7 +60,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     if(!(identical(rownames(x$E), c("a", "c", "g", "t")) |
          identical(rownames(x$E), c("A", "C", "G", "T")))){
       stop("invalid model, residue alphabet does not correspond to
-           nucleotide alphabet")
+           ordered nucleotide alphabet")
     }
     if(is.list(y)) y <- y[[1]]
     if(is.matrix(y)){
@@ -116,6 +116,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     Ey <- if(logspace) y$E else log(y$E)
     fun <- Vectorize(function(a, b) logsum((Ex[, a] + Ey[, b]) - qe))
     Saa <- outer(1:(n - 1), 1:(m - 1), fun)
+    # res <- Viterbi5(Ax, Ay, Ex, Ey, Saa, qex, qey, odds, offset, type = "semiglobal", itertab)
     if(type == "global"){
       V[-1, 1, "MI"] <- cumsum(c(Ax["MM", 1] + Ay["MI", 1], Ax["MM", 2:(n - 1)] + Ay["II", 1]))
       P[-1, 1, "MI"] <- c(3, rep(1, n - 2))
@@ -229,6 +230,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
     Saa <- if(odds) E - qe else E
+    # res <- Viterbi3(A, E, y, Saa, qey, odds, offset = 0, itertab, type = "semiglobal")
     P[, 1, 1] <- c(NA, 2, rep(1, n - 2))
     P[1, , 3] <- c(NA, 2, rep(3, m - 2))
     V[1, 1, 2] <- 0
@@ -340,7 +342,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 }
 
 #' @rdname Viterbi
-Viterbi.HMM <- function (x, y, logspace = "autodetect"){
+Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   n <- length(y)
   states <- rownames(x$E)
@@ -378,268 +380,316 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect"){
 
 
 #' @rdname Viterbi
-Viterbi.DNAbin <- function(x, y, type = 'semiglobal', d = 8, e = 2,
-                            S = NULL, itertab = NULL, offset = 0){
-  ###check that x is a character vector###
-  if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
-  if(!inherits(y, "DNAbin")) stop("second argument (y) must also be of class 'DNAbin'")
-  if(is.list(x)){
-    if(length(x) == 1){
-      tmp <- attributes(x)
-      x <- x[[1]]
-      attributes(x) <- tmp
-    }else stop("Invalid input: multi-sequence list")
-  }
-  if(is.list(y)){
-    if(length(y) == 1){
-      tmp <- attributes(y)
-      y <- y[[1]]
-      attributes(y) <- tmp
-    }else stop("Invalid input: multi-sequence list")
-  }
-  #class(x) <- class(y) <- NULL
-  n <- length(x) + 1
-  m <- length(y) + 1
-  if(identical(itertab, "WilburLipman")) itertab = WilburLipman(x, y)
-  if(!any(itertab)) itertab <- matrix(TRUE, n, m)
-  if(is.null(S)){
-    S <- NUC4.4
-    #S <- diag(2, nrow = 4) - 1
-  }else{
-    if(nrow(S) != ncol(S) & nrow(S) != 15) stop("Invalid scoring matrix (S)")
-    ### also check names order
-  }
-  guide <- as.raw(c(136, 24, 72, 40, 96, 144, 192, 48, 80, 160, 112, 224, 176, 208, 240))
-  # initialize scoring and pointer arrays (M and P)
-  M <- array(-Inf, dim = c(n, m, 3))
-  P <- M + NA
-  M[1, 1, 2] <- 0
-  if(type == 'global'){
-    M[, 1, 1] <- c(0, seq(from = -d, to = (- d + (n - 2) * -e), by = -e))
-    M[1, , 3] <- c(0, seq(from = -d, to = (- d + (m - 2) * -e), by = -e))
-  }else{
-    M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0 ### check this - should fill dim2 instead?
-  }
-  P[2:n, 1, 1] <- 1
-  P[1, 2:m, 3] <- 3
-  for(i in 2:n){
-    for(j in 2:m){
-      if(itertab[i, j]){
-        ###
-        #sij <-  S[x[i - 1], y[j - 1]] + offset
-        sij <-  S[match(x[i - 1], guide), match(y[j - 1], guide)] + offset
-        ###
-        Ixcdt <- c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e))#x alig to gap in y
-        Mcdt <- c(M[i - 1, j - 1, 1] + sij,
-                  M[i - 1, j - 1, 2] + sij,
-                  M[i - 1, j - 1, 3] + sij,
-                  if(type == 'local') 0 else NULL)
-        Iycdt <- c(-Inf, M[i, j - 1, 2] - (d + e), M[i, j - 1, 3] - e)
-        Ixmax <- whichismax(Ixcdt)
-        Mmax <- whichismax(Mcdt)
-        Iymax <- whichismax(Iycdt)
-        M[i, j, 1] <- Ixcdt[Ixmax]
-        M[i, j, 2] <- Mcdt[Mmax]
-        M[i, j, 3] <- Iycdt[Iymax]
-        P[i, j, 1] <- Ixmax
-        P[i, j, 2] <- Mmax
-        P[i, j, 3] <- Iymax
-      }
-    }
-  }
-  path <- c()
-  progression <- matrix(nrow = 2, ncol = 0)
-  if(type == 'global'){
-    # find highest score in bottom right corner of scoring array M
-    z <- c(n, m, whichismax(M[n, m, ]))
-    score <- M[z[1], z[2], z[3]]
-    while(z[1] > 1 | z[2] > 1){
-      path <- c(z[3], path)
-      progression <- cbind(z[1:2], progression)
-      z[3] <- P[z[1], z[2], z[3]]
-      z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
-    }
-    #alig <- trackback(z, condition = "z[1] > 1 | z[2] > 1", P = P)
-  }else if(type == 'semiglobal'){
-    # find highest score on bottom row or right column of scoring array M
-    border <- rbind(M[n, , ], M[-n, m, ])
-    ind <- which(border == max(border), arr.ind = TRUE)
-    if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
-    z <- if(ind[1] <= m) c(n, ind) else c(ind[1] - m, m, ind[2])
-    if(is.na(P[z[1], z[2], z[3]])) stop("alignment failed, try increasing offset")
-    score <- M[z[1], z[2], z[3]]
-    if(z[1] < n){
-      path <- rep(1, n - z[1])
-      progression <- rbind((z[1] + 1):n, rep(z[2], n - z[1]))
-    }else if(z[2] < m){
-      path <- rep(3, m - z[2])
-      progression <- rbind((z[2] + 1):m, rep(z[1], m - z[2]))
-    }
-    while(z[1] > 1 & z[2] > 1){
-      path <- c(z[3], path)
-      progression <- cbind(z[1:2], progression)
-      z[3] <- P[z[1], z[2], z[3]]
-      z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
-    }
-    if(z[1] > 1){
-      path <- c(rep(1, z[1] - 1), path)
-      progression <- cbind(rbind(1:(z[1] - 1), rep(1, z[1] - 1)), progression)
-    }else if(z[2] > 1){
-      path <- c(rep(3, z[2] - 1), path)
-      progression <- cbind(rbind(rep(1, z[2] - 1), 1:(z[2] - 1)), progression)
-    }
-  }else if(type == 'local'){
-    # find highest score in scoring array M
-    ind <- which(M[, , 2] == max(M[, , 2]), arr.ind = TRUE)
-    z <- c(ind, 2)
-    score <- M[z[1], z[2], z[3]]
-    P[1, 1, 2] <- 4
-    while(P[z[1], z[2], z[3]] != 4){
-      path <- c(z[3], path)
-      progression <- cbind(z[1:2], progression)
-      z[3] <- P[z[1], z[2], z[3]]
-      z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
-    }
-  }
-  key <- "1: x aligns to gap in y, 2: match, 3: y aligns to gap in x"
-  progression <- progression - 1
-  #rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
-  rownames(progression) <- c("x", "y") ### fix
-  res <- structure(list(score = score,
-                        #alignment = alig,
-                        path = path,
-                        #firstmatch = firstmatch,
-                        progression = progression,
-                        key = key,
-                        V = M,
-                        pointer = P),
-                   class = 'Viterbi')
-  return(res)
-}
+# Viterbi.DNAbin <- function(x, y, type = 'semiglobal', d = 8, e = 2,
+#                             S = NULL, itertab = NULL, offset = 0, cpp = TRUE){
+#   ###check that x is a character vector###
+#   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
+#   if(!inherits(y, "DNAbin")) stop("second argument (y) must also be of class 'DNAbin'")
+#   if(is.list(x)){
+#     if(length(x) == 1){
+#       tmp <- attributes(x)
+#       x <- x[[1]]
+#       attributes(x) <- tmp
+#     }else stop("Invalid input: multi-sequence list")
+#   }
+#   if(is.list(y)){
+#     if(length(y) == 1){
+#       tmp <- attributes(y)
+#       y <- y[[1]]
+#       attributes(y) <- tmp
+#     }else stop("Invalid input: multi-sequence list")
+#   }
+#   #class(x) <- class(y) <- NULL
+#   n <- length(x) + 1
+#   m <- length(y) + 1
+#   if(identical(itertab, "WilburLipman")) itertab = WilburLipman(x, y)
+#   if(!any(itertab)) itertab <- matrix(TRUE, n, m)
+#   if(is.null(S)){
+#     S <- NUC4.4
+#     #S <- diag(2, nrow = 4) - 1
+#   }else{
+#     if(nrow(S) != ncol(S) & nrow(S) != 15) stop("Invalid scoring matrix (S)")
+#     ### also check names order
+#   }
+#   guide <- as.raw(c(136, 24, 72, 40, 96, 144, 192, 48, 80, 160, 112, 224, 176, 208, 240))
+#   # initialize scoring and pointer arrays (M and P)
+#   M <- array(-Inf, dim = c(n, m, 3))
+#   P <- M + NA
+#   M[1, 1, 2] <- 0
+#   if(type == 'global'){
+#     M[, 1, 1] <- c(0, seq(from = -d, to = (- d + (n - 2) * -e), by = -e))
+#     M[1, , 3] <- c(0, seq(from = -d, to = (- d + (m - 2) * -e), by = -e))
+#   }else{
+#     M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0 ### check this - should fill dim2 instead?
+#   }
+#   P[2:n, 1, 1] <- 1
+#   P[1, 2:m, 3] <- 3
+#   # convert x and y to 15-ary so don't need guide = guide arg in cpp func?
+#   #res <- Viterbi1(x, y, S, type = "semiglobal", offset = 0, d, e, itertab)
+#   for(i in 2:n){
+#     for(j in 2:m){
+#       if(itertab[i, j]){
+#         ###
+#         #sij <-  S[x[i - 1], y[j - 1]] + offset
+#         sij <-  S[match(x[i - 1], guide), match(y[j - 1], guide)] + offset
+#         ###
+#         Ixcdt <- c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e))#x alig to gap in y
+#         Mcdt <- c(M[i - 1, j - 1, 1] + sij,
+#                   M[i - 1, j - 1, 2] + sij,
+#                   M[i - 1, j - 1, 3] + sij,
+#                   if(type == 'local') 0 else NULL)
+#         Iycdt <- c(-Inf, M[i, j - 1, 2] - (d + e), M[i, j - 1, 3] - e)
+#         Ixmax <- whichismax(Ixcdt)
+#         Mmax <- whichismax(Mcdt)
+#         Iymax <- whichismax(Iycdt)
+#         M[i, j, 1] <- Ixcdt[Ixmax]
+#         M[i, j, 2] <- Mcdt[Mmax]
+#         M[i, j, 3] <- Iycdt[Iymax]
+#         P[i, j, 1] <- Ixmax
+#         P[i, j, 2] <- Mmax
+#         P[i, j, 3] <- Iymax
+#       }
+#     }
+#   }
+#   path <- c()
+#   progression <- matrix(nrow = 2, ncol = 0)
+#   if(type == 'global'){
+#     # find highest score in bottom right corner of scoring array M
+#     z <- c(n, m, whichismax(M[n, m, ]))
+#     score <- M[z[1], z[2], z[3]]
+#     while(z[1] > 1 | z[2] > 1){
+#       path <- c(z[3], path)
+#       progression <- cbind(z[1:2], progression)
+#       z[3] <- P[z[1], z[2], z[3]]
+#       z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+#     }
+#     #alig <- trackback(z, condition = "z[1] > 1 | z[2] > 1", P = P)
+#   }else if(type == 'semiglobal'){
+#     # find highest score on bottom row or right column of scoring array M
+#     border <- rbind(M[n, , ], M[-n, m, ])
+#     ind <- which(border == max(border), arr.ind = TRUE)
+#     if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
+#     z <- if(ind[1] <= m) c(n, ind) else c(ind[1] - m, m, ind[2])
+#     if(is.na(P[z[1], z[2], z[3]])) stop("alignment failed, try increasing offset")
+#     score <- M[z[1], z[2], z[3]]
+#     if(z[1] < n){
+#       path <- rep(1, n - z[1])
+#       progression <- rbind((z[1] + 1):n, rep(z[2], n - z[1]))
+#     }else if(z[2] < m){
+#       path <- rep(3, m - z[2])
+#       progression <- rbind((z[2] + 1):m, rep(z[1], m - z[2]))
+#     }
+#     while(z[1] > 1 & z[2] > 1){
+#       path <- c(z[3], path)
+#       progression <- cbind(z[1:2], progression)
+#       z[3] <- P[z[1], z[2], z[3]]
+#       z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+#     }
+#     if(z[1] > 1){
+#       path <- c(rep(1, z[1] - 1), path)
+#       progression <- cbind(rbind(1:(z[1] - 1), rep(1, z[1] - 1)), progression)
+#     }else if(z[2] > 1){
+#       path <- c(rep(3, z[2] - 1), path)
+#       progression <- cbind(rbind(rep(1, z[2] - 1), 1:(z[2] - 1)), progression)
+#     }
+#   }else if(type == 'local'){
+#     # find highest score in scoring array M
+#     ind <- which(M[, , 2] == max(M[, , 2]), arr.ind = TRUE)
+#     z <- c(ind, 2)
+#     score <- M[z[1], z[2], z[3]]
+#     P[1, 1, 2] <- 4
+#     while(P[z[1], z[2], z[3]] != 4){
+#       path <- c(z[3], path)
+#       progression <- cbind(z[1:2], progression)
+#       z[3] <- P[z[1], z[2], z[3]]
+#       z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+#     }
+#   }
+#   key <- "1: x aligns to gap in y, 2: match, 3: y aligns to gap in x"
+#   progression <- progression - 1
+#   #rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
+#   rownames(progression) <- c("x", "y") ### fix
+#   res <- structure(list(score = score,
+#                         #alignment = alig,
+#                         path = path,
+#                         #firstmatch = firstmatch,
+#                         progression = progression,
+#                         key = key,
+#                         V = M,
+#                         pointer = P),
+#                    class = 'Viterbi')
+#   return(res)
+# }
 
 
 
 #' @rdname Viterbi
-Viterbi.default <- function(x, y, type = 'semiglobal', d = 8, e = 2,
-                            S = NULL, itertab = NULL, offset = 0){
-  ###check that x is a character vector###
+Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
+                            residues = NULL, gapchar = "-", S = NULL,
+                            itertab = NULL, offset = 0, cpp = TRUE){
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
-  if(mode(x) != "character" | mode(y) != "character") stop("x and y must be of mode 'character'")
-  n <- length(x) + 1
-  m <- length(y) + 1
-  if(identical(itertab, "WilburLipman")) itertab <- WilburLipman(x, y)
-  if(!any(itertab)) itertab <- matrix(TRUE, n, m)
-  if (is.null(S)) {
-    residues <- unique(c(x, y))
-    S <- diag(2, nrow = length(residues)) - 1
-    dimnames(S) <- list(residues, residues)
-  }
-  # initialize scoring and pointer arrays (M and P)
-  M <- array(-Inf, dim = c(n, m, 3))
-  P <- M + NA
-  M[1, 1, 2] <- 0
-  if(type == 'global'){
-    M[, 1, 1] <- c(0, seq(from = -d, to = (- d + (n - 2) * -e), by = -e))
-    M[1, , 3] <- c(0, seq(from = -d, to = (- d + (m - 2) * -e), by = -e))
-  }else{
-    M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0 ### check this - should fill dim2 instead?
-  }
-  P[2:n, 1, 1] <- 1
-  P[1, 2:m, 3] <- 3
-  # recursion step
-  # for(i in if(is.null(itertab)) 2:n else 1:nrow(itertab)){
-  #   for(j in if(is.null(itertab)) 2:m else 1){
-  #     if(!is.null(itertab)){
-  #       j <- itertab[i, 2]
-  #       i <- itertab[i, 1]
-  #     }
-  for(i in 2:n){
-    for(j in 2:m){
-      if(itertab[i, j]){
-        sij <-  S[x[i - 1], y[j - 1]] + offset
-        Ixcdt <- c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e))#x alig to gap in y
-        Mcdt <- c(M[i - 1, j - 1, 1] + sij,
-                  M[i - 1, j - 1, 2] + sij,
-                  M[i - 1, j - 1, 3] + sij,
-                  if(type == 'local') 0 else NULL)
-        Iycdt <- c(-Inf, M[i, j - 1, 2] - (d + e), M[i, j - 1, 3] - e)
-        Ixmax <- whichismax(Ixcdt) ### could improve using nnet::which.is.max###
-        Mmax <- whichismax(Mcdt)
-        Iymax <- whichismax(Iycdt)
-        M[i, j, 1] <- Ixcdt[Ixmax]
-        M[i, j, 2] <- Mcdt[Mmax]
-        M[i, j, 3] <- Iycdt[Iymax]
-        P[i, j, 1] <- Ixmax
-        P[i, j, 2] <- Mmax
-        P[i, j, 3] <- Iymax
+  DNA <- inherits(x, "DNAbin")
+  if(DNA){
+    if(!inherits(y, "DNAbin")) stop("x is a DNAbin object but y is not")
+    # changes here need also apply in alignpair
+    if(is.list(x)){
+      if(length(x) == 1){
+        x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
+        class(x) <- "DNAbin"
+      }else stop("Invalid input object x: multi-sequence list")
+    }
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+        class(y) <- "DNAbin"
+      }else stop("Invalid input object y: multi-sequence list")
+    }
+    if(is.null(S)){
+      S <- NUC4.4
+    }else{
+      IUPAC <- c("A", "T", "G", "C", "S", "W", "R", "Y", "K", "M", "B", "V", "H", "D", "N")
+      if(!(identical(rownames(S), IUPAC) & identical(colnames(S), IUPAC))) {
+        stop("For DNAbin objects, the scoring matrix (S) should have
+             15 rows and 15 columns, ordered and named according to the IUPAC
+             ambiguity codes: A, T, G, C, S, W, R, Y, K, M, B, V, H, D, N")
       }
     }
-  }
-  path <- c()
-  progression <- matrix(nrow = 2, ncol = 0)
-  if(type == 'global'){
-    # find highest score in bottom right corner of scoring array M
-    z <- c(n, m, whichismax(M[n, m, ]))
-    score <- M[z[1], z[2], z[3]]
-    while(z[1] > 1 | z[2] > 1){
-      path <- c(z[3], path)
-      progression <- cbind(z[1:2], progression)
-      z[3] <- P[z[1], z[2], z[3]]
-      z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+    #residues <- as.raw(c(136, 24, 72, 40, 96, 144, 192, 48, 80, 160, 112, 224, 176, 208, 240))
+    if(identical(itertab, "WilburLipman")){
+      itertab <- WilburLipman(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
     }
-    #alig <- trackback(z, condition = "z[1] > 1 | z[2] > 1", P = P)
-  }else if(type == 'semiglobal'){
-    # find highest score on bottom row or right column of scoring array M
-    border <- rbind(M[n, , ], M[-n, m, ])
-    ind <- which(border == max(border), arr.ind = TRUE)
-    if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
-    z <- if(ind[1] <= m) c(n, ind) else c(ind[1] - m, m, ind[2])
-    if(is.na(P[z[1], z[2], z[3]])) stop("alignment failed, try increasing offset")
-    score <- M[z[1], z[2], z[3]]
-    if(z[1] < n){
-      path <- rep(1, n - z[1])
-      progression <- rbind((z[1] + 1):n, rep(z[2], n - z[1]))
-    }else if(z[2] < m){
-      path <- rep(3, m - z[2])
-      progression <- rbind((z[2] + 1):m, rep(z[1], m - z[2]))
+    x <- DNA2pentadecimal(x)
+    y <- DNA2pentadecimal(y)
+  }else{
+    if(is.null(S)){
+      residues <- alphadetect(list(x, y), residues = residues, gapchar = gapchar)
+      S <- diag(2, nrow = length(residues)) - 1
+      dimnames(S) <- list(residues, residues)
+    }else{
+      residues <- rownames(S)
+      if(is.null(residues)) stop("scoring matrix S must have 'dimnames' attributes")
     }
-    while(z[1] > 1 & z[2] > 1){
-      path <- c(z[3], path)
-      progression <- cbind(z[1:2], progression)
-      z[3] <- P[z[1], z[2], z[3]]
-      z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+    # code x and y vectors as integers in with arity = length(residues) - 1
+    xcoded <- integer(length(x))
+    ycoded <- integer(length(y))
+    for(i in seq_along(residues)){
+      xcoded[x == residues[i]] <- i
+      ycoded[y == residues[i]] <- i
     }
-    if(z[1] > 1){
-      path <- c(rep(1, z[1] - 1), path)
-      progression <- cbind(rbind(1:(z[1] - 1), rep(1, z[1] - 1)), progression)
-    }else if(z[2] > 1){
-      path <- c(rep(3, z[2] - 1), path)
-      progression <- cbind(rbind(rep(1, z[2] - 1), 1:(z[2] - 1)), progression)
-    }
-  }else if(type == 'local'){
-    # find highest score in scoring array M
-    ind <- which(M[, , 2] == max(M[, , 2]), arr.ind = TRUE)
-    z <- c(ind, 2)
-    score <- M[z[1], z[2], z[3]]
-    P[1, 1, 2] <- 4
-    while(P[z[1], z[2], z[3]] != 4){
-      path <- c(z[3], path)
-      progression <- cbind(z[1:2], progression)
-      z[3] <- P[z[1], z[2], z[3]]
-      z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+    x <- xcoded[xcoded != 0] - 1
+    y <- ycoded[ycoded != 0] - 1
+    if(identical(itertab, "WilburLipman")) {
+      itertab <- WilburLipman(x, y, arity = length(residues))
     }
   }
-  key <- "1: x aligns to gap in y, 2: match, 3: y aligns to gap in x"
-  progression <- progression - 1
-  rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
-  res <- structure(list(score = score,
-                        #alignment = alig,
-                        path = path,
-                        #firstmatch = firstmatch,
-                        progression = progression,
-                        key = key,
-                        V = M,
-                        pointer = P),
-                   class = 'Viterbi')
+  type = switch(type, "global" = 0L, "semiglobal" = 1L, "local" = 2L, stop("invalid type"))
+  n <- length(x) + 1
+  m <- length(y) + 1
+  if(!any(itertab)) itertab <- matrix(TRUE, n, m)
+  if(cpp){
+    res <- ViterbiC.default(x, y, type, d, e, S, itertab, offset)
+  } else{
+    # initialize scoring and pointer arrays (M and P)
+    M <- array(-Inf, dim = c(n, m, 3))
+    P <- M + NA
+    M[1, 1, 2] <- 0
+    if(type == 0){
+      M[, 1, 1] <- c(0, seq(from = -d, to = (- d + (n - 2) * -e), by = -e))
+      M[1, , 3] <- c(0, seq(from = -d, to = (- d + (m - 2) * -e), by = -e))
+    }else{
+      M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0 ### check this - should fill dim2 instead?
+    }
+    P[2:n, 1, 1] <- 1
+    P[1, 2:m, 3] <- 3
+    for(i in 2:n){
+      for(j in 2:m){
+        if(itertab[i, j]){
+          sij <- S[x[i - 1] + 1, y[j - 1] + 1] + offset
+          Ixcdt <- c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e))#x alig to gap in y
+          Mcdt <- c(M[i - 1, j - 1, 1] + sij,
+                    M[i - 1, j - 1, 2] + sij,
+                    M[i - 1, j - 1, 3] + sij,
+                    if(type == 2) 0 else NULL)
+          Iycdt <- c(-Inf, M[i, j - 1, 2] - (d + e), M[i, j - 1, 3] - e)
+          Ixmax <- whichismax(Ixcdt) ### could improve using nnet::which.is.max###
+          Mmax <- whichismax(Mcdt)
+          Iymax <- whichismax(Iycdt)
+          M[i, j, 1] <- Ixcdt[Ixmax]
+          M[i, j, 2] <- Mcdt[Mmax]
+          M[i, j, 3] <- Iycdt[Iymax]
+          P[i, j, 1] <- Ixmax
+          P[i, j, 2] <- Mmax
+          P[i, j, 3] <- Iymax
+        }
+      }
+    }
+    path <- c()
+    progression <- matrix(nrow = 2, ncol = 0)
+    if(type == 0){
+      # find highest score in bottom right corner of scoring array M
+      z <- c(n, m, whichismax(M[n, m, ]))
+      score <- M[z[1], z[2], z[3]]
+      while(z[1] > 1 | z[2] > 1){
+        path <- c(z[3], path)
+        progression <- cbind(z[1:2], progression)
+        z[3] <- P[z[1], z[2], z[3]]
+        z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+      }
+      #alig <- trackback(z, condition = "z[1] > 1 | z[2] > 1", P = P)
+    }else if(type == 1){
+      # find highest score on bottom row or right column of scoring array M
+      border <- rbind(M[n, , ], M[-n, m, ]) ### needs fixing, cosider M[,,2] only
+      ind <- which(border == max(border), arr.ind = TRUE)
+      if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
+      z <- if(ind[1] <= m) c(n, ind) else c(ind[1] - m, m, ind[2])
+      if(is.na(P[z[1], z[2], z[3]])) stop("alignment failed, try increasing offset")
+      score <- M[z[1], z[2], z[3]]
+      if(z[1] < n){
+        path <- rep(1, n - z[1])
+        progression <- rbind((z[1] + 1):n, rep(z[2], n - z[1]))
+      }else if(z[2] < m){
+        path <- rep(3, m - z[2])
+        progression <- rbind((z[2] + 1):m, rep(z[1], m - z[2]))
+      }
+      while(z[1] > 1 & z[2] > 1){
+        path <- c(z[3], path)
+        progression <- cbind(z[1:2], progression)
+        z[3] <- P[z[1], z[2], z[3]]
+        z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+      }
+      if(z[1] > 1){
+        path <- c(rep(1, z[1] - 1), path)
+        progression <- cbind(rbind(1:(z[1] - 1), rep(1, z[1] - 1)), progression)
+      }else if(z[2] > 1){
+        path <- c(rep(3, z[2] - 1), path)
+        progression <- cbind(rbind(rep(1, z[2] - 1), 1:(z[2] - 1)), progression)
+      }
+    }else if(type == 2){
+      # find highest score in scoring array M
+      ind <- which(M[, , 2] == max(M[, , 2]), arr.ind = TRUE)
+      z <- c(ind, 2)
+      score <- M[z[1], z[2], z[3]]
+      P[1, 1, 2] <- 4
+      while(P[z[1], z[2], z[3]] != 4){
+        path <- c(z[3], path)
+        progression <- cbind(z[1:2], progression)
+        z[3] <- P[z[1], z[2], z[3]]
+        z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+      }
+    }
+    key <- "1: x aligns to gap in y, 2: match, 3: y aligns to gap in x"
+    progression <- progression - 1
+    path <- unname(path)
+    #rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
+    res <- structure(list(score = score,
+                          #alignment = alig,
+                          path = path,
+                          #firstmatch = firstmatch,
+                          progression = progression,
+                          key = key,
+                          V = M,
+                          pointer = P),
+                     class = 'Viterbi')
+  }
   return(res)
 }

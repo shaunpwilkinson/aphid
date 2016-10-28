@@ -6,8 +6,7 @@
 \usage{
 derivePHMM(x, seqweights = NULL, residues = NULL, gapchar = "-",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  inserts = "threshold", threshold = 0.5, lambda = 0, DI = TRUE,
-  ID = TRUE)
+  inserts = "map", threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE)
 }
 \arguments{
 \item{x}{a character matrix of aligned sequences.}

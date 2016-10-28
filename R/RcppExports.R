@@ -13,6 +13,12 @@
 #' and transmission probabilities for the model(s) are logged.
 #' @name ViterbiC
 #' @export
+ViterbiC.default <- function(x, y, type, d, e, S, itertab, offset) {
+    .Call('profile_Viterbidefault', PACKAGE = 'profile', x, y, type, d, e, S, itertab, offset)
+}
+
+#' @name ViterbiC
+#' @export
 ViterbiC.HMM <- function(x, y, logspace = FALSE) {
     .Call('profile_ViterbiHMM', PACKAGE = 'profile', x, y, logspace)
 }
@@ -75,6 +81,10 @@ emissioncount <- function(states, statenumbersystem, residues, resnumbersystem) 
 
 tab9C <- function(x, seqweights) {
     .Call('profile_tab9C', PACKAGE = 'profile', x, seqweights)
+}
+
+DNA2pentadecimal <- function(x) {
+    .Call('profile_DNA2pentadecimal', PACKAGE = 'profile', x)
 }
 
 DNAprobC <- function(a, probs) {

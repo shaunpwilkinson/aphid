@@ -2,6 +2,7 @@
 using namespace Rcpp;
 
 
+
 //' Count transition frequencies.
 //'
 //' Summation of transition frequencies in an integer vector.
@@ -82,6 +83,133 @@ NumericMatrix tab9C(IntegerMatrix x, NumericVector seqweights){
   }
   return out;
 }
+
+
+// [[Rcpp::export]]
+IntegerVector DNA2pentadecimal(RawVector x){
+  // a is a vector of raw bytes in format of Paradis (2007)
+  // return order A, T, G, C, S, W, R, Y, K, M, B, V, H, D, N (same as NUC4.4)
+  // many times faster than following R function:
+  // fun <- function(v, residues){
+  //   vcoded <- integer(length(v))
+  //   for(i in seq_along(residues)) vcoded[v == residues[i]] <- i
+  //     vcoded - 1
+  // }
+  IntegerVector res(x.size());
+  RawVector tmp = RawVector::create(4, 55, 0, 136, 72, 199, 40, 24,
+                                    224, 176, 208, 112, 240, 8, 160,
+                                    144, 96, 80);
+  for(int i = 0; i < x.size(); i++){
+    if(x[i] <= tmp[0]){
+      throw Rcpp::exception("Input sequence contains gaps or unknown characters");
+    }else{
+      //Paradis order (a bit-level coding scheme for nucleotides)
+      if((x[i] & tmp[1]) == tmp[2]){ // is purine?
+        if(x[i] == tmp[3]){
+          res[i] = 0; // A
+        } else if(x[i] == tmp[4]){
+          res[i] = 2; // G
+        } else{
+          res[i] = 6; // R (A or G)
+        }
+      } else if((x[i] & tmp[5]) == tmp[2]){ // is pyrimidine?
+        if(x[i] == tmp[6]){
+          res[i] = 3; // C
+        } else if(x[i] == tmp[7]){
+          res[i] = 1; // T
+        } else{
+          res[i] = 7; // Y (C or T)
+        }
+      }else if(x[i] == tmp[14]){
+        res[i] = 9; // M (A or C)
+      }else if(x[i] == tmp[15]){
+        res[i] = 5; // W (A or T)
+      }else if(x[i] == tmp[16]){
+        res[i] = 4; // S (G or C)
+      }else if(x[i] == tmp[17]){
+        res[i] = 8; // K (G or T)
+      }else if(x[i] == tmp[8]){
+        res[i] = 11;
+        // V (A or C or G)
+      } else if(x[i] == tmp[9]){
+        res[i] = 12;
+        // H (A or C or T)
+      } else if(x[i] == tmp[10]){
+        res[i] = 13;
+        // D (A or G or T)
+      } else if(x[i] == tmp[11]){
+        res[i] = 10;
+        // B (C or G or T)
+      } else if(x[i] == tmp[12]){
+        res[i] = 14;   // N
+      } else {
+        throw Rcpp::exception("Invalid byte");
+      }
+    }
+  }
+  return(res);
+}
+
+
+// // [[Rcpp::export]]
+// IntegerVector DNA2pentadecimal(RawVector x){
+//   // a is a raw byte in format of Paradis (2007)
+//   IntegerVector res(1);
+//   RawVector tmp = RawVector::create(4, 55, 0, 136, 72, 199, 40, 24,
+//                                     224, 176, 208, 112, 240, 8, 160,
+//                                     144, 96, 80);
+//   if(x[0] <= tmp[0]){
+//     throw Rcpp::exception("Input sequence contains gaps or unknown characters");
+//   }else{
+//     //NUC4.4 order
+//     if((x[0] & tmp[1]) == tmp[2]){ // is purine?
+//       if(x[0] == tmp[3]){
+//         res[0] = 0; // A
+//       } else if(x[0] == tmp[4]){
+//         res[0] = 2; // G
+//       } else{
+//         res[0] = 6; // R (A or G)
+//       }
+//     } else if((x[0] & tmp[5]) == tmp[2]){ // is pyrimidine?
+//       if(x[0] == tmp[6]){
+//         res[0] = 3; // C
+//       } else if(x[0] == tmp[7]){
+//         res[0] = 1; // T
+//       } else{
+//         res[0] = 7; // Y (C or T)
+//       }
+//     }else if(x[0] == tmp[14]){
+//       res[0] = 9; // M (A or C)
+//     }else if(x[0] == tmp[15]){
+//       res[0] = 5; // W (A or T)
+//     }else if(x[0] == tmp[16]){
+//       res[0] = 4; // S (G or C)
+//     }else if(x[0] == tmp[17]){
+//       res[0] = 8; // K (G or T)
+//     }else if(x[0] == tmp[8]){
+//       res[0] = 11;
+//       // V (A or C or G)
+//     } else if(x[0] == tmp[9]){
+//       res[0] = 12;
+//       // H (A or C or T)
+//     } else if(x[0] == tmp[10]){
+//       res[0] = 13;
+//       // D (A or G or T)
+//     } else if(x[0] == tmp[11]){
+//       res[0] = 10;
+//       // B (C or G or T)
+//     } else if(x[0] == tmp[12]){
+//       res[0] = 14;   // N
+//     } else {
+//       throw Rcpp::exception("Invalid byte");
+//     }
+//   }
+//   return(res);
+// }
+
+
+
+
 
 
 // [[Rcpp::export]]

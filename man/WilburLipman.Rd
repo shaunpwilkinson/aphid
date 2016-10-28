@@ -4,9 +4,15 @@
 \alias{WilburLipman}
 \title{Define search space for dynammic programming.}
 \usage{
-WilburLipman(x, y, k = 4, w = 10, threshold = 5)
+WilburLipman(x, y, arity = max(c(x, y)) + 1, k = 4, w = 10,
+  threshold = 5)
 }
 \arguments{
+\item{x, y}{integer vectors.}
+
+\item{arity}{integer indicating the numbering system that x and y are coded in,
+for example 4 for DNA, 20 for proteins}
+
 \item{threshold}{the number of standard deviations above the mean
 number of k-tuple matches
 for all diagonals with k-tuple matches for a diagonal to be be considered

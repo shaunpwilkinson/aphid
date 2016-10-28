@@ -11,6 +11,10 @@ whichismax <- function(v){
 }
 
 
+progression <- function(path, startpos){
+
+}
+
 #' Detect residue alphabet.
 #'
 #' \code{"alphadetect"} performs checks on the format of the "residues" argument
@@ -28,9 +32,9 @@ alphadetect <- function(sequences, residues = NULL, gapchar = "-"){
   }
   else if(is.null(residues)){
     residues <- sort(unique(as.vector(unlist(sequences))))
-    residues <- residues[residues != gapchar]
+    if(!is.null(gapchar)) residues <- residues[residues != gapchar]
   }else{
-    residues <- residues[residues != gapchar]
+    if(!is.null(gapchar)) residues <- residues[residues != gapchar]
   }
   if(!(length(residues) > 1 & mode(residues) == "character")){
     stop("invalid residues argument")
@@ -239,18 +243,19 @@ disambiguate <- function(a, probs = rep(0.25, 4)){
 
 
 
-as.ternary.DNAbin <- function(x){
+DNA2quaternary <- function(x){
   fun <- function(v){
-    # v is a raw vector
+    # v is a raw vector in Paradis (2007) scheme, possibly containing ambiguities
+    #converts A to 0, T to 1, G to 2, and C to 3
     attr(v, "class") <- NULL
     tmp <- attributes(v)
     resv <- rep(NA, length(v))
     ambigs <- (v & as.raw(8)) != 8
     if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate)
     resv[v == 136] <- 0
-    resv[v == 40] <- 1
+    resv[v == 24] <- 1
     resv[v == 72] <- 2
-    resv[v == 24] <- 3
+    resv[v == 40] <- 3
     attributes(resv) <- tmp
     resv
   }
