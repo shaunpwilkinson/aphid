@@ -8,17 +8,17 @@
 \title{Find the optimal sequence path recursively}
 \usage{
 Viterbi(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal",
-  odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, itertab = NULL,
-  DI = TRUE, ID = TRUE, cpp = TRUE)
+  odds = TRUE, offset = 0, d = 8, e = 2, S = NULL,
+  windowspace = "all", DI = TRUE, ID = TRUE, cpp = TRUE)
 
 \method{Viterbi}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
-  type = "semiglobal", odds = TRUE, offset = 0, itertab = NULL,
+  type = "semiglobal", odds = TRUE, offset = 0, windowspace = "all",
   DI = TRUE, ID = TRUE, cpp = TRUE)
 
 \method{Viterbi}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
 
 \method{Viterbi}{default}(x, y, type = "semiglobal", d = 8, e = 2,
-  residues = NULL, gapchar = "-", S = NULL, itertab = NULL,
+  residues = NULL, gapchar = "-", S = NULL, windowspace = "all",
   offset = 0, cpp = TRUE)
 }
 \arguments{
@@ -56,14 +56,14 @@ mismatches should generally take negative values or else spurious
 alignments could occur. If NULL matches are scored as 1 and
 mismatches scored as -1.}
 
-\item{itertab}{an optional two column matrix of row and column indices used
-to iterate through a subset of the viterbi array.}
-
 \item{DI}{logical. should delete-insert transitions be allowed? Only applicable for
 objects of class \code{"PHMM"}.}
 
 \item{ID}{logical. should insert-delete transitions be allowed? Only applicable for
 objects of class \code{"PHMM"}.}
+
+\item{itertab}{an optional two column matrix of row and column indices used
+to iterate through a subset of the viterbi array.}
 }
 \description{
 \code{Viterbi} finds the optimal path of a sequence through a HMM

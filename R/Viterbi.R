@@ -42,7 +42,7 @@
 #' Viterbi(x, y,  d = 8, e = 2)
 #'
 Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal",
-                    odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, itertab = NULL,
+                    odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, windowspace = "all",
                     DI = TRUE, ID = TRUE, cpp = TRUE){
   UseMethod("Viterbi")
 }
@@ -50,11 +50,13 @@ Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal
 #' @rdname Viterbi
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "semiglobal", odds = TRUE, offset = 0,
-                         itertab = NULL, DI = TRUE, ID = TRUE, cpp = TRUE){
+                         windowspace = "all", DI = TRUE, ID = TRUE, cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
   pp <- inherits(y, "PHMM")
-  pd <- inherits(y, "DNAbin")
+  pd <- is.DNA(y)
+  pc <- !pp & !pd
+
   if(pd){
     x$E <- x$E[order(rownames(x$E)),]
     if(!(identical(rownames(x$E), c("a", "c", "g", "t")) |
@@ -62,24 +64,25 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       stop("invalid model, residue alphabet does not correspond to
            ordered nucleotide alphabet")
     }
-    if(is.list(y)) y <- y[[1]]
-    if(is.matrix(y)){
-      if(nrow(y) == 1) {
-        y <- as.vector(y)
-      } else {
-        stop("Viterbi can only process one sequence at a time")
-      }
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+        class(y) <- "DNAbin"
+      }else stop("Invalid input object y: multi-sequence list")
     }
+    #y <- DNA2pentadecimal(y)
+  }else if(pc){
+    residues <- rownames(x$E)
+    ycoded <- integer(length(y))
+    for(i in seq_along(residues)) ycoded[y == residues[i]] <- i
+    y <- ycoded[ycoded != 0] - 1
   }
   n <- ncol(x$E) + 1
   m <- if(pp) ncol(y$E) + 1 else length(y) + 1
-  if(identical(itertab, "WilburLipman")) itertab <- NULL ### placeholder
-  if(!any(itertab)) itertab <- matrix(TRUE, n, m)
+  if(identical(windowspace, "WilburLipman") | identical(windowspace, "all")){
+    windowspace <- c(-x$size, if(pp) y$size else length(y)) ### placeholder
+  }else if(length(windowspace) != 2) stop("invalid windowspace argument")
   states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
-  V <- array(-Inf, dim = c(n, m, length(states)),
-             dimnames = list(x = 0:(n - 1), y = 0:(m - 1), state = states))
-  # pointer array
-  P <- V + NA
   # background emission probabilities
   if(!(is.null(qe))){
     if(all(qe >= 0) & all(qe <= 1)) qe <- log(qe)
@@ -105,6 +108,14 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       names(qe) <- rownames(x$E)
     }
   }
+  type = switch(type, "global" = 0L, "semiglobal" = 1L, "local" = 2L, stop("invalid type"))
+  #
+  # start cpp functions here
+  #
+  V <- array(-Inf, dim = c(n, m, length(states)),
+             dimnames = list(x = 0:(n - 1), y = 0:(m - 1), state = states))
+  # pointer array
+  P <- V + NA
   # fill scoring and pointer arrays. Key: D = 1, M = 2, I = 3
   if(pp){
     if(!odds) stop("Full (log) probability scores for PHMM-PHMM alignment are
@@ -132,7 +143,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     for(i in 2:n){
       for(j in 2:m){
-        if(itertab[i, j]){
+        if(j - i >= windowspace[1] & j - i <= windowspace[2]){
           sij <- Saa[i - 1, j - 1] + offset
           MIcdt <- c(V[i - 1, j, "MM"] + Ax["MM", i - 1] + Ay["MI", j],
                      V[i - 1, j, "MI"] + Ax["MM", i - 1] + Ay["II", j])
@@ -234,7 +245,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     P[, 1, 1] <- c(NA, 2, rep(1, n - 2))
     P[1, , 3] <- c(NA, 2, rep(3, m - 2))
     V[1, 1, 2] <- 0
-    if(type == "global"){
+    if(type == 0){
       V[-1, 1, 1] <- cumsum(c(0, A["DD", 2:(n - 1)])) + A["MD", 1]
       #V[2, 1, "D"] <- A["MD", 1]
       #for(i in 3:n) V[i, 1, "D"] <- V[i - 1, 1, "D"] + A["DD", i - 1]
@@ -245,11 +256,11 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     for(i in 2:n){
       for(j in 2:m){
-        if(itertab[i, j]){
+        if(j - i >= windowspace[1] & j - i <= windowspace[2]){
           if(pd){
             sij <- DNAprobC(y[j - 1], Saa[, i - 1]) + offset
           } else{
-            sij <- Saa[y[j - 1], i - 1] + offset
+            sij <- Saa[y[j - 1] + 1, i - 1] + offset
           }
           Dcdt <- c(V[i - 1, j, "D"] + A["DD", i - 1],
                     V[i - 1, j, "M"] + A["MD", i - 1],
@@ -257,7 +268,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           Mcdt <- c(V[i - 1, j - 1, "D"] + A["DM", i - 1] + sij,
                     V[i - 1, j - 1, "M"] + A["MM", i - 1] + sij,
                     V[i - 1, j - 1, "I"] + A["IM", i - 1] + sij,
-                    if(type == "local") 0 else NULL)
+                    if(type == 2) 0 else NULL)
           Icdt <- c(if(DI) V[i, j - 1, "D"] + A["DI", i] else -Inf,
                     V[i, j - 1, "M"] + A["MI", i],
                     V[i, j - 1, "I"] + A["II", i])
@@ -275,7 +286,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     path <- c()
     progression <- c()
-    if(type == 'global'){
+    if(type == 0){
       LLcdt <- c(V[n, m, "D"] + A["DM", n],
                  V[n, m, "M"] + A["MM", n],
                  V[n, m, "I"] + A["IM", n])
@@ -288,7 +299,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         z[3] <- P[z[1], z[2], z[3]]
         z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
       }
-    }else if (type == 'semiglobal'){
+      startposition = c(1, 1)
+    }else if (type == 1){
       tmp <- V[, , "M"]
       tmp[1:(n - 1), 1:(m - 1)] <- -Inf
       ind <- which(tmp == max(tmp), arr.ind = TRUE)
@@ -315,9 +327,12 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         path <- c(rep(3, z[2] - 1), path)
         progression <- c(rep(1, z[2] - 1), progression)
       }
-    }else{
+      startposition = c(1, 1)
+    }else if(type == 2){
       ind <- which(V[, , "M"] == max(V[, , "M"]), arr.ind = TRUE)
       if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
+      if(V[ind[1], ind[2], "M"] == 0) stop("alignment failed, try increasing
+                                           offset or changing type")
       z <- c(ind, 2)
       score <- V[z[1], z[2], z[3]]
       P[1, 1, "M"] <- 4
@@ -327,14 +342,17 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         z[3] <- P[z[1], z[2], z[3]]
         z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
       }
+      startposition = z[1:2]
     }
-    key <- "1 = delete, 2 = match, 3 = insert"
+    #key: "1 = delete, 2 = match, 3 = insert"
   }
   progression <- progression - 1 #to account for 0 row
+  path <- path - 1
   res <- structure(list(score = score,
                         path = path,
                         progression = progression,
-                        key = key,
+                        start = startposition,
+                        #key = key,
                         V = V,
                         pointer = P),
                    class = 'Viterbi')
@@ -379,159 +397,17 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
 }
 
 
-#' @rdname Viterbi
-# Viterbi.DNAbin <- function(x, y, type = 'semiglobal', d = 8, e = 2,
-#                             S = NULL, itertab = NULL, offset = 0, cpp = TRUE){
-#   ###check that x is a character vector###
-#   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
-#   if(!inherits(y, "DNAbin")) stop("second argument (y) must also be of class 'DNAbin'")
-#   if(is.list(x)){
-#     if(length(x) == 1){
-#       tmp <- attributes(x)
-#       x <- x[[1]]
-#       attributes(x) <- tmp
-#     }else stop("Invalid input: multi-sequence list")
-#   }
-#   if(is.list(y)){
-#     if(length(y) == 1){
-#       tmp <- attributes(y)
-#       y <- y[[1]]
-#       attributes(y) <- tmp
-#     }else stop("Invalid input: multi-sequence list")
-#   }
-#   #class(x) <- class(y) <- NULL
-#   n <- length(x) + 1
-#   m <- length(y) + 1
-#   if(identical(itertab, "WilburLipman")) itertab = WilburLipman(x, y)
-#   if(!any(itertab)) itertab <- matrix(TRUE, n, m)
-#   if(is.null(S)){
-#     S <- NUC4.4
-#     #S <- diag(2, nrow = 4) - 1
-#   }else{
-#     if(nrow(S) != ncol(S) & nrow(S) != 15) stop("Invalid scoring matrix (S)")
-#     ### also check names order
-#   }
-#   guide <- as.raw(c(136, 24, 72, 40, 96, 144, 192, 48, 80, 160, 112, 224, 176, 208, 240))
-#   # initialize scoring and pointer arrays (M and P)
-#   M <- array(-Inf, dim = c(n, m, 3))
-#   P <- M + NA
-#   M[1, 1, 2] <- 0
-#   if(type == 'global'){
-#     M[, 1, 1] <- c(0, seq(from = -d, to = (- d + (n - 2) * -e), by = -e))
-#     M[1, , 3] <- c(0, seq(from = -d, to = (- d + (m - 2) * -e), by = -e))
-#   }else{
-#     M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0 ### check this - should fill dim2 instead?
-#   }
-#   P[2:n, 1, 1] <- 1
-#   P[1, 2:m, 3] <- 3
-#   # convert x and y to 15-ary so don't need guide = guide arg in cpp func?
-#   #res <- Viterbi1(x, y, S, type = "semiglobal", offset = 0, d, e, itertab)
-#   for(i in 2:n){
-#     for(j in 2:m){
-#       if(itertab[i, j]){
-#         ###
-#         #sij <-  S[x[i - 1], y[j - 1]] + offset
-#         sij <-  S[match(x[i - 1], guide), match(y[j - 1], guide)] + offset
-#         ###
-#         Ixcdt <- c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e))#x alig to gap in y
-#         Mcdt <- c(M[i - 1, j - 1, 1] + sij,
-#                   M[i - 1, j - 1, 2] + sij,
-#                   M[i - 1, j - 1, 3] + sij,
-#                   if(type == 'local') 0 else NULL)
-#         Iycdt <- c(-Inf, M[i, j - 1, 2] - (d + e), M[i, j - 1, 3] - e)
-#         Ixmax <- whichismax(Ixcdt)
-#         Mmax <- whichismax(Mcdt)
-#         Iymax <- whichismax(Iycdt)
-#         M[i, j, 1] <- Ixcdt[Ixmax]
-#         M[i, j, 2] <- Mcdt[Mmax]
-#         M[i, j, 3] <- Iycdt[Iymax]
-#         P[i, j, 1] <- Ixmax
-#         P[i, j, 2] <- Mmax
-#         P[i, j, 3] <- Iymax
-#       }
-#     }
-#   }
-#   path <- c()
-#   progression <- matrix(nrow = 2, ncol = 0)
-#   if(type == 'global'){
-#     # find highest score in bottom right corner of scoring array M
-#     z <- c(n, m, whichismax(M[n, m, ]))
-#     score <- M[z[1], z[2], z[3]]
-#     while(z[1] > 1 | z[2] > 1){
-#       path <- c(z[3], path)
-#       progression <- cbind(z[1:2], progression)
-#       z[3] <- P[z[1], z[2], z[3]]
-#       z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
-#     }
-#     #alig <- trackback(z, condition = "z[1] > 1 | z[2] > 1", P = P)
-#   }else if(type == 'semiglobal'){
-#     # find highest score on bottom row or right column of scoring array M
-#     border <- rbind(M[n, , ], M[-n, m, ])
-#     ind <- which(border == max(border), arr.ind = TRUE)
-#     if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
-#     z <- if(ind[1] <= m) c(n, ind) else c(ind[1] - m, m, ind[2])
-#     if(is.na(P[z[1], z[2], z[3]])) stop("alignment failed, try increasing offset")
-#     score <- M[z[1], z[2], z[3]]
-#     if(z[1] < n){
-#       path <- rep(1, n - z[1])
-#       progression <- rbind((z[1] + 1):n, rep(z[2], n - z[1]))
-#     }else if(z[2] < m){
-#       path <- rep(3, m - z[2])
-#       progression <- rbind((z[2] + 1):m, rep(z[1], m - z[2]))
-#     }
-#     while(z[1] > 1 & z[2] > 1){
-#       path <- c(z[3], path)
-#       progression <- cbind(z[1:2], progression)
-#       z[3] <- P[z[1], z[2], z[3]]
-#       z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
-#     }
-#     if(z[1] > 1){
-#       path <- c(rep(1, z[1] - 1), path)
-#       progression <- cbind(rbind(1:(z[1] - 1), rep(1, z[1] - 1)), progression)
-#     }else if(z[2] > 1){
-#       path <- c(rep(3, z[2] - 1), path)
-#       progression <- cbind(rbind(rep(1, z[2] - 1), 1:(z[2] - 1)), progression)
-#     }
-#   }else if(type == 'local'){
-#     # find highest score in scoring array M
-#     ind <- which(M[, , 2] == max(M[, , 2]), arr.ind = TRUE)
-#     z <- c(ind, 2)
-#     score <- M[z[1], z[2], z[3]]
-#     P[1, 1, 2] <- 4
-#     while(P[z[1], z[2], z[3]] != 4){
-#       path <- c(z[3], path)
-#       progression <- cbind(z[1:2], progression)
-#       z[3] <- P[z[1], z[2], z[3]]
-#       z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
-#     }
-#   }
-#   key <- "1: x aligns to gap in y, 2: match, 3: y aligns to gap in x"
-#   progression <- progression - 1
-#   #rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
-#   rownames(progression) <- c("x", "y") ### fix
-#   res <- structure(list(score = score,
-#                         #alignment = alig,
-#                         path = path,
-#                         #firstmatch = firstmatch,
-#                         progression = progression,
-#                         key = key,
-#                         V = M,
-#                         pointer = P),
-#                    class = 'Viterbi')
-#   return(res)
-# }
-
-
 
 #' @rdname Viterbi
 Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
                             residues = NULL, gapchar = "-", S = NULL,
-                            itertab = NULL, offset = 0, cpp = TRUE){
+                            windowspace = "all",
+                            offset = 0, cpp = TRUE){
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
-  DNA <- inherits(x, "DNAbin")
+  DNA <- is.DNA(x)
   if(DNA){
-    if(!inherits(y, "DNAbin")) stop("x is a DNAbin object but y is not")
-    # changes here need also apply in alignpair
+    if(!is.DNA(y)) stop("x is a DNAbin object but y is not")
+    # changes here need also apply in Viterbi.PHMM, alignpair
     if(is.list(x)){
       if(length(x) == 1){
         x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
@@ -555,11 +431,15 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
       }
     }
     #residues <- as.raw(c(136, 24, 72, 40, 96, 144, 192, 48, 80, 160, 112, 224, 176, 208, 240))
-    if(identical(itertab, "WilburLipman")){
-      itertab <- WilburLipman(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
-    }
+    if(identical(windowspace, "WilburLipman")){
+      windowspace <- WilburLipman(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
+    }else if(identical(windowspace, "all")){
+      windowspace <- c(-length(x), length (y))
+    }else if(length(windowspace) != 2) stop("invalid windowspace argument")
     x <- DNA2pentadecimal(x)
     y <- DNA2pentadecimal(y)
+    x <- x[!is.na(x)]
+    y <- y[!is.na(y)]
   }else{
     if(is.null(S)){
       residues <- alphadetect(list(x, y), residues = residues, gapchar = gapchar)
@@ -578,16 +458,18 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
     }
     x <- xcoded[xcoded != 0] - 1
     y <- ycoded[ycoded != 0] - 1
-    if(identical(itertab, "WilburLipman")) {
-      itertab <- WilburLipman(x, y, arity = length(residues))
-    }
+    if(identical(windowspace, "WilburLipman")) {
+      windowspace <- WilburLipman(x, y, arity = length(residues))
+    }else if(identical(windowspace, "all")){
+      windowspace <- c(-length(x), length (y))
+    }else if(length(windowspace) != 2) stop("invalid windowspace argument")
   }
   type = switch(type, "global" = 0L, "semiglobal" = 1L, "local" = 2L, stop("invalid type"))
   n <- length(x) + 1
   m <- length(y) + 1
-  if(!any(itertab)) itertab <- matrix(TRUE, n, m)
+  #if(!any(itertab)) itertab <- matrix(TRUE, n, m)
   if(cpp){
-    res <- ViterbiC.default(x, y, type, d, e, S, itertab, offset)
+    res <- ViterbiC.default(x, y, type, d, e, S, windowspace, offset)
   } else{
     # initialize scoring and pointer arrays (M and P)
     M <- array(-Inf, dim = c(n, m, 3))
@@ -603,7 +485,8 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
     P[1, 2:m, 3] <- 3
     for(i in 2:n){
       for(j in 2:m){
-        if(itertab[i, j]){
+        #if(itertab[i, j]){
+        if(j - i >= windowspace[1] & j - i <= windowspace[2]){
           sij <- S[x[i - 1] + 1, y[j - 1] + 1] + offset
           Ixcdt <- c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e))#x alig to gap in y
           Mcdt <- c(M[i - 1, j - 1, 1] + sij,
@@ -636,6 +519,7 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
         z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
       }
       #alig <- trackback(z, condition = "z[1] > 1 | z[2] > 1", P = P)
+      startposition <- c(1, 1)
     }else if(type == 1){
       # find highest score on bottom row or right column of scoring array M
       border <- rbind(M[n, , ], M[-n, m, ]) ### needs fixing, cosider M[,,2] only
@@ -664,6 +548,7 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
         path <- c(rep(3, z[2] - 1), path)
         progression <- cbind(rbind(rep(1, z[2] - 1), 1:(z[2] - 1)), progression)
       }
+      startposition <- c(1, 1)
     }else if(type == 2){
       # find highest score in scoring array M
       ind <- which(M[, , 2] == max(M[, , 2]), arr.ind = TRUE)
@@ -676,14 +561,16 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
         z[3] <- P[z[1], z[2], z[3]]
         z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
       }
+      startposition <- z[1:2]
     }
     key <- "1: x aligns to gap in y, 2: match, 3: y aligns to gap in x"
     progression <- progression - 1
-    path <- unname(path)
+    path <- unname(path) - 1
     #rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
     res <- structure(list(score = score,
                           #alignment = alig,
                           path = path,
+                          start = startposition,
                           #firstmatch = firstmatch,
                           progression = progression,
                           key = key,

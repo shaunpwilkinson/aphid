@@ -13,8 +13,8 @@
 #' and transmission probabilities for the model(s) are logged.
 #' @name ViterbiC
 #' @export
-ViterbiC.default <- function(x, y, type, d, e, S, itertab, offset) {
-    .Call('profile_Viterbidefault', PACKAGE = 'profile', x, y, type, d, e, S, itertab, offset)
+ViterbiC.default <- function(x, y, type, d, e, S, windowspace, offset) {
+    .Call('profile_Viterbidefault', PACKAGE = 'profile', x, y, type, d, e, S, windowspace, offset)
 }
 
 #' @name ViterbiC
@@ -61,6 +61,14 @@ mapC <- function(ecs, notgaps, pseudocounts, seqweights, qe, lambda = 0) {
 
 returnmod <- function(x) {
     .Call('profile_returnmod', PACKAGE = 'profile', x)
+}
+
+progression <- function(path, start) {
+    .Call('profile_progression', PACKAGE = 'profile', path, start)
+}
+
+progression2 <- function(path, start) {
+    .Call('profile_progression2', PACKAGE = 'profile', path, start)
 }
 
 #' Count transition frequencies.

@@ -4,7 +4,7 @@
 \alias{align}
 \title{Multiple sequence alignment.}
 \usage{
-align(sequences, type = "global", residues = NULL, gapchar = "-",
+align(sequences, type = "semiglobal", residues = NULL, gapchar = "-",
   DI = FALSE, ID = FALSE, refine = "Viterbi", quiet = TRUE, ...)
 }
 \arguments{
@@ -35,6 +35,8 @@ to the tendency to converge to suboptimal local optima.}
 \item{refine}{the method used to refine the model following progressive alignment.
 Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
 Baum Welch parameter optimization (\code{refine = "BaumWelch"}).}
+
+\item{...}{aditional arguments to pass to \code{"train"}.}
 }
 \description{
 \code{align} finds the optimal alignment for a list of sequences using a hybrid

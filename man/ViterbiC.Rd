@@ -7,7 +7,7 @@
 \alias{ViterbiC.default}
 \title{Optimal path of sequence through model.}
 \usage{
-\method{ViterbiC}{default}(x, y, type, d, e, S, itertab, offset)
+\method{ViterbiC}{default}(x, y, type, d, e, S, windowspace, offset)
 
 \method{ViterbiC}{HMM}(x, y, logspace = FALSE)
 

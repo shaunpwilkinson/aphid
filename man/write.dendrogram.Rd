@@ -2,7 +2,7 @@
 % Please edit documentation in R/write.R
 \name{write.dendrogram}
 \alias{write.dendrogram}
-\title{Write dendrogram to Newick string}
+\title{Write dendrogram as a Newick string.}
 \usage{
 write.dendrogram(x, file = "", append = FALSE, strip.edges = FALSE,
   dec.places = 2)
@@ -16,14 +16,14 @@ If no file path is specified or \code{file = ""} the result will be printed to t
 \item{append}{a logical value indicating whether the output should be appended to the file.
 If \code{append = FALSE} the contents of the file will be overwritten (the default setting).}
 
-\item{strip.edges}{a logical value indicating whether edge weights should be 
+\item{strip.edges}{a logical value indicating whether edge weights should be
 removed from the output.}
 
-\item{dec.places}{an integer incidating how many decimal places the edge weights should 
+\item{dec.places}{an integer incidating how many decimal places the edge weights should
 be rounded to.}
 }
 \description{
-Writes a dendrogram object to a file or connection in Newick 
+Writes a dendrogram object to a file or connection in Newick
 (New Hampshire) format.
 }
 \examples{
@@ -33,7 +33,7 @@ write.dendrogram(arrests.den)
 
 }
 \seealso{
-\code{\link{read.dendrogram}} to create a \code{"dendrogram"} object from a 
+\code{\link{read.dendrogram}} to create a \code{"dendrogram"} object from a
 text file.
 }
 

@@ -26,9 +26,10 @@
 #' in the profile HMM. Defaults to FALSE, and similar to DI, not recommended for small
 #' training sets when \code{refine = "BaumWelch"} due
 #' to the tendency to converge to suboptimal local optima.
+#' @param ... aditional arguments to pass to \code{"train"}.
 #'
 #'
-align <- function(sequences, type = "global", residues = NULL,
+align <- function(sequences, type = "semiglobal", residues = NULL,
                   gapchar = "-", DI = FALSE, ID = FALSE, refine = "Viterbi",
                   quiet = TRUE, ...){
   if(!(is.list(sequences))) stop("invalid 'sequences' argument")
@@ -36,16 +37,17 @@ align <- function(sequences, type = "global", residues = NULL,
   if(is.null(attr(sequences, "names"))) names(sequences) <- paste0("SEQ", 1:nsq)
   # seqlengths <- sapply(sequences, length)
   # nmodules <- round(mean(seqlengths))
+  DNA <- is.DNA(sequences)
   residues <- alphadetect(sequences, residues = residues, gapchar = gapchar)
-  fun <- Vectorize(function(i, j) kmer(sequences[[i]], sequences[[j]]))
-  qds <- outer(1:nsq, 1:nsq, fun)
-  ### need to speed this up in C++
-  dimnames(qds) <- list(names(sequences),names(sequences))
-  guidetree <- as.dendrogram(hclust(as.dist(qds), method = "average"))
+  if(DNA) gapchar <- as.raw(4)
+  for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
+  qds <- kdist(sequences)
+  guidetree <- as.dendrogram(hclust(qds, method = "average"))
   newick <- write.dendrogram(guidetree, strip.edges = TRUE)
   newick <- gsub(";", "", newick)
   newick <- gsub("\\(", "alignpair\\(", newick)
-  if(type == 'semiglobal') newick <- gsub("\\)", ", type = 'semiglobal'\\)", newick)
+  if(type == 'global') newick <- gsub("\\)", ", type = 'global'\\)", newick)
+
   msa1 <- with(sequences, eval(parse(text = newick)))
   omniphmm <- derivePHMM(msa1, DI = DI, ID = ID, pseudocounts = "background") ### inserts = map?
   if(refine == "Viterbi"){
@@ -93,51 +95,49 @@ align <- function(sequences, type = "global", residues = NULL,
 #' alignpair(x, z)
 #'
 alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
-                      type = "semiglobal",
-                      offset = -0.1, itertab = NULL, pseudocounts = "background",
+                      type = "semiglobal", offset = 0, windowspace = "all",
+                      pseudocounts = "background",
                       residues = "autodetect", gapchar = "-"){
-  if(inherits(x, "DNAbin")){
-    if(!inherits(y, "DNAbin")) stop("class(x) and class(y) must match")
+  DNA <- is.DNA(x)
+  if(DNA){
+    if(!is.DNA(y)) stop("class(x) and class(y) must match")
     gapchar <- as.raw(4)
-    # changes here need also apply in alignpair
+    # changes here need also apply in Viterbi.default and Viterbi.PHMM
     if(is.list(x)){
       if(length(x) == 1){
-        #xnames <- names(x) # cache names for result rownames
-        #tmp <- attributes(x)[]
-        x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
+        if(!is.matrix(x)) x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
         class(x) <- "DNAbin"
-        #attributes(x) <- tmp
       }else stop("Invalid input: multi-sequence list")
+    }else{
+      if(!is.matrix(x)) x <- matrix(x, nrow = 1, dimnames = list(deparse(substitute(x)), NULL))
+      class(x) <- "DNAbin"
     }
     if(is.list(y)){
       if(length(y) == 1){
-        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+        if(!is.matrix(y)) y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
         class(y) <- "DNAbin"
-        #tmp <- attributes(y)
-        #y <- y[[1]]
-        #attributes(y) <- tmp
       }else stop("Invalid input: multi-sequence list")
+    }else{
+      if(!is.matrix(y)) y <- matrix(y, nrow = 1, dimnames = list(deparse(substitute(y)), NULL))
+      class(y) <- "DNAbin"
     }
-    DNA <- TRUE
-  }else {
+  }else{
     if(!is.matrix(x)){
       x <- matrix(x, nrow = 1, dimnames = list(deparse(substitute(x)), NULL))
     }
     if(!is.matrix(y)){
       y <- matrix(y, nrow = 1, dimnames = list(deparse(substitute(y)), NULL))
     }
-    DNA <- FALSE
   }
-  #if(is.list(x) | is.list(y)) stop("invalid arguments provided for x and or y")
   if(nrow(x) == 1 & nrow(y) == 1){
-    alig <- Viterbi(x, y, d = d, e = e, S = S, type = type, itertab = itertab)
+    alig <- Viterbi(x, y, d = d, e = e, S = S, type = type, windowspace = windowspace)
     #, offset = offset) ###not necessary for vec vs vec
     xind <- yind <- alig$path
-    xind[alig$path != 3] <- 1:length(x)
-    xind[alig$path == 3] <- 0
+    xind[alig$path != 2] <- 1:length(x)
+    xind[alig$path == 2] <- 0
     newx <- c(gapchar, as.vector(x))[xind + 1]
-    yind[alig$path != 1] <- 1:length(y)
-    yind[alig$path == 1] <- 0
+    yind[alig$path != 0] <- 1:length(y)
+    yind[alig$path == 0] <- 0
     newy <- c(gapchar, as.vector(y))[yind + 1]
     res <- rbind(newx, newy)
     rownames(res) <- c(rownames(x), rownames(y))
@@ -151,18 +151,18 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
       rm(tmp) # the old switcharoo
     }
     #if(identical(residues, "autodetect")) residues <- sort(unique(c(as.vector(x), y)))
-    residues <- alphadetect(x, residues = residues, gapchar = gapchar)
+    #residues <- alphadetect(x, residues = residues, gapchar = gapchar)
     n <- nrow(x)
     z <- derivePHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     l <- z$size
     alig <- Viterbi(z, y, qe = qe, logspace = TRUE, type = type,
-                    offset = offset, itertab = itertab)
+                    offset = offset, windowspace = windowspace)
     yind <- alig$path
-    yind[alig$path != 1] <- 1:length(y)
-    yind[alig$path == 1] <- 0
+    yind[alig$path != 0] <- 1:length(y)
+    yind[alig$path == 0] <- 0
     newy <- c(gapchar, y)[yind + 1]
     #also need to account for inserts in x
-    ynotinsert <- alig$path != 3 #logical vector
+    ynotinsert <- alig$path != 2 #logical vector
     yinsertlengths <- insertlengths(ynotinsert) #tabulate insert lengths
     xinsertlengths <- z$insertlengths
     #reconcile x and y insert lengths
@@ -178,7 +178,8 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     if(any(diffsy < 0)){
       diffsy[diffsy > 0] <- 0
       #align y to model
-      yprog <- alig$progression
+      #yprog <- alig$progression
+      yprog <- progression(alig$path, alig$start)[1, ]
       ygls <- -1 * diffsy[diffsy < 0]
       ygps <- sapply(which(diffsy < 0), match, c(yprog, l + 1)) - 1
       newy <- insertgaps(newy, ygps, ygls, gapchar = gapchar)
@@ -187,7 +188,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     #rownames(res)[n + 1] <- tmp1
     return(res)
   }else if(nrow(x) > 1 & nrow(y) > 1){
-    residues <- alphadetect(x, residues = residues, gapchar = gapchar)
+    #residues <- alphadetect(x, residues = residues, gapchar = gapchar)
     nx <- nrow(x)
     ny <- nrow(y)
     zx <- derivePHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
@@ -195,11 +196,11 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     lx <- zx$size
     ly <- zy$size
     alig <- Viterbi(zx, zy, qe = qe, logspace = TRUE, type = type,
-                    offset = offset, itertab = itertab)
+                    offset = offset, windowspace = windowspace)
     #vectors same length as model (+ 1 for begin state) with counts of
     #no of gaps to insert after each position
-    xinsertlengths <- insertlengths(alig$path < 4) - zx$insertlengths
-    yinsertlengths <- insertlengths(alig$path > 2) - zy$insertlengths
+    xinsertlengths <- insertlengths(alig$path < 3) - zx$insertlengths
+    yinsertlengths <- insertlengths(alig$path > 1) - zy$insertlengths
     #these vecs correspond to orig alig cols,
     #keeps track of how many gaps to insert after each
     resx <- rep(0, ncol(x) + 1)
@@ -210,7 +211,8 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     zyali <- c(0, zy$alignment, ncol(y) + 1)
     names(zxali) <- 0:(lx + 1)
     names(zyali) <- 0:(ly + 1) # includes begin and end states
-    prog <- alig$progression
+    #prog <- alig$progression
+    prog <- progression2(alig$path, alig$start)
     if(!(all(prog[, 1] == 0))) prog <- cbind(c(0, 0), prog)
     ypve <- which(yinsertlengths > 0)
     ynve <- which(yinsertlengths < 0)
@@ -260,7 +262,8 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
 #'
 align2phmm <- function(sequences, model, gapchar = "-", ...){
   #note changes here also need apply to 'train'
-  DNA <- inherits(sequences, "DNAbin")
+  stopifnot(class(model) == "PHMM")
+  DNA <- is.DNA(sequences)
   if(DNA) gapchar <- as.raw(4)
   if(is.list(sequences)){
   }else if(DNA){
@@ -304,15 +307,15 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
   colnames(out) <- rep("I", 2 * model$size + 1)
   colnames(out)[seq(2, 2 * model$size, by = 2)] <- 1:model$size
   for(i in 1:length(sequences)){
-    alignment <- Viterbi(model, sequences[i], type = 'global', ...)
+    alignment <- Viterbi(model, sequences[i], type = "global", ...)
     if(DNA){
       newrow <- rep("-", length(alignment$path))
-      newrow[alignment$path > 1] <- ape::as.character.DNAbin(sequences[[i]])
+      newrow[alignment$path > 0] <- ape::as.character.DNAbin(sequences[[i]])
     }else{
       newrow <- rep(gapchar, length(alignment$path))
-      newrow[alignment$path > 1] <- sequences[[i]]
+      newrow[alignment$path > 0] <- sequences[[i]]
     }
-    inserts <- alignment$path == 3
+    inserts <- alignment$path == 2
     if(any(inserts)){
       itp <- apply(rbind(c(F, inserts), c(inserts, F)), 2, decimal, 2)
       ist <- which(itp == 1)

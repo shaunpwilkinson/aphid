@@ -5,7 +5,7 @@
 \title{Pairwise alignment of sequences and/or multiple sequence alignments.}
 \usage{
 alignpair(x, y, d = 8, e = 2, S = NULL, qe = NULL,
-  type = "semiglobal", offset = -0.1, itertab = NULL,
+  type = "semiglobal", offset = 0, windowspace = "all",
   pseudocounts = "background", residues = "autodetect", gapchar = "-")
 }
 \arguments{

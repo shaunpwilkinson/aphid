@@ -15,7 +15,7 @@ using namespace Rcpp;
 // [[Rcpp::export(name = "ViterbiC.default")]]
 List Viterbidefault(IntegerVector x, IntegerVector y,
                     int type, double d, double e, NumericMatrix S,
-                    LogicalMatrix itertab, double offset){
+                    IntegerVector windowspace, double offset){
 
   int n = x.size() + 1;
   int m = y.size() + 1;
@@ -56,7 +56,7 @@ List Viterbidefault(IntegerVector x, IntegerVector y,
   // recursion
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
-      if(itertab(i, j)){
+      if(j - i >= windowspace[0] & j - i <= windowspace[1]){
         sij = S(x[i - 1], y[j - 1]) + offset;
         IXcdt[0] = MIX(i - 1, j) - e;
         IXcdt[1] = MMM(i - 1, j) - (d + e);

@@ -1,6 +1,47 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+// [[Rcpp::export]]
+IntegerMatrix progression(IntegerVector path, IntegerVector start){
+  IntegerMatrix res(2, path.size());
+  res(_, 0) = start;
+  int xpos = start[0];
+  int ypos = start[1];
+  for(int i = 0; i < path.size() - 1; i ++){
+    if(path[i] == 1){
+      xpos++;
+      ypos++;
+    }else if(path[i] == 0){
+      xpos++;
+    }else if(path[i] == 2){
+      ypos++;
+    }else throw Rcpp::exception("path contains unknown elements");
+    res (0, i + 1) = xpos;
+    res (1, i + 1) = ypos;
+  }
+  return(res);
+}
+
+// [[Rcpp::export]]
+IntegerMatrix progression2(IntegerVector path, IntegerVector start){
+  IntegerMatrix res(2, path.size());
+  res(_, 0) = start;
+  int xpos = start[0];
+  int ypos = start[1];
+  for(int i = 0; i < path.size() - 1; i ++){
+    if(path[i] == 2){
+      xpos++;
+      ypos++;
+    }else if(path[i] < 2){
+      xpos++;
+    }else if(path[i] > 2){
+      ypos++;
+    }
+    res (0, i + 1) = xpos;
+    res (1, i + 1) = ypos;
+  }
+  return(res);
+}
 
 
 //' Count transition frequencies.
@@ -98,53 +139,50 @@ IntegerVector DNA2pentadecimal(RawVector x){
   IntegerVector res(x.size());
   RawVector tmp = RawVector::create(4, 55, 0, 136, 72, 199, 40, 24,
                                     224, 176, 208, 112, 240, 8, 160,
-                                    144, 96, 80);
+                                    144, 96, 80, 2);
   for(int i = 0; i < x.size(); i++){
-    if(x[i] <= tmp[0]){
-      throw Rcpp::exception("Input sequence contains gaps or unknown characters");
-    }else{
-      //Paradis order (a bit-level coding scheme for nucleotides)
-      if((x[i] & tmp[1]) == tmp[2]){ // is purine?
-        if(x[i] == tmp[3]){
-          res[i] = 0; // A
-        } else if(x[i] == tmp[4]){
-          res[i] = 2; // G
-        } else{
-          res[i] = 6; // R (A or G)
-        }
-      } else if((x[i] & tmp[5]) == tmp[2]){ // is pyrimidine?
-        if(x[i] == tmp[6]){
-          res[i] = 3; // C
-        } else if(x[i] == tmp[7]){
-          res[i] = 1; // T
-        } else{
-          res[i] = 7; // Y (C or T)
-        }
-      }else if(x[i] == tmp[14]){
-        res[i] = 9; // M (A or C)
-      }else if(x[i] == tmp[15]){
-        res[i] = 5; // W (A or T)
-      }else if(x[i] == tmp[16]){
-        res[i] = 4; // S (G or C)
-      }else if(x[i] == tmp[17]){
-        res[i] = 8; // K (G or T)
-      }else if(x[i] == tmp[8]){
-        res[i] = 11;
-        // V (A or C or G)
-      } else if(x[i] == tmp[9]){
-        res[i] = 12;
-        // H (A or C or T)
-      } else if(x[i] == tmp[10]){
-        res[i] = 13;
-        // D (A or G or T)
-      } else if(x[i] == tmp[11]){
-        res[i] = 10;
-        // B (C or G or T)
-      } else if(x[i] == tmp[12]){
-        res[i] = 14;   // N
-      } else {
-        throw Rcpp::exception("Invalid byte");
+    if((x[i] & tmp[1]) == tmp[2]){ // is purine?
+      if(x[i] == tmp[3]){
+        res[i] = 0; // A
+      } else if(x[i] == tmp[4]){
+        res[i] = 2; // G
+      } else{
+        res[i] = 6; // R (A or G)
       }
+    } else if((x[i] & tmp[5]) == tmp[2]){ // is pyrimidine?
+      if(x[i] == tmp[6]){
+        res[i] = 3; // C
+      } else if(x[i] == tmp[7]){
+        res[i] = 1; // T
+      } else{
+        res[i] = 7; // Y (C or T)
+      }
+    }else if(x[i] == tmp[14]){
+      res[i] = 9; // M (A or C)
+    }else if(x[i] == tmp[15]){
+      res[i] = 5; // W (A or T)
+    }else if(x[i] == tmp[16]){
+      res[i] = 4; // S (G or C)
+    }else if(x[i] == tmp[17]){
+      res[i] = 8; // K (G or T)
+    }else if(x[i] == tmp[8]){
+      res[i] = 11;
+      // V (A or C or G)
+    } else if(x[i] == tmp[9]){
+      res[i] = 12;
+      // H (A or C or T)
+    } else if(x[i] == tmp[10]){
+      res[i] = 13;
+      // D (A or G or T)
+    } else if(x[i] == tmp[11]){
+      res[i] = 10;
+      // B (C or G or T)
+    } else if(x[i] == tmp[12]){
+      res[i] = 14;   // N
+    } else if(x[i] == tmp[0] | x[i] == tmp[18]){
+      res[i] = NA_INTEGER;
+    }else{
+      throw Rcpp::exception("Invalid byte");
     }
   }
   return(res);

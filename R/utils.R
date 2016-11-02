@@ -1,6 +1,19 @@
 #' Utilities.
 #'
 
+is.DNA <- function(x){
+  if(inherits(x, "DNAbin")){
+    return(TRUE)
+  }else if(all(x %in% as.raw(c(136, 72, 40, 24, 192, 160, 144, 96, 80, 48,
+                                224, 176, 208, 112, 240, 4, 2)))){
+    return(TRUE)
+  }else{
+    return(FALSE)
+  }
+}
+#-----------------------------------------------------------------------------
+
+
 decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
 
 
@@ -11,8 +24,23 @@ whichismax <- function(v){
 }
 
 
-progression <- function(path, startpos){
-
+progression <- function(x){ # an object of class "Viterbi"
+  res <- matrix(nrow = 2, ncol = length(x$path))
+  xpos <- res[1, 1] <- x$start[1]
+  ypos <- res[2,1 ] <- x$start[2]
+  for(i in 1:(length(x$path) - 1)){
+    if(x$path[i] == 0) {
+      xpos <- xpos + 1
+    } else if(x$path[i] == 1){
+      xpos <- xpos + 1
+      ypos <- ypos + 1
+    } else if(x$path[i] == 2){
+      ypos <- ypos + 1
+    } else stop("path contains unknown elements")
+    res [1, i + 1] <- xpos
+    res [2, i + 1] <- ypos
+  }
+  res
 }
 
 #' Detect residue alphabet.

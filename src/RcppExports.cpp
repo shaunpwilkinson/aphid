@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // Viterbidefault
-List Viterbidefault(IntegerVector x, IntegerVector y, int type, double d, double e, NumericMatrix S, LogicalMatrix itertab, double offset);
-RcppExport SEXP profile_Viterbidefault(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP dSEXP, SEXP eSEXP, SEXP SSEXP, SEXP itertabSEXP, SEXP offsetSEXP) {
+List Viterbidefault(IntegerVector x, IntegerVector y, int type, double d, double e, NumericMatrix S, IntegerVector windowspace, double offset);
+RcppExport SEXP profile_Viterbidefault(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP dSEXP, SEXP eSEXP, SEXP SSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -17,9 +17,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type d(dSEXP);
     Rcpp::traits::input_parameter< double >::type e(eSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type S(SSEXP);
-    Rcpp::traits::input_parameter< LogicalMatrix >::type itertab(itertabSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type windowspace(windowspaceSEXP);
     Rcpp::traits::input_parameter< double >::type offset(offsetSEXP);
-    rcpp_result_gen = Rcpp::wrap(Viterbidefault(x, y, type, d, e, S, itertab, offset));
+    rcpp_result_gen = Rcpp::wrap(Viterbidefault(x, y, type, d, e, S, windowspace, offset));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -136,6 +136,30 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type x(xSEXP);
     rcpp_result_gen = Rcpp::wrap(returnmod(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// progression
+IntegerMatrix progression(IntegerVector path, IntegerVector start);
+RcppExport SEXP profile_progression(SEXP pathSEXP, SEXP startSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
+    rcpp_result_gen = Rcpp::wrap(progression(path, start));
+    return rcpp_result_gen;
+END_RCPP
+}
+// progression2
+IntegerMatrix progression2(IntegerVector path, IntegerVector start);
+RcppExport SEXP profile_progression2(SEXP pathSEXP, SEXP startSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
+    rcpp_result_gen = Rcpp::wrap(progression2(path, start));
     return rcpp_result_gen;
 END_RCPP
 }

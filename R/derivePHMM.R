@@ -154,7 +154,7 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
            (emission pseudocounts)")
     }
   }else if(identical(pseudocounts, "background")){
-    pseudocounts <- list(A = exp(qa) * (7 + sum(c(DI, ID))), E = exp(qe) * nres)
+    pseudocounts <- list(A = qa * (7 + sum(c(DI, ID))), E = qe * nres)
   }else if(identical(pseudocounts, "Laplace")){
     pseudocounts <- list(A = c(1,1,DI,1,1,1,ID,1,1), E = rep(1, nres))
   }else if(identical(pseudocounts, "none")){
