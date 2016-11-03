@@ -6,7 +6,8 @@
 \usage{
 alignpair(x, y, d = 8, e = 2, S = NULL, qe = NULL,
   type = "semiglobal", offset = 0, windowspace = "all",
-  pseudocounts = "background", residues = "autodetect", gapchar = "-")
+  pseudocounts = "background", residues = NULL, gapchar = "-",
+  cpp = TRUE)
 }
 \arguments{
 \item{x, y}{character vectors or character matrices of aligned sequences.}

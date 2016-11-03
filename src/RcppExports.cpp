@@ -5,9 +5,21 @@
 
 using namespace Rcpp;
 
-// Viterbidefault
-List Viterbidefault(IntegerVector x, IntegerVector y, int type, double d, double e, NumericMatrix S, IntegerVector windowspace, double offset);
-RcppExport SEXP profile_Viterbidefault(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP dSEXP, SEXP eSEXP, SEXP SSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
+// DNAprobC2
+double DNAprobC2(int x, NumericVector probs);
+RcppExport SEXP profile_DNAprobC2(SEXP xSEXP, SEXP probsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type probs(probsSEXP);
+    rcpp_result_gen = Rcpp::wrap(DNAprobC2(x, probs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Viterbi_default
+List Viterbi_default(IntegerVector x, IntegerVector y, int type, double d, double e, NumericMatrix S, IntegerVector windowspace, double offset);
+RcppExport SEXP profile_Viterbi_default(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP dSEXP, SEXP eSEXP, SEXP SSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -19,33 +31,41 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type S(SSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type windowspace(windowspaceSEXP);
     Rcpp::traits::input_parameter< double >::type offset(offsetSEXP);
-    rcpp_result_gen = Rcpp::wrap(Viterbidefault(x, y, type, d, e, S, windowspace, offset));
+    rcpp_result_gen = Rcpp::wrap(Viterbi_default(x, y, type, d, e, S, windowspace, offset));
     return rcpp_result_gen;
 END_RCPP
 }
-// ViterbiHMM
-List ViterbiHMM(List x, CharacterVector y, bool logspace);
-RcppExport SEXP profile_ViterbiHMM(SEXP xSEXP, SEXP ySEXP, SEXP logspaceSEXP) {
+// Viterbi_HMM
+List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E);
+RcppExport SEXP profile_Viterbi_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type x(xSEXP);
-    Rcpp::traits::input_parameter< CharacterVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< bool >::type logspace(logspaceSEXP);
-    rcpp_result_gen = Rcpp::wrap(ViterbiHMM(x, y, logspace));
+    Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
+    rcpp_result_gen = Rcpp::wrap(Viterbi_HMM(y, A, E));
     return rcpp_result_gen;
 END_RCPP
 }
-// ViterbiPHMM
-List ViterbiPHMM(List x, CharacterVector y, bool logspace);
-RcppExport SEXP profile_ViterbiPHMM(SEXP xSEXP, SEXP ySEXP, SEXP logspaceSEXP) {
+// Viterbi_PHMM
+List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, double offset, bool DI, bool ID, bool DNA);
+RcppExport SEXP profile_Viterbi_PHMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type x(xSEXP);
-    Rcpp::traits::input_parameter< CharacterVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< bool >::type logspace(logspaceSEXP);
-    rcpp_result_gen = Rcpp::wrap(ViterbiPHMM(x, y, logspace));
+    Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type qe(qeSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type qey(qeySEXP);
+    Rcpp::traits::input_parameter< int >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type windowspace(windowspaceSEXP);
+    Rcpp::traits::input_parameter< double >::type offset(offsetSEXP);
+    Rcpp::traits::input_parameter< bool >::type DI(DISEXP);
+    Rcpp::traits::input_parameter< bool >::type ID(IDSEXP);
+    Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
+    rcpp_result_gen = Rcpp::wrap(Viterbi_PHMM(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -49,7 +49,7 @@
 train <- function(x, y, method = "Viterbi", maxiter = 100, logspace = "autodetect",
                   quiet = FALSE, deltaLL = 1E-07, modelend = FALSE, pseudocounts = "Laplace",
                   gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
-                  threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE){
+                  threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE, cpp = TRUE){
   UseMethod("train")
 }
 
@@ -59,7 +59,7 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
                        pseudocounts = "background", gapchar = "-",
                        fixqa = FALSE, fixqe = FALSE,
                        inserts = "map", threshold = 0.5, lambda = 0,
-                       DI = TRUE, ID = TRUE){
+                       DI = TRUE, ID = TRUE, cpp = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   #note any changes below also need apply to align2phmm
   DNA <- inherits(y, "DNAbin")
@@ -114,7 +114,7 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
   if(!is.null(x$qa)){
     if(!logspace) x$qa <- log(x$qa)
   } else{
-    alignment <- align2phmm(y, x)
+    alignment <- align2phmm(y, x, cpp = cpp)
     gaps <- alignment == gapchar
     inserts <- apply(gaps, 2, sum) > 0.5 * n
     xtr <- matrix(nrow = n, ncol = ncol(alignment))
@@ -131,7 +131,7 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
   }
   out <- x
   if(method  == "Viterbi"){
-    alignment <- align2phmm(y, out, logspace = TRUE)
+    alignment <- align2phmm(y, out, logspace = TRUE, cpp = cpp)
     for(i in 1:maxiter){
       if(!quiet) cat("Iteration", i, "\n")
       out <- derivePHMM(alignment, residues = residues, inserts = inserts,
@@ -139,7 +139,7 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
                         qa = if(fixqa) out$qa else NULL,
                         qe = if(fixqe) out$qe else NULL,
                         DI = DI, ID = ID) ### add others too, could just use ... = ...?
-      newalig <- align2phmm(y, out, logspace = TRUE)
+      newalig <- align2phmm(y, out, logspace = TRUE, cpp = cpp)
       if(!identical(alignment, newalig)){
         alignment <- newalig
       } else{
@@ -294,7 +294,7 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
 #' @rdname train
 train.HMM <- function(x, y, method = "Viterbi", maxiter = 100, deltaLL = 1E-07,
                       logspace = "autodetect", quiet = FALSE, modelend = FALSE,
-                      pseudocounts = "Laplace"){
+                      pseudocounts = "Laplace", cpp = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   if(is.list(y)){
   } else if(is.vector(y, mode = "character")){
@@ -314,7 +314,7 @@ train.HMM <- function(x, y, method = "Viterbi", maxiter = 100, deltaLL = 1E-07,
     for(i in 1:maxiter){
       samename <- logical(n)
       for(j in 1:n){
-        vitj <- Viterbi(out, y[[j]], logspace = TRUE)
+        vitj <- Viterbi(out, y[[j]], logspace = TRUE, cpp = cpp)
         if(identical(vitj$path, names(y[[j]]))) samename[j] <- TRUE
         names(y[[j]]) <- vitj$path
       }

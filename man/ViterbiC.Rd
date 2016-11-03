@@ -2,16 +2,16 @@
 % Please edit documentation in R/RcppExports.R
 \name{ViterbiC}
 \alias{ViterbiC}
-\alias{ViterbiC.HMM}
-\alias{ViterbiC.PHMM}
-\alias{ViterbiC.default}
+\alias{Viterbi_HMM}
+\alias{Viterbi_PHMM}
+\alias{Viterbi_default}
 \title{Optimal path of sequence through model.}
 \usage{
-\method{ViterbiC}{default}(x, y, type, d, e, S, windowspace, offset)
+Viterbi_default(x, y, type, d, e, S, windowspace, offset)
 
-\method{ViterbiC}{HMM}(x, y, logspace = FALSE)
+Viterbi_HMM(y, A, E)
 
-\method{ViterbiC}{PHMM}(x, y, logspace = FALSE)
+Viterbi_PHMM(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA)
 }
 \arguments{
 \item{x}{an object of class \code{HMM} or \code{PHMM}, or a character vector.}

@@ -247,9 +247,6 @@ IntegerVector DNA2pentadecimal(RawVector x){
 
 
 
-
-
-
 // [[Rcpp::export]]
 double DNAprobC(RawVector a, NumericVector probs){
   // a is a raw byte in format of Paradis (2007)
@@ -307,4 +304,8 @@ double DNAprobC(RawVector a, NumericVector probs){
     }
   }
 }
+
+
+
+
 

@@ -31,7 +31,7 @@
 #'
 align <- function(sequences, type = "semiglobal", residues = NULL,
                   gapchar = "-", DI = FALSE, ID = FALSE, refine = "Viterbi",
-                  quiet = TRUE, ...){
+                  quiet = TRUE, cpp = TRUE, ...){
   if(!(is.list(sequences))) stop("invalid 'sequences' argument")
   nsq <- length(sequences)
   if(is.null(attr(sequences, "names"))) names(sequences) <- paste0("SEQ", 1:nsq)
@@ -49,15 +49,16 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
   if(type == 'global') newick <- gsub("\\)", ", type = 'global'\\)", newick)
 
   msa1 <- with(sequences, eval(parse(text = newick)))
-  omniphmm <- derivePHMM(msa1, DI = DI, ID = ID, pseudocounts = "background") ### inserts = map?
+  omniphmm <- derivePHMM(msa1, DI = DI, ID = ID, pseudocounts = "background")
   if(refine == "Viterbi"){
     finalphmm <- train(omniphmm, sequences, method = refine,
                        maxiter = 300, DI = DI, ID = ID,
-                       inserts = "map", quiet = quiet, ... = ...)
+                       quiet = quiet, cpp = cpp,
+                       ... = ...)
   }else if(refine == "BaumWelch"){
     finalphmm <- train(omniphmm, sequences, method = refine,
                        maxiter = 300, DI = DI, ID = ID,
-                       quiet = quiet, ... = ...) ### condense
+                       quiet = quiet, cpp = cpp, ... = ...) ### condense
   } else if (refine == "none"){
     return(msa1)
   } else stop("argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none'")
@@ -97,7 +98,7 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
 alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
                       type = "semiglobal", offset = 0, windowspace = "all",
                       pseudocounts = "background",
-                      residues = "autodetect", gapchar = "-"){
+                      residues = NULL, gapchar = "-", cpp = TRUE){
   DNA <- is.DNA(x)
   if(DNA){
     if(!is.DNA(y)) stop("class(x) and class(y) must match")
@@ -130,7 +131,8 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     }
   }
   if(nrow(x) == 1 & nrow(y) == 1){
-    alig <- Viterbi(x, y, d = d, e = e, S = S, type = type, windowspace = windowspace)
+    alig <- Viterbi(x, y, d = d, e = e, S = S, type = type,
+                    windowspace = windowspace, cpp = cpp)
     #, offset = offset) ###not necessary for vec vs vec
     xind <- yind <- alig$path
     xind[alig$path != 2] <- 1:length(x)
@@ -150,13 +152,12 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
       y <- tmp
       rm(tmp) # the old switcharoo
     }
-    #if(identical(residues, "autodetect")) residues <- sort(unique(c(as.vector(x), y)))
     #residues <- alphadetect(x, residues = residues, gapchar = gapchar)
     n <- nrow(x)
     z <- derivePHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     l <- z$size
     alig <- Viterbi(z, y, qe = qe, logspace = TRUE, type = type,
-                    offset = offset, windowspace = windowspace)
+                    offset = offset, windowspace = windowspace, cpp = cpp)
     yind <- alig$path
     yind[alig$path != 0] <- 1:length(y)
     yind[alig$path == 0] <- 0
@@ -196,7 +197,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     lx <- zx$size
     ly <- zy$size
     alig <- Viterbi(zx, zy, qe = qe, logspace = TRUE, type = type,
-                    offset = offset, windowspace = windowspace)
+                    offset = offset, windowspace = windowspace, cpp = cpp)
     #vectors same length as model (+ 1 for begin state) with counts of
     #no of gaps to insert after each position
     xinsertlengths <- insertlengths(alig$path < 3) - zx$insertlengths
@@ -307,7 +308,7 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
   colnames(out) <- rep("I", 2 * model$size + 1)
   colnames(out)[seq(2, 2 * model$size, by = 2)] <- 1:model$size
   for(i in 1:length(sequences)){
-    alignment <- Viterbi(model, sequences[i], type = "global", ...)
+    alignment <- Viterbi(model, sequences[i], type = "global", ...  = ...)
     if(DNA){
       newrow <- rep("-", length(alignment$path))
       newrow[alignment$path > 0] <- ape::as.character.DNAbin(sequences[[i]])

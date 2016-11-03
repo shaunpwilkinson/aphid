@@ -56,13 +56,13 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   pp <- inherits(y, "PHMM")
   pd <- is.DNA(y)
   pc <- !pp & !pd
-
   if(pd){
-    x$E <- x$E[order(rownames(x$E)),]
-    if(!(identical(rownames(x$E), c("a", "c", "g", "t")) |
-         identical(rownames(x$E), c("A", "C", "G", "T")))){
-      stop("invalid model, residue alphabet does not correspond to
-           ordered nucleotide alphabet")
+    rownames(x$E) <- toupper(rownames(x$E))
+    NUCorder <- sapply(rownames(x$E), match, c("A", "T", "G", "C"))
+    x$E <- x$E[NUCorder, ]
+    if(!(identical(rownames(x$E), c("A", "T", "G", "C")))){
+      stop("invalid model for DNA, residue alphabet does not correspond to
+           nucleotide alphabet")
     }
     if(is.list(y)){
       if(length(y) == 1){
@@ -70,8 +70,13 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         class(y) <- "DNAbin"
       }else stop("Invalid input object y: multi-sequence list")
     }
-    #y <- DNA2pentadecimal(y)
+    y <- DNA2pentadecimal(y)
   }else if(pc){
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- y[[1]]
+      }else stop("Invalid input object y: multi-sequence list")
+    }
     residues <- rownames(x$E)
     ycoded <- integer(length(y))
     for(i in seq_along(residues)) ycoded[y == residues[i]] <- i
@@ -112,8 +117,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   #
   # start cpp functions here
   #
-  V <- array(-Inf, dim = c(n, m, length(states)),
-             dimnames = list(x = 0:(n - 1), y = 0:(m - 1), state = states))
+  V <- array(-Inf, dim = c(n, m, length(states)))
+  dimnames(V) <- list(x = 0:(n - 1), y = 0:(m - 1), state = states)
   # pointer array
   P <- V + NA
   # fill scoring and pointer arrays. Key: D = 1, M = 2, I = 3
@@ -127,275 +132,310 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     Ey <- if(logspace) y$E else log(y$E)
     fun <- Vectorize(function(a, b) logsum((Ex[, a] + Ey[, b]) - qe))
     Saa <- outer(1:(n - 1), 1:(m - 1), fun)
-    # res <- Viterbi5(Ax, Ay, Ex, Ey, Saa, qex, qey, odds, offset, type = "semiglobal", itertab)
-    if(type == "global"){
-      V[-1, 1, "MI"] <- cumsum(c(Ax["MM", 1] + Ay["MI", 1], Ax["MM", 2:(n - 1)] + Ay["II", 1]))
-      P[-1, 1, "MI"] <- c(3, rep(1, n - 2))
-      V[-1, 1, "DG"] <- cumsum(c(Ax["MD", 1], Ax["DD", 2:(n - 1)]))
-      P[-1, 1, "DG"] <- c(3, rep(2, n - 2))
-      V[1, 1, "MM"] <- 0
-      V[1, -1, "GD"] <- cumsum(c(Ay["MD", 1], Ay["DD", 2:(m - 1)]))
-      P[1, -1, "GD"] <- c(3, rep(4, m - 2))
-      V[1, -1, "IM"] <- cumsum(c(Ax["MI", 1] + Ay["MM", 1], Ax["II", 1] + Ay["MM", 2:(m - 1)]))
-      P[1, -1, "IM"] <- c(3, rep(5, m - 2))
+
+    if(cpp){
+      res <- NULL
+      stop("cpp option not supported yet")
+      # res <- Viterbi5(Ax, Ay, Ex, Ey, Saa, qex, qey, odds, offset, type = "semiglobal", itertab)
     }else{
-      V[1, , "MM"] <- V[, 1, "MM"] <- 0
-    }
-    for(i in 2:n){
-      for(j in 2:m){
-        if(j - i >= windowspace[1] & j - i <= windowspace[2]){
-          sij <- Saa[i - 1, j - 1] + offset
-          MIcdt <- c(V[i - 1, j, "MM"] + Ax["MM", i - 1] + Ay["MI", j],
-                     V[i - 1, j, "MI"] + Ax["MM", i - 1] + Ay["II", j])
-          DGcdt <- c(V[i - 1, j, "MM"] + Ax["MD", i - 1],
-                     V[i - 1, j, "DG"] + Ax["DD", i - 1])
-          MMcdt <- c(V[i - 1, j - 1, "MI"] + Ax["MM", i - 1] + Ay["IM", j - 1] + sij,
-                     V[i - 1, j - 1, "DG"] + Ax["DM", i - 1] + Ay["MM", j - 1] + sij,
-                     V[i - 1, j - 1, "MM"] + Ax["MM", i - 1] + Ay["MM", j - 1] + sij,
-                     V[i - 1, j - 1, "GD"] + Ax["MM", i - 1] + Ay["DM", j - 1] + sij,
-                     V[i - 1, j - 1, "IM"] + Ax["IM", i - 1] + Ay["MM", j - 1] + sij,
-                     if(type == "local") 0 else NULL)
-          GDcdt <- c(V[i, j - 1, "MM"] + Ay["MD", j - 1],
-                     V[i, j - 1, "GD"] + Ay["DD", j - 1])
-          IMcdt <- c(V[i, j - 1, "MM"] + Ax["MI", i] + Ay["MM", j - 1],
-                     V[i, j - 1, "IM"] + Ax["II", i] + Ay["MM", j - 1])
-          MImax <- whichismax(MIcdt)
-          DGmax <- whichismax(DGcdt)
-          MMmax <- whichismax(MMcdt)
-          GDmax <- whichismax(GDcdt)
-          IMmax <- whichismax(IMcdt)
-          V[i, j, "MI"] <- MIcdt[MImax]
-          V[i, j, "DG"] <- DGcdt[DGmax]
-          V[i, j, "MM"] <- MMcdt[MMmax]
-          V[i, j, "GD"] <- GDcdt[GDmax]
-          V[i, j, "IM"] <- IMcdt[IMmax]
-          P[i, j, "MI"] <- c(3, 1)[MImax]
-          P[i, j, "DG"] <- c(3, 2)[DGmax]
-          P[i, j, "MM"] <- c(1:6)[MMmax]
-          P[i, j, "GD"] <- c(3, 4)[GDmax]
-          P[i, j, "IM"] <- c(3, 5)[IMmax]
+      if(type == "global"){
+        V[-1, 1, "MI"] <- cumsum(c(Ax["MM", 1] + Ay["MI", 1], Ax["MM", 2:(n - 1)] + Ay["II", 1]))
+        P[-1, 1, "MI"] <- c(3, rep(1, n - 2))
+        V[-1, 1, "DG"] <- cumsum(c(Ax["MD", 1], Ax["DD", 2:(n - 1)]))
+        P[-1, 1, "DG"] <- c(3, rep(2, n - 2))
+        V[1, 1, "MM"] <- 0
+        V[1, -1, "GD"] <- cumsum(c(Ay["MD", 1], Ay["DD", 2:(m - 1)]))
+        P[1, -1, "GD"] <- c(3, rep(4, m - 2))
+        V[1, -1, "IM"] <- cumsum(c(Ax["MI", 1] + Ay["MM", 1], Ax["II", 1] + Ay["MM", 2:(m - 1)]))
+        P[1, -1, "IM"] <- c(3, rep(5, m - 2))
+      }else{
+        V[1, , "MM"] <- V[, 1, "MM"] <- 0
+      }
+      for(i in 2:n){
+        for(j in 2:m){
+          if(j - i >= windowspace[1] & j - i <= windowspace[2]){
+            sij <- Saa[i - 1, j - 1] + offset
+            MIcdt <- c(V[i - 1, j, "MM"] + Ax["MM", i - 1] + Ay["MI", j],
+                       V[i - 1, j, "MI"] + Ax["MM", i - 1] + Ay["II", j])
+            DGcdt <- c(V[i - 1, j, "MM"] + Ax["MD", i - 1],
+                       V[i - 1, j, "DG"] + Ax["DD", i - 1])
+            MMcdt <- c(V[i - 1, j - 1, "MI"] + Ax["MM", i - 1] + Ay["IM", j - 1] + sij,
+                       V[i - 1, j - 1, "DG"] + Ax["DM", i - 1] + Ay["MM", j - 1] + sij,
+                       V[i - 1, j - 1, "MM"] + Ax["MM", i - 1] + Ay["MM", j - 1] + sij,
+                       V[i - 1, j - 1, "GD"] + Ax["MM", i - 1] + Ay["DM", j - 1] + sij,
+                       V[i - 1, j - 1, "IM"] + Ax["IM", i - 1] + Ay["MM", j - 1] + sij,
+                       if(type == "local") 0 else NULL)
+            GDcdt <- c(V[i, j - 1, "MM"] + Ay["MD", j - 1],
+                       V[i, j - 1, "GD"] + Ay["DD", j - 1])
+            IMcdt <- c(V[i, j - 1, "MM"] + Ax["MI", i] + Ay["MM", j - 1],
+                       V[i, j - 1, "IM"] + Ax["II", i] + Ay["MM", j - 1])
+            MImax <- whichismax(MIcdt)
+            DGmax <- whichismax(DGcdt)
+            MMmax <- whichismax(MMcdt)
+            GDmax <- whichismax(GDcdt)
+            IMmax <- whichismax(IMcdt)
+            V[i, j, "MI"] <- MIcdt[MImax]
+            V[i, j, "DG"] <- DGcdt[DGmax]
+            V[i, j, "MM"] <- MMcdt[MMmax]
+            V[i, j, "GD"] <- GDcdt[GDmax]
+            V[i, j, "IM"] <- IMcdt[IMmax]
+            P[i, j, "MI"] <- c(3, 1)[MImax]
+            P[i, j, "DG"] <- c(3, 2)[DGmax]
+            P[i, j, "MM"] <- c(1:6)[MMmax]
+            P[i, j, "GD"] <- c(3, 4)[GDmax]
+            P[i, j, "IM"] <- c(3, 5)[IMmax]
+          }
         }
       }
+      path <- c()
+      progression <- matrix(nrow = 2, ncol = 0)
+      if(type == 'global'){
+        LLcdt <- c(V[n, m, "MI"] + Ax["MM", n] + Ay["IM", m],
+                   V[n, m, "DG"] + Ax["DM", n] + Ay["MM", m],
+                   V[n, m, "MM"] + Ax["MM", n] + Ay["MM", m],
+                   V[n, m, "GD"] + Ax["MM", n] + Ay["DM", m],
+                   V[n, m, "IM"] + Ax["IM", n] + Ay["MM", m])
+        LLptr <- whichismax(LLcdt)
+        score <- LLcdt[LLptr]
+        z <- c(n, m, LLptr)
+        while(z[1] > 1 | z[2] > 1){
+          path <- c(z[3], path)
+          progression <- cbind(z[1:2], progression)
+          z[3] <- P[z[1], z[2], z[3]]
+          z <- z - switch(path[1], c(1,0,0), c(1,0,0), c(1,1,0), c(0,1,0), c(0,1,0))
+        }
+      }else if (type == 'semiglobal'){
+        tmp <- V[, , "MM"]
+        tmp[1:(n - 1), 1:(m - 1)] <- -Inf
+        ind <- which(tmp == max(tmp), arr.ind = TRUE)
+        if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
+        z <- c(ind, 3)
+        score <- V[z[1], z[2], z[3]]
+        if(z[1] < n){
+          path <- rep(2, n - z[1])
+          progression <- rbind((z[1] + 1):n, rep(z[2], n - z[1]))
+        }else if(z[2] < m){
+          path <- rep(4, m - z[2])
+          progression <- rbind((z[2] + 1):m, rep(z[1], m - z[2]))
+        }
+        while(z[1] > 1 & z[2] > 1){
+          path <- c(z[3], path)
+          progression <- cbind(z[1:2], progression)
+          z[3] <- P[z[1], z[2], z[3]]
+          z <- z - switch(path[1], c(1,0,0), c(1,0,0), c(1,1,0), c(0,1,0), c(0,1,0))
+        }
+        if(z[1] > 1){
+          path <- c(rep(2, z[1] - 1), path)
+          progression <- cbind(rbind(1:(z[1] - 1), rep(1, z[1] - 1)), progression)
+        }else if(z[2] > 1){
+          path <- c(rep(4, z[2] - 1), path)
+          progression <- cbind(rbind(rep(1, z[2] - 1), 1:(z[2] - 1)), progression)
+        }
+      }else{
+        ind <- which(V[, , "MM"] == max(V[, , "MM"]), arr.ind = TRUE)
+        if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
+        z <- c(ind, 3)
+        score <- V[z[1], z[2], z[3]]
+        P[1, 1, "MM"] <- 6
+        while(P[z[1], z[2], z[3]] != 6){
+          path <- c(z[3], path)
+          progression <- cbind(z[1:2], progression)
+          z[3] <- P[z[1], z[2], z[3]]
+          z <- z - switch(path[1], c(1,0,0), c(1,0,0), c(1,1,0), c(0,1,0), c(0,1,0))
+        }
+      }
+      key <- "MI = 1, DG = 2, MM = 3, GD = 4, IM = 5"
+      rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
+      progression <- progression - 1 #to account for 0 row
+      path <- path - 1
+      res <- structure(list(score = score,
+                            path = path,
+                            progression = progression,
+                            start = startposition,
+                            #key = key,
+                            V = V,
+                            P = P),
+                       class = 'Viterbi')
     }
-    path <- c()
-    progression <- matrix(nrow = 2, ncol = 0)
-    if(type == 'global'){
-      LLcdt <- c(V[n, m, "MI"] + Ax["MM", n] + Ay["IM", m],
-                 V[n, m, "DG"] + Ax["DM", n] + Ay["MM", m],
-                 V[n, m, "MM"] + Ax["MM", n] + Ay["MM", m],
-                 V[n, m, "GD"] + Ax["MM", n] + Ay["DM", m],
-                 V[n, m, "IM"] + Ax["IM", n] + Ay["MM", m])
-      LLptr <- whichismax(LLcdt)
-      score <- LLcdt[LLptr]
-      z <- c(n, m, LLptr)
-      while(z[1] > 1 | z[2] > 1){
-        path <- c(z[3], path)
-        progression <- cbind(z[1:2], progression)
-        z[3] <- P[z[1], z[2], z[3]]
-        z <- z - switch(path[1], c(1,0,0), c(1,0,0), c(1,1,0), c(0,1,0), c(0,1,0))
-      }
-    }else if (type == 'semiglobal'){
-      tmp <- V[, , "MM"]
-      tmp[1:(n - 1), 1:(m - 1)] <- -Inf
-      ind <- which(tmp == max(tmp), arr.ind = TRUE)
-      if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
-      z <- c(ind, 3)
-      score <- V[z[1], z[2], z[3]]
-      if(z[1] < n){
-        path <- rep(2, n - z[1])
-        progression <- rbind((z[1] + 1):n, rep(z[2], n - z[1]))
-      }else if(z[2] < m){
-        path <- rep(4, m - z[2])
-        progression <- rbind((z[2] + 1):m, rep(z[1], m - z[2]))
-      }
-      while(z[1] > 1 & z[2] > 1){
-        path <- c(z[3], path)
-        progression <- cbind(z[1:2], progression)
-        z[3] <- P[z[1], z[2], z[3]]
-        z <- z - switch(path[1], c(1,0,0), c(1,0,0), c(1,1,0), c(0,1,0), c(0,1,0))
-      }
-      if(z[1] > 1){
-        path <- c(rep(2, z[1] - 1), path)
-        progression <- cbind(rbind(1:(z[1] - 1), rep(1, z[1] - 1)), progression)
-      }else if(z[2] > 1){
-        path <- c(rep(4, z[2] - 1), path)
-        progression <- cbind(rbind(rep(1, z[2] - 1), 1:(z[2] - 1)), progression)
-      }
-    }else{
-      ind <- which(V[, , "MM"] == max(V[, , "MM"]), arr.ind = TRUE)
-      if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
-      z <- c(ind, 3)
-      score <- V[z[1], z[2], z[3]]
-      P[1, 1, "MM"] <- 6
-      while(P[z[1], z[2], z[3]] != 6){
-        path <- c(z[3], path)
-        progression <- cbind(z[1:2], progression)
-        z[3] <- P[z[1], z[2], z[3]]
-        z <- z - switch(path[1], c(1,0,0), c(1,0,0), c(1,1,0), c(0,1,0), c(0,1,0))
-      }
-    }
-    key <- "MI = 1, DG = 2, MM = 3, GD = 4, IM = 5"
-    rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
   }else{
     qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC, qe) else qe[y]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
-    Saa <- if(odds) E - qe else E
-    # res <- Viterbi3(A, E, y, Saa, qey, odds, offset = 0, itertab, type = "semiglobal")
-    P[, 1, 1] <- c(NA, 2, rep(1, n - 2))
-    P[1, , 3] <- c(NA, 2, rep(3, m - 2))
-    V[1, 1, 2] <- 0
-    if(type == 0){
-      V[-1, 1, 1] <- cumsum(c(0, A["DD", 2:(n - 1)])) + A["MD", 1]
-      #V[2, 1, "D"] <- A["MD", 1]
-      #for(i in 3:n) V[i, 1, "D"] <- V[i - 1, 1, "D"] + A["DD", i - 1]
-      V[1, 2, "I"] <- A["MI", 1] + qey[1]
-      for(j in 3:m) V[1, j, "I"] <- V[1, j - 1, "I"] + A["II", 1] + qey[j - 1]
+    #Saa <- if(odds) E - qe else E
+    if(odds) E <- E - qe
+    if(cpp){
+      res <- Viterbi_PHMM(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA = pd)
     }else{
-      V[-1, 1, 1] <- V[1, -1, 3] <- 0 ### check this
-    }
-    for(i in 2:n){
-      for(j in 2:m){
-        if(j - i >= windowspace[1] & j - i <= windowspace[2]){
-          if(pd){
-            sij <- DNAprobC(y[j - 1], Saa[, i - 1]) + offset
-          } else{
-            sij <- Saa[y[j - 1] + 1, i - 1] + offset
+      P[, 1, 1] <- c(NA, 2, rep(1, n - 2))
+      P[1, , 3] <- c(NA, 2, rep(3, m - 2))
+      V[1, 1, 2] <- 0
+      if(type == 0){
+        V[-1, 1, 1] <- cumsum(c(0, A["DD", 2:(n - 1)])) + A["MD", 1]
+        #V[2, 1, "D"] <- A["MD", 1]
+        #for(i in 3:n) V[i, 1, "D"] <- V[i - 1, 1, "D"] + A["DD", i - 1]
+        V[1, 2, "I"] <- A["MI", 1] + qey[1]
+        for(j in 3:m) V[1, j, "I"] <- V[1, j - 1, "I"] + A["II", 1] + qey[j - 1]
+      }else{
+        V[-1, 1, 1] <- V[1, -1, 3] <- 0 ### check this - should be qey??
+      }
+      for(i in 2:n){
+        for(j in 2:m){
+          if(j - i >= windowspace[1] & j - i <= windowspace[2]){
+            if(pd){
+              sij <- DNAprobC2(y[j - 1], E[, i - 1]) + offset
+            } else{
+              sij <- E[y[j - 1] + 1, i - 1] + offset
+            }
+            Dcdt <- c(V[i - 1, j, "D"] + A["DD", i - 1],
+                      V[i - 1, j, "M"] + A["MD", i - 1],
+                      if(ID) V[i - 1, j, "I"] + A["ID", i - 1] else -Inf)
+            Mcdt <- c(V[i - 1, j - 1, "D"] + A["DM", i - 1] + sij,
+                      V[i - 1, j - 1, "M"] + A["MM", i - 1] + sij,
+                      V[i - 1, j - 1, "I"] + A["IM", i - 1] + sij,
+                      if(type == 2) 0 else NULL)
+            Icdt <- c(if(DI) V[i, j - 1, "D"] + A["DI", i] else -Inf,
+                      V[i, j - 1, "M"] + A["MI", i],
+                      V[i, j - 1, "I"] + A["II", i])
+            Dmax <- whichismax(Dcdt)
+            Mmax <- whichismax(Mcdt)
+            Imax <- whichismax(Icdt)
+            V[i, j, "D"] <- Dcdt[Dmax]
+            V[i, j, "M"] <- Mcdt[Mmax]
+            V[i, j, "I"] <- Icdt[Imax] + qey[j - 1]
+            P[i, j, "D"] <- Dmax
+            P[i, j, "M"] <- Mmax
+            P[i, j, "I"] <- Imax
           }
-          Dcdt <- c(V[i - 1, j, "D"] + A["DD", i - 1],
-                    V[i - 1, j, "M"] + A["MD", i - 1],
-                    if(ID) V[i - 1, j, "I"] + A["ID", i - 1] else -Inf)
-          Mcdt <- c(V[i - 1, j - 1, "D"] + A["DM", i - 1] + sij,
-                    V[i - 1, j - 1, "M"] + A["MM", i - 1] + sij,
-                    V[i - 1, j - 1, "I"] + A["IM", i - 1] + sij,
-                    if(type == 2) 0 else NULL)
-          Icdt <- c(if(DI) V[i, j - 1, "D"] + A["DI", i] else -Inf,
-                    V[i, j - 1, "M"] + A["MI", i],
-                    V[i, j - 1, "I"] + A["II", i])
-          Dmax <- whichismax(Dcdt)
-          Mmax <- whichismax(Mcdt)
-          Imax <- whichismax(Icdt)
-          V[i, j, "D"] <- Dcdt[Dmax]
-          V[i, j, "M"] <- Mcdt[Mmax]
-          V[i, j, "I"] <- Icdt[Imax] + qey[j - 1]
-          P[i, j, "D"] <- Dmax
-          P[i, j, "M"] <- Mmax
-          P[i, j, "I"] <- Imax
         }
       }
-    }
-    path <- c()
-    progression <- c()
-    if(type == 0){
-      LLcdt <- c(V[n, m, "D"] + A["DM", n],
-                 V[n, m, "M"] + A["MM", n],
-                 V[n, m, "I"] + A["IM", n])
-      LLptr <- whichismax(LLcdt)
-      score <- LLcdt[LLptr]
-      z <- c(n, m, LLptr)
-      while(z[1] > 1 | z[2] > 1){
-        path <- c(z[3], path)
-        progression <- c(z[1], progression)
-        z[3] <- P[z[1], z[2], z[3]]
-        z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
-      }
-      startposition = c(1, 1)
-    }else if (type == 1){
-      tmp <- V[, , "M"]
-      tmp[1:(n - 1), 1:(m - 1)] <- -Inf
-      ind <- which(tmp == max(tmp), arr.ind = TRUE)
-      if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1), ]
-      z <- c(ind, 2)
-      score <- V[z[1], z[2], z[3]]
-      if(z[1] < n){
-        path <- rep(1, n - z[1])
-        progression <- (z[1] + 1):n
-      }else if(z[2] < m){
-        path <- rep(3, m - z[2])
-        progression <- rep(n, m - z[2])
-      }
-      while(z[1] > 1 & z[2] > 1){
-        path <- c(z[3], path)
-        progression <- c(z[1], progression)
-        z[3] <- P[z[1], z[2], z[3]]
-        z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
-      }
-      if(z[1] > 1){
-        path <- c(rep(1, z[1] - 1), path)
-        progression <- c(1:(z[1] - 1), progression)
-      }else if(z[2] > 1){
-        path <- c(rep(3, z[2] - 1), path)
-        progression <- c(rep(1, z[2] - 1), progression)
-      }
-      startposition = c(1, 1)
-    }else if(type == 2){
-      ind <- which(V[, , "M"] == max(V[, , "M"]), arr.ind = TRUE)
-      if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
-      if(V[ind[1], ind[2], "M"] == 0) stop("alignment failed, try increasing
+      path <- c()
+      progression <- c()
+      if(type == 0){
+        LLcdt <- c(V[n, m, "D"] + A["DM", n],
+                   V[n, m, "M"] + A["MM", n],
+                   V[n, m, "I"] + A["IM", n])
+        LLptr <- whichismax(LLcdt)
+        score <- LLcdt[LLptr]
+        z <- c(n, m, LLptr)
+        while(z[1] > 1 | z[2] > 1){
+          path <- c(z[3], path)
+          progression <- c(z[1], progression)
+          z[3] <- P[z[1], z[2], z[3]]
+          z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+        }
+        startposition = c(1, 1)
+      }else if (type == 1){
+        tmp <- V[, , "M"]
+        tmp[1:(n - 1), 1:(m - 1)] <- -Inf
+        ind <- which(tmp == max(tmp), arr.ind = TRUE)
+        if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1), ]
+        z <- c(ind, 2)
+        score <- V[z[1], z[2], z[3]]
+        if(z[1] < n){
+          path <- rep(1, n - z[1])
+          progression <- (z[1] + 1):n
+        }else if(z[2] < m){
+          path <- rep(3, m - z[2])
+          progression <- rep(n, m - z[2])
+        }
+        while(z[1] > 1 & z[2] > 1){
+          path <- c(z[3], path)
+          progression <- c(z[1], progression)
+          z[3] <- P[z[1], z[2], z[3]]
+          z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+        }
+        if(z[1] > 1){
+          path <- c(rep(1, z[1] - 1), path)
+          progression <- c(1:(z[1] - 1), progression)
+        }else if(z[2] > 1){
+          path <- c(rep(3, z[2] - 1), path)
+          progression <- c(rep(1, z[2] - 1), progression)
+        }
+        startposition = c(1, 1)
+      }else if(type == 2){
+        ind <- which(V[, , "M"] == max(V[, , "M"]), arr.ind = TRUE)
+        if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
+        if(V[ind[1], ind[2], "M"] == 0) stop("alignment failed, try increasing
                                            offset or changing type")
-      z <- c(ind, 2)
-      score <- V[z[1], z[2], z[3]]
-      P[1, 1, "M"] <- 4
-      while(P[z[1], z[2], z[3]] != 4){
-        path <- c(z[3], path)
-        progression <- c(z[1], progression)
-        z[3] <- P[z[1], z[2], z[3]]
-        z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+        z <- c(ind, 2)
+        score <- V[z[1], z[2], z[3]]
+        P[1, 1, "M"] <- 4
+        while(P[z[1], z[2], z[3]] != 4){
+          path <- c(z[3], path)
+          progression <- c(z[1], progression)
+          z[3] <- P[z[1], z[2], z[3]]
+          z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
+        }
+        startposition = z[1:2]
       }
-      startposition = z[1:2]
+      #key: "1 = delete, 2 = match, 3 = insert"
+      progression <- progression - 1 #to account for 0 row
+      path <- path - 1
+      Dmatrix = NULL
+      res <- structure(list(score = score,
+                            path = path,
+                            progression = progression,
+                            start = startposition,
+                            #key = key,
+                            #V = V,
+                            #P = P,
+                            Dmatrix = V[, , 1],
+                            Mmatrix = V[, , 2],
+                            Imatrix = V[, , 3],
+                            Dpointer = P[, , 1],
+                            Mpointer = P[, , 2],
+                            Ipointer = P[, , 3]),
+                       class = 'Viterbi')
     }
-    #key: "1 = delete, 2 = match, 3 = insert"
   }
-  progression <- progression - 1 #to account for 0 row
-  path <- path - 1
-  res <- structure(list(score = score,
-                        path = path,
-                        progression = progression,
-                        start = startposition,
-                        #key = key,
-                        V = V,
-                        pointer = P),
-                   class = 'Viterbi')
   return(res)
 }
 
 #' @rdname Viterbi
 Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
-  n <- length(y)
-  states <- rownames(x$E)
-  H <- length(states) # not including BeginEnd state
-  path <- rep(NA, n)
-  V <- array(-Inf, dim = c(H, n), dimnames = list(state = states, roll = 1:n))
-  P <- V + NA # pointer array
   E <- if(logspace) x$E else log(x$E)
   A <- if(logspace) x$A else log(x$A)
-  #s <- if(logspace) x$s else log(x$s)
-  V[, 1] <- E[, y[1]] + A[1, -1] # formerly s
-  fun <- Vectorize(function(k, l) V[k, i - 1] + A[k + 1, l + 1])
-  for (i in 2:n){
-    tmp <- outer(1:H, 1:H, fun)
-    V[, i] <- E[, y[i]] + apply(tmp, 2, max)
-    P[, i] <- states[apply(tmp, 2, which.max)]
+  states <- rownames(E)
+  n <- length(y)
+  if(cpp){
+    residues <- colnames(E)
+    ycoded <- integer(n)
+    for(i in seq_along(residues)) ycoded[y == residues[i]]  <- i - 1
+    res <- Viterbi_HMM(ycoded, A, E)
+  }else{
+    H <- length(states) # not including BeginEnd state
+    #path <- rep(NA, n)
+    path <- integer(n)
+    V <- array(-Inf, dim = c(H, n), dimnames = list(state = states, roll = 1:n))
+    P <- V + NA # pointer array
+    #s <- if(logspace) x$s else log(x$s)
+    V[, 1] <- E[, y[1]] + A[1, -1] # formerly s
+    fun <- Vectorize(function(k, l) V[k, i - 1] + A[k + 1, l + 1])
+    for (i in 2:n){
+      tmp <- outer(1:H, 1:H, fun)
+      V[, i] <- E[, y[i]] + apply(tmp, 2, max)
+      #P[, i] <- states[apply(tmp, 2, which.max)]
+      P[, i] <- apply(tmp, 2, which.max)
+    }
+    ak0 <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H)
+    endstate <- which.max(V[, n] + ak0)
+    maxLL <- V[endstate, n] + ak0[endstate]
+    #path[n] <- states[endstate]
+    path[n] <- endstate
+    tmp <- path[n]
+    for(i in n:2){
+      path[i - 1] <- P[tmp, i]
+      tmp <- path[i - 1]
+    }
+    res <- structure(list(score = maxLL,
+                          path = path - 1,
+                          V = V,
+                          P = P - 1),
+                     class = "Viterbi")
   }
-  ak0 <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H)
-  endstate <- which.max(V[, n] + ak0)
-  maxLL <- V[endstate, n] + ak0[endstate]
-  path[n] <- states[endstate]
-  tmp <- path[n]
-  for(i in n:2){
-    path[i - 1] <- P[tmp, i]
-    tmp <- path[i - 1]
-  }
-  res <- structure(list(score = maxLL,
-                        path = path,
-                        progression = NULL,
-                        V = V,
-                        pointer = P),
-                   class = 'Viterbi')
   return(res)
 }
-
 
 
 #' @rdname Viterbi
@@ -469,7 +509,7 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
   m <- length(y) + 1
   #if(!any(itertab)) itertab <- matrix(TRUE, n, m)
   if(cpp){
-    res <- ViterbiC.default(x, y, type, d, e, S, windowspace, offset)
+    res <- Viterbi_default(x, y, type, d, e, S, windowspace, offset)
   } else{
     # initialize scoring and pointer arrays (M and P)
     M <- array(-Inf, dim = c(n, m, 3))
@@ -481,8 +521,9 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
     }else{
       M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0 ### check this - should fill dim2 instead?
     }
-    P[2:n, 1, 1] <- 1
-    P[1, 2:m, 3] <- 3
+    P[2, 1, 1] <- P[1, 2, 1] <- 2
+    P[3:n, 1, 1] <- 1
+    P[1, 3:m, 3] <- 3
     for(i in 2:n){
       for(j in 2:m){
         #if(itertab[i, j]){
@@ -575,7 +616,7 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
                           progression = progression,
                           key = key,
                           V = M,
-                          pointer = P),
+                          P = P),
                      class = 'Viterbi')
   }
   return(res)
