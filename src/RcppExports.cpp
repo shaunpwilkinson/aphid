@@ -17,6 +17,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// logsum
+double logsum(NumericVector x);
+RcppExport SEXP profile_logsum(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(logsum(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Viterbi_default
 List Viterbi_default(IntegerVector x, IntegerVector y, int type, double d, double e, NumericMatrix S, IntegerVector windowspace, double offset);
 RcppExport SEXP profile_Viterbi_default(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP dSEXP, SEXP eSEXP, SEXP SSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
@@ -69,40 +80,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// kdist
-NumericVector kdist(List x, int k, bool asmatrix);
-RcppExport SEXP profile_kdist(SEXP xSEXP, SEXP kSEXP, SEXP asmatrixSEXP) {
+// Viterbi_PP
+List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay, NumericMatrix Ex, NumericMatrix Ey, NumericVector qe, int type, IntegerVector windowspace, double offset);
+RcppExport SEXP profile_Viterbi_PP(SEXP AxSEXP, SEXP AySEXP, SEXP ExSEXP, SEXP EySEXP, SEXP qeSEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< bool >::type asmatrix(asmatrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(kdist(x, k, asmatrix));
-    return rcpp_result_gen;
-END_RCPP
-}
-// kdistDNA
-NumericVector kdistDNA(List x, int k, bool asmatrix);
-RcppExport SEXP profile_kdistDNA(SEXP xSEXP, SEXP kSEXP, SEXP asmatrixSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< bool >::type asmatrix(asmatrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(kdistDNA(x, k, asmatrix));
-    return rcpp_result_gen;
-END_RCPP
-}
-// logsum
-double logsum(NumericVector x);
-RcppExport SEXP profile_logsum(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(logsum(x));
+    Rcpp::traits::input_parameter< NumericMatrix >::type Ax(AxSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type Ay(AySEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type Ex(ExSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type Ey(EySEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type qe(qeSEXP);
+    Rcpp::traits::input_parameter< int >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type windowspace(windowspaceSEXP);
+    Rcpp::traits::input_parameter< double >::type offset(offsetSEXP);
+    rcpp_result_gen = Rcpp::wrap(Viterbi_PP(Ax, Ay, Ex, Ey, qe, type, windowspace, offset));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -129,6 +121,32 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< CharacterVector >::type y(ySEXP);
     Rcpp::traits::input_parameter< bool >::type logspace(logspaceSEXP);
     rcpp_result_gen = Rcpp::wrap(backwardC(x, y, logspace));
+    return rcpp_result_gen;
+END_RCPP
+}
+// kdist
+NumericVector kdist(List x, int k, bool asmatrix);
+RcppExport SEXP profile_kdist(SEXP xSEXP, SEXP kSEXP, SEXP asmatrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< bool >::type asmatrix(asmatrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(kdist(x, k, asmatrix));
+    return rcpp_result_gen;
+END_RCPP
+}
+// kdistDNA
+NumericVector kdistDNA(List x, int k, bool asmatrix);
+RcppExport SEXP profile_kdistDNA(SEXP xSEXP, SEXP kSEXP, SEXP asmatrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< bool >::type asmatrix(asmatrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(kdistDNA(x, k, asmatrix));
     return rcpp_result_gen;
 END_RCPP
 }

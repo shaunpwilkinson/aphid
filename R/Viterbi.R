@@ -88,6 +88,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     windowspace <- c(-x$size, if(pp) y$size else length(y)) ### placeholder
   }else if(length(windowspace) != 2) stop("invalid windowspace argument")
   states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
+
   # background emission probabilities
   if(!(is.null(qe))){
     if(all(qe >= 0) & all(qe <= 1)) qe <- log(qe)
@@ -113,10 +114,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       names(qe) <- rownames(x$E)
     }
   }
+
   type = switch(type, "global" = 0L, "semiglobal" = 1L, "local" = 2L, stop("invalid type"))
-  #
-  # start cpp functions here
-  #
   V <- array(-Inf, dim = c(n, m, length(states)))
   dimnames(V) <- list(x = 0:(n - 1), y = 0:(m - 1), state = states)
   # pointer array
@@ -124,21 +123,20 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   # fill scoring and pointer arrays. Key: D = 1, M = 2, I = 3
   if(pp){
     if(!odds) stop("Full (log) probability scores for PHMM-PHMM alignment are
-                   not supported in this version")
+                   not supported")
     if(logdetect(y) != logspace) stop("Both models must be in the same logspace format")
     Ax <- if(logspace) x$A else log(x$A)
     Ay <- if(logspace) y$A else log(y$A)
     Ex <- if(logspace) x$E else log(x$E)
     Ey <- if(logspace) y$E else log(y$E)
-    fun <- Vectorize(function(a, b) logsum((Ex[, a] + Ey[, b]) - qe))
-    Saa <- outer(1:(n - 1), 1:(m - 1), fun)
-
     if(cpp){
-      res <- NULL
-      stop("cpp option not supported yet")
-      # res <- Viterbi5(Ax, Ay, Ex, Ey, Saa, qex, qey, odds, offset, type = "semiglobal", itertab)
+      #res <- NULL
+      #stop("cpp option not supported yet")
+      res <- Viterbi_PP(Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
     }else{
-      if(type == "global"){
+      fun <- Vectorize(function(a, b) logsum((Ex[, a] + Ey[, b]) - qe))
+      Saa <- outer(1:(n - 1), 1:(m - 1), fun)
+      if(type == 0){
         V[-1, 1, "MI"] <- cumsum(c(Ax["MM", 1] + Ay["MI", 1], Ax["MM", 2:(n - 1)] + Ay["II", 1]))
         P[-1, 1, "MI"] <- c(3, rep(1, n - 2))
         V[-1, 1, "DG"] <- cumsum(c(Ax["MD", 1], Ax["DD", 2:(n - 1)]))
@@ -164,7 +162,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                        V[i - 1, j - 1, "MM"] + Ax["MM", i - 1] + Ay["MM", j - 1] + sij,
                        V[i - 1, j - 1, "GD"] + Ax["MM", i - 1] + Ay["DM", j - 1] + sij,
                        V[i - 1, j - 1, "IM"] + Ax["IM", i - 1] + Ay["MM", j - 1] + sij,
-                       if(type == "local") 0 else NULL)
+                       if(type == 2) 0 else NULL)
             GDcdt <- c(V[i, j - 1, "MM"] + Ay["MD", j - 1],
                        V[i, j - 1, "GD"] + Ay["DD", j - 1])
             IMcdt <- c(V[i, j - 1, "MM"] + Ax["MI", i] + Ay["MM", j - 1],
@@ -189,7 +187,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }
       path <- c()
       progression <- matrix(nrow = 2, ncol = 0)
-      if(type == 'global'){
+      if(type == 0){
         LLcdt <- c(V[n, m, "MI"] + Ax["MM", n] + Ay["IM", m],
                    V[n, m, "DG"] + Ax["DM", n] + Ay["MM", m],
                    V[n, m, "MM"] + Ax["MM", n] + Ay["MM", m],
@@ -204,7 +202,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           z[3] <- P[z[1], z[2], z[3]]
           z <- z - switch(path[1], c(1,0,0), c(1,0,0), c(1,1,0), c(0,1,0), c(0,1,0))
         }
-      }else if (type == 'semiglobal'){
+        startposition = c(1, 1)
+      }else if (type == 1){
         tmp <- V[, , "MM"]
         tmp[1:(n - 1), 1:(m - 1)] <- -Inf
         ind <- which(tmp == max(tmp), arr.ind = TRUE)
@@ -231,7 +230,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           path <- c(rep(4, z[2] - 1), path)
           progression <- cbind(rbind(rep(1, z[2] - 1), 1:(z[2] - 1)), progression)
         }
-      }else{
+        startposition = c(1, 1)
+      }else if(type == 2){
         ind <- which(V[, , "MM"] == max(V[, , "MM"]), arr.ind = TRUE)
         if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
         z <- c(ind, 3)
@@ -243,7 +243,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           z[3] <- P[z[1], z[2], z[3]]
           z <- z - switch(path[1], c(1,0,0), c(1,0,0), c(1,1,0), c(0,1,0), c(0,1,0))
         }
-      }
+        startposition = z[1:2]
+      }else(stop("invalid alignment type"))
       key <- "MI = 1, DG = 2, MM = 3, GD = 4, IM = 5"
       rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
       progression <- progression - 1 #to account for 0 row
@@ -254,7 +255,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                             start = startposition,
                             #key = key,
                             V = V,
-                            P = P),
+                            P = P,
+                            Saa = Saa),
                        class = 'Viterbi')
     }
   }else{

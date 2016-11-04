@@ -2,15 +2,14 @@
 % Please edit documentation in R/RcppExports.R
 \name{logsum}
 \alias{logsum}
-\title{Full log probability of sequence given model.}
+\title{Sum of logged values.}
 \usage{
 logsum(x)
 }
 \arguments{
-\item{x}{an object of class \code{HMM} or \code{PHMM}.}
+\item{x}{a vector of logged probabilities.}
 }
 \description{
-Implementation of the forward algorithm to caluclate the full (log) probability
-of a sequence through a given a HMM or profile HMM.
+\code{"logsum"} takes a vector of logged probabilities and returns.
 }
 
