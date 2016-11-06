@@ -72,6 +72,50 @@ double logsum(NumericVector x) {
 }
 
 
+//' Find the index of the maximum with sampling of ties.
+//'
+//' Returns the location of the maximum value in a numeric or integer vector.
+//'
+//' @param x a numeric or integer vector.
+//'
+// [[Rcpp::export]]
+int whichmax(NumericVector x){
+  int max = 0;
+  bool ties = false;
+  IntegerVector backups(x.size());
+  int counter = 0;
+  for(int i = 1; i < x.size(); i++){
+    if(x[i] > x[max]){
+      max = i;
+      if(ties){
+        for(int j = 0; j < counter; j++) backups[j] = 0;
+        counter = 0;
+        ties = false;
+      }
+    }else if(x[i] == x[max]){
+      backups[counter] = i;
+      counter++;
+      ties = true;
+    }
+    //checkUserInterrupt();
+  }
+  if(ties){
+    backups[counter] = max;
+    double rando = R::runif(0, 1);
+    double counternum = counter;
+    double increment = 1/(counternum + 1);
+    double ceiling = increment;
+    for(int i = 0; i <= counter; i++){
+      if(rando < ceiling){
+        return(backups[i]);
+      }else{
+        ceiling += increment;
+      }
+    }
+  }
+  return(max);
+}
+
 //' Optimal path of sequence through model.
 //'
 //' \code{ViterbiC} finds the optimal path of a sequence through a HMM
@@ -138,9 +182,9 @@ List Viterbi_default(IntegerVector x, IntegerVector y,
         // IYcdt[0] = -INFINITY;
         IYcdt[1] = MMM(i, j - 1) - (d + e);
         IYcdt[2] = MIY(i, j - 1) - e;
-        IXmax = which_max(IXcdt);
-        MMmax = which_max(MMcdt);
-        IYmax = which_max(IYcdt);
+        IXmax = whichmax(IXcdt);
+        MMmax = whichmax(MMcdt);
+        IYmax = whichmax(IYcdt);
         MIX(i, j) = IXcdt[IXmax];
         MMM(i, j) = MMcdt[MMmax];
         MIY(i, j) = IYcdt[IYmax];
@@ -164,7 +208,7 @@ List Viterbi_default(IntegerVector x, IntegerVector y,
     tbr = n - 1;
     tbc = m - 1;
     NumericVector brc = NumericVector::create(MIX(tbr, tbc), MMM(tbr, tbc), MIY(tbr, tbc));
-    tbm = which_max(brc);
+    tbm = whichmax(brc);
     score = brc[tbm];
     while(tbr > 0 | tbc > 0){
       keeppath[counter] = true;
@@ -247,7 +291,7 @@ List Viterbi_default(IntegerVector x, IntegerVector y,
     }
   }else{
     PMM(0, 0) = 3;
-    int maxind = which_max(MMM);
+    int maxind = whichmax(MMM);
     score = MMM[maxind];
     tbr = maxind % (n); // remainder
     tbc = maxind/(n); // quotient
@@ -291,7 +335,6 @@ List Viterbi_default(IntegerVector x, IntegerVector y,
   return(res);
 }
 
-//' @name ViterbiC
 // [[Rcpp::export]]
 List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
   List names = E.attr("dimnames");
@@ -321,7 +364,7 @@ List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
       }
     }
     for(int l = 0; l < nstates; l++){
-      int maxstate = which_max(tmp(_, l));
+      int maxstate = whichmax(tmp(_, l));
       colmaxs[l] = tmp(_, l)[maxstate];
       maxstates[l] = maxstate;
     }
@@ -333,7 +376,7 @@ List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
   NumericVector ak0(nstates);
   bool allinfinite = all(e[seq(1, nstates)] == rep(-INFINITY, nstates)).is_true();
   if(!allinfinite){ak0 += e[seq(1, nstates)];}
-  int maxstate = which_max(V(_, nrolls - 1) + ak0);
+  int maxstate = whichmax(V(_, nrolls - 1) + ak0);
   double score = V(_, nrolls - 1)[maxstate] + ak0[maxstate];
   IntegerVector path(nrolls);
   //CharacterVector charpath(nrolls);
@@ -353,7 +396,7 @@ List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
   return out;
 }
 
-//' @rdname ViterbiC
+
 // [[Rcpp::export]]
 List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
                   NumericVector qey, int type, IntegerVector windowspace, double offset,
@@ -418,9 +461,9 @@ List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
         if(DI) Icdt[0] = Dmatrix(i, j - 1) + A(2, i); //DI
         Icdt[1] = Mmatrix(i, j - 1) + A(5, i); //MI
         Icdt[2] = Imatrix(i, j - 1) +A (8, i); //II
-        Dmax = which_max(Dcdt);
-        Mmax = which_max(Mcdt);
-        Imax = which_max(Icdt);
+        Dmax = whichmax(Dcdt);
+        Mmax = whichmax(Mcdt);
+        Imax = whichmax(Icdt);
         Dmatrix(i, j) = Dcdt[Dmax];
         Mmatrix(i, j) = Mcdt[Mmax];
         Imatrix(i, j) = Icdt[Imax] + qey[j - 1];
@@ -448,13 +491,13 @@ List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
                                                 Mmatrix(n - 1, m - 1) + A(4, n - 1), //MM
                                                 Dmatrix(n - 1, m - 1) + A(7, n - 1)); //IM
 
-    tbm = which_max(LLcdt);
+    tbm = whichmax(LLcdt);
     score = LLcdt[tbm];
     tbr = n - 1; // traceback row
     tbc = m - 1; // traceback column
     // brc = bottom right corner
     //NumericVector brc = NumericVector::create(Dmatrix(tbr, tbc), Mmatrix(tbr, tbc), Imatrix(tbr, tbc));
-    //tbm = which_max(brc);
+    //tbm = whichmax(brc);
     //score = brc[tbm];
     while(tbr > 0 | tbc > 0){
       keeppath[counter] = true;
@@ -537,7 +580,7 @@ List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
     }
   }else{
     Mpointer(0, 0) = 3;
-    int maxind = which_max(Mmatrix);
+    int maxind = whichmax(Mmatrix);
     score = Mmatrix[maxind];
     tbr = maxind % (n); // remainder
     tbc = maxind/(n); // quotient
@@ -593,8 +636,6 @@ List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
   return(res);
 }
 
-
-//' @rdname ViterbiC
 // [[Rcpp::export]]
 List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay,
                 NumericMatrix Ex, NumericMatrix Ey,
@@ -697,11 +738,11 @@ List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay,
         GDcdt[1] = GDmatrix(i, j - 1) + Ay(0, j - 1); //DD
         IMcdt[0] = MMmatrix(i, j - 1) + Ax(5, i) + Ay(4, j - 1); //MI + MM
         IMcdt[1] = IMmatrix(i, j - 1) + Ax(8, i) + Ay(4, j - 1); //II + MM
-        MImax = which_max(MIcdt);
-        DGmax = which_max(DGcdt);
-        MMmax = which_max(MMcdt);
-        GDmax = which_max(GDcdt);
-        IMmax = which_max(IMcdt);
+        MImax = whichmax(MIcdt);
+        DGmax = whichmax(DGcdt);
+        MMmax = whichmax(MMcdt);
+        GDmax = whichmax(GDcdt);
+        IMmax = whichmax(IMcdt);
         MImatrix(i, j) = MIcdt[MImax];
         DGmatrix(i, j) = DGcdt[DGmax];
         MMmatrix(i, j) = MMcdt[MMmax];
@@ -734,7 +775,7 @@ List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay,
       MMmatrix(n - 1, m - 1) + Ax(4, n - 1) + Ay(4, m - 1), //MM + MM
       GDmatrix(n - 1, m - 1) + Ax(4, n - 1) + Ay(1, m - 1), //MM + DM
       IMmatrix(n - 1, m - 1) + Ax(7, n - 1) + Ay(4, m - 1));
-    tbm = which_max(LLcdt);
+    tbm = whichmax(LLcdt);
     score = LLcdt[tbm];
     tbr = n - 1; // traceback row
     tbc = m - 1; // traceback column
@@ -818,7 +859,7 @@ List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay,
     }
   }else{
     MMpointer(0, 0) = 5;
-    int maxind = which_max(MMmatrix);
+    int maxind = whichmax(MMmatrix);
     score = MMmatrix[maxind];
     tbr = maxind % (n); // remainder
     tbc = maxind/(n); // quotient

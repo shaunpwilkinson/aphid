@@ -46,7 +46,8 @@
 #' @references Durbin...
 #' @name train
 #'
-train <- function(x, y, method = "Viterbi", maxiter = 100, logspace = "autodetect",
+train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
+                  maxiter = if(method == "Viterbi") 10 else 100,
                   quiet = FALSE, deltaLL = 1E-07, modelend = FALSE, pseudocounts = "Laplace",
                   gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
                   threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE, cpp = TRUE){
@@ -54,7 +55,8 @@ train <- function(x, y, method = "Viterbi", maxiter = 100, logspace = "autodetec
 }
 
 #' @rdname train
-train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
+train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
+                       maxiter = if(method == "Viterbi") 10 else 100,
                        logspace = "autodetect", quiet = FALSE, deltaLL = 1E-07,
                        pseudocounts = "background", gapchar = "-",
                        fixqa = FALSE, fixqe = FALSE,
@@ -113,7 +115,7 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
   }
   if(!is.null(x$qa)){
     if(!logspace) x$qa <- log(x$qa)
-  } else{
+  }else{
     alignment <- align2phmm(y, x, cpp = cpp)
     gaps <- alignment == gapchar
     inserts <- apply(gaps, 2, sum) > 0.5 * n
@@ -132,17 +134,25 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
   out <- x
   if(method  == "Viterbi"){
     alignment <- align2phmm(y, out, logspace = TRUE, cpp = cpp)
+    #scores <- attr(alignment, "score")
+    #maxscore <- attr(alignment, "score")
     for(i in 1:maxiter){
       if(!quiet) cat("Iteration", i, "\n")
-      out <- derivePHMM(alignment, residues = residues, inserts = inserts,
+      out <- derivePHMM(alignment, seqweights = seqweights, residues = residues,
+                        inserts = inserts,
                         pseudocounts = pseudocounts, logspace = TRUE,
                         qa = if(fixqa) out$qa else NULL,
                         qe = if(fixqe) out$qe else NULL,
                         DI = DI, ID = ID) ### add others too, could just use ... = ...?
       newalig <- align2phmm(y, out, logspace = TRUE, cpp = cpp)
+      #score <- attr(newalig, "score")
+      #newscore <- attr(newalig, "score")
+      #if(!identical(alignment, newalig) & !(score %in% scores)){
       if(!identical(alignment, newalig)){
         alignment <- newalig
-      } else{
+        #scores <- c(scores, score)
+        #maxscore <- newscore
+      }else{
         if(!logspace){
           out$A <- exp(out$A)
           out$E <- exp(out$E)
@@ -153,7 +163,9 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
         return(out)
       }
     }
-    stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
+    if(!quiet) cat("Note: sequential alignments were not identical after", i, "iterations\n")
+    return(out)
+    #stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
   }else if(method == "BaumWelch"){
     # these just provide preformatted containers for the pseudocounts
     Apseudocounts <- x$A
@@ -292,7 +304,8 @@ train.PHMM <- function(x, y, method = "Viterbi", maxiter = 100,
 }
 
 #' @rdname train
-train.HMM <- function(x, y, method = "Viterbi", maxiter = 100, deltaLL = 1E-07,
+train.HMM <- function(x, y, method = "Viterbi", maxiter = if(method == "Viterbi") 10 else 100,
+                      deltaLL = 1E-07,
                       logspace = "autodetect", quiet = FALSE, modelend = FALSE,
                       pseudocounts = "Laplace", cpp = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)

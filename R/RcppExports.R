@@ -20,6 +20,16 @@ logsum <- function(x) {
     .Call('profile_logsum', PACKAGE = 'profile', x)
 }
 
+#' Find the index of the maximum with sampling of ties.
+#'
+#' Returns the location of the maximum value in a numeric or integer vector.
+#'
+#' @param x a numeric or integer vector.
+#'
+whichmax <- function(x) {
+    .Call('profile_whichmax', PACKAGE = 'profile', x)
+}
+
 #' Optimal path of sequence through model.
 #'
 #' \code{ViterbiC} finds the optimal path of a sequence through a HMM
@@ -35,17 +45,14 @@ Viterbi_default <- function(x, y, type, d, e, S, windowspace, offset) {
     .Call('profile_Viterbi_default', PACKAGE = 'profile', x, y, type, d, e, S, windowspace, offset)
 }
 
-#' @name ViterbiC
 Viterbi_HMM <- function(y, A, E) {
     .Call('profile_Viterbi_HMM', PACKAGE = 'profile', y, A, E)
 }
 
-#' @rdname ViterbiC
 Viterbi_PHMM <- function(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA) {
     .Call('profile_Viterbi_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA)
 }
 
-#' @rdname ViterbiC
 Viterbi_PP <- function(Ax, Ay, Ex, Ey, qe, type, windowspace, offset) {
     .Call('profile_Viterbi_PP', PACKAGE = 'profile', Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
 }

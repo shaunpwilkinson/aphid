@@ -31,7 +31,7 @@
 #'
 align <- function(sequences, type = "semiglobal", residues = NULL,
                   gapchar = "-", DI = FALSE, ID = FALSE, refine = "Viterbi",
-                  quiet = TRUE, cpp = TRUE, ...){
+                  quiet = FALSE, cpp = TRUE, ...){
   if(!(is.list(sequences))) stop("invalid 'sequences' argument")
   nsq <- length(sequences)
   if(is.null(attr(sequences, "names"))) names(sequences) <- paste0("SEQ", 1:nsq)
@@ -41,28 +41,39 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
   residues <- alphadetect(sequences, residues = residues, gapchar = gapchar)
   if(DNA) gapchar <- as.raw(4)
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
+  if(!quiet) cat("calculating pairwise distances\n")
   qds <- kdist(sequences)
+  if(!quiet) cat("building guide tree\n")
   guidetree <- as.dendrogram(hclust(qds, method = "average"))
+  if(!quiet) cat("calculating sequence weights\n")
+  seqweights <- weight(guidetree)
+  print(seqweights)
   newick <- write.dendrogram(guidetree, strip.edges = TRUE)
   newick <- gsub(";", "", newick)
   newick <- gsub("\\(", "alignpair\\(", newick)
   if(type == 'global') newick <- gsub("\\)", ", type = 'global'\\)", newick)
 
   msa1 <- with(sequences, eval(parse(text = newick)))
-  omniphmm <- derivePHMM(msa1, DI = DI, ID = ID, pseudocounts = "background")
+  if(!quiet) cat("deriving profile hidden Markov model\n")
+  omniphmm <- derivePHMM(msa1, seqweights = seqweights, DI = DI, ID = ID, pseudocounts = "background")
   if(refine == "Viterbi"){
+    if(!quiet) cat("refining model\n")
     finalphmm <- train(omniphmm, sequences, method = refine,
-                       maxiter = 300, DI = DI, ID = ID,
+                       DI = DI, ID = ID,
                        quiet = quiet, cpp = cpp,
                        ... = ...)
   }else if(refine == "BaumWelch"){
+    if(!quiet) cat("refining model\n")
     finalphmm <- train(omniphmm, sequences, method = refine,
-                       maxiter = 300, DI = DI, ID = ID,
+                       DI = DI, ID = ID,
                        quiet = quiet, cpp = cpp, ... = ...) ### condense
-  } else if (refine == "none"){
+  }else if (refine == "none"){
     return(msa1)
-  } else stop("argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none'")
-  align2phmm(sequences, model = finalphmm)
+  }else stop("argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none'")
+  if(!quiet) cat("aligning sequences to model\n")
+  res <- align2phmm(sequences, model = finalphmm)
+  if(!quiet) cat("done\n")
+  return(res)
 }
 
 #' Pairwise alignment of sequences and/or multiple sequence alignments.
@@ -160,8 +171,10 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
                     offset = offset, windowspace = windowspace, cpp = cpp)
     yind <- alig$path
     yind[alig$path != 0] <- 1:length(y)
-    yind[alig$path == 0] <- 0
-    newy <- c(gapchar, y)[yind + 1]
+    yind[alig$path == 0] <- 0 ### necessary?
+    tmp <- matrix(gapchar) #single element matrix
+    rownames(tmp) <- rownames(y)
+    newy <- cbind(tmp, y)[,yind + 1]
     #also need to account for inserts in x
     ynotinsert <- alig$path != 2 #logical vector
     yinsertlengths <- insertlengths(ynotinsert) #tabulate insert lengths
@@ -307,8 +320,10 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
   rownames(out) <- attr(sequences, "names")
   colnames(out) <- rep("I", 2 * model$size + 1)
   colnames(out)[seq(2, 2 * model$size, by = 2)] <- 1:model$size
+  score <- 0
   for(i in 1:length(sequences)){
     alignment <- Viterbi(model, sequences[i], type = "global", ...  = ...)
+    score <- score + alignment$score
     if(DNA){
       newrow <- rep("-", length(alignment$path))
       newrow[alignment$path > 0] <- ape::as.character.DNAbin(sequences[[i]])
@@ -365,5 +380,6 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
   colnames(res)[inserts] <- "I"
   rownames(res) <- names(sequences)
   if(DNA) res <- as.DNAbin(res)
+  attr(res, "score") <- score
   return(res)
 }

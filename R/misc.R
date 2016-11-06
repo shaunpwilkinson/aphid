@@ -72,6 +72,7 @@ insertgaps <- function(x, positions, lengths, gapchar = "-"){
   indices <- indices + 1
   gapcol <- matrix(rep(gapchar, n), ncol = 1, dimnames = list(rownames(x), NULL))
   res <- cbind(gapcol, x, deparse.level = 0)[, indices]
+  #res <- cbind(gapcol, x)[, indices]
   if(xisvec) res <- as.vector(res)
   return(res)
 }
