@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{DNAprobC2}
 \alias{DNAprobC2}
-\title{DNAprobabilities.}
+\title{DNA ambiguity probabilities.}
 \usage{
 DNAprobC2(x, probs)
 }
@@ -12,6 +12,6 @@ DNAprobC2(x, probs)
 \item{probs}{a length-4 vector.}
 }
 \description{
-Find DNA probabilities.
+Find DNA ambiguity probabilities.
 }
 

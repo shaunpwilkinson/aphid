@@ -64,7 +64,8 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                        DI = TRUE, ID = TRUE, cpp = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   #note any changes below also need apply to align2phmm
-  DNA <- inherits(y, "DNAbin")
+  DNA <- is.DNA(y)
+  # DNA <- inherits(y, "DNAbin")
   if(DNA) gapchar <- as.raw(4)
   if(is.list(y)){
   }else if(DNA){
@@ -100,6 +101,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     }else stop("invalid mode")
   }else stop("invalid 'y' argument")
   n <- length(y)
+  if(is.null(seqweights)) seqweights <- rep(1, n)
   states <- c("D", "M", "I")
   residues <- rownames(x$E)
   l <- x$size
@@ -206,7 +208,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         yj <- y[[j]]
         nj <- length(yj)
         if(nj == 0){
-          tmpA["DD", 2:(ncol(tmpA) - 1)] <- tmpA["DD", 2:(ncol(tmpA) - 1)] + 1
+          tmpA["DD", 2:(ncol(tmpA) - 1)] <- tmpA["DD", 2:(ncol(tmpA) - 1)] + seqweights[j]
           tmplogPx[j] <- sum(c(A["MD", 1],
                                A["DD", 2:l],
                                A["DM", l + 1]))
@@ -218,7 +220,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           backj <- backward(out, yj, logspace = TRUE, odds = FALSE)
           Bj <- backj$array
           for(k in 1:l){ #modules
-            for(a in seq_along(residues)){  #residue alphabet
+            for(a in seq_along(residues)){
               yjequalsa <- c(FALSE, yj == residues[a])
               if(any(yjequalsa)){
                 tmpE[a, k] <- tmpE[a, k] + exp(logsum(Rj[k + 1, yjequalsa, "M"] +

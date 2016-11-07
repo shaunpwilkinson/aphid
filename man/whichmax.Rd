@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{whichmax}
 \alias{whichmax}
-\title{Find the index of the maximum with sampling of ties.}
+\title{Find the index of the maximum with ties broken at random.}
 \usage{
 whichmax(x)
 }

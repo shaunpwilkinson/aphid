@@ -7,12 +7,13 @@
 \title{Backward algorithm.}
 \usage{
 backward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
-  type = "global", DI = TRUE, ID = TRUE)
+  type = "global", DI = TRUE, ID = TRUE, cpp = TRUE)
+
+\method{backward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
 
 \method{backward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
-  odds = TRUE, type = "global", DI = TRUE, ID = TRUE)
-
-\method{backward}{HMM}(x, y, logspace = "autodetect")
+  type = "global", odds = TRUE, windowspace = "all", DI = TRUE,
+  ID = TRUE, cpp = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{PHMM} or \code{HMM}.}

@@ -8,12 +8,13 @@
 \title{Forward algorithm.}
 \usage{
 forward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
-  type = "global", DI = TRUE, ID = TRUE)
+  type = "global", DI = TRUE, ID = TRUE, cpp = TRUE)
 
 \method{forward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
-  odds = TRUE, type = "global", DI = TRUE, ID = TRUE)
+  type = "global", odds = TRUE, windowspace = "all", DI = TRUE,
+  ID = TRUE, cpp = TRUE)
 
-\method{forward}{HMM}(x, y, logspace = "autodetect")
+\method{forward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
 
 \method{forward}{default}(x, y, type = "semiglobal", d = 8, e = 2,
   S = NULL, itertab = NULL, offset = 0)
@@ -39,10 +40,10 @@ at the beginning and end of the path should count towards the final score
 ('global'; default). Note that semiglobal and local models
 are not currently supported in this version.}
 
-\item{DI}{logical. should delete-insert transitions be allowed? Only applicable for
+\item{DI}{logical. should delete -> insert transitions be allowed? Only applicable for
 objects of class \code{"PHMM"}.}
 
-\item{ID}{logical. should insert-delete transitions be allowed? Only applicable for
+\item{ID}{logical. should insert -> delete transitions be allowed? Only applicable for
 objects of class \code{"PHMM"}.}
 }
 \description{

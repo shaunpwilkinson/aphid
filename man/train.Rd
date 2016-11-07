@@ -6,21 +6,22 @@
 \alias{train.PHMM}
 \title{Iterative refinement of model parameters.}
 \usage{
-train(x, y, method = "Viterbi", maxiter = 100, logspace = "autodetect",
+train(x, y, method = "Viterbi", seqweights = NULL,
+  logspace = "autodetect", maxiter = if (method == "Viterbi") 10 else 100,
   quiet = FALSE, deltaLL = 1e-07, modelend = FALSE,
   pseudocounts = "Laplace", gapchar = "-", fixqa = FALSE, fixqe = FALSE,
   inserts = "map", threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE,
   cpp = TRUE)
 
-\method{train}{PHMM}(x, y, method = "Viterbi", maxiter = 100,
-  logspace = "autodetect", quiet = FALSE, deltaLL = 1e-07,
-  pseudocounts = "background", gapchar = "-", fixqa = FALSE,
-  fixqe = FALSE, inserts = "map", threshold = 0.5, lambda = 0,
-  DI = TRUE, ID = TRUE, cpp = TRUE)
+\method{train}{PHMM}(x, y, method = "Viterbi", seqweights = NULL,
+  maxiter = if (method == "Viterbi") 10 else 100, logspace = "autodetect",
+  quiet = FALSE, deltaLL = 1e-07, pseudocounts = "background",
+  gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
+  threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE, cpp = TRUE)
 
-\method{train}{HMM}(x, y, method = "Viterbi", maxiter = 100,
-  deltaLL = 1e-07, logspace = "autodetect", quiet = FALSE,
-  modelend = FALSE, pseudocounts = "Laplace", cpp = TRUE)
+\method{train}{HMM}(x, y, method = "Viterbi", maxiter = if (method ==
+  "Viterbi") 10 else 100, deltaLL = 1e-07, logspace = "autodetect",
+  quiet = FALSE, modelend = FALSE, pseudocounts = "Laplace", cpp = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'} specifying the
@@ -31,9 +32,6 @@ starting parameter values.}
 \item{method}{a character string specifying the iterative model training method to use.
 Must be set to either \code{method = "Viterbi"} (default) or \code{method = "BaumWelch"}.}
 
-\item{maxiter}{the maximum number of EM iterations before the cycling process is terminated
-with an error.}
-
 \item{logspace}{logical argument indicating whether the emission and transition
 probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
 \code{logspace = "autodetect"} (default), the function will automatically detect
@@ -41,6 +39,9 @@ if the probabilities are in log space, returning an error if inconsistencies are
 Note that choosing the latter option increases the computational
 overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time for
 large models with many parameters.}
+
+\item{maxiter}{the maximum number of EM iterations before the cycling process is terminated
+with an error.}
 
 \item{quiet}{logical argument indicating whether the iteration progress should
 be printed to the console (\code{quiet = FALSE}; default) or suppressed

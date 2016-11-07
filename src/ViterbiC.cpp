@@ -1,9 +1,9 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' DNAprobabilities.
+//' DNA ambiguity probabilities.
 //'
-//' Find DNA probabilities.
+//' Find DNA ambiguity probabilities.
 //'
 //' @param x a pentadecimal integer (arity = 15).
 //' @param probs a length-4 vector.
@@ -52,9 +52,9 @@ double DNAprobC2(int x, NumericVector probs){
 }
 
 
-//' Sum of logged values.
+//' Sum of logged probabilities.
 //'
-//' \code{"logsum"} takes a vector of logged probabilities and returns.
+//' \code{"logsum"} takes a vector of logged probabilities and returns its sum.
 //'
 //' @param x a vector of logged probabilities.
 // [[Rcpp::export]]
@@ -72,7 +72,7 @@ double logsum(NumericVector x) {
 }
 
 
-//' Find the index of the maximum with sampling of ties.
+//' Find the index of the maximum with ties broken at random.
 //'
 //' Returns the location of the maximum value in a numeric or integer vector.
 //'
@@ -115,6 +115,7 @@ int whichmax(NumericVector x){
   }
   return(max);
 }
+
 
 //' Optimal path of sequence through model.
 //'
@@ -460,7 +461,7 @@ List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
         // Mcdt[3] is either 0 or -inf, depending on type
         if(DI) Icdt[0] = Dmatrix(i, j - 1) + A(2, i); //DI
         Icdt[1] = Mmatrix(i, j - 1) + A(5, i); //MI
-        Icdt[2] = Imatrix(i, j - 1) +A (8, i); //II
+        Icdt[2] = Imatrix(i, j - 1) + A(8, i); //II
         Dmax = whichmax(Dcdt);
         Mmax = whichmax(Mcdt);
         Imax = whichmax(Icdt);
@@ -489,7 +490,7 @@ List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
     //                            V[n, m, "I"] + A["IM", n])
     NumericVector LLcdt = NumericVector::create(Dmatrix(n - 1, m - 1) + A(1, n - 1), //DM
                                                 Mmatrix(n - 1, m - 1) + A(4, n - 1), //MM
-                                                Dmatrix(n - 1, m - 1) + A(7, n - 1)); //IM
+                                                Imatrix(n - 1, m - 1) + A(7, n - 1)); //IM
 
     tbm = whichmax(LLcdt);
     score = LLcdt[tbm];
@@ -757,8 +758,6 @@ List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay,
     }
     checkUserInterrupt();
   }
-
-
   // traceback
   IntegerVector path(m + n); // if being picky should be m + n - 2 but doesnt matter
   LogicalVector keeppath(m + n);
@@ -921,48 +920,27 @@ List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay,
 }
 
 
-
-//' Full log probability of sequence given model.
+//' Full probability of a sequence given a model.
 //'
 //' Implementation of the forward algorithm to caluclate the full (log) probability
 //' of a sequence through a given a HMM or profile HMM.
-//' @param x an object of class \code{HMM} or \code{PHMM}.
+//' @param y an integer vector with same arity as number of columns of E
+//'
 // [[Rcpp::export]]
-List forwardC(List x, CharacterVector y, bool logspace = false) {
-  NumericMatrix A = clone(VECTOR_ELT(x, 0));
-  NumericMatrix E = clone(VECTOR_ELT(x, 1));
-  List names = E.attr("dimnames");
-  CharacterVector states = VECTOR_ELT(names, 0);
-  CharacterVector residues = VECTOR_ELT(names, 1);
+List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
   int nrolls = y.size();
-  int nstates = states.size();
-  int nres = residues.size();
-  if(!logspace){
-    for(int i = 0; i < nstates; i++){
-      A(i, _) = log(A(i, _));
-      E(i, _) = log(E(i, _));
-    }
-    A(nstates, _) = log(A(nstates, _));
-  }
+  IntegerVector Edim = E.attr("dim");
+  int nstates = Edim[0];
+  int nres = Edim[1];
   if(nrolls == 0){
-    List out = List::create(Named("score") = A(1, 1), Named("path") = NULL);
-    out.attr("class") = "forward";
+    List out = List::create(Named("score") = A(0, 0), Named("array") = NULL);
+    out.attr("class") = "fullprob";
     return out;
   }
-  IntegerVector yind(nrolls);
-  CharacterVector yi(1);
-  for(int i = 0; i < nrolls; i++){
-    yi = y[i];
-    yind[i] = match(yi, residues)[0] - 1;
-  }
   NumericMatrix R(nstates, nrolls);
-  IntegerVector prerolls = Range(1, nrolls);
-  CharacterVector rolls = as<CharacterVector>(prerolls);
-  List rnames = List::create(Named("state") = states, Named("roll") = rolls);
-  R.attr("dimnames") = rnames;
   NumericVector s = A(0, _);
   NumericVector e = A(_, 0);
-  R(_, 0) = E(_, yind[0]) + s[seq(1, nstates)];
+  R(_, 0) = E(_, y[0]) + s[seq(1, nstates)];
   NumericMatrix tmp(nstates, nstates);
   NumericVector coltotals(nstates);
   for(int i = 1; i < nrolls; i++){
@@ -972,53 +950,117 @@ List forwardC(List x, CharacterVector y, bool logspace = false) {
       }
     }
     for(int k = 0; k < nstates; k++) coltotals[k] = logsum(tmp(_, k));
-    R(_, i) =  E(_, yind[i]) + coltotals;
+    R(_, i) =  E(_, y[i]) + coltotals;
   }
   NumericVector ak0(nstates);
   if(any(e[seq(1, nstates)] != rep(-INFINITY, nstates)).is_true()) ak0 = e[seq(1, nstates)];
   double res = logsum(R(_, nrolls - 1) + ak0);
-  List out = List::create(Named("score") = res, Named("array") = R);
-  out.attr("class") = "forward";
+  bool odds = false;
+  List out = List::create(Named("score") = res, Named("array") = R, Named("odds") = odds);
+  out.attr("class") = "fullprob";
   return out;
+}
+
+// [[Rcpp::export]]
+List forward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
+                  NumericVector qey, int type, IntegerVector windowspace,
+                  bool DI, bool ID, bool DNA){
+  int n = E.ncol() + 1;
+  int m = y.size() + 1;
+  double sij;
+  NumericVector Dcdt(3);
+  Dcdt[2] = -INFINITY;
+  NumericVector Mcdt(3);
+  NumericVector Icdt(3);
+  Icdt[0] = -INFINITY;
+  NumericVector neginf = NumericVector::create(-INFINITY);
+  NumericVector tmp = rep_len(neginf, n * m);
+  tmp.attr("dim") = IntegerVector::create(n, m);
+  NumericMatrix Dmatrix = as<NumericMatrix>(tmp);// x aligns to gap in y
+  NumericMatrix Mmatrix = clone(Dmatrix);// match-match
+  NumericMatrix Imatrix = clone(Dmatrix); // y aligns to gap in x
+  // initialize scoring matrices
+  Mmatrix(0, 0) = 0;
+  if(type == 0){
+    Dmatrix(1, 0) = A(3, 0); // Match -> Delete transition prob for position 0
+    Imatrix(0, 1) = A(5, 0) + qey[0];
+    for(int i = 2; i < n; i++) Dmatrix(i, 0) = Dmatrix(i - 1, 0) + A(0, i - 1);
+    for(int j = 2; j < m; j++) Imatrix(0, j) = Imatrix(0, j - 1) + A(8, 0) + qey[j - 1];
+  }else{
+    throw Rcpp::exception("type semiglobal not supported");
+    //for(int i = 1; i < n; i++) Dmatrix(i, 0) = 0;
+    //for(int j = 1; j < m; j++) Imatrix(0, j) = 0; // qey??
+  }
+  // recursion
+  for(int i = 1; i < n; i++){
+    for(int j = 1; j < m; j++){
+      if(j - i >= windowspace[0] & j - i <= windowspace[1]){
+        if(DNA){
+          sij = DNAprobC2(y[j - 1], E(_, i - 1));
+        }else{
+          sij = E(y[j - 1], i - 1);
+        }
+        Dcdt[0] = Dmatrix(i - 1, j) + A(0, i - 1); //DD
+        Dcdt[1] = Mmatrix(i - 1, j) + A(3, i - 1); //MD
+        if(ID) Dcdt[2] = Imatrix(i - 1, j) + A(6, i - 1);  //ID
+        Mcdt[0] = Dmatrix(i - 1, j - 1) + A(1, i - 1); //DM
+        Mcdt[1] = Mmatrix(i - 1, j - 1) + A(4, i - 1); //MM
+        Mcdt[2] = Imatrix(i - 1, j - 1) + A(7, i - 1); //IM
+        if(DI) Icdt[0] = Dmatrix(i, j - 1) + A(2, i); //DI
+        Icdt[1] = Mmatrix(i, j - 1) + A(5, i); //MI
+        Icdt[2] = Imatrix(i, j - 1) + A(8, i); //II
+        Dmatrix(i, j) = logsum(Dcdt);
+        Mmatrix(i, j) = logsum(Mcdt) + sij;
+        Imatrix(i, j) = logsum(Icdt) + qey[j - 1];
+      }
+    }
+    checkUserInterrupt();
+  }
+  double score;
+  if(type == 0){
+    NumericVector LLcdt = NumericVector::create(Dmatrix(n - 1, m - 1) + A(1, n - 1), //DM
+                                                Mmatrix(n - 1, m - 1) + A(4, n - 1), //MM
+                                                Imatrix(n - 1, m - 1) + A(7, n - 1)); //IM
+    score = logsum(LLcdt);
+  }else{
+    score = 0;
+  }
+  bool odds = all(qey == 0).is_true();
+  List res = List::create(Named("score") = score,
+                          Named("odds") = odds,
+                          Named("Dmatrix") = Dmatrix,
+                          Named("Mmatrix") = Mmatrix,
+                          Named("Imatrix") = Imatrix);
+  res.attr("class") = "fullprob";
+  return(res);
 }
 
 
 // [[Rcpp::export]]
-List backwardC(List x, CharacterVector y, bool logspace = false) {
-  NumericMatrix A = clone(VECTOR_ELT(x, 0));
-  NumericMatrix E = clone(VECTOR_ELT(x, 1));
-  List names = E.attr("dimnames");
-  CharacterVector states = VECTOR_ELT(names, 0);
-  CharacterVector residues = VECTOR_ELT(names, 1);
+List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E) {
   int nrolls = y.size();
-  int nstates = states.size(); // does not include begin/end state
-  int nres = residues.size();
-  if(!logspace){
-    for(int i = 0; i < nstates; i++){
-      A(i, _) = log(A(i, _));
-      E(i, _) = log(E(i, _));
-    }
-    A(nstates, _) = log(A(nstates, _));
-  }
+  IntegerVector Edim = E.attr("dim");
+  int nstates = Edim[0]; // does not include begin/end state
+  int nres = Edim[1];
   if(nrolls == 0){
-    List out = List::create(Named("score") = A(1, 1), Named("path") = NULL);
-    out.attr("class") = "forward";
+    List out = List::create(Named("score") = A(0, 0), Named("array") = NULL);
+    out.attr("class") = "fullprob";
     return out;
   }
-  IntegerVector yind(nrolls);
-  CharacterVector yi(1);
-  for(int i = 0; i < nrolls; i++){
-    yi = y[i];
-    yind[i] = match(yi, residues)[0] - 1;
-  }
+  // IntegerVector yind(nrolls);
+  // CharacterVector yi(1);
+  // for(int i = 0; i < nrolls; i++){
+  //   yi = y[i];
+  //   yind[i] = match(yi, residues)[0] - 1;
+  // }
   NumericMatrix R(nstates, nrolls);
   //IntegerVector prerolls = Range(nrolls, 1); // doesn't work in reverse
-  IntegerVector prerolls(nrolls);
-  prerolls[0] = nrolls;
-  for(int i = 1; i < nrolls; i++) prerolls[i] = prerolls[i - 1] - 1;
-  CharacterVector rolls = as<CharacterVector>(prerolls);
-  List rnames = List::create(Named("state") = states, Named("roll") = rolls);
-  R.attr("dimnames") = rnames;
+  // IntegerVector prerolls(nrolls);
+  // prerolls[0] = nrolls;
+  // for(int i = 1; i < nrolls; i++) prerolls[i] = prerolls[i - 1] - 1;
+  // CharacterVector rolls = as<CharacterVector>(prerolls);
+  // List rnames = List::create(Named("state") = states, Named("roll") = rolls);
+  // R.attr("dimnames") = rnames;
   NumericVector s = A(0, _);
   NumericVector e = A(_, 0);
   NumericVector ak0(nstates);
@@ -1029,16 +1071,97 @@ List backwardC(List x, CharacterVector y, bool logspace = false) {
   for(int i = nrolls - 1; i > 0; i--){
     for(int k = 0; k < nstates; k++){
       for(int l = 0; l < nstates; l++){
-        tmp(k, l) =  A(k + 1, l + 1) + E(l, yind[i]) + R(l, i);
+        tmp(k, l) =  A(k + 1, l + 1) + E(l, y[i]) + R(l, i);
       }
     }
     for(int k = 0; k < nstates; k++) rowtotals[k] = logsum(tmp(k, _));
     R(_, i - 1) =  rowtotals;
   }
   NumericVector logprobs(nstates);
-  for(int l = 0; l < nstates; l++) logprobs[l] = A(0, l + 1) + E(l, yind[0]) + R(l, 0);
+  for(int l = 0; l < nstates; l++) logprobs[l] = A(0, l + 1) + E(l, y[0]) + R(l, 0);
   double res = logsum(logprobs);
-  List out = List::create(Named("score") = res, Named("array") = R);
+  bool odds = false;
+  List out = List::create(Named("score") = res, Named("array") = R, Named("odds") = odds);
   out.attr("class") = "backward";
   return out;
+}
+
+
+// [[Rcpp::export]]
+List backward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
+                  NumericVector qey, int type, IntegerVector windowspace,
+                  bool DI, bool ID, bool DNA){
+  int n = E.ncol() + 1;
+  int m = y.size() + 1;
+  double sij;
+  NumericVector Dcdt(3);
+  Dcdt[2] = -INFINITY;
+  NumericVector Mcdt(3);
+  NumericVector Icdt(3);
+  Icdt[0] = -INFINITY;
+  NumericVector neginf = NumericVector::create(-INFINITY);
+  NumericVector tmp = rep_len(neginf, n * m);
+  tmp.attr("dim") = IntegerVector::create(n, m);
+  NumericMatrix Dmatrix = as<NumericMatrix>(tmp);// x aligns to gap in y
+  NumericMatrix Mmatrix = clone(Dmatrix);// match-match
+  NumericMatrix Imatrix = clone(Dmatrix); // y aligns to gap in x
+  // initialize scoring matrices
+  Dmatrix(n - 1, m - 1) = A(1, n - 1);
+  Mmatrix(n - 1, m - 1) = A(4, n - 1);
+  Imatrix(n - 1, m - 1) = A(7, n - 1);
+  if(type == 0){
+    for(int i = n - 1; i > 0; i--) {
+      Dmatrix(i - 1, m - 1) = Dmatrix(i, m - 1) + A(0, i - 1); //DD
+      Mmatrix(i - 1, m - 1) = Dmatrix(i, m - 1) + A(3, i - 1); //MD
+      if(ID) Imatrix(i - 1, m - 1) = Dmatrix(i, m - 1) + A(6, i - 1); //ID
+    }
+    for(int j = m - 1; j > 0; j--){
+      if(DI) Dmatrix(n - 1, j - 1) = Imatrix(n - 1, j) + A(2, n - 1) + qey[j - 1]; //DI
+      Mmatrix(n - 1, j - 1) = Imatrix(n - 1, j) + A(5, n - 1) + qey[j - 1]; //MI
+      Imatrix(n - 1, j - 1) = Imatrix(n - 1, j) + A(8, n - 1) + qey[j - 1]; //II
+    }
+  }else{
+    throw Rcpp::exception("type semiglobal not supported");
+    //for(int i = 1; i < n; i++) Dmatrix(i, 0) = 0;
+    //for(int j = 1; j < m; j++) Imatrix(0, j) = 0; // qey??
+  }
+  // recursion
+  for(int i = n - 2; i >= 0; i--){
+    for(int j = m - 2; j >= 0; j--){
+      if(j - i >= windowspace[0] & j - i <= windowspace[1]){
+        if(DNA){
+          sij = DNAprobC2(y[j], E(_, i));
+        }else{
+          sij = E(y[j], i);
+        }
+        Dcdt[0] = Dmatrix(i + 1, j) + A(0, i); //DD
+        Dcdt[1] = Mmatrix(i + 1, j + 1) + A(1, i) + sij; //DM
+        if(DI) Dcdt[2] = Imatrix(i, j + 1) + A(2, i) + qey[j];  //DI
+        Mcdt[0] = Dmatrix(i + 1, j) + A(3, i); //MD
+        Mcdt[1] = Mmatrix(i + 1, j + 1) + A(4, i) + sij; //MM
+        Mcdt[2] = Imatrix(i, j + 1) + A(5, i) + qey[j]; //IM
+        if(DI) Icdt[0] = Dmatrix(i + 1, j) + A(6, i); //DI
+        Icdt[1] = Mmatrix(i + 1, j + 1) + A(7, i) + sij; //MI
+        Icdt[2] = Imatrix(i, j + 1) + A(8, i) + qey[j]; //II
+        Dmatrix(i, j) = logsum(Dcdt);
+        Mmatrix(i, j) = logsum(Mcdt);
+        Imatrix(i, j) = logsum(Icdt);
+      }
+    }
+    checkUserInterrupt();
+  }
+  double score;
+  if(type == 0){
+    score = Mmatrix(0, 0);
+  }else{
+    score = 0;
+  }
+  bool odds = all(qey == 0).is_true();
+  List res = List::create(Named("score") = score,
+                          Named("odds") = odds,
+                          Named("Dmatrix") = Dmatrix,
+                          Named("Mmatrix") = Mmatrix,
+                          Named("Imatrix") = Imatrix);
+  res.attr("class") = "fullprob";
+  return(res);
 }

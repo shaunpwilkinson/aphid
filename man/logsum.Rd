@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{logsum}
 \alias{logsum}
-\title{Sum of logged values.}
+\title{Sum of logged probabilities.}
 \usage{
 logsum(x)
 }
@@ -10,6 +10,6 @@ logsum(x)
 \item{x}{a vector of logged probabilities.}
 }
 \description{
-\code{"logsum"} takes a vector of logged probabilities and returns.
+\code{"logsum"} takes a vector of logged probabilities and returns its sum.
 }
 

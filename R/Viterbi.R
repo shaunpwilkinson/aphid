@@ -51,8 +51,8 @@ Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "semiglobal", odds = TRUE, offset = 0,
                          windowspace = "all", DI = TRUE, ID = TRUE, cpp = TRUE){
-  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
-  if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
+  if(identical(logspace, "autodetect")) logspace <- logdetect(x)
+  if(!(type %in% c("global", "semiglobal", "local"))) stop("invalid type")
   pp <- inherits(y, "PHMM")
   pd <- is.DNA(y)
   pc <- !pp & !pd
@@ -260,7 +260,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                        class = 'Viterbi')
     }
   }else{
-    qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC, qe) else qe[y]
+    qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC2, qe) else qe[y]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
     #Saa <- if(odds) E - qe else E
@@ -373,14 +373,10 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       #key: "1 = delete, 2 = match, 3 = insert"
       progression <- progression - 1 #to account for 0 row
       path <- path - 1
-      Dmatrix = NULL
       res <- structure(list(score = score,
                             path = path,
                             progression = progression,
                             start = startposition,
-                            #key = key,
-                            #V = V,
-                            #P = P,
                             Dmatrix = V[, , 1],
                             Mmatrix = V[, , 2],
                             Imatrix = V[, , 3],
