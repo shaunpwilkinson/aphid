@@ -32,11 +32,12 @@
 #' modeled. Defaults to FALSE.
 #'
 
-deriveHMM <- function(x, residues = NULL, states = NULL, modelend = FALSE,
+deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, modelend = FALSE,
                       pseudocounts = "background", logspace = FALSE){
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
   # includes start and or end states?
+
   namesok <- all(sapply(x, function(y) !is.null(names(y))  | length(y) == 0))
   if(!(namesok)) stop("all elements of x must be named vectors")
   residues <- alphadetect(x, residues = residues)
@@ -44,7 +45,18 @@ deriveHMM <- function(x, residues = NULL, states = NULL, modelend = FALSE,
   if(states[1] != "BeginEnd") states <- c("BeginEnd", states)
   nres <- length(residues)
   nstates <- length(states)
+  n <- length(x)
+  if(is.null(seqweights)){
+    seqweights <- rep(1, n)
+  }else{
+    if(round(sum(seqweights), 2) != n){
+      if(round(sum(seqweights), 2) == 1){
+        seqweights <- seqweights * n
+      }else stop("invalid seqweights argument")
+    }
+  }
   # code states as integers
+
   indices <- 0:(nstates - 1)
   names(indices) <- states
   pathscoded <- lapply(x, function(v) indices[c("BeginEnd", names(v), "BeginEnd")])

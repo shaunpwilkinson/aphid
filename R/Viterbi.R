@@ -133,6 +133,18 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       #res <- NULL
       #stop("cpp option not supported yet")
       res <- Viterbi_PP(Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
+      V[, , 1] <- res$MImatrix
+      V[, , 2] <- res$DGmatrix
+      V[, , 3] <- res$MMmatrix
+      V[, , 4] <- res$GDmatrix
+      V[, , 5] <- res$IMmatrix
+      P[, , 1] <- res$MIpointer
+      P[, , 2] <- res$DGpointer
+      P[, , 3] <- res$MMpointer
+      P[, , 4] <- res$GDpointer
+      P[, , 5] <- res$IMpointer
+      res$array <- V
+      res$pointer = P
     }else{
       fun <- Vectorize(function(a, b) logsum((Ex[, a] + Ey[, b]) - qe))
       Saa <- outer(1:(n - 1), 1:(m - 1), fun)
@@ -253,20 +265,56 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                             path = path,
                             progression = progression,
                             start = startposition,
-                            #key = key,
-                            V = V,
-                            P = P,
+                            array = V,
+                            pointer = P,
                             Saa = Saa),
                        class = 'Viterbi')
     }
   }else{
-    qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC2, qe) else qe[y]
+    qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC2, qe) else qe[y + 1]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
     #Saa <- if(odds) E - qe else E
+    if(n == 1){
+      V[1, 1, "M"] <- 0
+      if(m > 1) V[1, 2, "I"] <- A["MI", 1]
+      if(m > 2) for(j in 3:m) V[1, j, "I"] <- V[1, j - 1, "I"] + A["II", 1]
+      P[, -1, "I"] <- c(1, rep(2, m - 2))
+      score <- if(m > 1) V[1, m, "I"] + A["IM", 1] else 0
+      res <- structure(list(score = score,
+                            path = rep(2, m - 1),
+                            start = c(1, 1),
+                            array = V,
+                            pointer = P),
+                       class = 'Viterbi')
+      return(res)
+    }
+    if(m == 1){
+      V[1, 1, "M"] <- 0
+      if(n > 1) V[2, 1, "D"] <- A["MD", 1]
+      if(n > 2) for(i in 3:n) V[i, 1, "D"] <- V[i - 1, 1, "D"] + A["DD", i - 1]
+      P[-1, , "D"] <- c(1, rep(0, n - 2))
+      score <- if(n > 1) V[n, 1, "D"] + A["DM", n] else 0
+      res <- structure(list(score = score,
+                            path = rep(0, n - 1),
+                            start = c(1, 1),
+                            array = V,
+                            pointer = P),
+                       class = 'Viterbi')
+      return(res)
+    }
+    ### for m == 1 too
     if(odds) E <- E - qe
     if(cpp){
       res <- Viterbi_PHMM(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA = pd)
+      V[, , 1] <- res$Dmatrix
+      V[, , 2] <- res$Mmatrix
+      V[, , 3] <- res$Imatrix
+      P[, , 1] <- res$Dpointer
+      P[, , 2] <- res$Mpointer
+      P[, , 3] <- res$Ipointer
+      res$array <- V
+      res$pointer = P
     }else{
       P[, 1, 1] <- c(NA, 2, rep(1, n - 2))
       P[1, , 3] <- c(NA, 2, rep(3, m - 2))
@@ -377,12 +425,14 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                             path = path,
                             progression = progression,
                             start = startposition,
-                            Dmatrix = V[, , 1],
-                            Mmatrix = V[, , 2],
-                            Imatrix = V[, , 3],
-                            Dpointer = P[, , 1],
-                            Mpointer = P[, , 2],
-                            Ipointer = P[, , 3]),
+                            array = V,
+                            pointer = P),
+                            # Dmatrix = V[, , 1],
+                            # Mmatrix = V[, , 2],
+                            # Imatrix = V[, , 3],
+                            # Dpointer = P[, , 1],
+                            # Mpointer = P[, , 2],
+                            # Ipointer = P[, , 3]),
                        class = 'Viterbi')
     }
   }
@@ -428,8 +478,8 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
     }
     res <- structure(list(score = maxLL,
                           path = path - 1,
-                          V = V,
-                          P = P - 1),
+                          array = V,
+                          pointer = P - 1),
                      class = "Viterbi")
   }
   return(res)
@@ -613,8 +663,8 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
                           #firstmatch = firstmatch,
                           progression = progression,
                           key = key,
-                          V = M,
-                          P = P),
+                          array = M,
+                          pointer = P),
                      class = 'Viterbi')
   }
   return(res)

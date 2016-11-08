@@ -24,6 +24,7 @@
 #' objects of class \code{"PHMM"}.
 #' @name forward
 forward <- function(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
+                    windowspace = "all",
                     type = "global", DI = TRUE, ID = TRUE, cpp = TRUE){
   UseMethod("forward")
 }
@@ -103,12 +104,16 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   if(pp){
     ### placeholder
   }else{
-    qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC2, qe) else qe[y]
+    qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC2, qe) else qe[y + 1]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
     if(odds) E <- E - qe
     if(cpp){
       res <- forward_PHMM(y, A, E, qe, qey, type, windowspace, DI, ID, DNA = pd)
+      R[, , 1] <- res$Dmatrix
+      R[, , 2] <- res$Mmatrix
+      R[, , 3] <- res$Imatrix
+      res$array <- R
     }else{
       if(type == 0){
         R[2, 1, "D"] <- A["MD", 1]
@@ -147,9 +152,10 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }
       res <- structure(list(score = score,
                             odds = odds,
-                            Dmatrix = R[, , 1],
-                            Mmatrix = R[, , 2],
-                            Imatrix = R[, , 3]),
+                            array = R),
+                            # Dmatrix = R[, , 1],
+                            # Mmatrix = R[, , 2],
+                            # Imatrix = R[, , 3]),
                        class = 'fullprob')
     }
   }

@@ -10,7 +10,7 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
   residues <- rownames(x$E)
   symblen <- length(residues)
   pHMMlength <- ncol(x$E)
-  maxemiss <- max(x$E)
+  maxemiss <- if(ncol(x$E) > 0) max(x$E) else 1
   if(from == "start") from <- 0
   if(to == "end") to <- pHMMlength + 1
   no.boxes <- to  + 1 - from

@@ -60,7 +60,7 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
                        inserts = "map", threshold = 0.5,
                        lambda = 0, DI = TRUE, ID = TRUE){
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
-  DNA <- inherits(x, "DNAbin")
+  DNA <- is.DNA(x)
   if(DNA) gapchar <- as.raw(4)
   residues <- alphadetect(x, residues = residues, gapchar = gapchar)
   nres <- length(residues)
@@ -110,11 +110,11 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
   l <- sum(!inserts) # PHMM length (excluding B & E positions)
   # emission counts
   if(DNA){
-    ecs <- apply(x[, !inserts], 2, tabDNA, ambiguities = TRUE, seqweights = seqweights)
+    ecs <- apply(x[, !inserts, drop = F], 2, tabDNA, ambiguities = TRUE, seqweights = seqweights)
   }else{
-    ecs <- apply(x[, !inserts], 2, tab, residues = residues, seqweights = seqweights)
+    ecs <- apply(x[, !inserts, drop = F], 2, tab, residues = residues, seqweights = seqweights)
   }
-  dimnames(ecs) <- list(residue = residues, position = 1:l)
+  if(length(ecs) > 0) dimnames(ecs) <- list(residue = residues, position = 1:l) else ecs = NULL
 
   #transitions
   xtr <- matrix(nrow = n, ncol = m)
@@ -169,20 +169,31 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
   #   ecs <- ecs + 1
   #   tcs <- tcs + 1
   # }
-  ecs <- ecs + pseudocounts$E
+
   tcs <- tcs + pseudocounts$A
   tcs[1:3, 1] <- tcs[c(1, 4, 7), l + 1] <- 0
   if(!DI) tcs[3, ] <- 0
   if(!ID) tcs[7, ] <- 0
-  E <- t(t(ecs)/apply(ecs, 2, sum))
+  if(is.null(ecs)){
+    E <- matrix(nrow = nres, ncol = 0)
+    rownames(E) <- residues
+  }else{
+    ecs <- ecs + pseudocounts$E
+    E <- t(t(ecs)/apply(ecs, 2, sum))
+  }
   A <- t(tcs)
-  for(i in c(1, 4, 7)) A[, i:(i + 2)] <- A[, i:(i + 2)]/apply(A[, i:(i + 2)], 1, sum)
+  # for(i in c(1, 4, 7)){
+  #   tmp1 <- A[, i:(i + 2), drop = F]
+  #   tmp2 <- apply(tmp1, 1, sum)
+  #   A[, i:(i + 2)] <- tmp1/tmp2
+  # }
+  for(i in c(1, 4, 7)) A[, i:(i + 2)] <- A[, i:(i + 2)]/apply(A[, i:(i + 2), drop = F], 1, sum)
   A[1, 1:3] <- 0 # gets rid of NaNs caused by division by zero
   A <- t(A)
   inslens <- insertlengths(!inserts)
   #which alignment columns correspond to which model positions?
   alignment <- which(!inserts)
-  names(alignment) <- 1:l
+  if(length(alignment) > 0) names(alignment) <- 1:l
   if(logspace){
     A <- log(A)
     E <- log(E)
@@ -229,9 +240,10 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
 #'
 map <- function(x, seqweights = NULL, residues = NULL,
                 gapchar = "-", pseudocounts = "background",
-                lambda = 0, qa = NULL, qe = NULL){
+                lambda = 0, qa = NULL, qe = NULL, cpp = TRUE){
   L <- ncol(x)
   n <- nrow(x)
+  if(n < 3) return(setNames(rep(TRUE, L), 1:L))
   DNA <- inherits(x, "DNAbin")
   if(DNA) gapchar = as.raw(4)
   residues <- alphadetect(x, residues = residues, gapchar = gapchar)
@@ -303,76 +315,77 @@ map <- function(x, seqweights = NULL, residues = NULL,
   }else if(identical(pseudocounts, "none")){
     pseudocounts <- list(A = rep(0, 9), E = rep(0, nres))
   }else stop("invalid pseudocounts argument")
-
-  res <- mapC(ecs, notgaps, pseudocounts, seqweights, qe, lambda)
-
-#   ecs2 <- ecs + pseudocounts$E
-#   term2 <- t(t(ecs2)/apply(ecs2, 2, sum))
-#   term2[ecs != 0] <- log(term2[ecs != 0]) # increase speed for conserved alignments
-#   M <- apply(ecs * term2, 2, sum)
-#   M <- c(0, M, 0)
-#   ecsj <- structure(numeric(nres), names = residues)
-#   tcsij <- structure(numeric(9), names = transitions)
-#   icsj <- structure(numeric(n), names = rownames(x)) #insert counts
-#   #alphaxy <- if(pseudocounts == "background") exp(qa) * 9 else rep(1, 9)
-#   for(j in 2:(L + 2)){
-#     tau <- iota <- numeric(j - 1)
-#     ecsij <- ecsj
-#     icsij <- icsj
-#     for(i in 1:(j - 1)){
-#       if(i < j - 1){
-#         iota[i] <- sum(ecsij * qe)
-#         ecsij <- ecsij - ecs[, i]
-#         zeroinserts <- icsij < 0.00001
-#         if(any(zeroinserts)){
-#           tcsij[1] <- sum(seqweights[!notgaps[, i] & !notgaps[, j] & zeroinserts]) #DD
-#           tcsij[2] <- sum(seqweights[!notgaps[, i] & notgaps[, j] & zeroinserts]) #DM
-#           tcsij[4] <- sum(seqweights[notgaps[, i] & !notgaps[, j] & zeroinserts]) #MD
-#           tcsij[5] <- sum(seqweights[notgaps[, i] & notgaps[, j] & zeroinserts]) #MM
-#           tcsij[3] <- sum(seqweights[!notgaps[, i] & !zeroinserts]) #DI
-#           tcsij[6] <- sum(seqweights[notgaps[, i] & !zeroinserts]) #MI
-#           tcsij[7] <- sum(seqweights[!notgaps[, j] & !zeroinserts]) #ID
-#           tcsij[8] <- sum(seqweights[notgaps[, j] & !zeroinserts]) #IM
-#         }else{
-#           tcsij[c(1, 2, 4, 5)] <- 0
-#           tcsij[3] <- sum(seqweights[!notgaps[, i]])
-#           tcsij[6] <- sum(seqweights[notgaps[, i]])
-#           tcsij[7] <- sum(seqweights[!notgaps[, j]])
-#           tcsij[8] <- sum(seqweights[notgaps[, j]])
-#         }
-#         tcsij[9] <- sum(icsij) - (tcsij[3] + tcsij[6]) #II
-#         icsij <- icsij - notgaps[, i + 1] * seqweights # ends up as vec of zeros at end of each i cycle
-#       }else{
-#         tcsij[1] <- sum(seqweights[!notgaps[, i] & !notgaps[, j]]) #DD
-#         tcsij[2] <- sum(seqweights[!notgaps[, i] & notgaps[, j]]) #DM
-#         tcsij[3] <- 0 #DI
-#         tcsij[4] <- sum(seqweights[notgaps[, i] & !notgaps[, j]]) #MD
-#         tcsij[5] <- sum(seqweights[notgaps[, i] & notgaps[, j]]) #MM
-#         tcsij[6] <- 0 #MI
-#         tcsij[7] <- 0 #ID
-#         tcsij[8] <- 0 #IM
-#         tcsij[9] <- 0 #II
-#       }
-#       cxy <- tcsij + pseudocounts$A
-#       axy <- cxy/c(rep(sum(cxy[1:3]), 3), rep(sum(cxy[4:6]), 3), rep(sum(cxy[7:9]), 3))
-#       tau[i] <- sum(cxy * log(axy))
-#     }
-#     if(j < L + 2){
-#       ecsj <- ecsj + ecs[, j - 1]
-#       icsj <- icsj + seqweights * notgaps[, j]
-#     }
-#     tmp <- S[1:(j - 1)] + tau + iota + M[j] + lambda
-#     sigma[j] <- whichismax(tmp)
-#     S[j] <- tmp[sigma[j]]
-#   }
-#   res <- structure(logical(L + 2), names = 0:(L + 1))
-#   res[L + 2] <- TRUE
-#   j <- sigma[L + 2]
-#   while(j > 0){
-#     res[j] <- TRUE
-#     j <- sigma[j]
-#   }
-#   res <- res[-(c(1, L + 2))]
+  if(cpp){
+    res <- mapC(ecs, notgaps, pseudocounts, seqweights, qe, lambda)
+  }else{
+    ecs2 <- ecs + pseudocounts$E
+    term2 <- t(t(ecs2)/apply(ecs2, 2, sum))
+    term2[ecs != 0] <- log(term2[ecs != 0]) # increase speed for conserved alignments
+    M <- apply(ecs * term2, 2, sum)
+    M <- c(0, M, 0)
+    ecsj <- structure(numeric(nres), names = residues)
+    tcsij <- structure(numeric(9), names = transitions)
+    icsj <- structure(numeric(n), names = rownames(x)) #insert counts
+    #alphaxy <- if(pseudocounts == "background") exp(qa) * 9 else rep(1, 9)
+    for(j in 2:(L + 2)){
+      tau <- iota <- numeric(j - 1)
+      ecsij <- ecsj
+      icsij <- icsj
+      for(i in 1:(j - 1)){
+        if(i < j - 1){
+          iota[i] <- sum(ecsij * qe)
+          ecsij <- ecsij - ecs[, i]
+          zeroinserts <- icsij < 0.00001
+          if(any(zeroinserts)){
+            tcsij[1] <- sum(seqweights[!notgaps[, i] & !notgaps[, j] & zeroinserts]) #DD
+            tcsij[2] <- sum(seqweights[!notgaps[, i] & notgaps[, j] & zeroinserts]) #DM
+            tcsij[4] <- sum(seqweights[notgaps[, i] & !notgaps[, j] & zeroinserts]) #MD
+            tcsij[5] <- sum(seqweights[notgaps[, i] & notgaps[, j] & zeroinserts]) #MM
+            tcsij[3] <- sum(seqweights[!notgaps[, i] & !zeroinserts]) #DI
+            tcsij[6] <- sum(seqweights[notgaps[, i] & !zeroinserts]) #MI
+            tcsij[7] <- sum(seqweights[!notgaps[, j] & !zeroinserts]) #ID
+            tcsij[8] <- sum(seqweights[notgaps[, j] & !zeroinserts]) #IM
+          }else{
+            tcsij[c(1, 2, 4, 5)] <- 0
+            tcsij[3] <- sum(seqweights[!notgaps[, i]])
+            tcsij[6] <- sum(seqweights[notgaps[, i]])
+            tcsij[7] <- sum(seqweights[!notgaps[, j]])
+            tcsij[8] <- sum(seqweights[notgaps[, j]])
+          }
+          tcsij[9] <- sum(icsij) - (tcsij[3] + tcsij[6]) #II
+          icsij <- icsij - notgaps[, i + 1] * seqweights # ends up as vec of zeros at end of each i cycle
+        }else{
+          tcsij[1] <- sum(seqweights[!notgaps[, i] & !notgaps[, j]]) #DD
+          tcsij[2] <- sum(seqweights[!notgaps[, i] & notgaps[, j]]) #DM
+          tcsij[3] <- 0 #DI
+          tcsij[4] <- sum(seqweights[notgaps[, i] & !notgaps[, j]]) #MD
+          tcsij[5] <- sum(seqweights[notgaps[, i] & notgaps[, j]]) #MM
+          tcsij[6] <- 0 #MI
+          tcsij[7] <- 0 #ID
+          tcsij[8] <- 0 #IM
+          tcsij[9] <- 0 #II
+        }
+        cxy <- tcsij + pseudocounts$A
+        axy <- cxy/c(rep(sum(cxy[1:3]), 3), rep(sum(cxy[4:6]), 3), rep(sum(cxy[7:9]), 3))
+        tau[i] <- sum(cxy * log(axy))
+      }
+      if(j < L + 2){
+        ecsj <- ecsj + ecs[, j - 1]
+        icsj <- icsj + seqweights * notgaps[, j]
+      }
+      tmp <- S[1:(j - 1)] + tau + iota + M[j] + lambda
+      sigma[j] <- whichismax(tmp)
+      S[j] <- tmp[sigma[j]]
+    }
+    res <- structure(logical(L + 2), names = 0:(L + 1))
+    res[L + 2] <- TRUE
+    j <- sigma[L + 2]
+    while(j > 0){
+      res[j] <- TRUE
+      j <- sigma[j]
+    }
+    res <- res[-(c(1, L + 2))]
+  }
   return(res)
 }
 

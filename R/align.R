@@ -47,7 +47,7 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
   guidetree <- as.dendrogram(hclust(qds, method = "average"))
   if(!quiet) cat("calculating sequence weights\n")
   seqweights <- weight(guidetree)
-  print(seqweights)
+  #print(seqweights)
   newick <- write.dendrogram(guidetree, strip.edges = TRUE)
   newick <- gsub(";", "", newick)
   newick <- gsub("\\(", "alignpair\\(", newick)
@@ -308,18 +308,20 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
     sequences <- tmp
   }else if(is.null(dim(sequences))){
     if(mode(sequences) == "character"){
+      seqname <- deparse(substitute(sequences))
       sequences <- list(sequences)
-      names(sequences) <- deparse(substitute(sequences))
+      names(sequences) <- seqname
       }else stop("invalid mode")
   }else stop("invalid 'sequences' argument")
   #
   #out <- vector(length(sequences) * (2 * model$size + 1),
   #              mode = if(DNA) "raw" else "character")
   #out <- matrix(out, nrow = length(sequences))
-  out <- matrix(nrow = length(sequences), ncol = 2 * model$size + 1)
+  l <- model$size
+  out <- matrix(nrow = length(sequences), ncol = 2 * l + 1)
   rownames(out) <- attr(sequences, "names")
-  colnames(out) <- rep("I", 2 * model$size + 1)
-  colnames(out)[seq(2, 2 * model$size, by = 2)] <- 1:model$size
+  colnames(out) <- rep("I", 2 * l + 1)
+  if(l > 0) colnames(out)[seq(2, 2 * l, by = 2)] <- 1:l
   score <- 0
   for(i in 1:length(sequences)){
     alignment <- Viterbi(model, sequences[i], type = "global", ...  = ...)
@@ -345,20 +347,20 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
       insflag2 <- c(FALSE, insflag, FALSE, FALSE)
       tuples <- rbind(insflag2[-(length(insflag2))], insflag2[-1])
       decs <- apply(tuples, 2, decimal, 2)
-      tuples <- tuples[, decs != 2] #remove true->falses
-      tuples <- tuples[,-ncol(tuples)]
+      tuples <- tuples[, decs != 2, drop = FALSE] #remove true->falses
+      tuples <- tuples[,-ncol(tuples), drop = FALSE]
       tuples[1, -1] <- TRUE
     }else{
-      tuples <- rbind(c(FALSE, rep(TRUE, model$size)), rep(FALSE, model$size + 1))
+      tuples <- rbind(c(FALSE, rep(TRUE, l)), rep(FALSE, l + 1))
     }
     indices <- as.vector(tuples)[-1]
-    newrow2 <- rep(if(DNA) "-" else gapchar, 2 * model$size + 1)
-    names(newrow2) <- c(rep(c("I", "M"), model$size), "I") #seq(0.5, x$size + 0.5, by = 0.5)
+    newrow2 <- rep(if(DNA) "-" else gapchar, 2 * l + 1)
+    names(newrow2) <- c(rep(c("I", "M"), l), "I") #seq(0.5, x$size + 0.5, by = 0.5)
     newrow2[indices] <- newrow
     out[i,] <- newrow2
   }
   discardcols <- apply(out, 2 ,function(v) all(v == if(DNA) "-" else gapchar))
-  matchcols <- c(FALSE, rep(c(TRUE, FALSE), model$size))
+  matchcols <- c(FALSE, rep(c(TRUE, FALSE), l))
   out <- out[, matchcols | !discardcols, drop = FALSE]
   out <- as.list(as.data.frame(out, stringsAsFactors = F))
   fun <- function(e){
@@ -381,5 +383,6 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
   rownames(res) <- names(sequences)
   if(DNA) res <- as.DNAbin(res)
   attr(res, "score") <- score
+  attr(res, "inserts") <- unname(inserts)
   return(res)
 }

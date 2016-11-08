@@ -96,8 +96,10 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     y <- tmp
   }else if(is.null(dim(y))){
     if(mode(y) == "character"){
+      yname <- deparse(substitute(y))
+      #y <- list(matrix(y, nrow = 1, dimnames = list(yname, NULL)))
       y <- list(y)
-      names(y) <- deparse(substitute(y))
+      names(y) <- yname
     }else stop("invalid mode")
   }else stop("invalid 'y' argument")
   n <- length(y)
@@ -139,7 +141,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     #scores <- attr(alignment, "score")
     #maxscore <- attr(alignment, "score")
     for(i in 1:maxiter){
-      if(!quiet) cat("Iteration", i, "\n")
+      if(!quiet) cat("iteration", i, "\n")
       out <- derivePHMM(alignment, seqweights = seqweights, residues = residues,
                         inserts = inserts,
                         pseudocounts = pseudocounts, logspace = TRUE,
@@ -161,11 +163,11 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           out$qa <- exp(out$qa)
           out$qe <- exp(out$qe)
         }
-        if(!quiet) cat("Converged after", i, "iterations\n")
+        if(!quiet) cat("converged after", i, "iterations\n")
         return(out)
       }
     }
-    if(!quiet) cat("Note: sequential alignments were not identical after", i, "iterations\n")
+    if(!quiet) cat("note: sequential alignments were not identical after", i, "iterations\n")
     return(out)
     #stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
   }else if(method == "BaumWelch"){
@@ -219,59 +221,44 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           tmplogPx[j] <- logPxj
           backj <- backward(out, yj, logspace = TRUE, odds = FALSE)
           Bj <- backj$array
-          for(k in 1:l){ #modules
+          tmpEj <- tmpE
+          tmpAj <- tmpA
+          tmpqej <- tmpqe
+          tmpEj[] <- tmpAj[] <- tmpqej[] <- 0
+          # for(k in 1:l){ #modules
+          #
+          # }
+          for(k in 1:l){
+            # Emission and background emission counts
             for(a in seq_along(residues)){
-              yjequalsa <- c(FALSE, yj == residues[a])
-              if(any(yjequalsa)){
-                tmpE[a, k] <- tmpE[a, k] + exp(logsum(Rj[k + 1, yjequalsa, "M"] +
-                                                        Bj[k + 1, yjequalsa, "M"]) -
-                                                 logPxj)
-                tmpqe[a] <- tmpqe[a] + exp(logsum(Rj[k + 1, yjequalsa, "I"] +
-                                                    Bj[k + 1, yjequalsa, "I"]) -
-                                             logPxj)
+              yjea <- c(FALSE, yj == residues[a])
+              if(any(yjea)){
+                tmpEj[a, k] <- exp(logsum(Rj[k + 1, yjea, "M"] + Bj[k + 1, yjea, "M"]) - logPxj)
+                tmpqej[a] <- exp(logsum(Rj[k + 1, yjea, "I"] + Bj[k + 1, yjea, "I"]) - logPxj)
               }
             }
-          }
-          for(k in 1:l){
-            # all vectors length 1 or nj + 1 ( i = 0... L)
-            tmpA["DD", k] <- tmpA["DD", k] +
-              exp(logsum(Rj[k, , "D"] + A["DD", k] + Bj[k + 1, , "D"]) - logPxj) #d to d
-            tmpA["MD", k] <- tmpA["MD", k] +
-              exp(logsum(Rj[k, , "M"] + A["MD", k] + Bj[k + 1, , "D"]) - logPxj) #m to d
-            if(ID){
-              tmpA["ID", k] <- tmpA["ID", k] +
-                exp(logsum(Rj[k, , "I"] + A["ID", k] + Bj[k + 1, , "D"]) - logPxj) #i to d
-            }
-            tmpA["DM", k] <- tmpA["DM", k] + exp(logsum(Rj[k, , "D"] +
-                                                          A["DM", k] +
-                                                          c(E[yj, k], -Inf) +
-                                                          c(Bj[k + 1, -1, "M"], -Inf))
-                                                 - logPxj) #d to m
-            tmpA["MM", k] <- tmpA["MM", k] + exp(logsum(Rj[k, , "M"] + A["MM", k] + c(E[yj, k], -Inf) +
-                                                          c(Bj[k + 1, -1, "M"], -Inf)) - logPxj) #m to m
-            tmpA["IM", k] <- tmpA["IM", k] + exp(logsum(Rj[k, , "I"] + A["IM", k] + c(E[yj, k], -Inf) +
-                                                          c(Bj[k + 1, -1, "M"], -Inf)) - logPxj) #i to m
-            if(DI){
-              tmpA["DI", k] <- tmpA["DI", k] + exp(logsum(Rj[k, , "D"] + A["DI", k] + c(qe[yj], -Inf) +
-                                                            c(Bj[k, -1, "I"], -Inf)) - logPxj) #d to i
-            }
-            tmpA["MI", k] <- tmpA["MI", k] + exp(logsum(Rj[k, , "M"] + A["MI", k] + c(qe[yj], -Inf) +
-                                                          c(Bj[k, -1, "I"], -Inf)) - logPxj) #m to i
-            tmpA["II", k] <- tmpA["II", k] + exp(logsum(Rj[k, , "I"] + A["II", k] + c(qe[yj], -Inf) +
-                                                          c(Bj[k, -1, "I"], -Inf)) - logPxj) #i to i
+            # Transition counts - all vectors length 1 or nj + 1 (i = 0... L)
+            tmpAj["DD", k] <- exp(logsum(Rj[k, , "D"] + A["DD", k] + Bj[k + 1, , "D"]) - logPxj)
+            tmpAj["MD", k] <- exp(logsum(Rj[k, , "M"] + A["MD", k] + Bj[k + 1, , "D"]) - logPxj)
+            if(ID) tmpAj["ID", k] <- exp(logsum(Rj[k, , "I"] + A["ID", k] + Bj[k + 1, , "D"]) - logPxj)
+            tmpAj["DM", k] <- exp(logsum(Rj[k, , "D"] + A["DM", k] + c(E[yj, k], -Inf) + c(Bj[k + 1, -1, "M"], -Inf)) - logPxj)
+            tmpAj["MM", k] <- exp(logsum(Rj[k, , "M"] + A["MM", k] + c(E[yj, k], -Inf) + c(Bj[k + 1, -1, "M"], -Inf)) - logPxj)
+            tmpAj["IM", k] <- exp(logsum(Rj[k, , "I"] + A["IM", k] + c(E[yj, k], -Inf) + c(Bj[k + 1, -1, "M"], -Inf)) - logPxj)
+            if(DI) tmpAj["DI", k] <- exp(logsum(Rj[k, , "D"] + A["DI", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
+            tmpAj["MI", k] <- exp(logsum(Rj[k, , "M"] + A["MI", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
+            tmpAj["II", k] <- exp(logsum(Rj[k, , "I"] + A["II", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
           }
           k <- l + 1
-          tmpA["DM", k] <- tmpA["DM", k] + exp(Rj[k, nj + 1,"D"] + A["DM", k] - logPxj)
-          tmpA["MM", k] <- tmpA["MM", k] + exp(Rj[k, nj + 1,"M"] + A["MM", k] - logPxj)
-          tmpA["IM", k] <- tmpA["IM", k] + exp(Rj[k, nj + 1,"I"] + A["IM", k] - logPxj)
-          if(DI){
-            tmpA["DI", k] <- tmpA["DI", k] + exp(logsum(Rj[k, , "D"] + A["DI", k] + c(qe[yj], -Inf) +
-                                                          c(Bj[k, -1, "I"], -Inf)) - logPxj) #d to i
-          }
-          tmpA["MI", k] <- tmpA["MI", k] + exp(logsum(Rj[k, , "M"] + A["MI", k] + c(qe[yj], -Inf) +
-                                                        c(Bj[k, -1, "I"], -Inf)) - logPxj) #m to i
-          tmpA["II", k] <- tmpA["II", k] + exp(logsum(Rj[k, , "I"] + A["II", k] + c(qe[yj], -Inf) +
-                                                        c(Bj[k, -1, "I"], -Inf)) - logPxj)
+          tmpAj["DM", k] <- exp(Rj[k, nj + 1,"D"] + A["DM", k] - logPxj)
+          tmpAj["MM", k] <- exp(Rj[k, nj + 1,"M"] + A["MM", k] - logPxj)
+          tmpAj["IM", k] <- exp(Rj[k, nj + 1,"I"] + A["IM", k] - logPxj)
+          if(DI) tmpAj["DI", k] <- exp(logsum(Rj[k, , "D"] + A["DI", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
+          tmpAj["MI", k] <- exp(logsum(Rj[k, , "M"] + A["MI", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
+          tmpAj["II", k] <- exp(logsum(Rj[k, , "I"] + A["II", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
+          # correct for sequence weight
+          tmpA <- tmpA + tmpAj * seqweights[j]
+          tmpE <- tmpE + tmpEj * seqweights[j]
+          tmpqe <- tmpqe + tmpqej * seqweights[j]
         }
       }
       tmpE <- log(tmpE/apply(tmpE, 1, sum))
@@ -286,27 +273,28 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       out$A <- A
       out$E <- E
       if(!fixqe) out$qe <- qe
-      ### cleanup required above
+      ### some cleanup required above
       logPx <- sum(tmplogPx) # page 62 eq 3.17
-      if(!quiet) cat("Iteration", i, "log likelihood = ", logPx, "\n")
+      if(!quiet) cat("iteration", i, "log likelihood =", logPx, "\n")
       if(abs(LL - logPx) < deltaLL){
         if(!logspace){
           out$A <- exp(out$A)
           out$E <- exp(out$E)
           out$qe <- exp(out$qe)
         }
-        if(!quiet) cat("Convergence threshold reached after", i, "EM iterations\n")
+        if(!quiet) cat("convergence threshold reached after", i, "EM iterations\n")
         return(out)
       }
       LL <- logPx
     }
     stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
-  }else stop("Invalid argument given for 'method'")
+  }else stop("invalid argument given for 'method'")
 
 }
 
 #' @rdname train
-train.HMM <- function(x, y, method = "Viterbi", maxiter = if(method == "Viterbi") 10 else 100,
+train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
+                      maxiter = if(method == "Viterbi") 10 else 100,
                       deltaLL = 1E-07,
                       logspace = "autodetect", quiet = FALSE, modelend = FALSE,
                       pseudocounts = "Laplace", cpp = TRUE){
@@ -314,8 +302,10 @@ train.HMM <- function(x, y, method = "Viterbi", maxiter = if(method == "Viterbi"
   if(is.list(y)){
   } else if(is.vector(y, mode = "character")){
     y <- list(y)
-  } else stop("invalid y argument")
+  }else stop("invalid y argument")
   n <- length(y)
+  if(is.null(seqweights)) seqweights <- rep(1, n)
+  stopifnot(sum(seqweights) == n)
   states <- rownames(x$A)
   nstates <- length(states)
   residues <- colnames(x$E)
@@ -330,19 +320,21 @@ train.HMM <- function(x, y, method = "Viterbi", maxiter = if(method == "Viterbi"
       samename <- logical(n)
       for(j in 1:n){
         vitj <- Viterbi(out, y[[j]], logspace = TRUE, cpp = cpp)
-        if(identical(vitj$path, names(y[[j]]))) samename[j] <- TRUE
-        names(y[[j]]) <- vitj$path
+        pathchar <- states[-1][vitj$path + 1]
+        if(identical(pathchar, names(y[[j]]))) samename[j] <- TRUE
+        names(y[[j]]) <- pathchar
       }
       if(all(samename)){
         if(!logspace){
           out$A <- exp(out$A)
           out$E <- exp(out$E)
         }
-        if(!quiet) cat("Iteration", i, "\nConverged after", i, "iterations\n")
+        if(!quiet) cat("iteration", i, "\nconverged after", i, "iterations\n")
         return(out)
       }else{
-        if(!quiet) cat("Iteration", i, "\n")
-        out <- deriveHMM(y, residues = residues, states = states, modelend = modelend,
+        if(!quiet) cat("iteration", i, "\n")
+        out <- deriveHMM(y, seqweights = seqweights, residues = residues,
+                         states = states, modelend = modelend,
                          pseudocounts = pseudocounts, logspace = TRUE)
       }
     }
@@ -403,18 +395,18 @@ train.HMM <- function(x, y, method = "Viterbi", maxiter = if(method == "Viterbi"
       out$A <- A
       out$E <- E
       logPx <- sum(tmplogPx) # page 62 eq 3.17
-      if(!quiet) cat("Iteration", i, "log likelihood = ", logPx, "\n")
+      if(!quiet) cat("iteration", i, "log likelihood = ", logPx, "\n")
       if(abs(LL - logPx) < deltaLL){
         if(!logspace){
           out$A <- exp(out$A)
           out$E <- exp(out$E)
         }
-        if(!quiet) cat("Convergence threshold reached after", i, "EM iterations\n")
+        if(!quiet) cat("convergence threshold reached after", i, "EM iterations\n")
         return(out)
       }
       LL <- logPx
     }
     stop("Failed to converge on a local maximum. Try increasing 'maxiter',
         decreasing 'deltaLL' or modifying start parameters")
-  }else stop("Invalid argument given for 'method'")
+  }else stop("invalid argument given for 'method'")
 }

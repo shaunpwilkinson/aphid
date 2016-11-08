@@ -27,6 +27,7 @@
 #' @name backward
 #'
 backward <- function(x, y, qe = NULL, logspace = "autodetect",  odds = TRUE,
+                     windowspace = "all",
                      type = "global", DI = TRUE, ID = TRUE, cpp = TRUE){
   UseMethod("backward")
 }
@@ -135,16 +136,20 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   type = switch(type, "global" = 0L, "semiglobal" = 1L, stop("invalid type"))
   B <- array(-Inf, dim = c(n, m, length(states)))
   dimnames(B) <- list(x = 0:(n - 1), y = 0:(m - 1), state = states)
-  B[n, m, ] <- A[c("DM", "MM", "IM"), n]
   if(pp){
     ### placeholder
   }else{
-    qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC2, qe) else qe[y]
+    qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC2, qe) else qe[y + 1]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
+    B[n, m, ] <- A[c("DM", "MM", "IM"), n]
     if(odds) E <- E - qe
     if(cpp){
       res <- backward_PHMM(y, A, E, qe, qey, type, windowspace, DI, ID, DNA = pd)
+      B[, , 1] <- res$Dmatrix
+      B[, , 2] <- res$Mmatrix
+      B[, , 3] <- res$Imatrix
+      res$array <- B
     }else{
       if(type == 0){
         for(i in n:2) {
@@ -186,9 +191,10 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }
       res <- structure(list(score = score,
                             odds = odds,
-                            Dmatrix = B[, , 1],
-                            Mmatrix = B[, , 2],
-                            Imatrix = B[, , 3]),
+                            array = B),
+                            # Dmatrix = B[, , 1],
+                            # Mmatrix = B[, , 2],
+                            # Imatrix = B[, , 3]),
                        class = 'fullprob')
     }
   }
