@@ -39,7 +39,7 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mode
   # includes start and or end states?
 
   namesok <- all(sapply(x, function(y) !is.null(names(y))  | length(y) == 0))
-  if(!(namesok)) stop("all elements of x must be named vectors")
+  if(!(namesok)) stop("x must be a list of named vectors")
   residues <- alphadetect(x, residues = residues)
   if(is.null(states)) states <- alphadetect(lapply(x, names))
   if(states[1] != "BeginEnd") states <- c("BeginEnd", states)
@@ -60,16 +60,26 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mode
   indices <- 0:(nstates - 1)
   names(indices) <- states
   pathscoded <- lapply(x, function(v) indices[c("BeginEnd", names(v), "BeginEnd")])
-  Acounts <- apply(sapply(pathscoded, transitioncount, nstates), 1, sum)  #Rcpp counting function
-  Acounts <- matrix(Acounts, nrow = nstates, byrow = TRUE)
-  unlistx <- unlist(x)
+  Acounts <- transitioncount(pathscoded[[1]], arity = nstates) * seqweights[1]
+  if(n > 1) for(i in 2:n) Acounts <- Acounts + transitioncount(pathscoded[[i]], arity = nstates) * seqweights[i]
+  #Acounts <- apply(sapply(pathscoded, transitioncount, nstates), 1, sum)  #Rcpp counting function
+  #Acounts <- matrix(Acounts, nrow = nstates, byrow = TRUE)
+  #unlistx <- unlist(x)
   indices <- 0:(nstates - 2)
   names(indices) <- states[-1]
-  statescoded <- indices[names(unlistx)]
+  statescoded <- lapply(x, function(e) indices[names(e)])
+  #statescoded <- indices[names(unlistx)]
   indices <- 0:(nres - 1)
   names(indices) <- residues
-  rescoded <- indices[unlistx]
-  Ecounts <- emissioncount(statescoded, nstates - 1, rescoded, nres) #Rcpp counting function
+  rescoded <- lapply(x, function(e) indices[e])
+  #rescoded <- indices[unlistx]
+  Ecounts <- emissioncount(statescoded[[1]], nstates - 1, rescoded[[1]], nres) * seqweights[1]
+  if(n > 1) for(i in 2:n){
+    Ecountsi <- emissioncount(statescoded[[i]], nstates - 1, rescoded[[i]], nres) * seqweights[i]
+    Ecounts <- Ecounts + Ecountsi
+  }
+  #Ecounts <- Ecounts + emissioncount(statescoded[[i]], nstates - 1, rescoded[[i]], nres) * seqweights[i]
+  #Ecounts <- emissioncount(statescoded, nstates - 1, rescoded, nres) #Rcpp counting function
   # add pseudocounts
   if(identical(pseudocounts, "background")){
     Apseudocounts <- Acounts + 1
@@ -86,7 +96,7 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mode
     Acounts <- Acounts + pseudocounts[[1]]
     Ecounts <- Ecounts + pseudocounts[[2]]
   }else if(!identical(pseudocounts, "none")) stop("invalid pseudocounts argument")
-  if(!(modelend)) Acounts[, 1] <- 0
+  if(!modelend) Acounts[, 1] <- 0
   # calculate transition and emission matrices
   A <- Acounts/apply(Acounts, 1, sum) #rows must sum to 1
   dimnames(A) <- list(from = states, to = states)

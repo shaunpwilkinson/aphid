@@ -49,30 +49,30 @@ IntegerMatrix progression2(IntegerVector path, IntegerVector start){
 //' Summation of transition frequencies in an integer vector.
 //'
 //' @param x an integer vector.
-//' @param numbersystem an integer representing the numbering system of the input vector,
+//' @param arity an integer representing the numbering system of the input vector,
 //' 2 for binary, 3 for ternary, etc.
 //'
 // [[Rcpp::export]]
-IntegerVector transitioncount(IntegerVector x, int numbersystem){
-  int newnumsys = pow(numbersystem, 2);
-  IntegerVector guide = seq(0, newnumsys - 1);
-  guide.attr("dim") = IntegerVector::create(numbersystem, numbersystem);
-  IntegerVector out(newnumsys);
-  for(int i = 1; i < x.size(); i++) out[guide(x[i], x[i - 1])]++;
-  out.attr("dim") = IntegerVector::create(numbersystem, numbersystem);
+IntegerVector transitioncount(IntegerVector x, int arity){
+  int newarity = pow(arity, 2);
+  IntegerVector guide = seq(0, newarity - 1);
+  guide.attr("dim") = IntegerVector::create(arity, arity);
+  IntegerVector out(newarity);
+  for(int i = 1; i < x.size(); i++) out[guide(x[i - 1], x[i])]++;
+  out.attr("dim") = IntegerVector::create(arity, arity);
   return(out);
 }
 
 
 // [[Rcpp::export]]
-IntegerVector emissioncount(IntegerVector states, int statenumbersystem,
-                            IntegerVector residues, int resnumbersystem){
-  int newnumsys = statenumbersystem * resnumbersystem;
-  IntegerVector guide = seq(0, newnumsys - 1);
-  guide.attr("dim") = IntegerVector::create(statenumbersystem, resnumbersystem);
-  IntegerVector out(newnumsys);
+IntegerVector emissioncount(IntegerVector states, int statearity,
+                            IntegerVector residues, int resarity){
+  int newarity = statearity * resarity;
+  IntegerVector guide = seq(0, newarity - 1);
+  guide.attr("dim") = IntegerVector::create(statearity, resarity);
+  IntegerVector out(newarity);
   for(int i = 0; i < states.size(); i++) out[guide(states[i], residues[i])]++;
-  out.attr("dim") = IntegerVector::create(statenumbersystem, resnumbersystem);
+  out.attr("dim") = IntegerVector::create(statearity, resarity);
   return(out);
 }
 

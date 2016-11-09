@@ -200,7 +200,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     E <- out$E
     A <- out$A
     qe <- out$qe
-    LL <- -1E06
+    LL <- -1E12
     for(i in 1:maxiter){
       tmpA <- Apseudocounts
       tmpE <- Epseudocounts
@@ -322,6 +322,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         vitj <- Viterbi(out, y[[j]], logspace = TRUE, cpp = cpp)
         pathchar <- states[-1][vitj$path + 1]
         if(identical(pathchar, names(y[[j]]))) samename[j] <- TRUE
+        # need to be named to feed into deriveHMM
         names(y[[j]]) <- pathchar
       }
       if(all(samename)){
@@ -340,22 +341,20 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     }
     stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
   }else if(method == "BaumWelch"){
-    Apseudocounts <- matrix(nrow = nstates, ncol = nstates)
-    Epseudocounts <- matrix(nrow = nstates - 1, ncol = nres)
+    Apseudocounts <- matrix(0, nrow = nstates, ncol = nstates)
+    Epseudocounts <- matrix(0, nrow = nstates - 1, ncol = nres)
     dimnames(Apseudocounts) <- list(from = states, to =  states)
     dimnames(Epseudocounts) <- list(state = states[-1], residue = residues)
     if(identical(pseudocounts, "Laplace")){
       Apseudocounts[] <- Epseudocounts[] <- 1
       if(!modelend) Apseudocounts[, 1] <- 0
-    } else if(identical(pseudocounts, "none")){
-      AApseudocounts[] <- Epseudocounts[] <- 0
     } else if(is.list(pseudocounts)){
       stopifnot(length(pseudocounts) == 2)
       stopifnot(identical(dim(pseudocounts[[1]]), dim(x$A)))
       stopifnot(identical(dim(pseudocounts[[2]]), dim(x$E)))
       Apseudocounts[] <- pseudocounts[[1]]
       Epseudocounts[] <- pseudocounts[[2]]
-    } else stop("invalid 'pseudocounts' argument")
+    } else if(!identical(pseudocounts, "none")) stop("invalid 'pseudocounts' argument")
     E <- out$E
     A <- out$A
     LL <- -1E12
@@ -367,7 +366,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         yj <- y[[j]]
         nj <- length(yj)
         if(nj == 0){
-          tmpA[1, 1] <- tmpA[1, 1] + if(modelend) 1 else 0
+          tmpA[1, 1] <- tmpA[1, 1] + if(modelend) seqweights[j] else 0
         }else{
           forwj <- forward(out, yj, logspace = TRUE)
           Rj <- forwj$array
@@ -375,19 +374,23 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           tmplogPx[j] <- logPxj
           backj <- backward(out, yj, logspace = TRUE)
           Bj <- backj$array
+          tmpAj <- tmpA
+          tmpEj <- tmpE
+          tmpAj[] <- tmpAj[] <- 0
           for(k in states[-1]){
-            tmpA[1, -1] <- tmpA[1, -1] + exp(A[1, -1] + E[, yj[1]] + Bj[, 1] - logPxj)
-            tmpA[-1, 1] <- tmpA[-1, 1] + exp(Rj[, nj] + A[-1, 1] - logPxj)
+            tmpAj[1, -1] <- exp(A[1, -1] + E[, yj[1]] + Bj[, 1] - logPxj)
+            tmpAj[-1, 1] <- exp(Rj[, nj] + A[-1, 1] - logPxj)
             for(l in states[-1]){
-              tmpA[k, l] <- tmpA[k, l] + exp(logsum(Rj[k, -nj] + A[k, l] +
-                                                      E[l, yj[-1]] + Bj[l, -1])
-                                             - logPxj)
+              tmpAj[k, l] <- exp(logsum(Rj[k, -nj] + A[k, l] + E[l, yj[-1]] + Bj[l, -1]) - logPxj)
             }
             for(b in residues){
               cond <- yj == b
-              tmpE[k, b] <- tmpE[k, b] + exp(logsum(Rj[k, cond] + Bj[k, cond]) - logPxj)
+              tmpEj[k, b] <- exp(logsum(Rj[k, cond] + Bj[k, cond]) - logPxj)
             }
           }
+          # correct for sequence weight
+          tmpA <- tmpA + tmpAj * seqweights[j]
+          tmpE <- tmpE + tmpEj * seqweights[j]
         }
       }
       A[] <- log(tmpA/apply(tmpA, 1, sum))
