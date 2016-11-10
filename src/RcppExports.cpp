@@ -253,28 +253,28 @@ BEGIN_RCPP
 END_RCPP
 }
 // transitioncount
-IntegerVector transitioncount(IntegerVector x, int numbersystem);
-RcppExport SEXP profile_transitioncount(SEXP xSEXP, SEXP numbersystemSEXP) {
+IntegerVector transitioncount(IntegerVector x, int arity);
+RcppExport SEXP profile_transitioncount(SEXP xSEXP, SEXP aritySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type numbersystem(numbersystemSEXP);
-    rcpp_result_gen = Rcpp::wrap(transitioncount(x, numbersystem));
+    Rcpp::traits::input_parameter< int >::type arity(aritySEXP);
+    rcpp_result_gen = Rcpp::wrap(transitioncount(x, arity));
     return rcpp_result_gen;
 END_RCPP
 }
 // emissioncount
-IntegerVector emissioncount(IntegerVector states, int statenumbersystem, IntegerVector residues, int resnumbersystem);
-RcppExport SEXP profile_emissioncount(SEXP statesSEXP, SEXP statenumbersystemSEXP, SEXP residuesSEXP, SEXP resnumbersystemSEXP) {
+IntegerVector emissioncount(IntegerVector states, int statearity, IntegerVector residues, int resarity);
+RcppExport SEXP profile_emissioncount(SEXP statesSEXP, SEXP statearitySEXP, SEXP residuesSEXP, SEXP resaritySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type states(statesSEXP);
-    Rcpp::traits::input_parameter< int >::type statenumbersystem(statenumbersystemSEXP);
+    Rcpp::traits::input_parameter< int >::type statearity(statearitySEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type residues(residuesSEXP);
-    Rcpp::traits::input_parameter< int >::type resnumbersystem(resnumbersystemSEXP);
-    rcpp_result_gen = Rcpp::wrap(emissioncount(states, statenumbersystem, residues, resnumbersystem));
+    Rcpp::traits::input_parameter< int >::type resarity(resaritySEXP);
+    rcpp_result_gen = Rcpp::wrap(emissioncount(states, statearity, residues, resarity));
     return rcpp_result_gen;
 END_RCPP
 }

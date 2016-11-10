@@ -4,12 +4,12 @@
 \alias{transitioncount}
 \title{Count transition frequencies.}
 \usage{
-transitioncount(x, numbersystem)
+transitioncount(x, arity)
 }
 \arguments{
 \item{x}{an integer vector.}
 
-\item{numbersystem}{an integer representing the numbering system of the input vector,
+\item{arity}{an integer representing the numbering system of the input vector,
 2 for binary, 3 for ternary, etc.}
 }
 \description{

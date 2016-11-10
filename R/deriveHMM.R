@@ -33,11 +33,11 @@
 #'
 
 deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, modelend = FALSE,
-                      pseudocounts = "background", logspace = FALSE){
+                      pseudocounts = "background", logspace = FALSE, k = 1){
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
   # includes start and or end states?
-
+  DNA <- inherits(x, "DNAbin")
   namesok <- all(sapply(x, function(y) !is.null(names(y))  | length(y) == 0))
   if(!(namesok)) stop("x must be a list of named vectors")
   residues <- alphadetect(x, residues = residues)
@@ -56,30 +56,26 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mode
     }
   }
   # code states as integers
-
   indices <- 0:(nstates - 1)
   names(indices) <- states
-  pathscoded <- lapply(x, function(v) indices[c("BeginEnd", names(v), "BeginEnd")])
+  pathscoded <- lapply(x, function(e) indices[c("BeginEnd", names(e), "BeginEnd")])
   Acounts <- transitioncount(pathscoded[[1]], arity = nstates) * seqweights[1]
-  if(n > 1) for(i in 2:n) Acounts <- Acounts + transitioncount(pathscoded[[i]], arity = nstates) * seqweights[i]
-  #Acounts <- apply(sapply(pathscoded, transitioncount, nstates), 1, sum)  #Rcpp counting function
-  #Acounts <- matrix(Acounts, nrow = nstates, byrow = TRUE)
-  #unlistx <- unlist(x)
+  if(n > 1){
+    for(i in 2:n){
+      Acounts <- Acounts + transitioncount(pathscoded[[i]], arity = nstates) * seqweights[i]
+    }
+  }
   indices <- 0:(nstates - 2)
   names(indices) <- states[-1]
   statescoded <- lapply(x, function(e) indices[names(e)])
-  #statescoded <- indices[names(unlistx)]
   indices <- 0:(nres - 1)
   names(indices) <- residues
-  rescoded <- lapply(x, function(e) indices[e])
-  #rescoded <- indices[unlistx]
+  rescoded <- lapply(x, if(DNA) DNA2quaternary else function(e) indices[e])
   Ecounts <- emissioncount(statescoded[[1]], nstates - 1, rescoded[[1]], nres) * seqweights[1]
   if(n > 1) for(i in 2:n){
     Ecountsi <- emissioncount(statescoded[[i]], nstates - 1, rescoded[[i]], nres) * seqweights[i]
     Ecounts <- Ecounts + Ecountsi
   }
-  #Ecounts <- Ecounts + emissioncount(statescoded[[i]], nstates - 1, rescoded[[i]], nres) * seqweights[i]
-  #Ecounts <- emissioncount(statescoded, nstates - 1, rescoded, nres) #Rcpp counting function
   # add pseudocounts
   if(identical(pseudocounts, "background")){
     Apseudocounts <- Acounts + 1

@@ -19,9 +19,10 @@ train(x, y, method = "Viterbi", seqweights = NULL,
   gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
   threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE, cpp = TRUE)
 
-\method{train}{HMM}(x, y, method = "Viterbi", maxiter = if (method ==
-  "Viterbi") 10 else 100, deltaLL = 1e-07, logspace = "autodetect",
-  quiet = FALSE, modelend = FALSE, pseudocounts = "Laplace", cpp = TRUE)
+\method{train}{HMM}(x, y, method = "Viterbi", seqweights = NULL,
+  maxiter = if (method == "Viterbi") 10 else 100, deltaLL = 1e-07,
+  logspace = "autodetect", quiet = FALSE, modelend = FALSE,
+  pseudocounts = "Laplace", cpp = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'} specifying the

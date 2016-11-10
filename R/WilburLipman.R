@@ -12,13 +12,11 @@
 #' significant...
 
 
-WilburLipman <- function(x, y, arity = max(c(x, y)) + 1, k = 4, w = 10, threshold = 5){
+WilburLipman <- function(x, y, arity = "autodetect", k = 4, w = 20, threshold = 5){
   # x and y coded as integers starting from 0
+  if(arity == "autodetect") arity <- max(c(x, y)) + 1
   N1 <- length(x)
   N2 <- length(y)
-  # n2t <- function(n) switch(n, 'a' = 0, 'c' = 1, 'g'= 2, 't' = 3, sample(0:3, 1)) ### hack
-  # xtr <- if(inherits(x, "DNAbin")) as.ternary.DNAbin(x) else unname(sapply(x, n2t))
-  # ytr <- if(inherits(y, "DNAbin")) as.ternary.DNAbin(y) else unname(sapply(y, n2t))
   xkm <- matrix(nrow = k, ncol = N1 - k + 1) # kmers for x
   ykm <- matrix(nrow = k, ncol = N2 - k + 1) # kmers for y
   for(i in 1:k){
@@ -26,13 +24,13 @@ WilburLipman <- function(x, y, arity = max(c(x, y)) + 1, k = 4, w = 10, threshol
     ykm[i, ] <- y[i:(N2 - (k - i))]
   }
   tmp <- apply(ykm, 2, decimal, from = arity) + 1 ### poss bug here with auto-simplify
-  pointer <- lapply(1:k^arity, function(x) which(x == tmp))
+  pointer <- lapply(1:k^arity, function(x) which(tmp == x))
   S1 <- apply(xkm, 2, function(x) pointer[[decimal(x, from = arity) + 1]])
   diagbin <- unlist(mapply("-", S1, 1:ncol(xkm)))
   diags <- tabulate(diagbin + (N1 + 1), nbins = N1 + N2 + 1)
   #names(diags) <- -N1:N2
   #diags <- table(unlist(mapply("-", S1, 1:ncol(xkm)))) # could prob speed this up a lot
-  if(length(diags) == 0) return(NULL)
+  if(length(diags) == 0) return(c(-length(x), length(y)))
   #sigdiags <- as.numeric(names(diags[diags > mean(diags) + threshold * sd(diags)]))
   sigdiags <- which(diags > mean(diags) + threshold * sd(diags)) - (N1 + 1)
   if(length(sigdiags) > 0){
@@ -42,8 +40,9 @@ WilburLipman <- function(x, y, arity = max(c(x, y)) + 1, k = 4, w = 10, threshol
     #return(outer(1:(N1 + 1), 1:(N2 + 1), function(x, y) (y - x) %in% windowspace))
     return(windowspace)
   }else{
+    return(c(-length(x), length(y)))
     #return(matrix(FALSE, nrow = N1 + 1, ncol = N2 + 1))
-    return(NULL)
+    #return(NULL)
   }
 }
 

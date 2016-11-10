@@ -4,8 +4,9 @@
 \alias{deriveHMM}
 \title{Derive a HMM from training sequences.}
 \usage{
-deriveHMM(x, residues = NULL, states = NULL, modelend = FALSE,
-  pseudocounts = "background", logspace = FALSE)
+deriveHMM(x, seqweights = NULL, residues = NULL, states = NULL,
+  modelend = FALSE, pseudocounts = "background", logspace = FALSE,
+  k = 1)
 }
 \arguments{
 \item{x}{a list of named character vectors representing residue emissions

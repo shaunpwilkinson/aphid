@@ -132,7 +132,6 @@ int whichmax(NumericVector x){
 List Viterbi_default(IntegerVector x, IntegerVector y,
                     int type, double d, double e, NumericMatrix S,
                     IntegerVector windowspace, double offset){
-
   int n = x.size() + 1;
   int m = y.size() + 1;
   double sij;
@@ -154,7 +153,6 @@ List Viterbi_default(IntegerVector x, IntegerVector y,
   IntegerMatrix PIX(n, m); // pointer matrices
   IntegerMatrix PMM = clone(PIX);
   IntegerMatrix PIY = clone(PIX);
-
   // initialize scoring matrices
   MMM(0, 0) = 0;
   if(type == 0){
@@ -326,12 +324,18 @@ List Viterbi_default(IntegerVector x, IntegerVector y,
     }
   }
   IntegerVector truncpath = path[keeppath];
-  //Rcout << any(duplicated(IntegerVector::create(1,2,2,3))).is_true();
   //Rcout << R::runif(-0.0001, 0.0001);
-  startposition = startposition + 1; // R indexing style
+  startposition = startposition + 1; // convert to R's indexing style
   List res = List::create(Named("score") = score,
                           Named("path") = truncpath,
-                          Named("start") = startposition);
+                          Named("start") = startposition,
+                          Named("IXmatrix") = MIX,
+                          Named("MMmatrix") = MMM,
+                          Named("IYmatrix") = MIY,
+                          Named("IXpointer") = PIX,
+                          Named("MMpointer") = PMM,
+                          Named("IYpointer") = PIY);
+
   res.attr("class") = "Viterbi";
   return(res);
 }
@@ -391,8 +395,8 @@ List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
   List out = List::create(
     Named("score") = score,
     Named("path") = path,
-    Named("V") = V,
-    Named("P") = P);
+    Named("array") = V,
+    Named("pointer") = P);
   out.attr("class") = "Viterbi";
   return out;
 }
@@ -1082,7 +1086,7 @@ List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E) {
   double res = logsum(logprobs);
   bool odds = false;
   List out = List::create(Named("score") = res, Named("array") = R, Named("odds") = odds);
-  out.attr("class") = "backward";
+  out.attr("class") = "fullprob";
   return out;
 }
 

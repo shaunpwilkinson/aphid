@@ -6,11 +6,12 @@
 \alias{generate.PHMM}
 \title{Generate random sequences from a model.}
 \usage{
-generate(x, size, logspace = "autodetect", gapchar = "-")
+generate(x, size, logspace = "autodetect", gapchar = "-", random = TRUE)
 
-\method{generate}{HMM}(x, size, logspace = "autodetect")
+\method{generate}{HMM}(x, size, logspace = "autodetect", random = TRUE)
 
-\method{generate}{PHMM}(x, size, logspace = "autodetect", gapchar = "-")
+\method{generate}{PHMM}(x, size, logspace = "autodetect", gapchar = "-",
+  random = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'}.}

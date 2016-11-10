@@ -108,15 +108,15 @@ progression2 <- function(path, start) {
 #' Summation of transition frequencies in an integer vector.
 #'
 #' @param x an integer vector.
-#' @param numbersystem an integer representing the numbering system of the input vector,
+#' @param arity an integer representing the numbering system of the input vector,
 #' 2 for binary, 3 for ternary, etc.
 #'
-transitioncount <- function(x, numbersystem) {
-    .Call('profile_transitioncount', PACKAGE = 'profile', x, numbersystem)
+transitioncount <- function(x, arity) {
+    .Call('profile_transitioncount', PACKAGE = 'profile', x, arity)
 }
 
-emissioncount <- function(states, statenumbersystem, residues, resnumbersystem) {
-    .Call('profile_emissioncount', PACKAGE = 'profile', states, statenumbersystem, residues, resnumbersystem)
+emissioncount <- function(states, statearity, residues, resarity) {
+    .Call('profile_emissioncount', PACKAGE = 'profile', states, statearity, residues, resarity)
 }
 
 tab9C <- function(x, seqweights) {

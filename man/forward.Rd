@@ -8,7 +8,8 @@
 \title{Forward algorithm.}
 \usage{
 forward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
-  type = "global", DI = TRUE, ID = TRUE, cpp = TRUE)
+  windowspace = "all", type = "global", DI = TRUE, ID = TRUE,
+  cpp = TRUE)
 
 \method{forward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
   type = "global", odds = TRUE, windowspace = "all", DI = TRUE,

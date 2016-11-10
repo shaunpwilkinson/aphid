@@ -7,7 +7,8 @@
 \title{Backward algorithm.}
 \usage{
 backward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
-  type = "global", DI = TRUE, ID = TRUE, cpp = TRUE)
+  windowspace = "all", type = "global", DI = TRUE, ID = TRUE,
+  cpp = TRUE)
 
 \method{backward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
 

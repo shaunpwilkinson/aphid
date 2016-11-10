@@ -77,16 +77,11 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         y <- y[[1]]
       }else stop("Invalid input object y: multi-sequence list")
     }
-    residues <- rownames(x$E)
-    ycoded <- integer(length(y))
-    for(i in seq_along(residues)) ycoded[y == residues[i]] <- i
-    y <- ycoded[ycoded != 0] - 1
+    y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
   }
   n <- ncol(x$E) + 1
   m <- if(pp) ncol(y$E) + 1 else length(y) + 1
-  if(identical(windowspace, "WilburLipman") | identical(windowspace, "all")){
-    windowspace <- c(-x$size, if(pp) y$size else length(y)) ### placeholder
-  }else if(length(windowspace) != 2) stop("invalid windowspace argument")
+
   states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
 
   # background emission probabilities
@@ -125,6 +120,16 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     if(!odds) stop("Full (log) probability scores for PHMM-PHMM alignment are
                    not supported")
     if(logdetect(y) != logspace) stop("Both models must be in the same logspace format")
+    if(identical(windowspace, "WilburLipman")){
+      xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE)
+      xseq <- setNames(seq_along(rownames(x$E)) - 1,  rownames(x$E))[xseq]
+      yseq <- generate.PHMM(y, size = 10 * ncol(y$A), random = FALSE)
+      yseq <- setNames(seq_along(rownames(x$E)) - 1,  rownames(x$E))[yseq]
+      #x$A to ensure order is same
+      windowspace <- WilburLipman(xseq, yseq, arity = nrow(x$E), k = 2)
+    }else if(identical(windowspace, "all")){
+      windowspace <- c(-x$size, y$size)
+    }else if(length(windowspace) != 2) stop("invalid windowspace argument")
     Ax <- if(logspace) x$A else log(x$A)
     Ay <- if(logspace) y$A else log(y$A)
     Ex <- if(logspace) x$E else log(x$E)
@@ -271,14 +276,20 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                        class = 'Viterbi')
     }
   }else{
+    if(identical(windowspace, "WilburLipman")){
+      xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE)
+      xseq <- setNames(seq_along(rownames(x$E)) - 1,  rownames(x$E))[xseq]
+      windowspace <- WilburLipman(xseq, y, arity = nrow(x$E), k = if(pd) 4 else 2)
+    }else if(identical(windowspace, "all")){
+      windowspace <- c(-x$size, length(y))
+    }else if(length(windowspace) != 2) stop("invalid windowspace argument")
     qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC2, qe) else qe[y + 1]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
-    #Saa <- if(odds) E - qe else E
     if(n == 1){
       V[1, 1, "M"] <- 0
       if(m > 1) V[1, 2, "I"] <- A["MI", 1]
-      if(m > 2) for(j in 3:m) V[1, j, "I"] <- V[1, j - 1, "I"] + A["II", 1]
+      if(m > 2) for(j in 3:m) V[1, j, "I"] <- V[1, j - 1, "I"] + A["II", 1] + qey[j - 1]
       P[, -1, "I"] <- c(1, rep(2, m - 2))
       score <- if(m > 1) V[1, m, "I"] + A["IM", 1] else 0
       res <- structure(list(score = score,
@@ -303,7 +314,6 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                        class = 'Viterbi')
       return(res)
     }
-    ### for m == 1 too
     if(odds) E <- E - qe
     if(cpp){
       res <- Viterbi_PHMM(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA = pd)
@@ -442,34 +452,56 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 #' @rdname Viterbi
 Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
+  pd <- is.DNA(y)
+  if(pd){
+    colnames(x$E) <- toupper(colnames(x$E))
+    NUCorder <- sapply(colnames(x$E), match, c("A", "T", "G", "C"))
+    x$E <- x$E[, NUCorder]
+    if(!(identical(colnames(x$E), c("A", "T", "G", "C")))){
+      stop("invalid model for DNA, residue alphabet does not correspond to
+           nucleotide alphabet")
+    }
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+        class(y) <- "DNAbin"
+      }else stop("Invalid input object y: multi-sequence list")
+    }
+    y <- DNA2pentadecimal(y)
+  }else{
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- y[[1]]
+      }else stop("Invalid input object y: multi-sequence list")
+    }
+    y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
+  }
   E <- if(logspace) x$E else log(x$E)
   A <- if(logspace) x$A else log(x$A)
   states <- rownames(E)
   n <- length(y)
   if(cpp){
-    residues <- colnames(E)
-    ycoded <- integer(n)
-    for(i in seq_along(residues)) ycoded[y == residues[i]]  <- i - 1
-    res <- Viterbi_HMM(ycoded, A, E)
+    #residues <- colnames(E)
+    #ycoded <- integer(n)
+    #for(i in seq_along(residues)) ycoded[y == residues[i]]  <- i - 1
+    res <- Viterbi_HMM(y, A, E)
   }else{
     H <- length(states) # not including BeginEnd state
     #path <- rep(NA, n)
     path <- integer(n)
     V <- array(-Inf, dim = c(H, n), dimnames = list(state = states, roll = 1:n))
     P <- V + NA # pointer array
-    #s <- if(logspace) x$s else log(x$s)
+    y <- y + 1 # convert to R's indexing style
     V[, 1] <- E[, y[1]] + A[1, -1] # formerly s
     fun <- Vectorize(function(k, l) V[k, i - 1] + A[k + 1, l + 1])
     for (i in 2:n){
       tmp <- outer(1:H, 1:H, fun)
       V[, i] <- E[, y[i]] + apply(tmp, 2, max)
-      #P[, i] <- states[apply(tmp, 2, which.max)]
       P[, i] <- apply(tmp, 2, which.max)
     }
     ak0 <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H)
     endstate <- which.max(V[, n] + ak0)
     maxLL <- V[endstate, n] + ak0[endstate]
-    #path[n] <- states[endstate]
     path[n] <- endstate
     tmp <- path[n]
     for(i in n:2){
@@ -538,14 +570,8 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
       if(is.null(residues)) stop("scoring matrix S must have 'dimnames' attributes")
     }
     # code x and y vectors as integers in with arity = length(residues) - 1
-    xcoded <- integer(length(x))
-    ycoded <- integer(length(y))
-    for(i in seq_along(residues)){
-      xcoded[x == residues[i]] <- i
-      ycoded[y == residues[i]] <- i
-    }
-    x <- xcoded[xcoded != 0] - 1
-    y <- ycoded[ycoded != 0] - 1
+    x <- setNames(seq_along(residues) - 1, residues)[x]
+    y <- setNames(seq_along(residues) - 1, residues)[y]
     if(identical(windowspace, "WilburLipman")) {
       windowspace <- WilburLipman(x, y, arity = length(residues))
     }else if(identical(windowspace, "all")){
@@ -555,13 +581,22 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
   type = switch(type, "global" = 0L, "semiglobal" = 1L, "local" = 2L, stop("invalid type"))
   n <- length(x) + 1
   m <- length(y) + 1
-  #if(!any(itertab)) itertab <- matrix(TRUE, n, m)
+  # initialize scoring and pointer arrays (M and P)
+  M <- array(-Inf, dim = c(n, m, 3))
+  P <- M + NA
   if(cpp){
     res <- Viterbi_default(x, y, type, d, e, S, windowspace, offset)
+    M[, , 1] <- res$IXmatrix
+    M[, , 2] <- res$MMmatrix
+    M[, , 3] <- res$IYmatrix
+    P[, , 1] <- res$IXpointer
+    P[, , 2] <- res$MMpointer
+    P[, , 3] <- res$IYpointer
+    res$array <- M
+    res$pointer = P
   } else{
-    # initialize scoring and pointer arrays (M and P)
-    M <- array(-Inf, dim = c(n, m, 3))
-    P <- M + NA
+    x <- x + 1
+    y <- y + 1 # convert to R's indexing style
     M[1, 1, 2] <- 0
     if(type == 0){
       M[, 1, 1] <- c(0, seq(from = -d, to = (- d + (n - 2) * -e), by = -e))
@@ -576,14 +611,14 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
       for(j in 2:m){
         #if(itertab[i, j]){
         if(j - i >= windowspace[1] & j - i <= windowspace[2]){
-          sij <- S[x[i - 1] + 1, y[j - 1] + 1] + offset
+          sij <- S[x[i - 1] + 1, y[j - 1]] + offset
           Ixcdt <- c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e))#x alig to gap in y
           Mcdt <- c(M[i - 1, j - 1, 1] + sij,
                     M[i - 1, j - 1, 2] + sij,
                     M[i - 1, j - 1, 3] + sij,
                     if(type == 2) 0 else NULL)
           Iycdt <- c(-Inf, M[i, j - 1, 2] - (d + e), M[i, j - 1, 3] - e)
-          Ixmax <- whichismax(Ixcdt) ### could improve using nnet::which.is.max###
+          Ixmax <- whichismax(Ixcdt)
           Mmax <- whichismax(Mcdt)
           Iymax <- whichismax(Iycdt)
           M[i, j, 1] <- Ixcdt[Ixmax]

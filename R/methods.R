@@ -9,7 +9,3 @@ kdist <- function(x, k = 5, asmatrix = FALSE){
   UseMethod("kdist")
 }
 
-
-posterior <- function(x, obs){
-  UseMethod("posterior")
-}

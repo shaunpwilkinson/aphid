@@ -64,7 +64,7 @@ alphadetect <- function(sequences, residues = NULL, gapchar = "-"){
   }else{
     if(!is.null(gapchar)) residues <- residues[residues != gapchar]
   }
-  if(!(length(residues) > 1 & mode(residues) == "character")){
+  if(!(length(residues) >= 1 & mode(residues) == "character")){
     stop("invalid residues argument")
   }
   return(residues)
@@ -83,7 +83,7 @@ tab <- function(v, residues, seqweights = 1){
 # x is a DNAbin vector
 tabDNA <- function(x, ambiguities = FALSE, seqweights = 1){
   if(identical(seqweights, 1)) seqweights <- rep(1, length(x))
-  stopifnot(length(seqweights) == length(x) & sum(seqweights) == length(x))
+  #stopifnot(length(seqweights) == length(x) & sum(seqweights) == length(x))
   res <- structure(numeric(4), names = c("A", "C", "G", "T"))
   res["A"] <- sum(seqweights[x == 136])
   res["C"] <- sum(seqweights[x == 40])

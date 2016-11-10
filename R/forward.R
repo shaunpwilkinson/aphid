@@ -60,16 +60,13 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           y <- y[[1]]
         }else stop("Invalid input object y: multi-sequence list")
       }
-      residues <- rownames(x$E)
-      ycoded <- integer(length(y))
-      for(i in seq_along(residues)) ycoded[y == residues[i]] <- i
-      y <- ycoded[ycoded != 0] - 1
+      y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
     }
   n <- ncol(x$E) + 1
   m <- if(pp) ncol(y$E) + 1 else length(y) + 1
-  if(identical(windowspace, "WilburLipman") | identical(windowspace, "all")){
-    windowspace <- c(-x$size, if(pp) y$size else length(y)) ### placeholder
-  }else if(length(windowspace) != 2) stop("invalid windowspace argument")
+  # if(identical(windowspace, "WilburLipman") | identical(windowspace, "all")){
+  #   windowspace <- c(-x$size, if(pp) y$size else length(y)) ### placeholder
+  # }else if(length(windowspace) != 2) stop("invalid windowspace argument")
   states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
 
   # background emission probabilities
@@ -104,9 +101,32 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   if(pp){
     ### placeholder
   }else{
+    if(identical(windowspace, "WilburLipman")){
+      xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE)
+      xseq <- setNames(seq_along(rownames(x$E)) - 1,  rownames(x$E))[xseq]
+      windowspace <- WilburLipman(xseq, y, arity = nrow(x$E), k = if(pd) 4 else 2)
+    }else if(identical(windowspace, "all")){
+      windowspace <- c(-x$size, length(y))
+    }else if(length(windowspace) != 2) stop("invalid windowspace argument")
     qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC2, qe) else qe[y + 1]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
+    if(n == 1){
+      R[1, 1, "M"] <- 0
+      if(m > 1) R[1, 2, "I"] <- A["MI", 1]
+      if(m > 2) for(j in 3:m) R[1, j, "I"] <- R[1, j - 1, "I"] + A["II", 1] + qey[j - 1]
+      score <- if(m > 1) R[1, m, "I"] + A["IM", 1] else 0
+      res <- structure(list(score = score, array = R), class = 'fullprob')
+      return(res)
+    }
+    if(m == 1){
+      R[1, 1, "M"] <- 0
+      if(n > 1) R[2, 1, "D"] <- A["MD", 1]
+      if(n > 2) for(i in 3:n) R[i, 1, "D"] <- R[i - 1, 1, "D"] + A["DD", i - 1]
+      score <- if(n > 1) R[n, 1, "D"] + A["DM", n] else 0
+      res <- structure(list(score = score, array = R), class = 'fullprob')
+      return(res)
+    }
     if(odds) E <- E - qe
     if(cpp){
       res <- forward_PHMM(y, A, E, qe, qey, type, windowspace, DI, ID, DNA = pd)
@@ -171,6 +191,30 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 #' @rdname forward
 forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
+  pd <- is.DNA(y)
+  if(pd){
+    colnames(x$E) <- toupper(colnames(x$E))
+    NUCorder <- sapply(colnames(x$E), match, c("A", "T", "G", "C"))
+    x$E <- x$E[, NUCorder]
+    if(!(identical(colnames(x$E), c("A", "T", "G", "C")))){
+      stop("invalid model for DNA, residue alphabet does not correspond to
+           nucleotide alphabet")
+    }
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+        class(y) <- "DNAbin"
+      }else stop("Invalid input object y: multi-sequence list")
+    }
+    y <- DNA2pentadecimal(y)
+  }else{
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- y[[1]]
+      }else stop("Invalid input object y: multi-sequence list")
+    }
+    y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
+  }
   n <- length(y)
   E <- if(logspace) x$E else log(x$E)
   A <- if(logspace) x$A else log(x$A)
@@ -179,13 +223,14 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   H <- length(states)
   if(length(y) == 0) structure(list(score = A[1, 1], array = NULL), class = 'fullprob')
   if(cpp){
-    ycoded <- integer(n)
-    for(i in seq_along(residues)) ycoded[y == residues[i]] <- i
-    y <- ycoded[ycoded != 0] - 1 # subtract 1 for cpp indexing
+    # ycoded <- integer(n)
+    # for(i in seq_along(residues)) ycoded[y == residues[i]] <- i
+    # y <- ycoded[ycoded != 0] - 1 # subtract 1 for cpp indexing
     res <- forward_HMM(y, A, E)
     # dimnames(res$array) = list(state = states, step = 1:n) # adds around 50% more time
     rownames(res$array) <- states
   }else{
+    y <- y + 1
     R <- array(NA, dim = c(H, n))#, dimnames = list(state = states, step = 1:n))
     rownames(R) <- states
     R[, 1] <- E[, y[1]] + A[1, -1]

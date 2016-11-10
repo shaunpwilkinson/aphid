@@ -19,12 +19,12 @@
 #' with "names" attribute representing the hidden states.
 #' @name generate
 #'
-generate <- function(x, size, logspace = "autodetect", gapchar = "-"){
+generate <- function(x, size, logspace = "autodetect", gapchar = "-", random = TRUE){
   UseMethod("generate")
 }
 
 #' @rdname generate
-generate.HMM <- function (x, size, logspace = "autodetect"){
+generate.HMM <- function (x, size, logspace = "autodetect", random = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   A <- if(logspace) exp(x$A) else x$A
   E <- if(logspace) exp(x$E) else x$E
@@ -32,13 +32,22 @@ generate.HMM <- function (x, size, logspace = "autodetect"){
   residues <- colnames(E)
   hidden <- character(size)
   emitted <- character(size)
-  state <- sample(states, size = 1, prob = A["BeginEnd", ])
+  if(random){
+    state <- sample(states, size = 1, prob = A["BeginEnd", ])
+  }else{
+    state = states[whichmax(A["BeginEnd", ]) + 1]
+  }
   if(state == "BeginEnd") return(character(0))
   counter <- 1L
   while(state != "BeginEnd" & counter <= size){
     hidden[counter] <- state
-    emitted[counter] <- sample(residues, size = 1, prob = E[state, ])
-    state <- sample(states, size = 1, prob = A[state,])
+    if(random){
+      emitted[counter] <- sample(residues, size = 1, prob = E[state, ])
+      state <- sample(states, size = 1, prob = A[state,])
+    }else{
+      emitted[counter] <- residues[whichmax(E[state, ]) + 1]
+      state <- states[whichmax(A[state,]) + 1]
+    }
     counter <- counter + 1L
   }
   hidden <- hidden[1:(counter - 1)]
@@ -48,7 +57,7 @@ generate.HMM <- function (x, size, logspace = "autodetect"){
 }
 
 #' @rdname generate
-generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-"){
+generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", random = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   A <- if(logspace) exp(x$A) else x$A
   E <- if(logspace) exp(x$E) else x$E
@@ -60,14 +69,26 @@ generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-"){
   state <- "M"
   counter <- 1
   while(counter <= size & position <= x$size){
-    state <- sample(states, size = 1, prob = A[paste0(state, states), paste(position)])
+    if(random){
+      state <- sample(states, size = 1, prob = A[paste0(state, states), paste(position)])
+    }else{
+      state <- states[whichmax(A[paste0(state, states), paste(position)]) + 1]
+    }
     if(state == states[2]){
       position <- position + 1
       if(position > x$size) break
-      emitted[counter] <- sample(rownames(E), size = 1, prob = E[, position])
-    } else if(state == states[3]){
-      emitted[counter] <- sample(rownames(E), size = 1, prob = qe)
-    } else{
+      if(random){
+        emitted[counter] <- sample(rownames(E), size = 1, prob = E[, position])
+      }else{
+        emitted[counter] <- rownames(E)[whichmax(E[, position]) + 1]
+      }
+    }else if(state == states[3]){
+      if(random){
+        emitted[counter] <- sample(rownames(E), size = 1, prob = qe)
+      }else{
+        emitted[counter] <- names(qe)[whichmax(qe) + 1]
+      }
+    }else{
       position <- position + 1
       emitted[counter] <- gapchar
     }

@@ -11,16 +11,32 @@
 #' Note that choosing the latter option increases the computational
 #' overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
 
-posterior.HMM <- function(x, y, logspace = "autodetect"){
+
+posterior <- function(x, y, logspace = "autodetect", cpp = TRUE){
+  UseMethod("posterior")
+}
+
+
+posterior.HMM <- function(x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
-  n <- length(y)
-  states <- rownames(x$E)
-  H <- length(states)
-  back <- backward(x, y, logspace = logspace)
+  back <- backward(x, y, logspace = logspace, cpp = cpp)
   B <- back$array
-  forw <- forward(x, y, logspace = logspace)
+  forw <- forward(x, y, logspace = logspace, cpp = cpp)
   R <- forw$array
   logPx <- forw$score
   postprobs <- exp(R + B - logPx)
   return(postprobs)
 }
+
+posterior.PHMM <- function(x, y, logspace = "autodetect", cpp = TRUE){
+  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
+  back <- backward(x, y, logspace = logspace, cpp = cpp)
+  B <- back$array
+  forw <- forward(x, y, logspace = logspace, cpp = cpp)
+  R <- forw$array
+  logPx <- forw$score
+  postprobs <- exp(R[,,"M"] + B[,,"M"] - logPx)
+  maxprobs <- apply(postprobs, 2, max)
+  return(maxprobs)
+}
+
