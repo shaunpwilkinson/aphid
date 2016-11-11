@@ -37,11 +37,12 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mode
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
   # includes start and or end states?
-  DNA <- inherits(x, "DNAbin")
-  namesok <- all(sapply(x, function(y) !is.null(names(y))  | length(y) == 0))
+  DNA <- is.DNA(x)
+  AA <- is.AA(x)
+  namesok <- all(sapply(x, function(y) !is.null(names(y)) | length(y) == 0))
   if(!(namesok)) stop("x must be a list of named vectors")
   residues <- alphadetect(x, residues = residues)
-  if(is.null(states)) states <- alphadetect(lapply(x, names))
+  if(is.null(states)) states <- unique(unlist(lapply(x, names)))
   if(states[1] != "BeginEnd") states <- c("BeginEnd", states)
   nres <- length(residues)
   nstates <- length(states)
@@ -56,8 +57,9 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mode
     }
   }
   # code states as integers
-  indices <- 0:(nstates - 1)
-  names(indices) <- states
+  indices <- setNames(seq_along(states) - 1, states)
+  #indices <- 0:(nstates - 1)
+  #names(indices) <- states
   pathscoded <- lapply(x, function(e) indices[c("BeginEnd", names(e), "BeginEnd")])
   Acounts <- transitioncount(pathscoded[[1]], arity = nstates) * seqweights[1]
   if(n > 1){
@@ -65,12 +67,17 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mode
       Acounts <- Acounts + transitioncount(pathscoded[[i]], arity = nstates) * seqweights[i]
     }
   }
-  indices <- 0:(nstates - 2)
-  names(indices) <- states[-1]
+  indices <- setNames(0:(nstates - 2), states[-1])
   statescoded <- lapply(x, function(e) indices[names(e)])
-  indices <- 0:(nres - 1)
-  names(indices) <- residues
-  rescoded <- lapply(x, if(DNA) DNA2quaternary else function(e) indices[e])
+  if(DNA){
+    rescoded <- lapply(x, DNA2quaternary)
+  }else if(AA){
+    rescoded <- lapply(x, AA2vigesimal)
+  }else{
+    indices <- setNames(0:(nres - 1), residues)
+    rescoded <- lapply(x, function(e) indices[e])
+  }
+  #rescoded <- lapply(x, if(DNA) DNA2quaternary else if(AA) AA2vigesimal else function(e) indices[e])
   Ecounts <- emissioncount(statescoded[[1]], nstates - 1, rescoded[[1]], nres) * seqweights[1]
   if(n > 1) for(i in 2:n){
     Ecountsi <- emissioncount(statescoded[[i]], nstates - 1, rescoded[[i]], nres) * seqweights[i]

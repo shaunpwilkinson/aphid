@@ -4,13 +4,48 @@
 is.DNA <- function(x){
   if(inherits(x, "DNAbin")){
     return(TRUE)
-  }else if(all(x %in% as.raw(c(136, 72, 40, 24, 192, 160, 144, 96, 80, 48,
-                                224, 176, 208, 112, 240, 4, 2)))){
-    return(TRUE)
+  }else if(inherits(x, "AAbin")){
+    return(FALSE)
+  }else if(mode(x) == "character"){
+    return(FALSE)
+  }else if(mode(x) == "raw"){
+    return(all(x %in% as.raw(c(136, 72, 40, 24, 192, 160, 144, 96, 80, 48,
+                                       224, 176, 208, 112, 240, 4, 2))))
+  }else if(mode(x) == "list"){
+    if(length(x) > 0){
+      return(all(unlist(x) %in% as.raw(c(136, 72, 40, 24, 192, 160, 144, 96, 80, 48,
+                             224, 176, 208, 112, 240, 4, 2))))
+    }else{
+      return(FALSE)
+    }
   }else{
     return(FALSE)
   }
 }
+
+is.AA <- function(x){
+  if(inherits(x, "AAbin")){
+    return(TRUE)
+  }else if(inherits(x, "DNAbin")){
+    return(FALSE)
+  }else if(mode(x) == "character"){
+    return(FALSE)
+  }else if(mode(x) == "raw"){
+    return(all(x %in% as.raw(c(65:90, 42, 45))))
+  }else if(mode(x) == "list"){
+    if(length(x) > 0){
+      return(all(unlist(x) %in% as.raw(c(65:90, 42, 45))))
+    }else{
+      return(FALSE)
+    }
+  }else{
+    return(FALSE)
+  }
+}
+
+
+
+
 #-----------------------------------------------------------------------------
 
 
@@ -53,9 +88,9 @@ whichismax <- function(v){
 #' and/or vectors
 #'
 alphadetect <- function(sequences, residues = NULL, gapchar = "-"){
-  if(inherits(sequences, "DNAbin") | identical(residues, "DNA")){
+  if(is.DNA(sequences) | identical(residues, "DNA")){
     residues <- c("A", "C", "G", "T")
-  } else if(inherits(sequences, "AAbin") | identical(residues, "AA")){
+  } else if(is.AA(sequences) | identical(residues, "AA")){
     residues <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
   }
   else if(is.null(residues)){
@@ -71,9 +106,9 @@ alphadetect <- function(sequences, residues = NULL, gapchar = "-"){
 }
 
 
-tab <- function(v, residues, seqweights = 1){
+tabulate.char <- function(v, residues, seqweights = 1){
   if(identical(seqweights, 1)) seqweights <- rep(1, length(v))
-  stopifnot(length(seqweights) == length(v) & sum(seqweights) == length(v))
+  #stopifnot(length(seqweights) == length(v) & sum(seqweights) == length(v))
   res <- structure(integer(length(residues)), names = residues)
   for(i in residues) res[i] <- sum(seqweights[v == i], na.rm = TRUE)
   return(res)
@@ -81,8 +116,8 @@ tab <- function(v, residues, seqweights = 1){
 
 #-------------------------------------------------------------------------------------------
 # x is a DNAbin vector
-tabDNA <- function(x, ambiguities = FALSE, seqweights = 1){
-  if(identical(seqweights, 1)) seqweights <- rep(1, length(x))
+tabulate.DNA <- function(x, ambiguities = FALSE, seqweights = NULL){
+  if(is.null(seqweights)) seqweights <- rep(1, length(x))
   #stopifnot(length(seqweights) == length(x) & sum(seqweights) == length(x))
   res <- structure(numeric(4), names = c("A", "C", "G", "T"))
   res["A"] <- sum(seqweights[x == 136])
@@ -113,6 +148,68 @@ tabDNA <- function(x, ambiguities = FALSE, seqweights = 1){
   }
   return(res)
 }
+
+tabulate.AA <- function(x, ambiguities = FALSE, seqweights = NULL){
+  # x is an AAbin vector
+  if(is.null(seqweights)) seqweights <- rep(1, length(x))
+  tmp <- structure(numeric(26), names = LETTERS)
+  guide <- as.raw(65:90)
+  for(i in seq_along(tmp)) tmp[i] <- sum(seqweights[x == guide[i]])
+  #tmp <- tabulate(AA2hexavigesimal(x) + 1, nbins = 26)
+  res <- tmp[-c(2, 10, 15, 21, 24, 26)]
+  #names(res) <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
+  if(ambiguities){
+    #names(xambigs) <- LETTERS[c(2, 10, 15, 21, 24, 26)]
+    if(sum(tmp[c(2, 10, 15, 21, 24, 26)]) > 0){
+      xambigs <- x %in% guide[c(2, 10, 15, 21, 24, 26)]
+      truncx <- x[xambigs]
+      truncweights <- seqweights[xambigs]
+      B <- sum(truncweights[truncx == guide[2]])/2 # D or N
+      J <- sum(truncweights[truncx == guide[10]])/2 # L or I
+      O <- sum(truncweights[truncx == guide[15]]) # Pyrrolysine
+      U <- sum(truncweights[truncx == guide[21]]) # Selenocysteine
+      X <- sum(truncweights[truncx == guide[24]])/20 #X
+      Z <- sum(truncweights[truncx == guide[26]])/2 # E or Q
+      res <- res + X
+      res["D"] <- res["D"] + B
+      res["N"] <- res["N"] + B
+      res["L"] <- res["L"] + J
+      res["I"] <- res["I"] + J
+      res["K"] <- res["K"] + O
+      res["C"] <- res["C"] + U
+      res["E"] <- res["E"] + Z
+      res["Q"] <- res["Q"] + Z
+    }
+  }
+  return(res)
+}
+
+
+
+
+# compress.AA2 <- function(x){
+#   indices <- c(rep(0, 5), rep(1, 2), rep(2, 6), rep(3, 3), rep(4, 4), rep(5, 5), 6, 6)
+#   names(indices) <- unlist(strsplit("AGPSTCUDENQBZFWYHKROILMVJX-", split = ""))
+#   res <- indices[as.character.AAbin(x)]
+#   res <- res[res < 6]
+#   return(res)
+# }
+
+compress.AA <- function(x, alphabet = "Dayhoff6"){
+  if(!identical(alphabet, "Dayhoff6")) stop("only Dayhoff6 alphabet supported")
+  res <- integer(length(x))
+  res[x %in% as.raw(c(65, 71, 80, 83, 84))] <- 1
+  res[x %in% as.raw(c(67, 85))] <- 2
+  res[x %in% as.raw(c(68, 69, 78, 81, 66, 90))] <- 3
+  res[x %in% as.raw(c(70, 87, 89))] <- 4
+  res[x %in% as.raw(c(72, 75, 82, 79))] <- 5
+  res[x %in% as.raw(c(73, 76, 77, 86, 74))] <- 6
+  res <- res[res > 0]
+  return(res - 1)
+}
+
+
+
 
 
 #' Diagnostic model checks.
@@ -221,9 +318,9 @@ probDNA <- function(a, probs = rep(0.25, 4)){
   }
 }
 
-is.ambiguous <- function(a) a != 4 & (a & as.raw(8)) != 8
+is.ambiguous.DNA <- function(a) a != 4 & (a & as.raw(8)) != 8
 
-disambiguate <- function(a, probs = rep(0.25, 4)){
+disambiguate.DNA <- function(a, probs = rep(0.25, 4)){
   # a is a raw byte in Paradis (2007) format
   # probs is a 4-element numeric vector of background probabilities for the set {a,c,g,t}
   # returns a sampled base
@@ -265,13 +362,36 @@ disambiguate <- function(a, probs = rep(0.25, 4)){
       sample(as.raw(c(40, 72, 24)), size = 1, prob = probs[-1]) # B (C or G or T)
     } else if(a == 240){
       sample(as.raw(c(136, 40, 72, 24)), size = 1, prob = probs) #N
-    } else stop("invalid byte")
+    } else stop("invalid byte for class 'DNAbin'")
   }
 }
 
+disambiguate.AA <- function(a, probs = rep(0.05, 20)){
+  # a is a raw byte in AAbin format
+  guide <- as.raw(c(65:90, 42, 45)) #length = 28
+  nonambigs <- guide[1:25][-c(2, 10, 15, 21, 24)]
+   #structure(guide, class = "AAbin")
+  if(a == guide[24]){
+    sample(nonambigs, size = 1, prob = probs)
+  }else if(a == guide[2]){# B
+    sample(nonambigs[c(3, 12)], size = 1, prob = probs[c(3, 12)]) # D or N
+  }else if(a == guide[10]){# J
+    sample(nonambigs[c(8, 10)], size = 1, prob = probs[c(8, 10)]) # I or L
+  }else if(a == guide[26]){ # Z
+    sample(nonambigs[c(4, 14)], size = 1, prob = probs[c(4, 14)]) # E or Q
+  }else if(a == guide[15]){# O (Pyrrolysine)
+    return(nonambigs[9]) # K (Lysine)
+  }else if(a == guide[21]){# U (Selenocysteine)
+    return(nonambigs[2]) #C )(Cysteine)
+  }else if(a == guide[26]){ # Z
+    sample(nonambigs[c(4, 14)], size = 1, prob = probs[c(4, 14)]) # E or Q
+  }else if(a == guide[27] | a == guide[27]) {
+    return(NULL)
+  }else stop("invalid byte for class 'AAbin'")
+}
 
 
-DNA2quaternary <- function(x){
+DNA2quaternary <- function(x, probs = rep(0.25, 4)){
   fun <- function(v){
     # v is a raw vector in Paradis (2007) scheme, possibly containing ambiguities
     #converts A to 0, T to 1, G to 2, and C to 3
@@ -279,7 +399,7 @@ DNA2quaternary <- function(x){
     tmp <- attributes(v)
     resv <- rep(NA, length(v))
     ambigs <- (v & as.raw(8)) != 8
-    if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate)
+    if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.DNA, probs)
     resv[v == 136] <- 0
     resv[v == 24] <- 1
     resv[v == 72] <- 2
@@ -290,6 +410,31 @@ DNA2quaternary <- function(x){
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
 
+AA2hexavigesimal <- function(x){
+  fun <- function(v){
+    resv <- as.integer(v) - 65
+    resv <- resv[resv >= 0 & resv < 26]
+    return(resv)
+  }
+  if(is.list(x)) lapply(x, fun) else fun(x)
+}
+
+AA2vigesimal <- function(x, probs = rep(0.05, 20)){
+  fun <- function(v){
+    ambigs <- !(v %in% as.raw(c(65:89)[-c(2, 10, 15, 21, 24)]))
+    if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.AA, probs)
+    resv <- as.integer(v) - 65
+    #ambigs <- !(resv >= 0 & resv < 25 & !(resv %in% c(1, 9, 14, 20, 23)))
+    #if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.DNA)
+    resv[resv > 0] <- resv[resv > 0] - 1
+    resv[resv > 7] <- resv[resv > 7] - 1
+    resv[resv > 11] <- resv[resv > 11] - 1
+    resv[resv > 16] <- resv[resv > 16] - 1
+    resv[resv > 18] <- resv[resv > 18] - 1
+    return(resv)
+  }
+  if(is.list(x)) lapply(x, fun) else fun(x)
+}
 
 JC69 <- function(x, fivecharstates = TRUE){
   if(!fivecharstates) x <- x[, x[1,] != "-" & x[2,] != "-"]

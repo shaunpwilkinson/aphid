@@ -35,7 +35,7 @@ generate.HMM <- function (x, size, logspace = "autodetect", random = TRUE){
   if(random){
     state <- sample(states, size = 1, prob = A["BeginEnd", ])
   }else{
-    state = states[whichmax(A["BeginEnd", ]) + 1]
+    state = states[whichmax(A["BeginEnd", ])]
   }
   if(state == "BeginEnd") return(character(0))
   counter <- 1L
@@ -45,8 +45,8 @@ generate.HMM <- function (x, size, logspace = "autodetect", random = TRUE){
       emitted[counter] <- sample(residues, size = 1, prob = E[state, ])
       state <- sample(states, size = 1, prob = A[state,])
     }else{
-      emitted[counter] <- residues[whichmax(E[state, ]) + 1]
-      state <- states[whichmax(A[state,]) + 1]
+      emitted[counter] <- residues[whichmax(E[state, ])]
+      state <- states[whichmax(A[state,])]
     }
     counter <- counter + 1L
   }
@@ -72,7 +72,7 @@ generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", rand
     if(random){
       state <- sample(states, size = 1, prob = A[paste0(state, states), paste(position)])
     }else{
-      state <- states[whichmax(A[paste0(state, states), paste(position)]) + 1]
+      state <- states[whichmax(A[paste0(state, states), paste(position)])]
     }
     if(state == states[2]){
       position <- position + 1
@@ -80,13 +80,13 @@ generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", rand
       if(random){
         emitted[counter] <- sample(rownames(E), size = 1, prob = E[, position])
       }else{
-        emitted[counter] <- rownames(E)[whichmax(E[, position]) + 1]
+        emitted[counter] <- rownames(E)[whichmax(E[, position])]
       }
     }else if(state == states[3]){
       if(random){
         emitted[counter] <- sample(rownames(E), size = 1, prob = qe)
       }else{
-        emitted[counter] <- names(qe)[whichmax(qe) + 1]
+        emitted[counter] <- names(qe)[whichmax(qe)]
       }
     }else{
       position <- position + 1

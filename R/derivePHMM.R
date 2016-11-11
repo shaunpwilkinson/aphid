@@ -61,7 +61,8 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
                        lambda = 0, DI = TRUE, ID = TRUE){
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
   DNA <- is.DNA(x)
-  if(DNA) gapchar <- as.raw(4)
+  AA <- is.AA(x)
+  gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
   residues <- alphadetect(x, residues = residues, gapchar = gapchar)
   nres <- length(residues)
   n <- nrow(x)
@@ -80,10 +81,12 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
   if(length(seqweights) != n) stop("invalid seqweights argument")
   # background emission probabilities (qe)
   if(is.null(qe)){
-    if(DNA){
-      allecs <- apply(x, 2, tabDNA, ambiguities = TRUE, seqweights = seqweights)
-    } else{
-      allecs <- apply(x, 2, tab, residues = residues, seqweights = seqweights)
+    allecs <- if(AA){
+      apply(x, 2, tabulate.AA, ambiguities = TRUE, seqweights = seqweights)
+    }else if(DNA){
+      apply(x, 2, tabulate.DNA, ambiguities = TRUE, seqweights = seqweights)
+    }else{
+      apply(x, 2, tabulate.char, residues = residues, seqweights = seqweights)
     }
     allecs <- apply(allecs, 1, sum)
     qe <- (allecs + 1)/sum(allecs + 1)
@@ -101,18 +104,21 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
   gapweights <- gaps * seqweights
   if(identical(inserts, "threshold")){
     inserts <- apply(gapweights, 2, sum) > threshold * n
-  } else if(identical(inserts, "map")){
+  }else if(identical(inserts, "map")){
     inserts <- !map(x, residues = residues, gapchar = gapchar, seqweights = seqweights,
                     pseudocounts = pseudocounts, qa = qa, qe = qe)
-  } else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
+    if(sum(!inserts) < 3) inserts <- apply(gapweights, 2, sum) > threshold * n
+  }else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
     stop("invalid inserts argument")
   }
   l <- sum(!inserts) # PHMM length (excluding B & E positions)
   # emission counts
-  if(DNA){
-    ecs <- apply(x[, !inserts, drop = F], 2, tabDNA, ambiguities = TRUE, seqweights = seqweights)
+  ecs <- if(AA){
+    apply(x[, !inserts, drop = F], 2, tabulate.AA, ambiguities = TRUE, seqweights = seqweights)
+  }else if(DNA){
+    apply(x[, !inserts, drop = F], 2, tabulate.DNA, ambiguities = TRUE, seqweights = seqweights)
   }else{
-    ecs <- apply(x[, !inserts, drop = F], 2, tab, residues = residues, seqweights = seqweights)
+    apply(x[, !inserts, drop = F], 2, tabulate.char, residues = residues, seqweights = seqweights)
   }
   if(length(ecs) > 0) dimnames(ecs) <- list(residue = residues, position = 1:l) else ecs = NULL
 
@@ -212,7 +218,7 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
 #' Assigns columns to insert states using the maximum \emph{a posteriori} method
 #' outlined in Durbin et al. (1998).
 #'
-#' @param x a character matrix of aligned sequences.
+#' @param x a matrix of aligned sequences.
 #' @param seqweights either NULL (default; all sequences are given a weight of 1)
 #' or a numeric vector of sequence weights used to
 #' derive the model. The sum of these weights should be equal to the number of
@@ -241,11 +247,13 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
 map <- function(x, seqweights = NULL, residues = NULL,
                 gapchar = "-", pseudocounts = "background",
                 lambda = 0, qa = NULL, qe = NULL, cpp = TRUE){
+  if(!is.matrix(x)) stop("x must be a matrix")
   L <- ncol(x)
   n <- nrow(x)
   if(n < 3) return(setNames(rep(TRUE, L), 1:L))
-  DNA <- inherits(x, "DNAbin")
-  if(DNA) gapchar = as.raw(4)
+  AA <- is.AA(x)
+  DNA <- is.DNA(x)
+  gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   residues <- alphadetect(x, residues = residues, gapchar = gapchar)
   nres <- length(residues)
   transitions = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
@@ -260,10 +268,12 @@ map <- function(x, seqweights = NULL, residues = NULL,
     }
   }
   if(length(seqweights) != n) stop("invalid seqweights argument")
-  if(DNA){
-    ecs <- apply(x, 2, tabDNA, ambiguities = TRUE, seqweights = seqweights)
+  if(AA){
+    ecs <- apply(x, 2, tabulate.AA, ambiguities = TRUE, seqweights = seqweights)
+  }else if(DNA){
+    ecs <- apply(x, 2, tabulate.DNA, ambiguities = TRUE, seqweights = seqweights)
   }else{
-    ecs <- apply(x, 2, tab, residues = residues, seqweights = seqweights)
+    ecs <- apply(x, 2, tabulate.char, residues = residues, seqweights = seqweights)
   }
   # ecs <- t(t(ecs) * seqweights)
   allecs <- apply(ecs, 1, sum)
@@ -271,9 +281,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
     qe <- log((allecs + 1)/sum(allecs + 1))
   }else if(all(qe >= 0 & qe <= 1) & round(sum(qe), 2) == 1){
     qe <- log(qe)
-  } else if(all(qe <= 0) & round(sum(exp(qe)), 2) == 1){
-    # qe <- qe
-  } else stop("invalid qe argument")
+  }else if(any(qe > 0) | round(sum(exp(qe)), 2) != 1) stop("invalid qe")
   gaps <- x == gapchar
   notgaps <- cbind(TRUE, !gaps, TRUE)
   #if(!DI) alltcs[c(3, 7)] <- 0 ### need to work out DI strategy
@@ -291,11 +299,8 @@ map <- function(x, seqweights = NULL, residues = NULL,
     qa <- log((alltcs + 1)/sum(alltcs + 1)) # force addition of Laplace pseudos
   }else if(all(qa >= 0 & qa <= 1) & round(sum(qa), 2) == 1){
     qa <- log(qa)
-  } else if(all(qa <= 0) & round(sum(exp(qa)), 2) == 1){
-    # qa <- qa
-  } else stop("invalid qa argument")
+  }else if(any(qa > 0) | round(sum(exp(qa)), 2) != 1) stop("invalid qa")
   # calculate Mj for j = 1 ... L + 1
-
   # convert pseudocounts arg to list of vectors if necessary
   if(is.list(pseudocounts)){
     if(!names(pseudocounts)[1] == "A"){
@@ -374,9 +379,10 @@ map <- function(x, seqweights = NULL, residues = NULL,
         icsj <- icsj + seqweights * notgaps[, j]
       }
       tmp <- S[1:(j - 1)] + tau + iota + M[j] + lambda
-      sigma[j] <- whichismax(tmp)
+      sigma[j] <- whichmax(tmp)
       S[j] <- tmp[sigma[j]]
     }
+
     res <- structure(logical(L + 2), names = 0:(L + 1))
     res[L + 2] <- TRUE
     j <- sigma[L + 2]

@@ -1,8 +1,9 @@
 #' Multiple sequence alignment.
 #'
 #' \code{align} finds the optimal alignment for a list of sequences using a hybrid
-#' algorithm that involves a progressive alignment step followed by an iterative refinement
-#' stage.
+#' algorithm that involves a progressive alignment, the generation of a a profile
+#' HMM, an iterative model refinement step, and finally the alignment of the sequences
+#' to the model.
 #'
 #' @param sequences a list of character vectors consisting of symbols from
 #' the residue alphabet
@@ -38,8 +39,9 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
   # seqlengths <- sapply(sequences, length)
   # nmodules <- round(mean(seqlengths))
   DNA <- is.DNA(sequences)
+  AA <- is.AA(sequences)
   residues <- alphadetect(sequences, residues = residues, gapchar = gapchar)
-  if(DNA) gapchar <- as.raw(4)
+  gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
   if(!quiet) cat("calculating pairwise distances\n")
   qds <- kdist(sequences)
