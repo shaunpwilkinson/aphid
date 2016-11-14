@@ -99,7 +99,8 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   pp <- inherits(y, "PHMM")
   if(pp) stop("PHMM vs PHMM back comparison is not supported")
   pd <- is.DNA(y)
-  pc <- !pp & !pd
+  pa <- is.AA(y)
+  pc <- !pp & !pd & !pa
   if(pd){
     rownames(x$E) <- toupper(rownames(x$E))
     NUCorder <- sapply(rownames(x$E), match, c("A", "T", "G", "C"))
@@ -114,22 +115,38 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         class(y) <- "DNAbin"
       }else stop("Invalid input object y: multi-sequence list")
     }
-    y <- DNA2pentadecimal(y)
-    }else if(pc){
-      if(is.list(y)){
-        if(length(y) == 1){
-          y <- y[[1]]
-        }else stop("Invalid input object y: multi-sequence list")
-      }
-      y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
+    y.DNAbin <- y
+    y <- DNA2pentadecimal(y, na.rm = TRUE)
+  }else if(pa){
+    rownames(x$E) <- toupper(rownames(x$E))
+    PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
+    x$E <- x$E[PFAMorder, ]
+    if(!(identical(rownames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
+      stop("invalid model for AA, residue alphabet does not correspond to
+           20-letter amino acid alphabet")
     }
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+        class(y) <- "AAbin"
+      }else stop("Invalid input object y: multi-sequence list")
+    }
+    y.AAbin <- y
+    y <- AA2heptovigesimal(y, na.rm = TRUE)
+  }else if(pc){
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- y[[1]]
+      }else stop("Invalid input object y: multi-sequence list")
+    }
+    y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
+  }
   n <- ncol(x$E) + 1
   m <- if(pp) ncol(y$E) + 1 else length(y) + 1
   # if(identical(windowspace, "WilburLipman") | identical(windowspace, "all")){
   #   windowspace <- c(-x$size, if(pp) y$size else length(y)) ### placeholder
   # }else if(length(windowspace) != 2) stop("invalid windowspace argument")
   states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
-
   # background emission probabilities
   if(!(is.null(qe))){
     if(all(qe >= 0) & all(qe <= 1)) qe <- log(qe)
@@ -162,19 +179,35 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     ### placeholder
   }else{
     if(identical(windowspace, "WilburLipman")){
-      xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE)
-      xseq <- setNames(seq_along(rownames(x$E)) - 1,  rownames(x$E))[xseq]
-      windowspace <- WilburLipman(xseq, y, arity = nrow(x$E), k = if(pd) 4 else 2)
+      xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE, AA = pa, DNA = pd)
+      if(pd){
+        xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
+        yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
+        windowspace <- WilburLipman(xqt, yqt, arity = 4, k = 5)
+      }else if(pa){
+        y.comp <- compress.AA(y.AAbin, alpha = "Dayhoff6", na.rm = TRUE)
+        xseq.comp <- compress.AA(xseq, alpha = "Dayhoff6", na.rm = TRUE)
+        windowspace <- WilburLipman(xseq.comp, y.comp, arity = 6, k = 5)
+      }else{
+        xseq <- match(xseq, rownames(x$E)) - 1
+        windowspace <- WilburLipman(xseq, y, arity = nrow(x$E), k = 3)
+      }
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, length(y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
-    qey <- if(odds) rep(0, m - 1) else if(pd) sapply(y, DNAprobC2, qe) else qe[y + 1]
+    qey <- if(odds) {
+      rep(0, m - 1)
+    }else if(pd){
+      sapply(y, DNAprobC2, qe)
+    }else if(pa){
+      sapply(y, AAprobC2, qe)
+    }else qe[y + 1]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
     B[n, m, ] <- A[c("DM", "MM", "IM"), n]
     if(odds) E <- E - qe
     if(cpp){
-      res <- backward_PHMM(y, A, E, qe, qey, type, windowspace, DI, ID, DNA = pd)
+      res <- backward_PHMM(y, A, E, qe, qey, type, windowspace, DI, ID, DNA = pd, AA = pa)
       B[, , 1] <- res$Dmatrix
       B[, , 2] <- res$Mmatrix
       B[, , 3] <- res$Imatrix
@@ -197,7 +230,14 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       for(i in (n - 1):1){
         for(j in (m - 1):1){
           if(j - i >= windowspace[1] & j - i <= windowspace[2]){
-            sij <- if(pd) DNAprobC2(y[j], E[, i]) else E[y[j] + 1, i]
+            #sij <- if(pd) DNAprobC2(y[j], E[, i]) else E[y[j] + 1, i]
+            if(pd){
+              sij <- DNAprobC2(y[j], E[, i]) + offset
+            }else if(pa){
+              sij <- AAprobC2(y[j], E[, i]) + offset
+            }else{
+              sij <- E[y[j] + 1, i] + offset
+            }
             Dcdt <- c(B[i + 1, j, "D"] + A["DD", i],
                       B[i + 1, j + 1, "M"] + A["DM", i] + sij,
                       if(DI) B[i, j + 1, "I"] + A["DI", i] + qey[j] else -Inf)

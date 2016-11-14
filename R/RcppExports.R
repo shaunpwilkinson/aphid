@@ -6,9 +6,19 @@
 #' Find DNA ambiguity probabilities.
 #'
 #' @param x a pentadecimal integer (arity = 15).
-#' @param probs a length-4 vector.
+#' @param probs a length-4 vector of logged probabilities.
 DNAprobC2 <- function(x, probs) {
     .Call('profile_DNAprobC2', PACKAGE = 'profile', x, probs)
+}
+
+#' AA ambiguity probabilities.
+#'
+#' Find AA ambiguity probabilities.
+#'
+#' @param x a heptovigdecimal integer (arity = 27).
+#' @param probs a length-20 vector of logged probab.
+AAprobC2 <- function(x, probs) {
+    .Call('profile_AAprobC2', PACKAGE = 'profile', x, probs)
 }
 
 #' Sum of logged probabilities.
@@ -26,8 +36,8 @@ logsum <- function(x) {
 #'
 #' @param x a numeric or integer vector.
 #'
-whichmax <- function(x) {
-    .Call('profile_whichmax', PACKAGE = 'profile', x)
+whichmax <- function(x, start = 1L) {
+    .Call('profile_whichmax', PACKAGE = 'profile', x, start)
 }
 
 #' Optimal path of sequence through model.
@@ -41,7 +51,7 @@ whichmax <- function(x) {
 #' @param logspace logical argument indicating whether the emission
 #' and transmission probabilities for the model(s) are logged.
 #' @name ViterbiC
-Viterbi_default <- function(x, y, type, d, e, S, windowspace, offset) {
+Viterbi_default <- function(x, y, type, d, e, S, windowspace, offset = 0) {
     .Call('profile_Viterbi_default', PACKAGE = 'profile', x, y, type, d, e, S, windowspace, offset)
 }
 
@@ -49,11 +59,11 @@ Viterbi_HMM <- function(y, A, E) {
     .Call('profile_Viterbi_HMM', PACKAGE = 'profile', y, A, E)
 }
 
-Viterbi_PHMM <- function(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA) {
-    .Call('profile_Viterbi_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA)
+Viterbi_PHMM <- function(y, A, E, qe, qey, type, windowspace, offset = 0, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
+    .Call('profile_Viterbi_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA, AA)
 }
 
-Viterbi_PP <- function(Ax, Ay, Ex, Ey, qe, type, windowspace, offset) {
+Viterbi_PP <- function(Ax, Ay, Ex, Ey, qe, type, windowspace, offset = 0) {
     .Call('profile_Viterbi_PP', PACKAGE = 'profile', Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
 }
 
@@ -67,24 +77,20 @@ forward_HMM <- function(y, A, E) {
     .Call('profile_forward_HMM', PACKAGE = 'profile', y, A, E)
 }
 
-forward_PHMM <- function(y, A, E, qe, qey, type, windowspace, DI, ID, DNA) {
-    .Call('profile_forward_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, DI, ID, DNA)
+forward_PHMM <- function(y, A, E, qe, qey, type, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
+    .Call('profile_forward_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA)
 }
 
 backward_HMM <- function(y, A, E) {
     .Call('profile_backward_HMM', PACKAGE = 'profile', y, A, E)
 }
 
-backward_PHMM <- function(y, A, E, qe, qey, type, windowspace, DI, ID, DNA) {
-    .Call('profile_backward_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, DI, ID, DNA)
+backward_PHMM <- function(y, A, E, qe, qey, type, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
+    .Call('profile_backward_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA)
 }
 
-kdist.default <- function(x, k = 5L, asmatrix = FALSE) {
-    .Call('profile_kdist', PACKAGE = 'profile', x, k, asmatrix)
-}
-
-kdist.DNAbin <- function(x, k = 5L, asmatrix = FALSE) {
-    .Call('profile_kdistDNA', PACKAGE = 'profile', x, k, asmatrix)
+kcount_DNA <- function(x, k = 5L) {
+    .Call('profile_kcount_DNA', PACKAGE = 'profile', x, k)
 }
 
 mapC <- function(ecs, notgaps, pseudocounts, seqweights, qe, lambda = 0) {
@@ -121,13 +127,5 @@ emissioncount <- function(states, statearity, residues, resarity) {
 
 tab9C <- function(x, seqweights) {
     .Call('profile_tab9C', PACKAGE = 'profile', x, seqweights)
-}
-
-DNA2pentadecimal <- function(x) {
-    .Call('profile_DNA2pentadecimal', PACKAGE = 'profile', x)
-}
-
-DNAprobC <- function(a, probs) {
-    .Call('profile_DNAprobC', PACKAGE = 'profile', a, probs)
 }
 

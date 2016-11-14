@@ -9,7 +9,7 @@ map(x, seqweights = NULL, residues = NULL, gapchar = "-",
   cpp = TRUE)
 }
 \arguments{
-\item{x}{a character matrix of aligned sequences.}
+\item{x}{a matrix of aligned sequences.}
 
 \item{seqweights}{either NULL (default; all sequences are given a weight of 1)
 or a numeric vector of sequence weights used to

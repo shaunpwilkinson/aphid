@@ -5,7 +5,7 @@
 \alias{Viterbi_default}
 \title{Optimal path of sequence through model.}
 \usage{
-Viterbi_default(x, y, type, d, e, S, windowspace, offset)
+Viterbi_default(x, y, type, d, e, S, windowspace, offset = 0)
 }
 \arguments{
 \item{x}{an object of class \code{HMM} or \code{PHMM}, or a character vector.}

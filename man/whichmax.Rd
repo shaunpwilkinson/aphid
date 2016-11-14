@@ -4,7 +4,7 @@
 \alias{whichmax}
 \title{Find the index of the maximum with ties broken at random.}
 \usage{
-whichmax(x)
+whichmax(x, start = 1L)
 }
 \arguments{
 \item{x}{a numeric or integer vector.}

@@ -44,7 +44,7 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
   if(!quiet) cat("calculating pairwise distances\n")
-  qds <- kdist(sequences)
+  qds <- kdistance(sequences, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
   if(!quiet) cat("building guide tree\n")
   guidetree <- as.dendrogram(hclust(qds, method = "average"))
   if(!quiet) cat("calculating sequence weights\n")
@@ -53,7 +53,6 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
   newick <- gsub(";", "", newick)
   newick <- gsub("\\(", "alignpair\\(", newick)
   if(type == 'global') newick <- gsub("\\)", ", type = 'global'\\)", newick)
-
   msa1 <- with(sequences, eval(parse(text = newick)))
   if(!quiet) cat("deriving profile hidden Markov model\n")
   omniphmm <- derivePHMM(msa1, seqweights = seqweights, DI = DI, ID = ID, pseudocounts = "background")

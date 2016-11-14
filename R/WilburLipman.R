@@ -24,7 +24,7 @@ WilburLipman <- function(x, y, arity = "autodetect", k = 4, w = 20, threshold = 
     ykm[i, ] <- y[i:(N2 - (k - i))]
   }
   tmp <- apply(ykm, 2, decimal, from = arity) + 1 ### poss bug here with auto-simplify
-  pointer <- lapply(1:k^arity, function(x) which(tmp == x))
+  pointer <- lapply(1:arity^k, function(x) which(tmp == x))
   S1 <- apply(xkm, 2, function(x) pointer[[decimal(x, from = arity) + 1]])
   diagbin <- unlist(mapply("-", S1, 1:ncol(xkm)))
   diags <- tabulate(diagbin + (N1 + 1), nbins = N1 + N2 + 1)

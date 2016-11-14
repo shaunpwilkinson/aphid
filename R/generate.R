@@ -57,14 +57,23 @@ generate.HMM <- function (x, size, logspace = "autodetect", random = TRUE){
 }
 
 #' @rdname generate
-generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", random = TRUE){
+generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", random = TRUE,
+                           DNA = FALSE, AA = FALSE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   A <- if(logspace) exp(x$A) else x$A
   E <- if(logspace) exp(x$E) else x$E
-  qe <- if(logspace) exp(x$qe) else x$qe
-  emitted <- character(size)
+  qe <- if(is.null(x$qe)) rep(1/nrow(E), nrow(E)) else if(logspace) exp(x$qe) else x$qe
+  #### condition if names qe and rownames E mismatch?
+  stopifnot(!(DNA & AA))
+  if(DNA) gapchar <- as.raw(4) else if(AA) gapchar <- as.raw(45)
+  emitted <- if(DNA | AA) raw(size) else character(size)
   hidden <- integer(size)
   states <- c("D", "M", "I")
+  residues <- if(DNA){
+    as.raw(c(136, 40, 72, 24))[sapply(toupper(rownames(E)), match, c("A", "C", "G", "T"))]
+  }else if(AA){
+    as.raw(65:89)[-c(2, 10, 15, 21, 24)]
+  }else rownames(E)
   position <- 0
   state <- "M"
   counter <- 1
@@ -78,15 +87,15 @@ generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", rand
       position <- position + 1
       if(position > x$size) break
       if(random){
-        emitted[counter] <- sample(rownames(E), size = 1, prob = E[, position])
+        emitted[counter] <- sample(residues, size = 1, prob = E[, position])
       }else{
-        emitted[counter] <- rownames(E)[whichmax(E[, position])]
+        emitted[counter] <- residues[whichmax(E[, position])]
       }
     }else if(state == states[3]){
       if(random){
-        emitted[counter] <- sample(rownames(E), size = 1, prob = qe)
+        emitted[counter] <- sample(residues, size = 1, prob = qe)
       }else{
-        emitted[counter] <- names(qe)[whichmax(qe)]
+        emitted[counter] <- residues[whichmax(qe)]
       }
     }else{
       position <- position + 1
@@ -98,6 +107,7 @@ generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", rand
   emitted <- emitted[1:(counter - 1)]
   hidden <- hidden[1:(counter - 1)]
   names(emitted) <- hidden
+  class(emitted) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
   return(emitted)
 }
 

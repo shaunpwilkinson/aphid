@@ -11,7 +11,7 @@ generate(x, size, logspace = "autodetect", gapchar = "-", random = TRUE)
 \method{generate}{HMM}(x, size, logspace = "autodetect", random = TRUE)
 
 \method{generate}{PHMM}(x, size, logspace = "autodetect", gapchar = "-",
-  random = TRUE)
+  random = TRUE, DNA = FALSE, AA = FALSE)
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'}.}

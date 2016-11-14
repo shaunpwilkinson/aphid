@@ -43,20 +43,16 @@ is.AA <- function(x){
   }
 }
 
-
-
-
 #-----------------------------------------------------------------------------
-
 
 decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
 
 
-whichismax <- function(v){
-  ind <- which(v == max(v, na.rm = TRUE))
-  if(length(ind) > 1) ind <- sample(ind, 1)
-  ind
-}
+# whichismax <- function(v){
+#   ind <- which(v == max(v, na.rm = TRUE))
+#   if(length(ind) > 1) ind <- sample(ind, 1)
+#   ind
+# }
 
 #
 # progression <- function(x){ # an object of class "Viterbi"
@@ -185,8 +181,6 @@ tabulate.AA <- function(x, ambiguities = FALSE, seqweights = NULL){
 }
 
 
-
-
 # compress.AA2 <- function(x){
 #   indices <- c(rep(0, 5), rep(1, 2), rep(2, 6), rep(3, 3), rep(4, 4), rep(5, 5), 6, 6)
 #   names(indices) <- unlist(strsplit("AGPSTCUDENQBZFWYHKROILMVJX-", split = ""))
@@ -194,22 +188,33 @@ tabulate.AA <- function(x, ambiguities = FALSE, seqweights = NULL){
 #   res <- res[res < 6]
 #   return(res)
 # }
+#
+# compress.AA3 <- function(x, alphabet = "Dayhoff6"){
+#   if(!identical(alphabet, "Dayhoff6")) stop("only Dayhoff6 alphabet supported")
+#   res <- integer(length(x))
+#   res[x %in% as.raw(c(65, 71, 80, 83, 84))] <- 1
+#   res[x %in% as.raw(c(67, 85))] <- 2
+#   res[x %in% as.raw(c(68, 69, 78, 81, 66, 90))] <- 3
+#   res[x %in% as.raw(c(70, 87, 89))] <- 4
+#   res[x %in% as.raw(c(72, 75, 82, 79))] <- 5
+#   res[x %in% as.raw(c(73, 76, 77, 86, 74))] <- 6
+#   res <- res[res > 0]
+#   return(res - 1)
+# }
 
-compress.AA <- function(x, alphabet = "Dayhoff6"){
-  if(!identical(alphabet, "Dayhoff6")) stop("only Dayhoff6 alphabet supported")
-  res <- integer(length(x))
-  res[x %in% as.raw(c(65, 71, 80, 83, 84))] <- 1
-  res[x %in% as.raw(c(67, 85))] <- 2
-  res[x %in% as.raw(c(68, 69, 78, 81, 66, 90))] <- 3
-  res[x %in% as.raw(c(70, 87, 89))] <- 4
-  res[x %in% as.raw(c(72, 75, 82, 79))] <- 5
-  res[x %in% as.raw(c(73, 76, 77, 86, 74))] <- 6
-  res <- res[res > 0]
-  return(res - 1)
+compress.AA <- function(x, alpha = "Dayhoff6", na.rm = FALSE){
+  if(!identical(alpha, "Dayhoff6")) stop("only Dayhoff6 alphabet supported in this version")
+  fun <- function(y){
+    y <- unclass(y)
+    bits <- 65:90
+    ints <- c(0, 2, 1, 2, 2, 3, 0, 4, 5, 5, 4, 5, 5, 2, 4, 0, 2, 4, 0, 0, 1, 5, 3, NA, 3, 2)
+    res <- ints[match(as.numeric(y), bits)]
+    attributes(res) <- attributes(y)
+    if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
+    return(res)
+  }
+  if(is.list(x)) lapply(x, fun) else fun(x)
 }
-
-
-
 
 
 #' Diagnostic model checks.
@@ -320,50 +325,48 @@ probDNA <- function(a, probs = rep(0.25, 4)){
 
 is.ambiguous.DNA <- function(a) a != 4 & (a & as.raw(8)) != 8
 
-disambiguate.DNA <- function(a, probs = rep(0.25, 4)){
+disambiguate.DNA <- function(a, probs = rep(0.25, 4), random = TRUE){
   # a is a raw byte in Paradis (2007) format
   # probs is a 4-element numeric vector of background probabilities for the set {a,c,g,t}
   # returns a sampled base
-  if(a == 2 | a == 4){
-    stop("Input sequence contains gaps or unknown characters")
-  }else{
-    if((a & as.raw(55)) == as.raw(0)){ # is purine?
-      if(a != 136 & a != 72){
-        sample(as.raw(c(136, 72)), size = 1, prob = probs[c(1, 3)]) # unknown A or G
-      }else{
-        return(a) #known base A or G
-      }
-    }else if((a & as.raw(199)) == as.raw(0)){ # is pyrimidine
-      if(a != 40 & a != 24){
-        sample(as.raw(c(40, 24)), size = 1, prob = probs[c(2, 4)]) # unknown base C or T
-      }else{
-        return(a) # known base C or T
-      }
-      # a,c,g,t = 136, 40, 72, 24
-    }else if(a == 160){
-      sample(as.raw(c(136, 40)), size = 1, prob = probs[1:2])
-      # M (A or C)
-    }else if(a == 144){
-      sample(as.raw(c(136, 24)), size = 1, prob = probs[c(1, 4)])
-      # W (A or T)
-    }else if(a == 96){
-      sample(as.raw(c(40, 72)), size = 1, prob = probs[2:3])
-      # S (G or C)
-    }else if(a == 80){
-      sample(as.raw(c(72, 24)), size = 1, prob = probs[3:4])
-      # K (G or T)
-    }else if(a == 224){ # V (A or C or G)
-      sample(as.raw(c(136, 40, 72)), size = 1, prob = probs[-4])
-    } else if(a == 176){
-      sample(as.raw(c(136, 40, 24)), size = 1, prob = probs[-3]) # H (A or C or T)
-    } else if(a == 208){
-      sample(as.raw(c(136, 72, 24)), size = 1, prob = probs[-2]) # D (A or G or T)
-    } else if(a == 112){
-      sample(as.raw(c(40, 72, 24)), size = 1, prob = probs[-1]) # B (C or G or T)
-    } else if(a == 240){
-      sample(as.raw(c(136, 40, 72, 24)), size = 1, prob = probs) #N
-    } else stop("invalid byte for class 'DNAbin'")
-  }
+  if((a & as.raw(55)) == as.raw(0)){ # is purine?
+    if(a != 136 & a != 72){
+      sample(as.raw(c(136, 72)), size = 1, prob = probs[c(1, 3)]) # unknown A or G
+    }else{
+      return(a) #known base A or G
+    }
+  }else if((a & as.raw(199)) == as.raw(0)){ # is pyrimidine
+    if(a != 40 & a != 24){
+      sample(as.raw(c(40, 24)), size = 1, prob = probs[c(2, 4)]) # unknown base C or T
+    }else{
+      return(a) # known base C or T
+    }
+    # a,c,g,t = 136, 40, 72, 24
+  }else if(a == 160){
+    sample(as.raw(c(136, 40)), size = 1, prob = probs[1:2])
+    # M (A or C)
+  }else if(a == 144){
+    sample(as.raw(c(136, 24)), size = 1, prob = probs[c(1, 4)])
+    # W (A or T)
+  }else if(a == 96){
+    sample(as.raw(c(40, 72)), size = 1, prob = probs[2:3])
+    # S (G or C)
+  }else if(a == 80){
+    sample(as.raw(c(72, 24)), size = 1, prob = probs[3:4])
+    # K (G or T)
+  }else if(a == 224){ # V (A or C or G)
+    sample(as.raw(c(136, 40, 72)), size = 1, prob = probs[-4])
+  } else if(a == 176){
+    sample(as.raw(c(136, 40, 24)), size = 1, prob = probs[-3]) # H (A or C or T)
+  } else if(a == 208){
+    sample(as.raw(c(136, 72, 24)), size = 1, prob = probs[-2]) # D (A or G or T)
+  } else if(a == 112){
+    sample(as.raw(c(40, 72, 24)), size = 1, prob = probs[-1]) # B (C or G or T)
+  } else if(a == 240){
+    sample(as.raw(c(136, 40, 72, 24)), size = 1, prob = probs) #N
+  } else if(a == 2 | a == 4){
+    return(a)
+  }else stop("invalid byte for class 'DNAbin'")
 }
 
 disambiguate.AA <- function(a, probs = rep(0.05, 20)){
@@ -390,48 +393,110 @@ disambiguate.AA <- function(a, probs = rep(0.05, 20)){
   }else stop("invalid byte for class 'AAbin'")
 }
 
-
-DNA2quaternary <- function(x, probs = rep(0.25, 4)){
+DNA2quaternary <- function(x, probs = rep(0.25, 4), random = TRUE, na.rm = FALSE){
   fun <- function(v){
     # v is a raw vector in Paradis (2007) scheme, possibly containing ambiguities
     #converts A to 0, T to 1, G to 2, and C to 3
-    attr(v, "class") <- NULL
-    tmp <- attributes(v)
-    resv <- rep(NA, length(v))
+    v <- unclass(v)
     ambigs <- (v & as.raw(8)) != 8
-    if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.DNA, probs)
-    resv[v == 136] <- 0
-    resv[v == 24] <- 1
-    resv[v == 72] <- 2
-    resv[v == 40] <- 3
-    attributes(resv) <- tmp
-    resv
+    if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.DNA, probs, random)
+    bits <- c(136, 24, 72, 40)
+    ints <- 0:3
+    res <- ints[match(as.numeric(v), bits)]
+    attributes(res) <- attributes(v)
+    if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
+    return(res)
   }
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
 
-AA2hexavigesimal <- function(x){
+DNA2pentadecimal <- function(x, na.rm = FALSE){
   fun <- function(v){
-    resv <- as.integer(v) - 65
-    resv <- resv[resv >= 0 & resv < 26]
-    return(resv)
+    # v is a raw vector in Paradis (2007) scheme, possibly containing ambiguities
+    #converts A to 0, T to 1, G to 2, and C to 3
+    # return order A, T, G, C, S, W, R, Y, K, M, B, V, H, D, N (same as NUC4.4)
+    bits <- c(136, 24, 72, 40, 96, 144, 192, 48, 80 ,160, 112, 224, 176, 208, 240)
+    ints <- 0:14
+    res <- ints[match(as.numeric(v), bits)]
+    attributes(res) <- attributes(unclass(v))
+    if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
+    return(res)
   }
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
 
-AA2vigesimal <- function(x, probs = rep(0.05, 20)){
+AA2hexavigesimal <- function(x, na.rm = FALSE){
+  ### return order = LETTERS
   fun <- function(v){
-    ambigs <- !(v %in% as.raw(c(65:89)[-c(2, 10, 15, 21, 24)]))
+    res <- as.integer(v) - 65
+    res[res < 0 | res > 25] <- NA
+    attributes(res) <- attributes(unclass(v))
+    if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
+    return(res)
+  }
+  if(is.list(x)) lapply(x, fun) else fun(x)
+}
+
+AA2heptovigesimal <- function(x, na.rm = FALSE){
+  ### return order ACDEFGHIKLMNPQRSTVWY, X, BJZ, OU, *
+  ### for input into AAprobC2
+  fun <- function(v){
+    bits <- c(65, 67, 68, 69, 70, 71, 72, 73, 75, 76, 77, 78, 80,
+              81, 82, 83, 84, 86, 87, 89, 88, 66, 74, 90,  79,85, 42)
+    ints <- c(0:26)
+    res <- ints[match(as.numeric(v), bits)]
+    attributes(res) <- attributes(unclass(v))
+    isnares <- is.na(res)
+    if(na.rm) if(any(isnares)) res <- res[!isnares]
+    return(res)
+  }
+  if(is.list(x)) lapply(x, fun) else fun(x)
+}
+
+AA2vigesimal <- function(x, probs = rep(0.05, 20), na.rm = FALSE){
+  # return order "A" "C" "D" "E" "F" "G" "H" "I" "K" "L" "M" "N" "P" "Q" "R" "S" "T" "V" "W" "Y"
+  fun <- function(v){
+    ambigs <- !(v %in% as.raw((65:89)[-c(2, 10, 15, 21, 24)]))
     if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.AA, probs)
-    resv <- as.integer(v) - 65
-    #ambigs <- !(resv >= 0 & resv < 25 & !(resv %in% c(1, 9, 14, 20, 23)))
-    #if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.DNA)
-    resv[resv > 0] <- resv[resv > 0] - 1
-    resv[resv > 7] <- resv[resv > 7] - 1
-    resv[resv > 11] <- resv[resv > 11] - 1
-    resv[resv > 16] <- resv[resv > 16] - 1
-    resv[resv > 18] <- resv[resv > 18] - 1
-    return(resv)
+    bits <- (65:89)[-c(2, 10, 15, 21, 24)]
+    ints <- 0:19
+    res <- ints[match(as.numeric(v), bits)]
+    attributes(res) <- attributes(unclass(v))
+    if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
+    return(res)
+  }
+  if(is.list(x)) lapply(x, fun) else fun(x)
+}
+
+AA2quadrovigesimal <- function(x, na.rm = FALSE){
+  # for use with PAM and BLOSUM matrices
+  # return order "A" "R" "N" "D" "C" "Q" "E" "G" "H" "I" "L" "K" "M" "F" "P" "S" "T" "W" "Y" "V" "B" "Z" "X" "*"
+  # Ambig code J, and special codes O and U are returned as 22 (X). Gaps are returned as NA or removed if na.rm = T
+  fun <- function(v){
+    bits <- c(65, 82, 78, 68, 67, 81, 69, 71, 72, 73, 76, 75,
+              77, 70, 80, 83, 84, 87, 89, 86, 66, 90, 88, 42, 74, 79, 85)
+    ints <- c(0:23, 22, 22, 22)
+    res <- ints[match(as.numeric(v), bits)]
+    attributes(res) <- attributes(unclass(v))
+    isnares <- is.na(res)
+    if(na.rm) if(any(isnares)) res <- res[!isnares]
+    return(res)
+  }
+  if(is.list(x)) lapply(x, fun) else fun(x)
+}
+
+AA2duovigesimal <- function(x, na.rm = FALSE){
+  # for use with Gonnet matrix
+  # return order "C" "S" "T" "P" "A" "G" "N" "D" "E" "Q" "H" "R" "K" "M" "I" "L" "V" "F" "Y" "W" "X" "*"
+  # Ambig codes B, J and Z, special codes O and Z, are returned as 20 (X), and gaps are returned as NA
+  fun <- function(v){
+    bits <- c(67, 83, 84, 80, 65, 71, 78, 68, 69, 81, 72, 82, 75, 77, 73, 76, 86, 70, 89, 87, 88, 42, 66, 74, 79, 85, 90)
+    ints <- c(0:21, rep(20, 5))
+    res <- ints[match(as.numeric(v), bits)]
+    attributes(res) <- attributes(unclass(v))
+    isnares <- is.na(res) #placeholder for ambig treatment
+    if(na.rm) if(any(isnares)) res <- res[!isnares]
+    return(res)
   }
   if(is.list(x)) lapply(x, fun) else fun(x)
 }

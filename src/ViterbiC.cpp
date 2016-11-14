@@ -6,12 +6,14 @@ using namespace Rcpp;
 //' Find DNA ambiguity probabilities.
 //'
 //' @param x a pentadecimal integer (arity = 15).
-//' @param probs a length-4 vector.
+//' @param probs a length-4 vector of logged probabilities.
 // [[Rcpp::export]]
 double DNAprobC2(int x, NumericVector probs){
   // a is an integer vector with length 1 and arity = 15, representing DNA with ambiguities
+  // order A, T, G, C, S, W, R, Y, K, M, B, V, H, D, N (same as NUC4.4)
+  // as outout by function "DNA2pentadecimal"
   // format of Paradis (2007). Eg output of a = DNA2pentadecimal(x.DNAbin)[1]
-  // probs is a 4-element numeric vector of probabilities for the set {a,c,g,t}
+  // probs is a 4-element numeric vector of probabilities for the set {A,T,G,C} (in that order)
   if(probs.size() != 4){
     throw Rcpp::exception("probs argument must be a numeric vector of length 4");
   }
@@ -20,34 +22,73 @@ double DNAprobC2(int x, NumericVector probs){
   }else if(x < 10){
     if(x < 7){
       if(x == 4){
-        return((probs[2] + probs[3])/2);
+        return(log((exp(probs[2]) + exp(probs[3]))/2));
       }else if(x == 5){
-        return((probs[0] + probs[1])/2);
+        return(log((exp(probs[0]) + exp(probs[1]))/2));
       }else{
-        return((probs[0] + probs[2])/2);
+        return(log((exp(probs[0]) + exp(probs[2]))/2));
       }
     }else{
       if(x == 7){
-        return((probs[1] + probs[3])/2);
+        return(log((exp(probs[1]) + exp(probs[3]))/2));
       }else if(x == 8){
-        return((probs[1] + probs[2])/2);
+        return(log((exp(probs[1]) + exp(probs[2]))/2));
       }else{
-        return((probs[0] + probs[3])/2);
+        return(log((exp(probs[0]) + exp(probs[3]))/2));
       }
     }
   }else if(x < 14){
     if(x == 10){
-      return((probs[1] + probs[2] + probs[3])/3); //B
+      return(log((exp(probs[1]) + exp(probs[2]) + exp(probs[3]))/3)); //B
     }else if(x == 11){
-      return((probs[0] + probs[2] + probs[3])/3); //V
+      return(log((exp(probs[0]) + exp(probs[2]) + exp(probs[3]))/3)); //V
     }else if(x == 12){
-      return((probs[0] + probs[1] + probs[3])/3); //H
+      return(log((exp(probs[0]) + exp(probs[1]) + exp(probs[3]))/3)); //H
     }else{
-      return((probs[0] + probs[1] + probs[2])/3); //D
+      return(log((exp(probs[0]) + exp(probs[1]) + exp(probs[2]))/3)); //D
     }
   }else if(x == 14){
-    return((probs[0] + probs[1] + probs[2] + probs[3])/4);
+    return(log(0.25));
   }else throw Rcpp::exception("expected integers between 0 and 14");
+  return(0);
+}
+
+
+//' AA ambiguity probabilities.
+//'
+//' Find AA ambiguity probabilities.
+//'
+//' @param x a heptovigdecimal integer (arity = 27).
+//' @param probs a length-20 vector of logged probab.
+// [[Rcpp::export]]
+double AAprobC2(int x, NumericVector probs){
+  // a is an integer vector with length 1 and arity = 27, representing AA with ambiguities
+  // order  ACDEFGHIKLMNPQRSTVWY X BJZ OU *
+  // as output by AA2heptovigesimal
+  // format of Paradis (2007).
+  // probs is a 20-element numeric vector of probabilities for the set {ACDEFGHIKLMNPQRSTVWY} (in that order)
+  if(probs.size() != 20){
+    throw Rcpp::exception("probs argument must be a numeric vector of length 20");
+  }
+  if(x < 20){
+    return(probs[x]); //knownbase
+  }else if(x == 20){
+    return(log(0.05));
+  }else if(x < 24){
+    if(x == 21){
+      return(log((exp(probs[2]) + exp(probs[11]))/2)); //B (D or N)
+    }else if(x == 22){
+      return(log((exp(probs[7]) + exp(probs[9]))/2)); //J (I or L)
+    }else{
+      return(log((exp(probs[3]) + exp(probs[13]))/2)); //Z (E or Q)
+    }
+  }else if(x == 24){
+    return(probs[8]); //O switch to K
+  }else if(x == 25){
+    return(probs[1]); //U switch to C
+  }else if(x == 26){
+    return(min(probs)); //* check this
+  }else throw Rcpp::exception("expected integers between 0 and 26");
   return(0);
 }
 
@@ -131,7 +172,7 @@ int whichmax(NumericVector x, int start = 1){
 // [[Rcpp::export]]
 List Viterbi_default(IntegerVector x, IntegerVector y,
                     int type, double d, double e, NumericMatrix S,
-                    IntegerVector windowspace, double offset){
+                    IntegerVector windowspace, double offset = 0){
   int n = x.size() + 1;
   int m = y.size() + 1;
   double sij;
@@ -404,8 +445,8 @@ List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
 
 // [[Rcpp::export]]
 List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
-                  NumericVector qey, int type, IntegerVector windowspace, double offset,
-                  bool DI, bool ID, bool DNA){
+                  NumericVector qey, int type, IntegerVector windowspace, double offset = 0,
+                  bool DI = false, bool ID = false, bool DNA = false, bool AA = false){
   int n = E.ncol() + 1;
   int m = y.size() + 1;
   double sij;
@@ -453,6 +494,8 @@ List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
       if(j - i >= windowspace[0] & j - i <= windowspace[1]){
         if(DNA){
           sij = DNAprobC2(y[j - 1], E(_, i - 1)) + offset;
+        }else if(AA){
+          sij = AAprobC2(y[j - 1], E(_, i - 1)) + offset;
         }else{
           sij = E(y[j - 1], i - 1) + offset;
         }
@@ -644,7 +687,7 @@ List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
 // [[Rcpp::export]]
 List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay,
                 NumericMatrix Ex, NumericMatrix Ey,
-                NumericVector qe, int type, IntegerVector windowspace, double offset){
+                NumericVector qe, int type, IntegerVector windowspace, double offset = 0){
   int n = Ex.ncol() + 1;
   int m = Ey.ncol() + 1;
   NumericMatrix Saa(n - 1, m - 1);
@@ -968,7 +1011,7 @@ List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
 // [[Rcpp::export]]
 List forward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
                   NumericVector qey, int type, IntegerVector windowspace,
-                  bool DI, bool ID, bool DNA){
+                  bool DI = false, bool ID = false, bool DNA = false, bool AA = false){
   int n = E.ncol() + 1;
   int m = y.size() + 1;
   double sij;
@@ -1001,6 +1044,8 @@ List forward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
       if(j - i >= windowspace[0] & j - i <= windowspace[1]){
         if(DNA){
           sij = DNAprobC2(y[j - 1], E(_, i - 1));
+        }else if(AA){
+          sij = AAprobC2(y[j - 1], E(_, i - 1));
         }else{
           sij = E(y[j - 1], i - 1);
         }
@@ -1094,7 +1139,7 @@ List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E) {
 // [[Rcpp::export]]
 List backward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
                   NumericVector qey, int type, IntegerVector windowspace,
-                  bool DI, bool ID, bool DNA){
+                  bool DI = false, bool ID = false, bool DNA = false, bool AA = false){
   int n = E.ncol() + 1;
   int m = y.size() + 1;
   double sij;
@@ -1135,6 +1180,8 @@ List backward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVec
       if(j - i >= windowspace[0] & j - i <= windowspace[1]){
         if(DNA){
           sij = DNAprobC2(y[j], E(_, i));
+        }else if(AA){
+          sij = AAprobC2(y[j], E(_, i));
         }else{
           sij = E(y[j], i);
         }

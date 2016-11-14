@@ -4,10 +4,12 @@
 \alias{posterior}
 \title{Posterior decoding.}
 \usage{
-posterior(x, obs, logspace = "autodetect", cpp = TRUE)
+posterior(x, y, logspace = "autodetect", cpp = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'}.}
+
+\item{y}{a character vector...}
 
 \item{logspace}{logical argument indicating whether the emission and transition
 probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
@@ -15,8 +17,6 @@ probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
 if the probabilities are in log space, returning an error if inconsistencies are found.
 Note that choosing the latter option increases the computational
 overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
-
-\item{y}{a character vector...}
 }
 \description{
 Calculates the posterior probability of a sequence given a model.

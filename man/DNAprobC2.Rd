@@ -9,7 +9,7 @@ DNAprobC2(x, probs)
 \arguments{
 \item{x}{a pentadecimal integer (arity = 15).}
 
-\item{probs}{a length-4 vector.}
+\item{probs}{a length-4 vector of logged probabilities.}
 }
 \description{
 Find DNA ambiguity probabilities.

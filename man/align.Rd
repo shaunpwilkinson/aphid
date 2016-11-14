@@ -41,7 +41,8 @@ Baum Welch parameter optimization (\code{refine = "BaumWelch"}).}
 }
 \description{
 \code{align} finds the optimal alignment for a list of sequences using a hybrid
-algorithm that involves a progressive alignment step followed by an iterative refinement
-stage.
+algorithm that involves a progressive alignment, the generation of a a profile
+HMM, an iterative model refinement step, and finally the alignment of the sequences
+to the model.
 }
 
