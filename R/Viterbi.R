@@ -63,7 +63,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     x$E <- x$E[NUCorder, ]
     if(!(identical(rownames(x$E), c("A", "T", "G", "C")))){
       stop("invalid model for DNA, residue alphabet does not correspond to
-           nucleotide alphabet")
+            nucleotide alphabet")
     }
     if(is.list(y)){
       if(length(y) == 1){
@@ -79,7 +79,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     x$E <- x$E[PFAMorder, ]
     if(!(identical(rownames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
       stop("invalid model for AA, residue alphabet does not correspond to
-           20-letter amino acid alphabet")
+            20-letter amino acid alphabet")
     }
     if(is.list(y)){
       if(length(y) == 1){
@@ -98,7 +98,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
     if(mode(y) == "character"){
       y <- match(y, rownames(x$E)) - 1
-      if(any(is.na(y))) stop("residues in sequence are missing from the model")
+      if(any(is.na(y))) stop("residues in sequence(s) are missing from the model")
     }#else if length(unique(y)) > nrow(x$E) stop("")
   }
   n <- ncol(x$E) + 1

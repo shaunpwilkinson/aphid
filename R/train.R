@@ -65,11 +65,27 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   #note any changes below also need apply to align2phmm
   DNA <- is.DNA(y)
+  AA <- is.AA(y)
   # DNA <- inherits(y, "DNAbin")
-  if(DNA) gapchar <- as.raw(4)
-  if(is.list(y)){
-  }else if(DNA){
-    if(is.matrix(y)){
+  gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
+  if(!is.list(y)){
+    if(DNA | AA){
+      if(is.matrix(y)){
+        nseq <- nrow(y)
+        seqnames <- rownames(y)
+        tmp <- structure(vector(mode = "list", length = nseq), class = if(DNA) "DNAbin" else "AAbin")
+        for(i in 1: nseq){
+          seqi <- as.vector(y[i, ])
+          tmp[[i]] <- seqi[seqi != gapchar]
+        }
+        names(tmp) <- seqnames
+      }else{
+        tmp <- structure(list(y), class = if(DNA) "DNAbin" else "AAbin")
+        names(tmp) <- deparse(substitute(y))
+      }
+      y <- tmp
+    }else if(is.matrix(y)){
+      if(mode(y[1, 1]) != "character") stop("invalid mode")
       nseq <- nrow(y)
       seqnames <- rownames(y)
       tmp <- structure(vector(mode = "list", length = nseq), class = "DNAbin")
@@ -78,30 +94,16 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         tmp[[i]] <- seqi[seqi != gapchar]
       }
       names(tmp) <- seqnames
-    }else{
-      tmp <- structure(list(y), class = "DNAbin")
-      names(tmp) <- deparse(substitute(y))
-    }
-    y <- tmp
-  }else if(is.matrix(y)){
-    if(mode(y[1, 1]) != "character") stop("invalid mode")
-    nseq <- nrow(y)
-    seqnames <- rownames(y)
-    tmp <- structure(vector(mode = "list", length = nseq), class = "DNAbin")
-    for(i in 1: nseq){
-      seqi <- as.vector(y[i, ])
-      tmp[[i]] <- seqi[seqi != gapchar]
-    }
-    names(tmp) <- seqnames
-    y <- tmp
-  }else if(is.null(dim(y))){
-    if(mode(y) == "character"){
-      yname <- deparse(substitute(y))
-      #y <- list(matrix(y, nrow = 1, dimnames = list(yname, NULL)))
-      y <- list(y)
-      names(y) <- yname
-    }else stop("invalid mode")
-  }else stop("invalid 'y' argument")
+      y <- tmp
+    }else if(is.null(dim(y))){
+      if(mode(y) == "character"){
+        yname <- deparse(substitute(y))
+        #y <- list(matrix(y, nrow = 1, dimnames = list(yname, NULL)))
+        y <- list(y)
+        names(y) <- yname
+      }else stop("invalid mode")
+    }else stop("invalid 'y' argument")
+  }
   n <- length(y)
   if(is.null(seqweights)) seqweights <- rep(1, n)
   states <- c("D", "M", "I")
@@ -114,7 +116,13 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
   if(!is.null(x$qe)){
     if(!logspace) x$qe <- log(x$qe)
   }else{
-    allecs <- tab(unlist(y), residues = residues) + 1
+    allecs <- if(DNA){
+      apply(t(sapply(y, tabulate.DNA, ambiguities = TRUE)) * seqweights, 2, sum) + 1
+    }else if(AA){
+      apply(t(sapply(y, tabulate.AA, ambiguities = TRUE)) * seqweights, 2, sum) + 1
+    }else{
+      apply(t(sapply(y, tabulate.char, residues = residues)) * seqweights, 2, sum) + 1
+    } #tab(unlist(y), residues = residues) + 1 ### needs fixing
     x$qe <- log(allecs/sum(allecs))
   }
   if(!is.null(x$qa)){
@@ -171,6 +179,28 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     return(out)
     #stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
   }else if(method == "BaumWelch"){
+    if(DNA){
+      rownames(x$E) <- toupper(rownames(x$E))
+      NUCorder <- sapply(rownames(x$E), match, c("A", "T", "G", "C"))
+      x$E <- x$E[NUCorder, ]
+      if(!(identical(rownames(x$E), c("A", "T", "G", "C")))){
+        stop("Invalid model for DNA, residue alphabet does not correspond to
+              nucleotide alphabet")
+      }
+      y <- DNA2quaternary(y, random = FALSE)
+    }else if(AA){
+      rownames(x$E) <- toupper(rownames(x$E))
+      PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
+      x$E <- x$E[PFAMorder, ]
+      if(!(identical(rownames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
+        stop("Invalid model residue alphabet does not correspond to
+              20-letter amino acid alphabet")
+      }
+      y <- AA2vigesimal(y, random = FALSE)
+    }else{
+      y <- lapply(y, function(e) match(e, residues) - 1)
+      if(any(is.na(y))) stop("Residues in sequence(s) are missing from the model")
+    }
     # these just provide preformatted containers for the pseudocounts
     Apseudocounts <- x$A
     Epseudocounts <- x$E
@@ -181,11 +211,11 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       Epseudocounts[] <- rep(qepseudocounts, l)
       qacounts <- exp(x$qa) * if(DI & ID) 9 else if (DI | ID) 8 else 7
       Apseudocounts[] <- rep(qacounts, l + 1)
-    } else if(identical(pseudocounts, "Laplace")){
+    }else if(identical(pseudocounts, "Laplace")){
       Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- 1
-    } else if(identical(pseudocounts, "none")){
+    }else if(identical(pseudocounts, "none")){
       Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- 0
-    } else if(is.list(pseudocounts)){
+    }else if(is.list(pseudocounts)){
       stopifnot(length(pseudocounts) == 3)
       stopifnot(identical(dim(pseudocounts[[1]]), dim(x$A)))
       stopifnot(identical(dim(pseudocounts[[2]]), dim(x$E)))
@@ -193,7 +223,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       Apseudocounts[] <- pseudocounts[[1]]
       Epseudocounts[] <- pseudocounts[[2]]
       qepseudocounts[] <- pseudocounts[[3]]
-    } else stop("invalid 'pseudocounts' argument")
+    }else stop("Invalid 'pseudocounts' argument")
     Apseudocounts[1:3, 1] <- Apseudocounts[c(1, 4, 7), l + 1] <- 0
     if(!DI) Apseudocounts["DI", ] <- 0
     if(!ID) Apseudocounts["ID", ] <- 0
@@ -211,9 +241,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         nj <- length(yj)
         if(nj == 0){
           tmpA["DD", 2:(ncol(tmpA) - 1)] <- tmpA["DD", 2:(ncol(tmpA) - 1)] + seqweights[j]
-          tmplogPx[j] <- sum(c(A["MD", 1],
-                               A["DD", 2:l],
-                               A["DM", l + 1]))
+          tmplogPx[j] <- sum(c(A["MD", 1], A["DD", 2:l], A["DM", l + 1]))
         }else{
           forwj <- forward(out, yj, logspace = TRUE, odds = FALSE)
           Rj <- forwj$array
@@ -225,16 +253,15 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           tmpAj <- tmpA
           tmpqej <- tmpqe
           tmpEj[] <- tmpAj[] <- tmpqej[] <- 0
-          # for(k in 1:l){ #modules
-          #
-          # }
+          yj <- yj + 1 # R indexing style
+          yjea <- cbind(FALSE, sapply(yj, function(r) 1:length(residues) == r))
           for(k in 1:l){
             # Emission and background emission counts
             for(a in seq_along(residues)){
-              yjea <- c(FALSE, yj == residues[a])
-              if(any(yjea)){
-                tmpEj[a, k] <- exp(logsum(Rj[k + 1, yjea, "M"] + Bj[k + 1, yjea, "M"]) - logPxj)
-                tmpqej[a] <- exp(logsum(Rj[k + 1, yjea, "I"] + Bj[k + 1, yjea, "I"]) - logPxj)
+              #yjea <- c(FALSE, yj == residues[a])
+              if(any(yjea[a, ])){
+                tmpEj[a, k] <- exp(logsum(Rj[k + 1, yjea[a, ], "M"] + Bj[k + 1, yjea[a, ], "M"]) - logPxj)
+                tmpqej[a] <- exp(logsum(Rj[k + 1, yjea[a, ], "I"] + Bj[k + 1, yjea[a, ], "I"]) - logPxj)
               }
             }
             # Transition counts - all vectors length 1 or nj + 1 (i = 0... L)
@@ -275,20 +302,20 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       if(!fixqe) out$qe <- qe
       ### some cleanup required above
       logPx <- sum(tmplogPx) # page 62 eq 3.17
-      if(!quiet) cat("iteration", i, "log likelihood =", logPx, "\n")
+      if(!quiet) cat("Iteration", i, "log likelihood =", logPx, "\n")
       if(abs(LL - logPx) < deltaLL){
         if(!logspace){
           out$A <- exp(out$A)
           out$E <- exp(out$E)
           out$qe <- exp(out$qe)
         }
-        if(!quiet) cat("convergence threshold reached after", i, "EM iterations\n")
+        if(!quiet) cat("Convergence threshold reached after", i, "EM iterations\n")
         return(out)
       }
       LL <- logPx
     }
     stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
-  }else stop("invalid argument given for 'method'")
+  }else stop("Invalid argument given for 'method'")
 
 }
 

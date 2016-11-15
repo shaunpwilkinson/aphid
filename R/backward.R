@@ -139,7 +139,11 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         y <- y[[1]]
       }else stop("Invalid input object y: multi-sequence list")
     }
-    y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
+    #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
+    if(mode(y) == "character"){
+      y <- match(y, rownames(x$E)) - 1
+      if(any(is.na(y))) stop("residues in sequence(s) are missing from the model")
+    }#else if length(unique(y)) > nrow(x$E) stop("")
   }
   n <- ncol(x$E) + 1
   m <- if(pp) ncol(y$E) + 1 else length(y) + 1
@@ -232,11 +236,11 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           if(j - i >= windowspace[1] & j - i <= windowspace[2]){
             #sij <- if(pd) DNAprobC2(y[j], E[, i]) else E[y[j] + 1, i]
             if(pd){
-              sij <- DNAprobC2(y[j], E[, i]) + offset
+              sij <- DNAprobC2(y[j], E[, i])
             }else if(pa){
-              sij <- AAprobC2(y[j], E[, i]) + offset
+              sij <- AAprobC2(y[j], E[, i])
             }else{
-              sij <- E[y[j] + 1, i] + offset
+              sij <- E[y[j] + 1, i]
             }
             Dcdt <- c(B[i + 1, j, "D"] + A["DD", i],
                       B[i + 1, j + 1, "M"] + A["DM", i] + sij,

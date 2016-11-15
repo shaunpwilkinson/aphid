@@ -111,6 +111,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
                       pseudocounts = "background",
                       residues = NULL, gapchar = "-", cpp = TRUE){
   DNA <- is.DNA(x)
+  AA <- is.AA(x)
   if(DNA){
     if(!is.DNA(y)) stop("class(x) and class(y) must match")
     gapchar <- as.raw(4)
@@ -133,6 +134,28 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
       if(!is.matrix(y)) y <- matrix(y, nrow = 1, dimnames = list(deparse(substitute(y)), NULL))
       class(y) <- "DNAbin"
     }
+  }else if(AA){
+    if(!is.AA(y)) stop("class(x) and class(y) must match")
+    gapchar <- as.raw(45)
+    # changes here need also apply in Viterbi.default and Viterbi.PHMM
+    if(is.list(x)){
+      if(length(x) == 1){
+        if(!is.matrix(x)) x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
+        class(x) <- "AAbin"
+      }else stop("Invalid input: multi-sequence list")
+    }else{
+      if(!is.matrix(x)) x <- matrix(x, nrow = 1, dimnames = list(deparse(substitute(x)), NULL))
+      class(x) <- "AAbin"
+    }
+    if(is.list(y)){
+      if(length(y) == 1){
+        if(!is.matrix(y)) y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+        class(y) <- "AAbin"
+      }else stop("Invalid input: multi-sequence list")
+    }else{
+      if(!is.matrix(y)) y <- matrix(y, nrow = 1, dimnames = list(deparse(substitute(y)), NULL))
+      class(y) <- "AAbin"
+    }
   }else{
     if(!is.matrix(x)){
       x <- matrix(x, nrow = 1, dimnames = list(deparse(substitute(x)), NULL))
@@ -154,7 +177,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     newy <- c(gapchar, as.vector(y))[yind + 1]
     res <- rbind(newx, newy)
     rownames(res) <- c(rownames(x), rownames(y))
-    if(DNA) class(res) <- "DNAbin"
+    class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     return(res)
   }else if(sum(c(nrow(x) == 1, nrow(y) == 1)) == 1){
     if(nrow(x) == 1){
@@ -200,6 +223,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     }
     res <- rbind(newx, newy)
     #rownames(res)[n + 1] <- tmp1
+    class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     return(res)
   }else if(nrow(x) > 1 & nrow(y) > 1){
     #residues <- alphadetect(x, residues = residues, gapchar = gapchar)
@@ -260,6 +284,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     newy <- insertgaps(y, which(resy > 0) - 1, resy[resy > 0], gapchar = gapchar)
     res <- rbind(newx, newy)
     res <- res[, apply(res, 2, function(v) !all(v == gapchar))]
+    class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     return(res)
   }else{
     stop("invalid arguments provided for x and or y")
@@ -278,41 +303,43 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
   #note changes here also need apply to 'train'
   stopifnot(class(model) == "PHMM")
   DNA <- is.DNA(sequences)
-  if(DNA) gapchar <- as.raw(4)
-  if(is.list(sequences)){
-  }else if(DNA){
-    if(is.matrix(sequences)){
+  AA <- is.AA(sequences)
+  gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
+  if(!is.list(sequences)){
+    if(DNA | AA){
+      if(is.matrix(sequences)){
+        nseq <- nrow(sequences)
+        seqnames <- rownames(sequences)
+        tmp <- structure(vector(mode = "list", length = nseq), class = if(DNA) "DNAbin" else "AAbin")
+        for(i in 1: nseq){
+          seqi <- as.vector(sequences[i, ])
+          tmp[[i]] <- seqi[seqi != gapchar]
+        }
+        names(tmp) <- seqnames
+      }else{
+        tmp <- structure(list(sequences), class = if(DNA) "DNAbin" else "AAbin")
+        names(tmp) <- deparse(substitute(sequences))
+      }
+      sequences <- tmp
+    }else if(is.matrix(sequences)){
+      if(mode(sequences[1, 1]) != "character") stop("invalid mode") ### remove [1,1]
       nseq <- nrow(sequences)
       seqnames <- rownames(sequences)
-      tmp <- structure(vector(mode = "list", length = nseq), class = "DNAbin")
+      tmp <- structure(vector(mode = "list", length = nseq))
       for(i in 1: nseq){
         seqi <- as.vector(sequences[i, ])
         tmp[[i]] <- seqi[seqi != gapchar]
       }
       names(tmp) <- seqnames
-    }else{
-      tmp <- structure(list(sequences), class = "DNAbin")
-      names(tmp) <- deparse(substitute(sequences))
-    }
-    sequences <- tmp
-  }else if(is.matrix(sequences)){
-    if(mode(sequences[1, 1]) != "character") stop("invalid mode")
-    nseq <- nrow(sequences)
-    seqnames <- rownames(sequences)
-    tmp <- structure(vector(mode = "list", length = nseq), class = "DNAbin")
-    for(i in 1: nseq){
-      seqi <- as.vector(sequences[i, ])
-      tmp[[i]] <- seqi[seqi != gapchar]
-    }
-    names(tmp) <- seqnames
-    sequences <- tmp
-  }else if(is.null(dim(sequences))){
-    if(mode(sequences) == "character"){
-      seqname <- deparse(substitute(sequences))
-      sequences <- list(sequences)
-      names(sequences) <- seqname
+      sequences <- tmp
+    }else if(is.null(dim(sequences))){
+      if(mode(sequences) == "character"){
+        seqname <- deparse(substitute(sequences))
+        sequences <- list(sequences)
+        names(sequences) <- seqname
       }else stop("invalid mode")
-  }else stop("invalid 'sequences' argument")
+    }else stop("invalid 'sequences' argument")
+  }
   #
   #out <- vector(length(sequences) * (2 * model$size + 1),
   #              mode = if(DNA) "raw" else "character")
@@ -326,9 +353,14 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
   for(i in 1:length(sequences)){
     alignment <- Viterbi(model, sequences[i], type = "global", ...  = ...)
     score <- score + alignment$score
-    if(DNA){
+    newrow <- rep(gapchar, length(alignment$path))
+    if(DNA | AA){
       newrow <- rep("-", length(alignment$path))
-      newrow[alignment$path > 0] <- ape::as.character.DNAbin(sequences[[i]])
+      newrow[alignment$path > 0] <- if(DNA){
+        ape::as.character.DNAbin(sequences[[i]])
+      }else{
+        ape::as.character.AAbin(sequences[[i]])
+      }
     }else{
       newrow <- rep(gapchar, length(alignment$path))
       newrow[alignment$path > 0] <- sequences[[i]]
@@ -354,12 +386,12 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
       tuples <- rbind(c(FALSE, rep(TRUE, l)), rep(FALSE, l + 1))
     }
     indices <- as.vector(tuples)[-1]
-    newrow2 <- rep(if(DNA) "-" else gapchar, 2 * l + 1)
+    newrow2 <- rep(if(DNA | AA) "-" else gapchar, 2 * l + 1)
     names(newrow2) <- c(rep(c("I", "M"), l), "I") #seq(0.5, x$size + 0.5, by = 0.5)
     newrow2[indices] <- newrow
     out[i,] <- newrow2
   }
-  discardcols <- apply(out, 2 ,function(v) all(v == if(DNA) "-" else gapchar))
+  discardcols <- apply(out, 2 ,function(v) all(v == if(DNA | AA) "-" else gapchar))
   matchcols <- c(FALSE, rep(c(TRUE, FALSE), l))
   out <- out[, matchcols | !discardcols, drop = FALSE]
   out <- as.list(as.data.frame(out, stringsAsFactors = F))
@@ -381,7 +413,7 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
   inserts <- sapply(colnames(res), function(v) grepl("I", v))
   colnames(res)[inserts] <- "I"
   rownames(res) <- names(sequences)
-  if(DNA) res <- as.DNAbin(res)
+  if(DNA) res <- ape::as.DNAbin(res) else if(AA) res <- ape::as.AAbin(res)
   attr(res, "score") <- score
   attr(res, "inserts") <- unname(inserts)
   return(res)

@@ -78,7 +78,11 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         y <- y[[1]]
       }else stop("Invalid input object y: multi-sequence list")
     }
-    y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
+    #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
+    if(mode(y) == "character"){
+      y <- match(y, rownames(x$E)) - 1
+      if(any(is.na(y))) stop("residues in sequence(s) are missing from the model")
+    }#else if length(unique(y)) > nrow(x$E) stop("")
   }
   n <- ncol(x$E) + 1
   m <- if(pp) ncol(y$E) + 1 else length(y) + 1
@@ -181,11 +185,11 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         for(j in 2:m){
           if(j - i >= windowspace[1] & j - i <= windowspace[2]){
             if(pd){
-              sij <- DNAprobC2(y[j - 1], E[, i - 1]) + offset
+              sij <- DNAprobC2(y[j - 1], E[, i - 1])
             }else if(pa){
-              sij <- AAprobC2(y[j - 1], E[, i - 1]) + offset
+              sij <- AAprobC2(y[j - 1], E[, i - 1])
             }else{
-              sij <- E[y[j - 1] + 1, i - 1] + offset
+              sij <- E[y[j - 1] + 1, i - 1]
             }
             Dcdt <- c(R[i - 1, j, "D"] + A["DD", i - 1],
                       R[i - 1, j, "M"] + A["MD", i - 1],
@@ -301,8 +305,8 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
 }
 
 #' @rdname forward
-forward.default <- function(x, y, type = 'semiglobal', d = 8, e = 2,
-                           S = NULL, itertab = NULL, offset = 0){
+forward.default <- function(x, y, type = 'global', d = 8, e = 2,
+                           S = NULL, windowspace = "all"){
   ###check that x is a character vector###
   # this is invalid, d and e have no probabilistic interpretation
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
@@ -330,7 +334,7 @@ forward.default <- function(x, y, type = 'semiglobal', d = 8, e = 2,
         j <- itertab[i, 2]
         i <- itertab[i, 1]
       }
-      sij <-  S[x[i - 1], y[j - 1]] + offset
+      sij <-  S[x[i - 1], y[j - 1]]
       M[i, j, 1] <- logsum(c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e)))#x alig to gap in y
       M[i, j, 2] <- logsum(c(M[i - 1, j - 1, 1],
                              M[i - 1, j - 1, 2],

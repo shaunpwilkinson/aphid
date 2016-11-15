@@ -102,11 +102,12 @@ alphadetect <- function(sequences, residues = NULL, gapchar = "-"){
 }
 
 
-tabulate.char <- function(v, residues, seqweights = 1){
-  if(identical(seqweights, 1)) seqweights <- rep(1, length(v))
+tabulate.char <- function(x, residues, seqweights = NULL){
+  if(is.null(seqweights)) seqweights <- rep(1, length(x))
+  #if(identical(seqweights, 1)) seqweights <- rep(1, length(v))
   #stopifnot(length(seqweights) == length(v) & sum(seqweights) == length(v))
   res <- structure(integer(length(residues)), names = residues)
-  for(i in residues) res[i] <- sum(seqweights[v == i], na.rm = TRUE)
+  for(i in residues) res[i] <- sum(seqweights[x == i], na.rm = TRUE)
   return(res)
 }
 
@@ -453,7 +454,7 @@ AA2heptovigesimal <- function(x, na.rm = FALSE){
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
 
-AA2vigesimal <- function(x, probs = rep(0.05, 20), na.rm = FALSE){
+AA2vigesimal <- function(x, probs = rep(0.05, 20), random = TRUE, na.rm = FALSE){
   # return order "A" "C" "D" "E" "F" "G" "H" "I" "K" "L" "M" "N" "P" "Q" "R" "S" "T" "V" "W" "Y"
   fun <- function(v){
     ambigs <- !(v %in% as.raw((65:89)[-c(2, 10, 15, 21, 24)]))
