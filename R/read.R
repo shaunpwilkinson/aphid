@@ -92,5 +92,154 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
       y
     })
   }
-  res
+  return(res)
 }
+
+
+
+read.PHMM <- function(file = "", ...){
+  x <- scan(file = file, what = "", sep = "\n", quiet = TRUE, ...)
+  # make this part a new fun and lapply in list case
+  if(identical(x, character(0))){
+    warning("Empty character string.")
+    return(NULL)
+  }
+  modstart <- grep("^HMMER3/f", x)[1]
+  if(!(length(modstart) > 0)) stop("only HMMER3 save file format
+                                   version f supported at this stage")
+  modend <- modstart + grep("^//", x[modstart:length(x)])[1] - 1
+
+  x <- x[modstart:modend]
+  out <- list()
+  out$name <- gsub("NAME +", "", x[2]) #Mandatory
+  whichacc <- grep("^ACC ", x[1:30]) # Optional
+  if(length(whichacc) > 0) out$accession <- gsub("ACC +", "", x[whichacc[1]])
+  whichdesc <- grep("DESC ", x[1:30]) # Optional
+  if(length(whichdesc) > 0) out$description <- gsub("DESC +", "", x[whichdesc[1]])
+  whichsize <- grep("LENG ", x[1:30])[1] #Mandatory
+  out$size <- as.integer(gsub("LENG +", "", x[whichsize]))
+  whichmaxl <- grep("^MAXL ", x[1:30]) # Optional
+  if(length(whichmaxl) > 0) out$maxlength <- as.integer(gsub("MAXL +", "", x[whichmaxl[1]]))
+  whichalpha <- grep("ALPH ", x[1:30])[1] #Mandatory
+  out$alphabet <- gsub("ALPH +", "", x[whichalpha])
+  whichref <- grep("^RF ", x[1:30]) #Optional
+  if(length(whichref) > 0){
+    ref <- gsub("RF +", "", x[whichref[1]])
+    out$has.reference <- switch(toupper(ref), YES = TRUE, NO = FALSE, NULL)
+  }
+  whichmm <- grep("^MM ", x[1:30]) #Optional
+  if(length(whichmm) > 0){
+    mm <- gsub("MM +", "", x[whichmm[1]])
+    out$has.mask <- switch(toupper(mm), YES = TRUE, NO = FALSE, NULL)
+  }
+  whichcons <- grep("^CONS ", x[1:30]) #Optional
+  if(length(whichcons) > 0){
+    cons <- gsub("CONS +", "", x[whichcons[1]])
+    out$has.consensus <- switch(toupper(cons), YES = TRUE, NO = FALSE, NULL)
+  }
+  whichcs <- grep("^CS ", x[1:30]) #Optional
+  if(length(whichcs) > 0){
+    cs <- gsub("CS +", "", x[whichcs[1]])
+    out$has.construct <- switch(toupper(cs), YES = TRUE, NO = FALSE, NULL)
+  }
+  whichmap <- grep("^MAP ", x[1:30]) #Optional
+  if(length(whichmap) > 0){
+    map. <- gsub("MAP +", "", x[whichmap[1]])
+    out$map <- switch(toupper(map.), YES = TRUE, NO = FALSE, NULL)
+  }
+  whichnseq <- grep("^NSEQ ", x[1:30])#Optional
+  if(length(whichnseq) > 0){
+    nseq <- gsub("NSEQ +", "", x[whichnseq[1]])
+    out$nseq <- as.integer(gsub("NSEQ +", "", x[whichnseq]))
+  }
+  whicheffn <- grep("^EFFN ", x[1:30])#Optional
+  if(length(whicheffn) > 0){
+    effn <- gsub("EFFN +", "", x[whicheffn[1]])
+    out$effn <- as.integer(gsub("EFFN +", "", x[whicheffn]))
+  }
+  whichchecksum <- grep("^CKSUM ", x[1:30]) #Optional
+  if(length(whichchecksum) > 0){
+    effn <- gsub("CKSUM +", "", x[whichchecksum[1]])
+    out$checksum <- as.integer(gsub("CKSUM +", "", x[whichchecksum]))
+  }
+  whichmodstart <- grep("^HMM ", x[1:30])[1] #Mandatory, note use ^ for start, $ for end
+  out$residues <- unlist(strsplit(gsub("HMM +", "", x[whichmodstart]), split = " +"))
+  transitions <- unlist(strsplit(x[whichmodstart + 1], split = " +"))
+  transitions <- transitions[transitions != ""]
+  trans2 <- toupper(gsub("->", "", transitions))
+  out$DI <- "d->i" %in% transitions
+  out$ID <- "i->d" %in% transitions
+  whichqe <- whichmodstart + 2
+  if(grepl("COMPO ", x[whichqe])){
+    compo <- as.numeric(unlist(strsplit(gsub("COMPO +", "", x[whichqe]), split = " +")))
+    compo <- compo[!is.na(compo)]
+    names(compo) <- out$residues
+    out$compo <- -compo
+    whichqe <- whichqe + 1
+  }
+  qe <- as.numeric(unlist(strsplit(x[whichqe], split = " +")))
+  qe <- qe[!is.na(qe)]
+  names(qe) <- out$residues
+  out$qe <- -qe
+  out$A <- matrix(-Inf, nrow = length(trans2), ncol = out$size + 1)
+  rownames(out$A) <- trans2 #c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
+  colnames(out$A) <- 0:out$size
+  out$E <- matrix(-Inf, nrow = length(out$residues), ncol = out$size)
+  rownames(out$E) <- out$residues
+  colnames(out$E) <- 1:out$size
+  begintrans <- unlist(strsplit(gsub("^ +", "", x[whichqe + 1]), split = " +"))
+  tmp <- if(out$ID) 6 else 5
+  out$A[1:tmp, 1] <- -as.numeric(begintrans[1:tmp])
+  if(out$map) out$alignment <- integer(out$size)
+  if(out$has.consensus) out$consensus <- character(out$size)
+  if(out$has.reference) out$reference <- character(out$size)
+  if(out$has.mask) out$masked <- logical(out$size)
+  if(out$has.construct) out$construct <- character(out$size)
+  wms <- whichqe + 2 # which module start
+  for(i in 1:out$size){
+    matchprobs <- unlist(strsplit(gsub("^ +", "", x[wms]), split = " +"))
+    stopifnot(as.integer(matchprobs[1]) == i)
+    counter <- length(out$residues) + 1
+    out$E[, i] <- -as.numeric(matchprobs[2:counter])
+    counter <- counter + 1
+    if(out$map) out$alignment[i] <- as.integer(matchprobs[counter])
+    if(out$has.consensus) out$consensus[i] <- matchprobs[counter + 1]
+    if(out$has.reference) out$reference[i] <- matchprobs[counter + 2]
+    if(out$has.mask) out$masked[i] <- switch(matchprobs[counter + 3], m = TRUE, FALSE)
+    if(out$has.construct) out$construct[i] <- matchprobs[counter + 4]
+    if(i < out$size){
+      out$A[, i + 1] <- -as.numeric(unlist(strsplit(gsub("^ +", "", x[wms + 2]), split = " +")))
+      wms <- wms + 3
+    }else{
+      stopifnot(grepl("^//", x[wms + 3]))
+      endprobs <- unlist(strsplit(gsub("^ +", "", x[wms + 2]), split = " +"))
+      out$A[endprobs != "*", i + 1] <- -as.numeric(endprobs[endprobs != "*"])
+    }
+  }
+  if(!out$DI | !out$ID) {
+    appdg <- matrix(nrow = 0, ncol = out$size + 1)
+    if(!out$DI) appdg <- rbind(appdg, -Inf)
+
+  }
+  if(!out$DI){
+    tmp <- matrix(rep(-Inf, out$size + 1), nrow = 1)
+    rownames(tmp) <- "DI"
+    out$A <- rbind(out$A, tmp)
+  }
+  if(!out$ID){
+    tmp <- matrix(rep(-Inf, out$size + 1), nrow = 1)
+    rownames(tmp) <- "ID"
+    out$A <- rbind(out$A, tmp)
+  }
+  tmp <- match(c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II"), rownames(out$A))
+  out$A <- out$A[tmp, ]
+  out$A[is.na(out$A)] <- -Inf
+  class(out) <- "PHMM"
+  return(out)
+}
+
+
+
+
+
+

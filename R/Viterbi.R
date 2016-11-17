@@ -59,6 +59,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   pc <- !pp & !pd & !pa
   if(pd){
     rownames(x$E) <- toupper(rownames(x$E))
+    if("U" %in% rownames(x$E)) rownames(x$E)[rownames(x$E) == "U"] <- "T"
     NUCorder <- sapply(rownames(x$E), match, c("A", "T", "G", "C"))
     x$E <- x$E[NUCorder, ]
     if(!(identical(rownames(x$E), c("A", "T", "G", "C")))){

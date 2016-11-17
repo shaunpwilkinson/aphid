@@ -17,8 +17,8 @@ forward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
 
 \method{forward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
 
-\method{forward}{default}(x, y, type = "semiglobal", d = 8, e = 2,
-  S = NULL, itertab = NULL, offset = 0)
+\method{forward}{default}(x, y, type = "global", d = 8, e = 2, S = NULL,
+  windowspace = "all")
 }
 \arguments{
 \item{x}{an object of class \code{PHMM} or \code{HMM}.}
