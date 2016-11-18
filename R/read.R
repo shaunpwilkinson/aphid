@@ -111,65 +111,57 @@ read.PHMM <- function(file = "", ...){
 
   x <- x[modstart:modend]
   out <- list()
-  out$name <- gsub("NAME +", "", x[2]) #Mandatory
-  whichacc <- grep("^ACC ", x[1:30]) # Optional
-  if(length(whichacc) > 0) out$accession <- gsub("ACC +", "", x[whichacc[1]])
-  whichdesc <- grep("DESC ", x[1:30]) # Optional
-  if(length(whichdesc) > 0) out$description <- gsub("DESC +", "", x[whichdesc[1]])
-  whichsize <- grep("LENG ", x[1:30])[1] #Mandatory
-  out$size <- as.integer(gsub("LENG +", "", x[whichsize]))
-  whichmaxl <- grep("^MAXL ", x[1:30]) # Optional
-  if(length(whichmaxl) > 0) out$maxlength <- as.integer(gsub("MAXL +", "", x[whichmaxl[1]]))
-  whichalpha <- grep("ALPH ", x[1:30])[1] #Mandatory
-  out$alphabet <- gsub("ALPH +", "", x[whichalpha])
-  whichref <- grep("^RF ", x[1:30]) #Optional
-  if(length(whichref) > 0){
-    ref <- gsub("RF +", "", x[whichref[1]])
-    out$has.reference <- switch(toupper(ref), YES = TRUE, NO = FALSE, NULL)
-  }
-  whichmm <- grep("^MM ", x[1:30]) #Optional
-  if(length(whichmm) > 0){
-    mm <- gsub("MM +", "", x[whichmm[1]])
-    out$has.mask <- switch(toupper(mm), YES = TRUE, NO = FALSE, NULL)
-  }
-  whichcons <- grep("^CONS ", x[1:30]) #Optional
-  if(length(whichcons) > 0){
-    cons <- gsub("CONS +", "", x[whichcons[1]])
-    out$has.consensus <- switch(toupper(cons), YES = TRUE, NO = FALSE, NULL)
-  }
-  whichcs <- grep("^CS ", x[1:30]) #Optional
-  if(length(whichcs) > 0){
-    cs <- gsub("CS +", "", x[whichcs[1]])
-    out$has.construct <- switch(toupper(cs), YES = TRUE, NO = FALSE, NULL)
-  }
-  whichmap <- grep("^MAP ", x[1:30]) #Optional
-  if(length(whichmap) > 0){
-    map. <- gsub("MAP +", "", x[whichmap[1]])
-    out$map <- switch(toupper(map.), YES = TRUE, NO = FALSE, NULL)
-  }
-  whichnseq <- grep("^NSEQ ", x[1:30])#Optional
-  if(length(whichnseq) > 0){
-    nseq <- gsub("NSEQ +", "", x[whichnseq[1]])
-    out$nseq <- as.integer(gsub("NSEQ +", "", x[whichnseq]))
-  }
-  whicheffn <- grep("^EFFN ", x[1:30])#Optional
-  if(length(whicheffn) > 0){
-    effn <- gsub("EFFN +", "", x[whicheffn[1]])
-    out$effn <- as.integer(gsub("EFFN +", "", x[whicheffn]))
-  }
-  whichchecksum <- grep("^CKSUM ", x[1:30]) #Optional
-  if(length(whichchecksum) > 0){
-    effn <- gsub("CKSUM +", "", x[whichchecksum[1]])
-    out$checksum <- as.integer(gsub("CKSUM +", "", x[whichchecksum]))
-  }
-  whichmodstart <- grep("^HMM ", x[1:30])[1] #Mandatory, note use ^ for start, $ for end
-  out$residues <- unlist(strsplit(gsub("HMM +", "", x[whichmodstart]), split = " +"))
-  transitions <- unlist(strsplit(x[whichmodstart + 1], split = " +"))
+
+  out$name <- gsub("^NAME +", "", x[2]) #Mandatory
+
+  i <- grep("^ACC ", x[1:30]) # Optional
+  if(length(i) > 0) out$accession <- gsub("ACC +", "", x[i[1]])
+
+  i <- grep("^DESC ", x[1:30]) # Optional
+  if(length(i) > 0) out$description <- gsub("DESC +", "", x[i[1]])
+
+  out$size <- as.integer(gsub("^LENG +", "", x[grep("LENG ", x[1:30])[1]])) #Mandatory
+
+  i <- grep("^MAXL ", x[1:30]) # Optional
+  if(length(i) > 0) out$maxlength <- as.integer(gsub("MAXL +", "", x[i[1]]))
+
+  out$alphabet <- trimws(gsub("ALPH", "", x[grep("^ALPH ", x[1:30])[1]]))  #Mandatory
+
+  i <- grep("^RF ", x[1:30]) #Optional
+  hasref <- if(length(i) > 0) trimws(toupper(gsub("RF", "", x[i[1]]))) == "YES" else F
+
+  i <- grep("^MM ", x[1:30]) #Optional
+  hasmm <- if(length(i) > 0) trimws(toupper(gsub("MM", "", x[i[1]]))) == "YES" else F
+
+  i <- grep("^CONS ", x[1:30]) #Optional
+  hascons <- if(length(i) > 0) trimws(toupper(gsub("CONS", "", x[i[1]]))) == "YES" else F
+
+  i <- grep("^CS ", x[1:30]) #Optional
+  hascs <- if(length(i) > 0) trimws(toupper(gsub("CS", "", x[i[1]]))) == "YES" else F
+
+  i <- grep("^MAP ", x[1:30]) #Optional
+  hasmap <- if(length(i) > 0) trimws(toupper(gsub("MAP", "", x[i[1]]))) == "YES" else F
+
+  i <- grep("^DATE ", x[1:30]) #Optional
+  if(length(i) > 0) out$date <- gsub("DATE +", "", x[i[1]]) # leave as string
+
+  i <- grep("^NSEQ ", x[1:30])#Optional
+  if(length(i) > 0) out$nseq <- as.integer(gsub("NSEQ +", "", x[i]))
+
+  i <- grep("^EFFN ", x[1:30])#Optional
+  if(length(i) > 0) out$effn <- as.numeric(gsub("EFFN +", "", x[i]))
+
+  i <- grep("^CKSUM ", x[1:30]) #Optional
+  if(length(i) > 0) out$checksum <- as.integer(gsub("CKSUM +", "", x[i]))
+
+  i <- grep("^HMM ", x[1:30])[1] #Mandatory, note use ^ for start, $ for end
+  out$residues <- unlist(strsplit(gsub("HMM +", "", x[i]), split = " +"))
+  transitions <- unlist(strsplit(x[i + 1], split = " +"))
   transitions <- transitions[transitions != ""]
   trans2 <- toupper(gsub("->", "", transitions))
   out$DI <- "d->i" %in% transitions
   out$ID <- "i->d" %in% transitions
-  whichqe <- whichmodstart + 2
+  whichqe <- i + 2
   if(grepl("COMPO ", x[whichqe])){
     compo <- as.numeric(unlist(strsplit(gsub("COMPO +", "", x[whichqe]), split = " +")))
     compo <- compo[!is.na(compo)]
@@ -190,11 +182,11 @@ read.PHMM <- function(file = "", ...){
   begintrans <- unlist(strsplit(gsub("^ +", "", x[whichqe + 1]), split = " +"))
   tmp <- if(out$ID) 6 else 5
   out$A[1:tmp, 1] <- -as.numeric(begintrans[1:tmp])
-  if(out$map) out$alignment <- integer(out$size)
-  if(out$has.consensus) out$consensus <- character(out$size)
-  if(out$has.reference) out$reference <- character(out$size)
-  if(out$has.mask) out$masked <- logical(out$size)
-  if(out$has.construct) out$construct <- character(out$size)
+  if(hasmap) out$alignment <- integer(out$size)
+  if(hascons) out$consensus <- character(out$size)
+  if(hasref) out$reference <- character(out$size)
+  if(hasmm) out$mask <- logical(out$size)
+  if(hascs) out$construct <- character(out$size)
   wms <- whichqe + 2 # which module start
   for(i in 1:out$size){
     matchprobs <- unlist(strsplit(gsub("^ +", "", x[wms]), split = " +"))
@@ -202,11 +194,11 @@ read.PHMM <- function(file = "", ...){
     counter <- length(out$residues) + 1
     out$E[, i] <- -as.numeric(matchprobs[2:counter])
     counter <- counter + 1
-    if(out$map) out$alignment[i] <- as.integer(matchprobs[counter])
-    if(out$has.consensus) out$consensus[i] <- matchprobs[counter + 1]
-    if(out$has.reference) out$reference[i] <- matchprobs[counter + 2]
-    if(out$has.mask) out$masked[i] <- switch(matchprobs[counter + 3], m = TRUE, FALSE)
-    if(out$has.construct) out$construct[i] <- matchprobs[counter + 4]
+    if(hasmap) out$alignment[i] <- as.integer(matchprobs[counter])
+    if(hascons) out$consensus[i] <- matchprobs[counter + 1]
+    if(hasref) out$reference[i] <- matchprobs[counter + 2]
+    if(hasmm) out$mask[i] <- switch(matchprobs[counter + 3], m = TRUE, FALSE)
+    if(hascs) out$construct[i] <- matchprobs[counter + 4]
     if(i < out$size){
       out$A[, i + 1] <- -as.numeric(unlist(strsplit(gsub("^ +", "", x[wms + 2]), split = " +")))
       wms <- wms + 3
@@ -219,7 +211,6 @@ read.PHMM <- function(file = "", ...){
   if(!out$DI | !out$ID) {
     appdg <- matrix(nrow = 0, ncol = out$size + 1)
     if(!out$DI) appdg <- rbind(appdg, -Inf)
-
   }
   if(!out$DI){
     tmp <- matrix(rep(-Inf, out$size + 1), nrow = 1)

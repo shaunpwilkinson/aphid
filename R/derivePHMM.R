@@ -58,10 +58,13 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
                        gapchar = "-", pseudocounts = "background",
                        logspace = TRUE, qa = NULL, qe = NULL,
                        inserts = "map", threshold = 0.5,
-                       lambda = 0, DI = TRUE, ID = TRUE){
+                       lambda = 0, DI = FALSE, ID = FALSE,
+                       name = deparse(substitute(x)), description = NULL,
+                       compo = FALSE, consensus = FALSE){
+  # alphabet, compo
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
-  DNA <- is.DNA(x)
-  AA <- is.AA(x)
+  DNA <- is.DNA(x) # raw DNA bytes
+  AA <- is.AA(x) # raw AA bytes
   gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
   residues <- alphadetect(x, residues = residues, gapchar = gapchar)
   nres <- length(residues)
@@ -166,16 +169,6 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
   }else if(identical(pseudocounts, "none")){
     pseudocounts <- list(A = rep(0, 9), E = rep(0, nres))
   }else stop("invalid pseudocounts argument")
-
-  # transition and emission probability arrays A & E
-  # if(pseudocounts == 'background'){
-  #   ecs <- ecs + qe * nres
-  #   tcs <- tcs + qa * (7 + sum(c(DI, ID)))
-  # }else if(pseudocounts == 'Laplace'){
-  #   ecs <- ecs + 1
-  #   tcs <- tcs + 1
-  # }
-
   tcs <- tcs + pseudocounts$A
   tcs[1:3, 1] <- tcs[c(1, 4, 7), l + 1] <- 0
   if(!DI) tcs[3, ] <- 0
@@ -188,11 +181,6 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
     E <- t(t(ecs)/apply(ecs, 2, sum))
   }
   A <- t(tcs)
-  # for(i in c(1, 4, 7)){
-  #   tmp1 <- A[, i:(i + 2), drop = F]
-  #   tmp2 <- apply(tmp1, 1, sum)
-  #   A[, i:(i + 2)] <- tmp1/tmp2
-  # }
   for(i in c(1, 4, 7)) A[, i:(i + 2)] <- A[, i:(i + 2)]/apply(A[, i:(i + 2), drop = F], 1, sum)
   A[1, 1:3] <- 0 # gets rid of NaNs caused by division by zero
   A <- t(A)
@@ -206,10 +194,31 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
     qa <- log(qa)
     qe <- log(qe)
   }
-  res <- structure(list(A = A, E = E, qa = qa, qe = qe, size = l,
-                        insertlengths = inslens,
-                        alignment = alignment),
+  reference <- character(m)
+  reference[inserts] <- "."
+  reference[!inserts] <- "x"
+  mask <- character(m)
+  mask[inserts] <- "m"
+  mask[!inserts] <- "."
+  alphabet <- if(identical(toupper(sort(residues)), c("A", "C", "G", "T"))){
+    "dna"
+  }else if(identical(toupper(sort(residues)), c("A", "C", "G", "U"))){
+    "rna"
+  }else if(identical(toupper(sort(residues)), LETTERS[-c(2, 10, 15, 21, 24, 26)])){
+    "amino"
+  } else "custom"
+
+  res <- structure(list(name = name, description = description,
+                        size = l, alphabet = alphabet,
+                        A = A, E = E, qa = qa, qe = qe,
+                        insertlengths = inslens, alignment = alignment,
+                        date = date(), nseq = n, weights = seqweights,
+                        reference = reference, mask = mask),
                    class = "PHMM")
+  if(consensus){
+    res$consensus <- generate(res, size = l * 100, random = FALSE, gapchar = ".")
+  }
+  if(compo) res$compo <- log(apply(exp(E), 1, mean))
   return(res)
 }
 

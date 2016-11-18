@@ -84,9 +84,12 @@ decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
 #' and/or vectors
 #'
 alphadetect <- function(sequences, residues = NULL, gapchar = "-"){
-  if(is.DNA(sequences) | identical(residues, "DNA")){
+  if(identical(residues, "RNA") | identical(residues, "rna")){
+    residues <- c("A", "C", "G", "U")
+  }else if(is.DNA(sequences) | identical(residues, "DNA") | identical(residues, "dna")){
     residues <- c("A", "C", "G", "T")
-  } else if(is.AA(sequences) | identical(residues, "AA")){
+  }else if(is.AA(sequences) | identical(residues, "AA") |
+           identical(residues, "amino") | identical (residues, "AMINO")){
     residues <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
   }
   else if(is.null(residues)){
@@ -95,12 +98,11 @@ alphadetect <- function(sequences, residues = NULL, gapchar = "-"){
   }else{
     if(!is.null(gapchar)) residues <- residues[residues != gapchar]
   }
-  if(!(length(residues) >= 1 & mode(residues) == "character")){
+  if(!(length(residues) > 0 & mode(residues) == "character")){
     stop("invalid residues argument")
   }
   return(residues)
 }
-
 
 tabulate.char <- function(x, residues, seqweights = NULL){
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
@@ -181,28 +183,6 @@ tabulate.AA <- function(x, ambiguities = FALSE, seqweights = NULL){
   return(res)
 }
 
-
-# compress.AA2 <- function(x){
-#   indices <- c(rep(0, 5), rep(1, 2), rep(2, 6), rep(3, 3), rep(4, 4), rep(5, 5), 6, 6)
-#   names(indices) <- unlist(strsplit("AGPSTCUDENQBZFWYHKROILMVJX-", split = ""))
-#   res <- indices[as.character.AAbin(x)]
-#   res <- res[res < 6]
-#   return(res)
-# }
-#
-# compress.AA3 <- function(x, alphabet = "Dayhoff6"){
-#   if(!identical(alphabet, "Dayhoff6")) stop("only Dayhoff6 alphabet supported")
-#   res <- integer(length(x))
-#   res[x %in% as.raw(c(65, 71, 80, 83, 84))] <- 1
-#   res[x %in% as.raw(c(67, 85))] <- 2
-#   res[x %in% as.raw(c(68, 69, 78, 81, 66, 90))] <- 3
-#   res[x %in% as.raw(c(70, 87, 89))] <- 4
-#   res[x %in% as.raw(c(72, 75, 82, 79))] <- 5
-#   res[x %in% as.raw(c(73, 76, 77, 86, 74))] <- 6
-#   res <- res[res > 0]
-#   return(res - 1)
-# }
-
 compress.AA <- function(x, alpha = "Dayhoff6", na.rm = FALSE){
   if(!identical(alpha, "Dayhoff6")) stop("only Dayhoff6 alphabet supported in this version")
   fun <- function(y){
@@ -216,7 +196,6 @@ compress.AA <- function(x, alpha = "Dayhoff6", na.rm = FALSE){
   }
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
-
 
 #' Diagnostic model checks.
 #'

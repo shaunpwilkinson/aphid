@@ -19,7 +19,8 @@
 #' with "names" attribute representing the hidden states.
 #' @name generate
 #'
-generate <- function(x, size, logspace = "autodetect", gapchar = "-", random = TRUE){
+generate <- function(x, size, logspace = "autodetect", gapchar = "-", random = TRUE,
+                     DNA = FALSE, AA = FALSE){
   UseMethod("generate")
 }
 
@@ -69,6 +70,7 @@ generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", rand
   emitted <- if(DNA | AA) raw(size) else character(size)
   hidden <- integer(size)
   states <- c("D", "M", "I")
+  if(DNA) rownames(E)[toupper(rownames(E)) == "U"] <- "T"
   residues <- if(DNA){
     as.raw(c(136, 40, 72, 24))[sapply(toupper(rownames(E)), match, c("A", "C", "G", "T"))]
   }else if(AA){

@@ -20,11 +20,9 @@
 #'
 write.dendrogram <- function(x, file = "", append = FALSE,
                              strip.edges = FALSE, dec.places = 2){
-  if(!(inherits(x, 'dendrogram'))) stop("input object must be of class 'dendrogram'")
+  if(!(inherits(x, "dendrogram"))) stop("Input object must be of class 'dendrogram'")
   renameLeaves <- function(y){
-    if(is.leaf(y)){
-      y[1] <- attr(y, 'label')
-    }
+    if(is.leaf(y)) y[1] <- attr(y, 'label')
     y
   }
   x <- dendrapply(x, renameLeaves)
@@ -58,7 +56,7 @@ write.dendrogram <- function(x, file = "", append = FALSE,
     res <- gsub(":[0-9.]+", "", res)
   }else{
     target <- paste0(c("(\\.", rep("[0-9]", dec.places), ")[0-9]+"), collapse = "")
-    res <- gsub(target, "\\1", res) ### maybe signif places better?
+    res <- gsub(target, "\\1", res) ### maybe signif places better? format?
     if(dec.places == 0) res <- gsub("\\.", "", res)
   }
   if(file == ""){
@@ -68,3 +66,78 @@ write.dendrogram <- function(x, file = "", append = FALSE,
   }
 }
 
+
+write.PHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f"){
+  options(digits = 6, scipen = 10)
+  stopifnot(form == "HMMER3" & vers == "f")
+  if(!(inherits(x, "PHMM"))) stop("Input object must be of class 'PHMM'")
+  cat(paste0(form, "/", vers), file = file, sep = "\n", append = append) ##[produced by R::profile?]
+  cat(paste0("NAME  ", x$name), file = file, sep = "\n", append = T)
+  if(!is.null(x$accession)) cat(paste0("ACC   ", x$accession), file = file, sep = "\n", append = T)
+  if(!is.null(x$description)) cat(paste0("DESC  ", x$description), file = file, sep = "\n", append = T)
+  cat(paste0("LENG  ", x$size), file = file, sep = "\n", append = T)
+  if(!is.null(x$maxlength)) cat(paste0("MAXL  ", x$maxlength), file = file, sep = "\n", append = T)
+  cat(paste0("ALPH  ", x$alphabet), file = file, sep = "\n", append = T)
+
+  rfl <- if(is.null(x$reference)) "RF    no" else "RF    yes"
+  mml <- if(is.null(x$mask))      "MM    no" else "MM    yes"
+  cl <- if(is.null(x$consensus))  "CONS  no" else "CONS  yes"
+  csl <- if(is.null(x$construct)) "CS    no" else "CS    yes"
+  mpl <- if(is.null(x$alignment)) "MAP   no" else "MAP   yes"
+  cat(rfl, mml, cl, csl, mpl, file = file, sep = "\n", append = TRUE)
+
+  if(!is.null(x$date)) cat(paste0("DATE  ", x$date), file = file, append = T, sep = "\n")
+  if(!is.null(x$nseq)) cat(paste0("NSEQ  ", x$nseq), file = file, append = T, sep = "\n")
+  if(!is.null(x$effn)) cat(paste0("EFFN  ", round(x$effn, 6)), file = file, append = T, sep = "\n")
+  if(!is.null(x$checksum)) cat(paste0("CKSUM ", x$checksum), file = file, append = T, sep = "\n")
+  ### placeholder for stats, cutoffs, etc
+  residues <- rownames(x$E)
+  cat(c("HMM          ", paste0(residues, "        "), "\n"), file = file, append = T, sep = "")
+  cat("            m->m     m->i     m->d     i->m     i->i     d->m     d->d",
+      file = file, append = T, sep = "\n")
+  if(!is.null(x$compo)){
+    compoline <- paste(format(-x$compo, digits = 6, scientific = FALSE), collapse = "  ")
+    compoline = paste0("  COMPO   ", compoline)
+    cat(compoline, file = file, sep = "\n", append = TRUE)
+  }
+
+  qe <- as.character(format(-x$qe, digits = 6, scientific = FALSE))
+  qeline <- paste0("          ", paste(qe, collapse = "  "))
+  cat(qeline, file = file, sep = "\n", append = TRUE)
+
+  A <- as.character(format(-x$A[c(5, 6, 4, 8, 9, 2, 1), ], width = 6, scientific = FALSE))
+  # as.character(formatC(-x$A[c(5, 6, 4, 8, 9, 2, 1), ], width = 6, format = "f"))
+  # A <- -x$A
+  # tA <- x$A[is.finite(x$A)]
+  # as.character(formatC(-tA, width = 8, format = "f"))
+  A[A == "Inf"] <- "      *"
+  dim(A) <- c(7, x$size + 1)
+  A[6, 1] <- "0.00000"
+
+  E <- as.character(format(-x$E, digits = 6, scientific = FALSE))
+  E[E == "Inf"] <- "      *"
+  dim(E) <- c(length(residues), x$size)
+
+  trans0line = paste("         ", paste(A[, 1], collapse = "  "))
+  cat(trans0line, file = file, sep = "\n", append = TRUE)
+  for(i in 1:x$size){
+    emline <- paste0(if(i < 10) "      " else if(i < 100) "     " else "    ", i, "   ")
+    emline <- paste0(emline, paste(E[, i], collapse = "  "))
+    if(!is.null(x$alignment)){
+      tmp <- x$alignment[i]
+      emline <- paste0(emline, if(tmp < 10) "      " else if(tmp < 100) "     " else  "    ")
+      emline <- paste0(emline, tmp)
+    }else{
+      emline <- paste0(emline, "      -")
+    }
+    emline <- paste0(emline, " ", if(!is.null(x$consensus)) x$consensus[i] else "-")
+    emline <- paste0(emline, " ", if(!is.null(x$reference)) x$reference[i] else "-")
+    emline <- paste0(emline, " ", if(!is.null(x$mask)) x$mask[i] else "-")
+    emline <- paste0(emline, " ", if(!is.null(x$construct)) x$construct[i] else "-")
+    cat(emline, file = file, sep = "\n", append = TRUE)
+    cat(qeline, file = file, sep = "\n", append = TRUE)
+    transline <- paste0("          ", paste(A[, i + 1], collapse = "  "))
+    cat(transline, file = file, sep = "\n", append = TRUE)
+  }
+  cat("//", file = file, sep = "", append = TRUE)
+}
