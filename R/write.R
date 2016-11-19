@@ -68,7 +68,7 @@ write.dendrogram <- function(x, file = "", append = FALSE,
 
 
 write.PHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f"){
-  options(digits = 6, scipen = 10)
+  options(digits = 7, scipen = 10)
   stopifnot(form == "HMMER3" & vers == "f")
   if(!(inherits(x, "PHMM"))) stop("Input object must be of class 'PHMM'")
   cat(paste0(form, "/", vers), file = file, sep = "\n", append = append) ##[produced by R::profile?]
@@ -96,26 +96,32 @@ write.PHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f"
   cat("            m->m     m->i     m->d     i->m     i->i     d->m     d->d",
       file = file, append = T, sep = "\n")
   if(!is.null(x$compo)){
-    compoline <- paste(format(-x$compo, digits = 6, scientific = FALSE), collapse = "  ")
-    compoline = paste0("  COMPO   ", compoline)
+    compoline <- formatC(-x$compo, digits = 5, format = "f")
+    compoline[trimws(compoline) == "Inf"] <- "      *"
+    compoline <- gsub("(.......).+", "\\1", compoline) # in case any logprobs are > 10
+    compoline = paste0("  COMPO   ", paste(compoline, collapse = "  "))
     cat(compoline, file = file, sep = "\n", append = TRUE)
   }
 
-  qe <- as.character(format(-x$qe, digits = 6, scientific = FALSE))
-  qeline <- paste0("          ", paste(qe, collapse = "  "))
+  qe <- formatC(-x$qe, digits = 5, format = "f")
+  qe[trimws(qe) == "Inf"] <- "      *"
+  qe <- gsub("(.......).+", "\\1", qe)
+  qeline = paste0("          ", paste(qe, collapse = "  "))
+
+  # qe <- as.character(format(-x$qe, digits = 6, scientific = FALSE))
+  # qeline <- paste0("          ", paste(qe, collapse = "  "))
   cat(qeline, file = file, sep = "\n", append = TRUE)
 
-  A <- as.character(format(-x$A[c(5, 6, 4, 8, 9, 2, 1), ], width = 6, scientific = FALSE))
-  # as.character(formatC(-x$A[c(5, 6, 4, 8, 9, 2, 1), ], width = 6, format = "f"))
-  # A <- -x$A
-  # tA <- x$A[is.finite(x$A)]
-  # as.character(formatC(-tA, width = 8, format = "f"))
-  A[A == "Inf"] <- "      *"
+  A <- formatC(-x$A[c(5, 6, 4, 8, 9, 2, 1), ], digits = 6, format = "f")
+  A[trimws(A) == "Inf"] <- "      *"
+  A <- gsub("(.......).+", "\\1", A)
   dim(A) <- c(7, x$size + 1)
-  A[6, 1] <- "0.00000"
+  A[6, 1] <- A[6, x$size + 1] <- "0.00000"
 
-  E <- as.character(format(-x$E, digits = 6, scientific = FALSE))
-  E[E == "Inf"] <- "      *"
+  #E <- as.character(format(-x$E, digits = 6, scientific = FALSE))
+  E <- formatC(-x$E, digits = 6, format = "f")
+  E[trimws(E) == "Inf"] <- "      *"
+  E <- gsub("(.......).+", "\\1", E)
   dim(E) <- c(length(residues), x$size)
 
   trans0line = paste("         ", paste(A[, 1], collapse = "  "))
