@@ -6,7 +6,9 @@
 \usage{
 derivePHMM(x, seqweights = NULL, residues = NULL, gapchar = "-",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  inserts = "map", threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE)
+  inserts = "map", threshold = 0.5, lambda = 0, DI = FALSE,
+  ID = FALSE, name = deparse(substitute(x)), description = NULL,
+  compo = FALSE, consensus = FALSE)
 }
 \arguments{
 \item{x}{a character matrix of aligned sequences.}

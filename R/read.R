@@ -98,7 +98,7 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
 
 
 read.PHMM <- function(file = "", ...){
-  x <- scan(file = file, what = "", sep = "\n", quiet = TRUE, ...)
+  x <- scan(file = file, what = "", sep = "\n", quiet = TRUE, ... = ...)
   # make this part a new fun and lapply in list case
   if(identical(x, character(0))){
     warning("Empty character string.")

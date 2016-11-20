@@ -6,7 +6,8 @@
 \alias{generate.PHMM}
 \title{Generate random sequences from a model.}
 \usage{
-generate(x, size, logspace = "autodetect", gapchar = "-", random = TRUE)
+generate(x, size, logspace = "autodetect", gapchar = "-", random = TRUE,
+  DNA = FALSE, AA = FALSE)
 
 \method{generate}{HMM}(x, size, logspace = "autodetect", random = TRUE)
 

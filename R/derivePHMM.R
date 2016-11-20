@@ -215,9 +215,9 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
                         date = date(), nseq = n, weights = seqweights,
                         reference = reference, mask = mask),
                    class = "PHMM")
-  if(consensus){
-    res$consensus <- generate(res, size = l * 100, random = FALSE, gapchar = ".")
-  }
+  # if(consensus){
+  #   res$consensus <- generate(res, size = l * 100, random = FALSE, gapchar = ".")
+  # }
   if(compo) res$compo <- log(apply(exp(E), 1, mean))
   return(res)
 }

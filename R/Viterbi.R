@@ -99,7 +99,10 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
     if(mode(y) == "character"){
       y <- match(y, rownames(x$E)) - 1
-      if(any(is.na(y))) stop("residues in sequence(s) are missing from the model")
+      if(any(is.na(y))) {
+        warning("residues in sequence(s) are missing from the model")
+        y <- y[!is.na(y)]
+      }
     }#else if length(unique(y)) > nrow(x$E) stop("")
   }
   n <- ncol(x$E) + 1

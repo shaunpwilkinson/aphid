@@ -311,40 +311,80 @@ disambiguate.DNA <- function(a, probs = rep(0.25, 4), random = TRUE){
   # returns a sampled base
   if((a & as.raw(55)) == as.raw(0)){ # is purine?
     if(a != 136 & a != 72){
-      sample(as.raw(c(136, 72)), size = 1, prob = probs[c(1, 3)]) # unknown A or G
+      if(random){
+        sample(as.raw(c(136, 72)), size = 1, prob = probs[c(1, 3)]) # unknown A or G
+      }else{
+        as.raw(c(136, 72))[whichmax(probs[c(1, 3)])]
+      }
     }else{
       return(a) #known base A or G
     }
   }else if((a & as.raw(199)) == as.raw(0)){ # is pyrimidine
     if(a != 40 & a != 24){
-      sample(as.raw(c(40, 24)), size = 1, prob = probs[c(2, 4)]) # unknown base C or T
+      if(random){
+        sample(as.raw(c(40, 24)), size = 1, prob = probs[c(2, 4)]) # unknown base C or T
+      }else{
+        as.raw(c(40, 24))[whichmax(probs[c(2, 4)])]
+      }
     }else{
       return(a) # known base C or T
     }
     # a,c,g,t = 136, 40, 72, 24
-  }else if(a == 160){
-    sample(as.raw(c(136, 40)), size = 1, prob = probs[1:2])
-    # M (A or C)
-  }else if(a == 144){
-    sample(as.raw(c(136, 24)), size = 1, prob = probs[c(1, 4)])
-    # W (A or T)
-  }else if(a == 96){
-    sample(as.raw(c(40, 72)), size = 1, prob = probs[2:3])
-    # S (G or C)
-  }else if(a == 80){
-    sample(as.raw(c(72, 24)), size = 1, prob = probs[3:4])
-    # K (G or T)
+  }else if(a == 160){ # M (A or C)
+    if(random){
+      sample(as.raw(c(136, 40)), size = 1, prob = probs[1:2])
+    }else{
+      as.raw(c(136, 40))[whichmax(probs[c(1, 2)])]
+    }
+  }else if(a == 144){ # W (A or T)
+    if(random){
+      sample(as.raw(c(136, 24)), size = 1, prob = probs[c(1, 4)])
+    }else{
+      as.raw(c(136, 24))[whichmax(probs[c(1, 4)])]
+    }
+  }else if(a == 96){ # S (G or C)
+    if(random){
+      sample(as.raw(c(40, 72)), size = 1, prob = probs[c(2, 3)])
+    }else{
+      as.raw(c(40, 72))[whichmax(probs[c(2, 3)])]
+    }
+  }else if(a == 80){ # K (G or T)
+    if(random){
+      sample(as.raw(c(72, 24)), size = 1, prob = probs[c(3, 4)])
+    }else{
+      as.raw(c(72, 24))[whichmax(probs[c(3, 4)])]
+    }
   }else if(a == 224){ # V (A or C or G)
-    sample(as.raw(c(136, 40, 72)), size = 1, prob = probs[-4])
-  } else if(a == 176){
-    sample(as.raw(c(136, 40, 24)), size = 1, prob = probs[-3]) # H (A or C or T)
-  } else if(a == 208){
-    sample(as.raw(c(136, 72, 24)), size = 1, prob = probs[-2]) # D (A or G or T)
-  } else if(a == 112){
-    sample(as.raw(c(40, 72, 24)), size = 1, prob = probs[-1]) # B (C or G or T)
-  } else if(a == 240){
-    sample(as.raw(c(136, 40, 72, 24)), size = 1, prob = probs) #N
-  } else if(a == 2 | a == 4){
+    if(random){
+      sample(as.raw(c(136, 40, 72)), size = 1, prob = probs[-4])
+    }else{
+      as.raw(c(136, 40, 72))[whichmax(probs[-4])]
+    }
+  }else if(a == 176){
+    if(random){
+      sample(as.raw(c(136, 40, 24)), size = 1, prob = probs[-3]) # H (A or C or T)
+    }else{
+      as.raw(c(136, 40, 24))[whichmax(probs[-3])]
+    }
+  }else if(a == 208){
+    if(random){
+      sample(as.raw(c(136, 72, 24)), size = 1, prob = probs[-2]) # D (A or G or T)
+    }else{
+      as.raw(c(136, 72, 24))[whichmax(probs[-2])]
+    }
+  }else if(a == 112){
+    if(random){
+      sample(as.raw(c(40, 72, 24)), size = 1, prob = probs[-1]) # B (C or G or T)
+    }else{
+      as.raw(c(40, 72, 24))[whichmax(probs[-1])]
+    }
+  }else if(a == 240){
+    if(random){
+      sample(as.raw(c(136, 40, 72, 24)), size = 1, prob = probs) #N
+    }else{
+      as.raw(c(136, 40, 72, 24))[whichmax(probs)]
+    }
+  }else if(a == 2 | a == 4){
     return(a)
   }else stop("invalid byte for class 'DNAbin'")
 }
