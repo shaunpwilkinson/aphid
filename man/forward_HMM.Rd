@@ -4,7 +4,7 @@
 \alias{forward_HMM}
 \title{Full probability of a sequence given a model.}
 \usage{
-forward_HMM(y, A, E)
+forward_HMM(y, A, E, DNA = FALSE, AA = FALSE)
 }
 \arguments{
 \item{y}{an integer vector with same arity as number of columns of E}

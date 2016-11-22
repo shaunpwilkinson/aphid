@@ -71,15 +71,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // Viterbi_HMM
-List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E);
-RcppExport SEXP profile_Viterbi_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP) {
+List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
+RcppExport SEXP profile_Viterbi_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
-    rcpp_result_gen = Rcpp::wrap(Viterbi_HMM(y, A, E));
+    Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
+    Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
+    rcpp_result_gen = Rcpp::wrap(Viterbi_HMM(y, A, E, DNA, AA));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -124,15 +126,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // forward_HMM
-List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E);
-RcppExport SEXP profile_forward_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP) {
+List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
+RcppExport SEXP profile_forward_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_HMM(y, A, E));
+    Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
+    Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
+    rcpp_result_gen = Rcpp::wrap(forward_HMM(y, A, E, DNA, AA));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -158,15 +162,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // backward_HMM
-List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E);
-RcppExport SEXP profile_backward_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP) {
+List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
+RcppExport SEXP profile_backward_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
-    rcpp_result_gen = Rcpp::wrap(backward_HMM(y, A, E));
+    Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
+    Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
+    rcpp_result_gen = Rcpp::wrap(backward_HMM(y, A, E, DNA, AA));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -55,8 +55,8 @@ Viterbi_default <- function(x, y, type, d, e, S, windowspace, offset = 0) {
     .Call('profile_Viterbi_default', PACKAGE = 'profile', x, y, type, d, e, S, windowspace, offset)
 }
 
-Viterbi_HMM <- function(y, A, E) {
-    .Call('profile_Viterbi_HMM', PACKAGE = 'profile', y, A, E)
+Viterbi_HMM <- function(y, A, E, DNA = FALSE, AA = FALSE) {
+    .Call('profile_Viterbi_HMM', PACKAGE = 'profile', y, A, E, DNA, AA)
 }
 
 Viterbi_PHMM <- function(y, A, E, qe, qey, type, windowspace, offset = 0, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
@@ -73,16 +73,16 @@ Viterbi_PP <- function(Ax, Ay, Ex, Ey, qe, type, windowspace, offset = 0) {
 #' of a sequence through a given a HMM or profile HMM.
 #' @param y an integer vector with same arity as number of columns of E
 #'
-forward_HMM <- function(y, A, E) {
-    .Call('profile_forward_HMM', PACKAGE = 'profile', y, A, E)
+forward_HMM <- function(y, A, E, DNA = FALSE, AA = FALSE) {
+    .Call('profile_forward_HMM', PACKAGE = 'profile', y, A, E, DNA, AA)
 }
 
 forward_PHMM <- function(y, A, E, qe, qey, type, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
     .Call('profile_forward_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA)
 }
 
-backward_HMM <- function(y, A, E) {
-    .Call('profile_backward_HMM', PACKAGE = 'profile', y, A, E)
+backward_HMM <- function(y, A, E, DNA = FALSE, AA = FALSE) {
+    .Call('profile_backward_HMM', PACKAGE = 'profile', y, A, E, DNA, AA)
 }
 
 backward_PHMM <- function(y, A, E, qe, qey, type, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
