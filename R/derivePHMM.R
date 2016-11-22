@@ -55,18 +55,19 @@
 #' @references Durbin..
 #'
 derivePHMM <- function(x, seqweights = NULL, residues = NULL,
-                       gapchar = "-", pseudocounts = "background",
+                       gapchar = "-", endchar = "?", pseudocounts = "background",
                        logspace = TRUE, qa = NULL, qe = NULL,
                        inserts = "map", threshold = 0.5,
-                       lambda = 0, DI = FALSE, ID = FALSE,
+                       lambda = 0, DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
                        name = deparse(substitute(x)), description = NULL,
                        compo = FALSE, consensus = FALSE){
-  # alphabet, compo
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
   DNA <- is.DNA(x) # raw DNA bytes
   AA <- is.AA(x) # raw AA bytes
   gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
-  residues <- alphadetect(x, residues = residues, gapchar = gapchar)
+  endchar <- if(DNA) as.raw(2) else if(AA) as.raw(63) else endchar
+  if(omit.endgaps) x <- trim(x, gapchar = gapchar, endchar = endchar, DNA = DNA, AA = AA)
+  residues <- alphadetect(x, residues = residues, gapchar = gapchar, endchar = endchar)
   nres <- length(residues)
   n <- nrow(x)
   m <- ncol(x)
@@ -104,12 +105,14 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
   }
   # designate insert-columns
   gaps <- x == gapchar
+  #ends <- x == endchar
   gapweights <- gaps * seqweights
   if(identical(inserts, "threshold")){
     inserts <- apply(gapweights, 2, sum) > threshold * n
   }else if(identical(inserts, "map")){
-    inserts <- !map(x, residues = residues, gapchar = gapchar, seqweights = seqweights,
-                    pseudocounts = pseudocounts, qa = qa, qe = qe)
+    inserts <- !map(x, residues = residues, gapchar = gapchar, endchar = endchar,
+                    seqweights = seqweights, pseudocounts = pseudocounts,
+                    qa = qa, qe = qe)
     if(sum(!inserts) < 3) inserts <- apply(gapweights, 2, sum) > threshold * n
   }else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
     stop("invalid inserts argument")
@@ -117,13 +120,18 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
   l <- sum(!inserts) # PHMM length (excluding B & E positions)
   # emission counts
   ecs <- if(AA){
-    apply(x[, !inserts, drop = F], 2, tabulate.AA, ambiguities = TRUE, seqweights = seqweights)
+    apply(x[, !inserts, drop = F], 2, tabulate.AA,
+          ambiguities = TRUE, seqweights = seqweights)
   }else if(DNA){
-    apply(x[, !inserts, drop = F], 2, tabulate.DNA, ambiguities = TRUE, seqweights = seqweights)
+    apply(x[, !inserts, drop = F], 2, tabulate.DNA,
+          ambiguities = TRUE, seqweights = seqweights)
   }else{
-    apply(x[, !inserts, drop = F], 2, tabulate.char, residues = residues, seqweights = seqweights)
+    apply(x[, !inserts, drop = F], 2, tabulate.char,
+          residues = residues, seqweights = seqweights)
   }
-  if(length(ecs) > 0) dimnames(ecs) <- list(residue = residues, position = 1:l) else ecs = NULL
+  if(length(ecs) > 0){
+    dimnames(ecs) <- list(residue = residues, position = 1:l)
+  }else ecs = NULL
 
   #transitions
   xtr <- matrix(nrow = n, ncol = m)
@@ -181,7 +189,9 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
     E <- t(t(ecs)/apply(ecs, 2, sum))
   }
   A <- t(tcs)
-  for(i in c(1, 4, 7)) A[, i:(i + 2)] <- A[, i:(i + 2)]/apply(A[, i:(i + 2), drop = F], 1, sum)
+  for(i in c(1, 4, 7)) {
+    A[, i:(i + 2)] <- A[, i:(i + 2)]/apply(A[, i:(i + 2), drop = F], 1, sum)
+  }
   A[1, 1:3] <- 0 # gets rid of NaNs caused by division by zero
   A <- t(A)
   inslens <- insertlengths(!inserts)
@@ -254,7 +264,7 @@ derivePHMM <- function(x, seqweights = NULL, residues = NULL,
 #' @references Durbin...
 #'
 map <- function(x, seqweights = NULL, residues = NULL,
-                gapchar = "-", pseudocounts = "background",
+                gapchar = "-", endchar = "?", pseudocounts = "background",
                 lambda = 0, qa = NULL, qe = NULL, cpp = TRUE){
   if(!is.matrix(x)) stop("x must be a matrix")
   L <- ncol(x)
@@ -263,7 +273,8 @@ map <- function(x, seqweights = NULL, residues = NULL,
   AA <- is.AA(x)
   DNA <- is.DNA(x)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
-  residues <- alphadetect(x, residues = residues, gapchar = gapchar)
+  endchar <- if(DNA) as.raw(2) else if(AA) as.raw(63) else endchar
+  residues <- alphadetect(x, residues = residues, gapchar = gapchar, endchar = endchar)
   nres <- length(residues)
   transitions = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
   S <- sigma <- c(0, rep(NA, L + 1))
@@ -292,13 +303,14 @@ map <- function(x, seqweights = NULL, residues = NULL,
     qe <- log(qe)
   }else if(any(qe > 0) | round(sum(exp(qe)), 2) != 1) stop("invalid qe")
   gaps <- x == gapchar
+  #ends <- x == endchar
   notgaps <- cbind(TRUE, !gaps, TRUE)
   #if(!DI) alltcs[c(3, 7)] <- 0 ### need to work out DI strategy
-  if(is.null(qa)) {
+  if(is.null(qa)){
     gapweights <- gaps * seqweights
     inserts <- apply(gapweights, 2, sum) > 0.5 * nrow(x)
     xtr <- matrix(nrow = nrow(x), ncol = ncol(x))
-    insertsn <- matrix(rep(inserts, n), nrow = n, byrow = T)
+    insertsn <- matrix(rep(inserts, n), nrow = n, byrow = TRUE)
     xtr[gaps & !insertsn] <- 0L # Delete
     xtr[!gaps & !insertsn] <- 1L # Match
     xtr[!gaps & insertsn] <- 2L # Insert
@@ -350,6 +362,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
           iota[i] <- sum(ecsij * qe)
           ecsij <- ecsij - ecs[, i]
           zeroinserts <- icsij < 0.00001
+          #need a way to avoid counting NAs in notgaps matrix (endchars)
           if(any(zeroinserts)){
             tcsij[1] <- sum(seqweights[!notgaps[, i] & !notgaps[, j] & zeroinserts]) #DD
             tcsij[2] <- sum(seqweights[!notgaps[, i] & notgaps[, j] & zeroinserts]) #DM
@@ -367,7 +380,8 @@ map <- function(x, seqweights = NULL, residues = NULL,
             tcsij[8] <- sum(seqweights[notgaps[, j]])
           }
           tcsij[9] <- sum(icsij) - (tcsij[3] + tcsij[6]) #II
-          icsij <- icsij - notgaps[, i + 1] * seqweights # ends up as vec of zeros at end of each i cycle
+          icsij <- icsij - notgaps[, i + 1] * seqweights
+          # ends up as vec of zeros at end of each i cycle
         }else{
           tcsij[1] <- sum(seqweights[!notgaps[, i] & !notgaps[, j]]) #DD
           tcsij[2] <- sum(seqweights[!notgaps[, i] & notgaps[, j]]) #DM

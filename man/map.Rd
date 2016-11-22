@@ -4,7 +4,7 @@
 \alias{map}
 \title{Optimal profile HMM construction.}
 \usage{
-map(x, seqweights = NULL, residues = NULL, gapchar = "-",
+map(x, seqweights = NULL, residues = NULL, gapchar = "-", endchar = "?",
   pseudocounts = "background", lambda = 0, qa = NULL, qe = NULL,
   cpp = TRUE)
 }

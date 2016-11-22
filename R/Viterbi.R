@@ -510,11 +510,11 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
       }else stop("Invalid input object y: multi-sequence list")
     }
     y <- DNA2pentadecimal(y, na.rm = TRUE)
-  }else if (AA){
-    rownames(x$E) <- toupper(rownames(x$E))
-    PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
-    x$E <- x$E[PFAMorder, ]
-    if(!(identical(rownames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
+  }else if(AA){
+    colnames(x$E) <- toupper(colnames(x$E))
+    PFAMorder <- sapply(colnames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
+    x$E <- x$E[, PFAMorder]
+    if(!(identical(colnames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
       stop("invalid model for AA, residue alphabet does not correspond to
            20-letter amino acid alphabet")
     }
@@ -531,7 +531,6 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
         y <- y[[1]]
       }else stop("Invalid input object y: multi-sequence list")
     }
-    #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
     if(mode(y) == "character") y <- match(y, colnames(x$E)) - 1
   }
   E <- if(logspace) x$E else log(x$E)
@@ -539,23 +538,53 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   states <- rownames(E)
   n <- length(y)
   if(cpp){
-    #residues <- colnames(E)
-    #ycoded <- integer(n)
-    #for(i in seq_along(residues)) ycoded[y == residues[i]]  <- i - 1
-    res <- Viterbi_HMM(y, A, E)
+    res <- Viterbi_HMM(y, A, E, DNA, AA)
   }else{
     H <- length(states) # not including BeginEnd state
-    #path <- rep(NA, n)
     path <- integer(n)
     V <- array(-Inf, dim = c(H, n), dimnames = list(state = states, roll = 1:n))
     P <- V + NA # pointer array
-    y <- y + 1 # convert to R's indexing style
-    V[, 1] <- E[, y[1]] + A[1, -1] # formerly s
-    fun <- Vectorize(function(k, l) V[k, i - 1] + A[k + 1, l + 1])
-    for (i in 2:n){
-      tmp <- outer(1:H, 1:H, fun)
-      V[, i] <- E[, y[i]] + apply(tmp, 2, max)
-      P[, i] <- apply(tmp, 2, whichmax)
+    tmp <- matrix(nrow = H, ncol = H)
+    if(DNA){
+      for(k in 1:H) V[k, 1] <- DNAprobC2(y[1], E[k, ]) + A[1, k + 1]
+      for (i in 2:n){
+        for(k in 1:H){
+          for(l in 1:H){
+            tmp[k, l] <- V[k, i - 1] + A[k + 1, l + 1]
+          }
+        }
+        for(k in 1:H){
+          P[k, i] <- whichmax(tmp[, k])
+          V[k, i] <- tmp[P[k, i], k] + DNAprobC2(y[i], E[k, ])
+        }
+      }
+    }else if(AA){
+      for(k in 1:H) V[k, 1] <- AAprobC2(y[1], E[k, ]) + A[1, k + 1]
+      for (i in 2:n){
+        for(k in 1:H){
+          for(l in 1:H){
+            tmp[k, l] <- V[k, i - 1] + A[k + 1, l + 1]
+          }
+        }
+        for(k in 1:H) {
+          P[k, i] <- whichmax(tmp[, k])
+          V[k, i] <- tmp[P[k, i], k] + AAprobC2(y[i], E[k, ])
+        }
+      }
+    }else{
+      y <- y + 1 # convert to R's indexing style
+      for(k in 1:H) V[k, 1] <- E[k, y[1]] + A[1, k + 1]
+      for (i in 2:n){
+        for(k in 1:H){
+          for(l in 1:H){
+            tmp[k, l] <- V[k, i - 1] + A[k + 1, l + 1]
+          }
+        }
+        for(k in 1:H) {
+          P[k, i] <- whichmax(tmp[, k])
+          V[k, i] <- tmp[P[k, i], k] + E[k, y[i]]
+        }
+      }
     }
     ak0 <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H)
     endstate <- whichmax(V[, n] + ak0)

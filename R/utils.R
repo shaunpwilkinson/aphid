@@ -1,5 +1,34 @@
-#' Utilities.
+#' Detect residue alphabet.
 #'
+#' \code{"alphadetect"} performs checks on the format of the "residues" argument
+#' to be passed to a variety of other functions. Single-element string arguments
+#' such as "DNA" and "AA" are
+#' converted to their respective alphabet in a character vector format.
+#' @param sequences a character matrix or vector, or a list of character matrices
+#' and/or vectors
+#'
+alphadetect <- function(sequences, residues = NULL, gapchar = "-", endchar = "?"){
+  if(identical(residues, "RNA") | identical(residues, "rna")){
+    residues <- c("A", "C", "G", "U")
+  }else if(is.DNA(sequences) | identical(residues, "DNA") | identical(residues, "dna")){
+    residues <- c("A", "C", "G", "T")
+  }else if(is.AA(sequences) | identical(residues, "AA") |
+           identical(residues, "amino") | identical (residues, "AMINO")){
+    residues <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
+  }
+  else if(is.null(residues)){
+    residues <- sort(unique(as.vector(unlist(sequences))))
+    if(!is.null(gapchar)) residues <- residues[residues != gapchar]
+    if(!is.null(endchar)) residues <- residues[residues != endchar]
+  }else{
+    if(!is.null(gapchar)) residues <- residues[residues != gapchar]
+    if(!is.null(endchar)) residues <- residues[residues != endchar]
+  }
+  if(!(length(residues) > 0 & mode(residues) == "character")){
+    stop("invalid residues argument")
+  }
+  return(residues)
+}
 
 is.DNA <- function(x){
   if(inherits(x, "DNAbin")){
@@ -31,10 +60,10 @@ is.AA <- function(x){
   }else if(mode(x) == "character"){
     return(FALSE)
   }else if(mode(x) == "raw"){
-    return(all(x %in% as.raw(c(65:90, 42, 45))))
+    return(all(x %in% as.raw(c(65:90, 42, 45, 63))))
   }else if(mode(x) == "list"){
     if(length(x) > 0){
-      return(all(unlist(x) %in% as.raw(c(65:90, 42, 45))))
+      return(all(unlist(x) %in% as.raw(c(65:90, 42, 45, 63))))
     }else{
       return(FALSE)
     }
@@ -43,66 +72,7 @@ is.AA <- function(x){
   }
 }
 
-#-----------------------------------------------------------------------------
-
 decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
-
-
-# whichismax <- function(v){
-#   ind <- which(v == max(v, na.rm = TRUE))
-#   if(length(ind) > 1) ind <- sample(ind, 1)
-#   ind
-# }
-
-#
-# progression <- function(x){ # an object of class "Viterbi"
-#   res <- matrix(nrow = 2, ncol = length(x$path))
-#   xpos <- res[1, 1] <- x$start[1]
-#   ypos <- res[2,1 ] <- x$start[2]
-#   for(i in 1:(length(x$path) - 1)){
-#     if(x$path[i] == 0) {
-#       xpos <- xpos + 1
-#     } else if(x$path[i] == 1){
-#       xpos <- xpos + 1
-#       ypos <- ypos + 1
-#     } else if(x$path[i] == 2){
-#       ypos <- ypos + 1
-#     } else stop("path contains unknown elements")
-#     res [1, i + 1] <- xpos
-#     res [2, i + 1] <- ypos
-#   }
-#   res
-# }
-
-#' Detect residue alphabet.
-#'
-#' \code{"alphadetect"} performs checks on the format of the "residues" argument
-#' to be passed to a variety of other functions. Single-element string arguments
-#' such as "DNA" and "AA" are
-#' converted to their respective alphabet in a character vector format.
-#' @param sequences a character matrix or vector, or a list of character matrices
-#' and/or vectors
-#'
-alphadetect <- function(sequences, residues = NULL, gapchar = "-"){
-  if(identical(residues, "RNA") | identical(residues, "rna")){
-    residues <- c("A", "C", "G", "U")
-  }else if(is.DNA(sequences) | identical(residues, "DNA") | identical(residues, "dna")){
-    residues <- c("A", "C", "G", "T")
-  }else if(is.AA(sequences) | identical(residues, "AA") |
-           identical(residues, "amino") | identical (residues, "AMINO")){
-    residues <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
-  }
-  else if(is.null(residues)){
-    residues <- sort(unique(as.vector(unlist(sequences))))
-    if(!is.null(gapchar)) residues <- residues[residues != gapchar]
-  }else{
-    if(!is.null(gapchar)) residues <- residues[residues != gapchar]
-  }
-  if(!(length(residues) > 0 & mode(residues) == "character")){
-    stop("invalid residues argument")
-  }
-  return(residues)
-}
 
 tabulate.char <- function(x, residues, seqweights = NULL){
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
@@ -113,9 +83,8 @@ tabulate.char <- function(x, residues, seqweights = NULL){
   return(res)
 }
 
-#-------------------------------------------------------------------------------------------
-# x is a DNAbin vector
 tabulate.DNA <- function(x, ambiguities = FALSE, seqweights = NULL){
+  # x is a DNAbin vector
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
   #stopifnot(length(seqweights) == length(x) & sum(seqweights) == length(x))
   res <- structure(numeric(4), names = c("A", "C", "G", "T"))
@@ -197,8 +166,38 @@ compress.AA <- function(x, alpha = "Dayhoff6", na.rm = FALSE){
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
 
+trim <- function(x, gapchar = "-", endchar = "?", DNA = FALSE, AA = FALSE){
+  #X is a raw or character matrix
+  # gapchar can have length > 1
+  gapchar <- if(DNA) as.raw(c(4, 240)) else if(AA) as.raw(c(45, 88)) else gapchar
+  endchar <- if(DNA) as.raw(2) else if (AA) as.raw(63) else endchar
+  L <- ncol(x)
+  n <- nrow(x)
+  if(!any(c(x[, 1], x[, L]) %in% gapchar)) return(x)
+  for(i in 1:n){
+    if(x[i, 1] %in% gapchar){
+      counter <- 1
+      advance = TRUE
+      while(advance & counter <= L){
+        x[i, counter] <- endchar
+        counter <- counter + 1
+        advance <- if(counter <= L) x[i, counter] %in% gapchar else FALSE
+      }
+    }
+    if(x[i, L] %in% gapchar){
+      counter <- L
+      advance = TRUE
+      while(advance & counter >= 1){
+        x[i, counter] <- endchar
+        counter <- counter - 1
+        advance <- if(counter >= 1) x[i, counter] %in% gapchar else FALSE
+      }
+    }
+  }
+  return(x)
+}
+
 #' Diagnostic model checks.
-#'
 validate <- function(x){
   if(inherits(x, "HMM")){
     states <- rownames(x$A)
@@ -238,7 +237,6 @@ validate <- function(x){
 }
 
 #' Detect if model parameters are in log space.
-#'
 logdetect <- function(x){
   if(inherits(x, "HMM")){
     if(all(x$A <= 0) & all(x$E <= 0)){
@@ -535,3 +533,31 @@ JC69 <- function(x, fivecharstates = TRUE){
   }
   list(K = K, VarK = VarK)
 }
+
+
+
+# whichismax <- function(v){
+#   ind <- which(v == max(v, na.rm = TRUE))
+#   if(length(ind) > 1) ind <- sample(ind, 1)
+#   ind
+# }
+
+#
+# progression <- function(x){ # an object of class "Viterbi"
+#   res <- matrix(nrow = 2, ncol = length(x$path))
+#   xpos <- res[1, 1] <- x$start[1]
+#   ypos <- res[2,1 ] <- x$start[2]
+#   for(i in 1:(length(x$path) - 1)){
+#     if(x$path[i] == 0) {
+#       xpos <- xpos + 1
+#     } else if(x$path[i] == 1){
+#       xpos <- xpos + 1
+#       ypos <- ypos + 1
+#     } else if(x$path[i] == 2){
+#       ypos <- ypos + 1
+#     } else stop("path contains unknown elements")
+#     res [1, i + 1] <- xpos
+#     res [2, i + 1] <- ypos
+#   }
+#   res
+# }

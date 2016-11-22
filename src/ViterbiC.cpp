@@ -382,7 +382,8 @@ List Viterbi_default(IntegerVector x, IntegerVector y,
 }
 
 // [[Rcpp::export]]
-List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
+List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
+                 bool DNA = false, bool AA = false){
   List names = E.attr("dimnames");
   CharacterVector states = VECTOR_ELT(names, 0);
   CharacterVector residues = VECTOR_ELT(names, 1);
@@ -396,32 +397,64 @@ List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
   V.attr("dimnames") = vnames;
   NumericVector s = A(0, _);
   NumericVector e = A(_, 0);
-  V(_, 0) = E(_, y[0]) + s[seq(1, nstates)];
+  LogicalVector tf(nstates + 1, true);
+  //for(int k = 1; k < nstates; k++) tf[k] = true;
+  tf[0] = false; // used to remove start/end row/col from A later
   IntegerMatrix P(nstates, nrolls);
   //CharacterMatrix P(nstates, nrolls);
   P.attr("dimnames") = vnames;
   NumericMatrix tmp(nstates, nstates);
   NumericVector colmaxs(nstates);
   IntegerVector maxstates(nstates);
-  for(int i = 1; i < nrolls; i++){
-    for(int j = 0; j < nstates; j++){
-      for(int k = 0; k < nstates; k++){
-        tmp(j, k) = V(j, i - 1) + A(j + 1, k + 1);
+  if(DNA){
+    for(int l = 0; l < nstates; l++) V(l, 0) = DNAprobC2(y[0], E(l,_)) + A(0, l + 1);
+    for(int i = 1; i < nrolls; i++){
+      for(int j = 0; j < nstates; j++){
+        for(int k = 0; k < nstates; k++){
+          tmp(j, k) = V(j, i - 1) + A(j + 1, k + 1);
+        }
       }
+      for(int l = 0; l < nstates; l++){
+        P(l, i) = whichmax(tmp(_, l), 0); // 0-based indexing for cpp
+        V(l, i) = DNAprobC2(y[i], E(l,_)) + tmp(P(l, i), l);
+      }
+      checkUserInterrupt();
     }
-    for(int l = 0; l < nstates; l++){
-      int maxstate = whichmax(tmp(_, l), 0);
-      colmaxs[l] = tmp(_, l)[maxstate];
-      maxstates[l] = maxstate;
+  }else if(AA){
+    for(int l = 0; l < nstates; l++) V(l, 0) = AAprobC2(y[0], E(l,_)) + A(0, l + 1);
+    for(int i = 1; i < nrolls; i++){
+      for(int j = 0; j < nstates; j++){
+        for(int k = 0; k < nstates; k++){
+          tmp(j, k) = V(j, i - 1) + A(j + 1, k + 1);
+        }
+      }
+      for(int l = 0; l < nstates; l++){
+        P(l, i) = whichmax(tmp(_, l), 0); // 0-based indexing for cpp
+        V(l, i) = AAprobC2(y[i], E(l,_)) + tmp(P(l, i), l);
+      }
+      checkUserInterrupt();
     }
-    V(_, i) = E(_, y[i]) + colmaxs;
-    P(_, i) = maxstates;
-    //P(_, i) = as<CharacterVector>(states[maxstates]);
-    checkUserInterrupt(); //could speed up slightly by checking less frequently
+  }else{
+    V(_, 0) = E(_, y[0]) + s[seq(1, nstates)];
+    for(int i = 1; i < nrolls; i++){
+      for(int j = 0; j < nstates; j++){
+        for(int k = 0; k < nstates; k++){
+          tmp(j, k) = V(j, i - 1) + A(j + 1, k + 1);
+        }
+      }
+      for(int l = 0; l < nstates; l++){
+        int maxstate = whichmax(tmp(_, l), 0);
+        colmaxs[l] = tmp(_, l)[maxstate];
+        maxstates[l] = maxstate;
+      }
+      V(_, i) = E(_, y[i]) + colmaxs;
+      P(_, i) = maxstates;
+      checkUserInterrupt();
+    }
   }
-  NumericVector ak0(nstates);
+  NumericVector ak0(nstates, 0.0);
   bool allinfinite = all(e[seq(1, nstates)] == rep(-INFINITY, nstates)).is_true();
-  if(!allinfinite){ak0 += e[seq(1, nstates)];}
+  if(!allinfinite) ak0 += e[seq(1, nstates)];
   int maxstate = whichmax(V(_, nrolls - 1) + ak0, 0);
   double score = V(_, nrolls - 1)[maxstate] + ak0[maxstate];
   IntegerVector path(nrolls);
@@ -974,7 +1007,8 @@ List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay,
 //' @param y an integer vector with same arity as number of columns of E
 //'
 // [[Rcpp::export]]
-List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
+List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
+                 bool DNA = false, bool AA = false){
   int nrolls = y.size();
   IntegerVector Edim = E.attr("dim");
   int nstates = Edim[0];
@@ -987,17 +1021,44 @@ List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E){
   NumericMatrix R(nstates, nrolls);
   NumericVector s = A(0, _);
   NumericVector e = A(_, 0);
-  R(_, 0) = E(_, y[0]) + s[seq(1, nstates)];
+
   NumericMatrix tmp(nstates, nstates);
   NumericVector coltotals(nstates);
-  for(int i = 1; i < nrolls; i++){
-    for(int k = 0; k < nstates; k++){
+  if(DNA){
+    for(int l = 0; l < nstates; l++) R(l, 0) = DNAprobC2(y[0], E(l,_)) + A(0, l + 1);
+    for(int i = 1; i < nrolls; i++){
+      for(int j = 0; j < nstates; j++){
+        for(int k = 0; k < nstates; k++){
+          tmp(j, k) = R(j, i - 1) + A(j + 1, k + 1);
+        }
+      }
       for(int l = 0; l < nstates; l++){
-        tmp(k, l) = R(k, i - 1) + A(k + 1, l + 1);
+        R(l, i) = DNAprobC2(y[i], E(l,_)) + logsum(tmp(_, l));
       }
     }
-    for(int k = 0; k < nstates; k++) coltotals[k] = logsum(tmp(_, k));
-    R(_, i) =  E(_, y[i]) + coltotals;
+  }else if(AA){
+    for(int l = 0; l < nstates; l++) R(l, 0) = AAprobC2(y[0], E(l,_)) + A(0, l + 1);
+    for(int i = 1; i < nrolls; i++){
+      for(int j = 0; j < nstates; j++){
+        for(int k = 0; k < nstates; k++){
+          tmp(j, k) = R(j, i - 1) + A(j + 1, k + 1);
+        }
+      }
+      for(int l = 0; l < nstates; l++){
+        R(l, i) = AAprobC2(y[i], E(l,_)) + logsum(tmp(_, l));
+      }
+    }
+  }else{
+    R(_, 0) = E(_, y[0]) + s[seq(1, nstates)];
+    for(int i = 1; i < nrolls; i++){
+      for(int k = 0; k < nstates; k++){
+        for(int l = 0; l < nstates; l++){
+          tmp(k, l) = R(k, i - 1) + A(k + 1, l + 1);
+        }
+      }
+      for(int k = 0; k < nstates; k++) coltotals[k] = logsum(tmp(_, k));
+      R(_, i) =  E(_, y[i]) + coltotals;
+    }
   }
   NumericVector ak0(nstates);
   if(any(e[seq(1, nstates)] != rep(-INFINITY, nstates)).is_true()) ak0 = e[seq(1, nstates)];
@@ -1086,7 +1147,8 @@ List forward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
 
 
 // [[Rcpp::export]]
-List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E) {
+List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
+                  bool DNA = false, bool AA = false) {
   int nrolls = y.size();
   IntegerVector Edim = E.attr("dim");
   int nstates = Edim[0]; // does not include begin/end state
@@ -1096,38 +1158,51 @@ List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E) {
     out.attr("class") = "fullprob";
     return out;
   }
-  // IntegerVector yind(nrolls);
-  // CharacterVector yi(1);
-  // for(int i = 0; i < nrolls; i++){
-  //   yi = y[i];
-  //   yind[i] = match(yi, residues)[0] - 1;
-  // }
   NumericMatrix R(nstates, nrolls);
-  //IntegerVector prerolls = Range(nrolls, 1); // doesn't work in reverse
-  // IntegerVector prerolls(nrolls);
-  // prerolls[0] = nrolls;
-  // for(int i = 1; i < nrolls; i++) prerolls[i] = prerolls[i - 1] - 1;
-  // CharacterVector rolls = as<CharacterVector>(prerolls);
-  // List rnames = List::create(Named("state") = states, Named("roll") = rolls);
-  // R.attr("dimnames") = rnames;
   NumericVector s = A(0, _);
   NumericVector e = A(_, 0);
   NumericVector ak0(nstates);
   if(any(e[seq(1, nstates)] != rep(-INFINITY, nstates)).is_true()) ak0 = e[seq(1, nstates)];
   R(_, nrolls - 1) = ak0;
   NumericMatrix tmp(nstates, nstates);
-  NumericVector rowtotals(nstates);
-  for(int i = nrolls - 1; i > 0; i--){
-    for(int k = 0; k < nstates; k++){
-      for(int l = 0; l < nstates; l++){
-        tmp(k, l) =  A(k + 1, l + 1) + E(l, y[i]) + R(l, i);
-      }
-    }
-    for(int k = 0; k < nstates; k++) rowtotals[k] = logsum(tmp(k, _));
-    R(_, i - 1) =  rowtotals;
-  }
   NumericVector logprobs(nstates);
-  for(int l = 0; l < nstates; l++) logprobs[l] = A(0, l + 1) + E(l, y[0]) + R(l, 0);
+  if(DNA){
+    for(int i = nrolls - 1; i > 0; i--){
+      for(int k = 0; k < nstates; k++){
+        for(int l = 0; l < nstates; l++){
+          tmp(k, l) =  A(k + 1, l + 1) + DNAprobC2(y[i], E(l,_)) + R(l, i);
+        }
+      }
+      for(int k = 0; k < nstates; k++) R(k, i - 1) = logsum(tmp(k, _));
+    }
+    for(int l = 0; l < nstates; l++) {
+      logprobs[l] = A(0, l + 1) + DNAprobC2(y[0], E(l,_)) + R(l, 0);
+    }
+  }else if(AA){
+    for(int i = nrolls - 1; i > 0; i--){
+      for(int k = 0; k < nstates; k++){
+        for(int l = 0; l < nstates; l++){
+          tmp(k, l) =  A(k + 1, l + 1) + AAprobC2(y[i], E(l,_)) + R(l, i);
+        }
+      }
+      for(int k = 0; k < nstates; k++) R(k, i - 1) = logsum(tmp(k, _));
+    }
+    for(int l = 0; l < nstates; l++) {
+      logprobs[l] = A(0, l + 1) + AAprobC2(y[0], E(l,_)) + R(l, 0);
+    }
+  }else{
+    for(int i = nrolls - 1; i > 0; i--){
+      for(int k = 0; k < nstates; k++){
+        for(int l = 0; l < nstates; l++){
+          tmp(k, l) =  A(k + 1, l + 1) + E(l, y[i]) + R(l, i);
+        }
+      }
+      for(int k = 0; k < nstates; k++) R(k, i - 1) = logsum(tmp(k, _));
+    }
+    for(int l = 0; l < nstates; l++) {
+      logprobs[l] = A(0, l + 1) + E(l, y[0]) + R(l, 0);
+    }
+  }
   double res = logsum(logprobs);
   bool odds = false;
   List out = List::create(Named("score") = res, Named("array") = R, Named("odds") = odds);
