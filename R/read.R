@@ -32,29 +32,23 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
     return(NULL)
   }
   x <- paste0(x, collapse = "")
-
   # these subs will be rectified post-parse
   x <- gsub("('.*)\\((.*')", "\\1openbracket\\2", x)
   x <- gsub("('.*)\\)(.*')", "\\1closebracket\\2", x)
   x <- gsub("([[:alpha:]]) ([[:alpha:]])", "\\1_\\2", x)
-
+  # only certain characters allowed at this stage
   x <- gsub("[^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_:;\\(\\),.]", "", x)
   #x <- gsub("([\\(\\),])(,)", "\\1unnamednode\\2", x)
   x <- gsub("\\(,", "\\(unnamedleaf,", x)
   while(grepl(",,", x)) x <- gsub(",,", ",unnamedleaf,", x)
   x <- gsub(",\\)", ",unnamedleaf\\)", x)
-
-  #x <- gsub("\\):", "\\)unnamednode:", x)
-  #x <- gsub("\\)[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.]+:", "\\):", x)
   x <- gsub("\\)[^,:;\\(\\)]+([,:;\\(\\)])", "\\)\\1", x) # remove inner nodes (for now)
-
-  if(grepl("[^\\)];", x)) x <- gsub("(.+);", "\\(\\1\\);", x) # enclose entire string in brax (ex ;)
-
+  # enclose entire string in brackets (excluding ;)
+  if(grepl("[^\\)];", x)) x <- gsub("(.+);", "\\(\\1\\);", x)
   if(strip.edges) x <- gsub(":([0-9.]+)", "", x)
   hasedges <- grepl(":", x)
   if(hasedges){
     tmp <- gsub("([\\(,])([^\\(\\),]+):", "\\1\\(\"\\2\"):", x)
-
     #tmp <- gsub("([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.]+):", "\\(\"\\1\"):", x)
     tmp <- gsub(";", ":1", tmp)
   }else{
@@ -67,8 +61,6 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
   while(grepl("structure\\(\\(structure", tmp)){
     tmp <- gsub("structure\\(\\(structure", "structure\\(list\\(structure", tmp)
   }
-  #tmp <- gsub("\\)([^\\(\\),]+):", "\\),label=\\(\"\\1\"):", tmp)
-  #tmp <- gsub("\\)([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.]+):", "\\), label = \\1:", tmp)
   tmp <- gsub(":([0-9.]+)", ",edge = \\1)", tmp)
   tmp <- eval(parse(text = tmp))
   attr(tmp, "edge") <- 0
