@@ -31,10 +31,10 @@ weight <- function(x, method = "Gerstein"){
       ratios <- lapply(grandchildedges, function(v) v/sum(v))
       inheritances <- mapply("*", childedges, ratios, SIMPLIFY = FALSE)
       newgrandchildedges <- mapply("+", grandchildedges, inheritances, SIMPLIFY = FALSE)
-      lcounter <- 1
-      dcounter <- 1
+      lcounter <- 1 #leaf counter
+      dcounter <- 1 #dendro counter
       tmp <- x
-      for(i in 1:length(ngrandchildren)){
+      for(i in seq_along(ngrandchildren)){
         if(ngrandchildren[i] > 1){
           for(j in 1:ngrandchildren[i]){
             leafj <- tmp[[i]][[j]]
@@ -44,7 +44,7 @@ weight <- function(x, method = "Gerstein"){
           }
           dcounter <- dcounter + 1
         }else{
-          x[[lcounter]] <- x[[i]]
+          x[[lcounter]] <- tmp[[i]]
           lcounter <- lcounter + 1
         }
       }

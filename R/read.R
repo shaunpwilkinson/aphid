@@ -32,42 +32,60 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
     return(NULL)
   }
   x <- paste0(x, collapse = "")
+
+  # these subs will be rectified post-parse
+  x <- gsub("('.*)\\((.*')", "\\1openbracket\\2", x)
+  x <- gsub("('.*)\\)(.*')", "\\1closebracket\\2", x)
+  x <- gsub("([[:alpha:]]) ([[:alpha:]])", "\\1_\\2", x)
+
+  x <- gsub("[^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_:;\\(\\),.]", "", x)
+  #x <- gsub("([\\(\\),])(,)", "\\1unnamednode\\2", x)
+  x <- gsub("\\(,", "\\(unnamedleaf,", x)
+  while(grepl(",,", x)) x <- gsub(",,", ",unnamedleaf,", x)
+  x <- gsub(",\\)", ",unnamedleaf\\)", x)
+
+  if(grepl("[^\\)];", x)) x <- gsub("(.+);", "\\(\\1\\);", x) # enclose entire string in brax (ex ;)
+
   if(strip.edges) x <- gsub(":([0-9.]+)", "", x)
-  newick.has.edgeweights <- grepl(":", x)
-  if(newick.has.edgeweights){
-    tmp <- gsub("([[:alnum:]]+):", "\\(\"\\1\"):", x)
+  hasedges <- grepl(":", x)
+  if(hasedges){
+    #tmp <- gsub("([[:alnum:]]+):", "\\(\"\\1\"):", x)
+    tmp <- gsub("([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.]+):", "\\(\"\\1\"):", x)
     tmp <- gsub(";", ":1", tmp)
   }else{
-    tmp <- gsub("([[:alnum:]]+)", "\\(\"\\1\")", x)
+    #tmp <- gsub("([[:alnum:]]+)", "\\(\"\\1\")", x)
+    tmp <- gsub("([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.]+)", "\\(\"\\1\")", x)
     tmp <- gsub("(\\))","\\1:1", tmp)
     tmp <- gsub(";", "", tmp)
   }
   tmp <- gsub("\\(", "structure\\(\\(", tmp)
-  tmp <- gsub("ture\\(\\(struc", "ture\\(list\\(struc", tmp)
+  while(grepl("structure\\(\\(structure", tmp)){
+    tmp <- gsub("structure\\(\\(structure", "structure\\(list\\(structure", tmp)
+  }
+
   tmp <- gsub(":([0-9.]+)", ",edge = \\1)", tmp)
   tmp <- eval(parse(text = tmp))
-  attr(tmp, 'edge') <- 0
+  attr(tmp, "edge") <- 0
   # convert nested list to dendrogram object by setting attributes recursvely
   leaflabels <- unlist(tmp)
   setAttributes <- function(x){ # x is a nested list with 'edge' attributes
     if(is.list(x)){
       clade_sizes <- sapply(x, function(y) length(unlist(y)))
-      attr(x, 'members') <- sum(clade_sizes)
-      attr(x, 'midpoint') <- ((clade_sizes[1] - 1)/2 +
-                                (clade_sizes[1] + (clade_sizes[2] - 1)/2))/2
-      if(is.null(attr(x, 'height'))) attr(x, 'height') <- 0
-      # if(!(exists("leaf.values"))) leaf.values <- cbind(unlist(x), 1:length(unlist(x)))
+      attr(x, "members") <- sum(clade_sizes)
+      attr(x, "midpoint") <- if(length(clade_sizes) > 1){
+        ((clade_sizes[1] - 1)/2 + (clade_sizes[1] + (clade_sizes[2] - 1)/2))/2
+      }else 0
+      if(is.null(attr(x, "height"))) attr(x, "height") <- 0
       x[] <- lapply(x, function(y){
-        attr(y, 'height') <- attr(x, 'height') - attr(y, 'edge')
-        attr(y, 'edge') <- NULL
+        attr(y, "height") <- attr(x, "height") - attr(y, "edge")
+        attr(y, "edge") <- NULL
         if(!(is.list(y))){
           attr(y, "label") <- y[1]
           attr(y, "leaf") <- TRUE
-          attr(y, 'members') <- 1
-          # y[1] <- leaf.values[which(leaf.values[,1] == y), 2]
+          attr(y, "members") <- 1
           if(!is.null(leaflabels)){
-            y[] <- match(y,  leaflabels)
-            mode(y) <- 'integer'
+            y[] <- match(y, leaflabels)
+            mode(y) <- "integer"
           }
         }
         y
@@ -77,21 +95,34 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
     x
   }
   res <- setAttributes(tmp)
-  attr(res, 'edge') <- NULL
-  attr(res, 'class') <- 'dendrogram'
-  min.height <- min(unlist(dendrapply(res, attr, 'height')))
+  if(!is.list(res)){
+    attr(res, "height") <- attr(res, "edge")
+    attr(res, "label") <- res[1]
+    attr(res, "members") <- 1
+    attr(res, "leaf") <- TRUE
+  }
+  attr(res, "edge") <- NULL
+  attr(res, "class") <- "dendrogram"
+  min.height <- min(unlist(dendrapply(res, attr, "height")))
   res <- dendrapply(res, function(y){
-    attr(y, 'height') <- attr(y, 'height') - min.height
+    attr(y, "height") <- attr(y, "height") - min.height
+    if(!(is.list(y))){
+      attr(y, "label") <- gsub("openbracket", "\\(", attr(y, "label"))
+      attr(y, "label") <- gsub("closebracket", "\\)", attr(y, "label"))
+      attr(y, "label") <- gsub("_", " ", attr(y, "label"))
+      attr(y, "label") <- gsub("unnamedleaf", "", attr(y, "label"))
+    }
     y
   })
-  if(!(newick.has.edgeweights)){
+  if(!hasedges){
     res <- dendrapply(res, function(y){
       if(is.leaf(y)){
-        attr(y, 'height') <- 0
+        attr(y, "height") <- 0
       }
       y
     })
   }
+  if(length(res) == 1 & length(res[[1]]) == 1) res <- res[[1]]
   return(res)
 }
 
