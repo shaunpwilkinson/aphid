@@ -44,17 +44,22 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
   while(grepl(",,", x)) x <- gsub(",,", ",unnamedleaf,", x)
   x <- gsub(",\\)", ",unnamedleaf\\)", x)
 
+  #x <- gsub("\\):", "\\)unnamednode:", x)
+  #x <- gsub("\\)[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.]+:", "\\):", x)
+  x <- gsub("\\)[^,:;\\(\\)]+([,:;\\(\\)])", "\\)\\1", x) # remove inner nodes (for now)
+
   if(grepl("[^\\)];", x)) x <- gsub("(.+);", "\\(\\1\\);", x) # enclose entire string in brax (ex ;)
 
   if(strip.edges) x <- gsub(":([0-9.]+)", "", x)
   hasedges <- grepl(":", x)
   if(hasedges){
-    #tmp <- gsub("([[:alnum:]]+):", "\\(\"\\1\"):", x)
-    tmp <- gsub("([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.]+):", "\\(\"\\1\"):", x)
+    tmp <- gsub("([\\(,])([^\\(\\),]+):", "\\1\\(\"\\2\"):", x)
+
+    #tmp <- gsub("([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.]+):", "\\(\"\\1\"):", x)
     tmp <- gsub(";", ":1", tmp)
   }else{
-    #tmp <- gsub("([[:alnum:]]+)", "\\(\"\\1\")", x)
-    tmp <- gsub("([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.]+)", "\\(\"\\1\")", x)
+    tmp <- gsub("([\\(,])([^\\(\\),]+)", "\\1\\(\"\\2\")", x)
+    #tmp <- gsub("([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.]+)", "\\(\"\\1\")", x)
     tmp <- gsub("(\\))","\\1:1", tmp)
     tmp <- gsub(";", "", tmp)
   }
@@ -62,7 +67,8 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
   while(grepl("structure\\(\\(structure", tmp)){
     tmp <- gsub("structure\\(\\(structure", "structure\\(list\\(structure", tmp)
   }
-
+  #tmp <- gsub("\\)([^\\(\\),]+):", "\\),label=\\(\"\\1\"):", tmp)
+  #tmp <- gsub("\\)([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.]+):", "\\), label = \\1:", tmp)
   tmp <- gsub(":([0-9.]+)", ",edge = \\1)", tmp)
   tmp <- eval(parse(text = tmp))
   attr(tmp, "edge") <- 0
