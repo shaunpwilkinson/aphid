@@ -38,14 +38,16 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
                   quiet = FALSE, cpp = TRUE, ...){
   if(!(is.list(sequences))) stop("invalid 'sequences' argument")
   nsq <- length(sequences)
-  if(is.null(attr(sequences, "names"))) names(sequences) <- paste0("SEQ", 1:nsq)
+  #if(is.null(attr(sequences, "names")))
   DNA <- is.DNA(sequences)
   AA <- is.AA(sequences)
   residues <- alphadetect(sequences, residues = residues, gapchar = gapchar)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
   if(!quiet) cat("calculating pairwise distances\n")
-  qds <- kdistance(sequences, k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+  tmp <- names(sequences)
+  names(sequences) <- paste0("S", 1:nsq)
+  qds <- kdistance(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
   if(!quiet) cat("building guide tree\n")
   guidetree <- as.dendrogram(hclust(qds, method = "average"))
   if(!quiet) cat("calculating sequence weights\n")
@@ -53,7 +55,7 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
   newick <- write.dendrogram(guidetree, strip.edges = TRUE)
   newick <- gsub(";", "", newick)
   newick <- gsub("\\(", "alignpair\\(", newick)
-  if(type == "global") newick <- gsub("\\)", ", type = 'global'\\)", newick)
+  if(type == "global") newick <- gsub("\\)", ", type='global'\\)", newick)
   if(!quiet) cat("building initial alignment\n")
   msa1 <- with(sequences, eval(parse(text = newick)))
   if(!quiet) cat("deriving profile hidden Markov model\n")
@@ -71,9 +73,10 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
                        DI = DI, ID = ID,
                        quiet = quiet, cpp = cpp, ... = ...) ### condense
   }else if (refine == "none"){
-    return(msa1)
+    finalphmm <- omniphmm
   }else stop("argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none'")
   if(!quiet) cat("aligning sequences to model\n")
+  if(!is.null(tmp)) names(sequences) <- tmp
   res <- align2phmm(sequences, model = finalphmm)
   if(!quiet) cat("done\n")
   return(res)

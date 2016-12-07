@@ -22,7 +22,13 @@ write.dendrogram <- function(x, file = "", append = FALSE,
                              strip.edges = FALSE, dec.places = 2){
   if(!(inherits(x, "dendrogram"))) stop("Input object must be of class 'dendrogram'")
   renameLeaves <- function(y){
-    if(is.leaf(y)) y[1] <- attr(y, 'label')
+    if(is.leaf(y)){
+      tmp <- attr(y, "label")
+      if(grepl("[^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]", tmp)){
+        tmp <- paste0(c("'", tmp, "'"), collapse = "")
+      }
+      y[1] <- tmp
+    }
     y
   }
   x <- dendrapply(x, renameLeaves)
@@ -30,18 +36,18 @@ write.dendrogram <- function(x, file = "", append = FALSE,
   addEdges <- function(y){
     if(is.list(y)){
       y[] <- lapply(y, function(z){
-        attr(z, 'edge') <- format(attr(y, 'height') - attr(z, 'height'), scientific = FALSE)
+        attr(z, "edge") <- format(attr(y, "height") - attr(z, "height"), scientific = FALSE)
         z
       })
-      attributes(y)[names(attributes(y)) != 'edge'] <- NULL
+      attributes(y)[names(attributes(y)) != "edge"] <- NULL
       y[] <- lapply(y, addEdges)
     }else{
-      attributes(y)[names(attributes(y)) != 'edge'] <- NULL
+      attributes(y)[names(attributes(y)) != "edge"] <- NULL
     }
     y
   }
   x <- addEdges(x)
-  attr(x, 'edge') <- 0
+  attr(x, "edge") <- 0
   tmp <- deparse(x)
   tmp <- paste0(tmp, collapse = "")
   tmp <- gsub(" ", "", tmp)
@@ -53,7 +59,7 @@ write.dendrogram <- function(x, file = "", append = FALSE,
   res <- substr(res, start = 2, stop = nchar(res)-3)
   res <- paste0(res, ";")
   if(strip.edges){
-    res <- gsub(":[0-9.]+", "", res)
+    res <- gsub(":[-0-9Ee.]+", "", res)
   }else{
     target <- paste0(c("(\\.", rep("[0-9]", dec.places), ")[0-9]+"), collapse = "")
     res <- gsub(target, "\\1", res) ### maybe signif places better? format?
