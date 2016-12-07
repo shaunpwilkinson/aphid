@@ -36,7 +36,7 @@
 #' pseudocounts are recommended for small training sets,
 #' since Laplacian counts can overinflate insert and delete transition probabilities
 #' leading to convergence at suboptimal local maxima.
-#' @seealso \code{\link{deriveHMM}} and \code{\link{derivePHMM}} for
+#' @seealso \code{\link{derive.HMM}} and \code{\link{derive.PHMM}} for
 #' maximum-likelihood parameter estimation when training sequence states are
 #' known.
 #' @references Juang B-H & Rabiner L R (1990) The segmental K-means
@@ -50,7 +50,7 @@ train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autod
                   maxiter = if(method == "Viterbi") 10 else 100,
                   quiet = FALSE, deltaLL = 1E-07, modelend = FALSE, pseudocounts = "Laplace",
                   gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
-                  threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE, cpp = TRUE){
+                  threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE, cpp = TRUE, ...){
   UseMethod("train")
 }
 
@@ -61,7 +61,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                        pseudocounts = "background", gapchar = "-",
                        fixqa = FALSE, fixqe = FALSE,
                        inserts = "map", threshold = 0.5, lambda = 0,
-                       DI = TRUE, ID = TRUE, cpp = TRUE){
+                       DI = TRUE, ID = TRUE, cpp = TRUE, ...){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   #note any changes below also need apply to align2phmm
   DNA <- is.DNA(y)
@@ -145,18 +145,18 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
   }
   out <- x
   if(method  == "Viterbi"){
-    alignment <- align2phmm(y, out, logspace = TRUE, cpp = cpp)
+    alignment <- align2phmm(y, out, logspace = TRUE, cpp = cpp, windowspace = "WilburLipman")
     #scores <- attr(alignment, "score")
     #maxscore <- attr(alignment, "score")
     for(i in 1:maxiter){
-      if(!quiet) cat("iteration", i, "\n")
-      out <- derivePHMM(alignment, seqweights = seqweights, residues = residues,
+      if(!quiet) cat("Iteration", i, "\n")
+      out <- derive.PHMM(alignment, seqweights = seqweights, residues = residues,
                         inserts = inserts,
                         pseudocounts = pseudocounts, logspace = TRUE,
                         qa = if(fixqa) out$qa else NULL,
                         qe = if(fixqe) out$qe else NULL,
                         DI = DI, ID = ID) ### add others too, could just use ... = ...?
-      newalig <- align2phmm(y, out, logspace = TRUE, cpp = cpp)
+      newalig <- align2phmm(y, out, logspace = TRUE, cpp = cpp, ... = ...)
       #score <- attr(newalig, "score")
       #newscore <- attr(newalig, "score")
       #if(!identical(alignment, newalig) & !(score %in% scores)){
@@ -187,7 +187,8 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         stop("Invalid model for DNA, residue alphabet does not correspond to
               nucleotide alphabet")
       }
-      y <- DNA2quaternary(y, random = FALSE)
+      #y <- DNA2quaternary(y, random = FALSE)
+      y <- encode.DNA(y, arity = 4, random = FALSE, na.rm = TRUE)
     }else if(AA){
       rownames(x$E) <- toupper(rownames(x$E))
       PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -196,7 +197,8 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         stop("Invalid model residue alphabet does not correspond to
               20-letter amino acid alphabet")
       }
-      y <- AA2vigesimal(y, random = FALSE)
+      #y <- AA2vigesimal(y, random = FALSE)
+      y <- encode.AA(y, arity = 20, random = FALSE, na.rm = TRUE)
     }else{
       y <- lapply(y, function(e) match(e, residues) - 1)
       if(any(is.na(y))) stop("Residues in sequence(s) are missing from the model")
@@ -243,7 +245,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           tmpA["DD", 2:(ncol(tmpA) - 1)] <- tmpA["DD", 2:(ncol(tmpA) - 1)] + seqweights[j]
           tmplogPx[j] <- sum(c(A["MD", 1], A["DD", 2:l], A["DM", l + 1]))
         }else{
-          forwj <- forward(out, yj, logspace = TRUE, odds = FALSE)
+          forwj <- forward(out, yj, logspace = TRUE, odds = FALSE, ... = ...)
           Rj <- forwj$array
           logPxj <- forwj$score
           tmplogPx[j] <- logPxj
@@ -324,7 +326,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                       maxiter = if(method == "Viterbi") 10 else 100,
                       deltaLL = 1E-07,
                       logspace = "autodetect", quiet = FALSE, modelend = FALSE,
-                      pseudocounts = "Laplace", cpp = TRUE){
+                      pseudocounts = "Laplace", cpp = TRUE, ...){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   if(is.list(y)){
   } else if(is.vector(y, mode = "character")){
@@ -346,10 +348,10 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     for(i in 1:maxiter){
       samename <- logical(n)
       for(j in 1:n){
-        vitj <- Viterbi(out, y[[j]], logspace = TRUE, cpp = cpp)
+        vitj <- Viterbi(out, y[[j]], logspace = TRUE, cpp = cpp, ... = ...)
         pathchar <- states[-1][vitj$path + 1]
         if(identical(pathchar, names(y[[j]]))) samename[j] <- TRUE
-        # need to be named to feed into deriveHMM
+        # need to be named to feed into derive.HMM
         names(y[[j]]) <- pathchar
       }
       if(all(samename)){
@@ -357,11 +359,11 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           out$A <- exp(out$A)
           out$E <- exp(out$E)
         }
-        if(!quiet) cat("iteration", i, "\nconverged after", i, "iterations\n")
+        if(!quiet) cat("Iteration", i, "\nconverged after", i, "iterations\n")
         return(out)
       }else{
-        if(!quiet) cat("iteration", i, "\n")
-        out <- deriveHMM(y, seqweights = seqweights, residues = residues,
+        if(!quiet) cat("Iteration", i, "\n")
+        out <- derive.HMM(y, seqweights = seqweights, residues = residues,
                          states = states, modelend = modelend,
                          pseudocounts = pseudocounts, logspace = TRUE)
       }
@@ -395,7 +397,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         if(nj == 0){
           tmpA[1, 1] <- tmpA[1, 1] + if(modelend) seqweights[j] else 0
         }else{
-          forwj <- forward(out, yj, logspace = TRUE)
+          forwj <- forward(out, yj, logspace = TRUE, ... = ...)
           Rj <- forwj$array
           logPxj <- forwj$score
           tmplogPx[j] <- logPxj
@@ -425,7 +427,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       out$A <- A
       out$E <- E
       logPx <- sum(tmplogPx) # page 62 eq 3.17
-      if(!quiet) cat("iteration", i, "log likelihood = ", logPx, "\n")
+      if(!quiet) cat("Iteration", i, "log likelihood = ", logPx, "\n")
       if(abs(LL - logPx) < deltaLL){
         if(!logspace){
           out$A <- exp(out$A)

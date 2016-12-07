@@ -1,6 +1,6 @@
 #' Derive a profile HMM from a multiple sequence alignment.
 #'
-#' \code{derivePHMM} generates a profile HMM from a given multiple sequence alignment.
+#' \code{derive.PHMM} generates a profile HMM from a given multiple sequence alignment.
 #'
 #' This function is the homologue of \code{hmmbuild} in HMMER3.1 (http://hmmer.org/) and
 #' \code{modelfromalign} and \code{buildmodel} in the SAM package
@@ -54,7 +54,7 @@
 #' Only applicable for \code{inserts = "map"}.
 #' @references Durbin..
 #'
-derivePHMM <- function(x, seqweights = NULL, residues = NULL,
+derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
                        gapchar = "-", endchar = "?", pseudocounts = "background",
                        logspace = TRUE, qa = NULL, qe = NULL,
                        inserts = "map", threshold = 0.5,

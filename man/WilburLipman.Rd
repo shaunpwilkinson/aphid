@@ -4,7 +4,7 @@
 \alias{WilburLipman}
 \title{Define search space for dynammic programming.}
 \usage{
-WilburLipman(x, y, arity = "autodetect", k = 4, w = 20, threshold = 5)
+WilburLipman(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5)
 }
 \arguments{
 \item{x, y}{integer vectors.}

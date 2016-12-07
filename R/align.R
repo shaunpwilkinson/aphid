@@ -1,17 +1,18 @@
 #' Multiple sequence alignment.
 #'
 #' \code{align} finds the optimal alignment for a list of sequences using a hybrid
-#' algorithm that involves a progressive alignment, the generation of a a profile
+#' algorithm involving a progressive multiple sequence alignment, the generation of a profile
 #' HMM, an iterative model refinement step, and finally the alignment of the sequences
-#' to the model.
+#' back to the model.
 #'
 #' @param sequences a list of character vectors consisting of symbols from
-#' the residue alphabet
+#' the residue alphabet.
 #' @param gapchar the character used to represent gaps in the alignment matrix.
 #' @param residues either NULL (default; emitted residues are automatically
 #' detected from the list of sequences), or a case sensitive character vector specifying the
-#' residue alphabet (e.g. c(A, C, G, T) for DNA).
-#' Note that the former option can be slow for large lists of character vectors;
+#' residue alphabet (e.g. c(A, C, G, T) for DNA). The character strings "RNA", "DNA", "AA",
+#' and "AMINO"are also accepted.
+#' Note that the default option can be slow for large lists of character vectors;
 #' therefore specifying the residue alphabet can increase speed in these cases.
 #' Also note that the default setting \code{residues = NULL} will not
 #' detect rare residues that are not present in the sequence list, and thus will
@@ -27,24 +28,24 @@
 #' in the profile HMM. Defaults to FALSE, and similar to DI, not recommended for small
 #' training sets when \code{refine = "BaumWelch"} due
 #' to the tendency to converge to suboptimal local optima.
+#' @param quiet logical argument indicating whether feedback should be printed
+#' to the console.
 #' @param ... aditional arguments to pass to \code{"train"}.
 #'
 #'
 align <- function(sequences, type = "semiglobal", residues = NULL,
-                  gapchar = "-", DI = FALSE, ID = FALSE, refine = "Viterbi",
+                  gapchar = "-", k = 5, refine = "Viterbi", DI = FALSE, ID = FALSE,
                   quiet = FALSE, cpp = TRUE, ...){
   if(!(is.list(sequences))) stop("invalid 'sequences' argument")
   nsq <- length(sequences)
   if(is.null(attr(sequences, "names"))) names(sequences) <- paste0("SEQ", 1:nsq)
-  # seqlengths <- sapply(sequences, length)
-  # nmodules <- round(mean(seqlengths))
   DNA <- is.DNA(sequences)
   AA <- is.AA(sequences)
   residues <- alphadetect(sequences, residues = residues, gapchar = gapchar)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
   if(!quiet) cat("calculating pairwise distances\n")
-  qds <- kdistance(sequences, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+  qds <- kdistance(sequences, k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
   if(!quiet) cat("building guide tree\n")
   guidetree <- as.dendrogram(hclust(qds, method = "average"))
   if(!quiet) cat("calculating sequence weights\n")
@@ -52,10 +53,12 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
   newick <- write.dendrogram(guidetree, strip.edges = TRUE)
   newick <- gsub(";", "", newick)
   newick <- gsub("\\(", "alignpair\\(", newick)
-  if(type == 'global') newick <- gsub("\\)", ", type = 'global'\\)", newick)
+  if(type == "global") newick <- gsub("\\)", ", type = 'global'\\)", newick)
+  if(!quiet) cat("building initial alignment\n")
   msa1 <- with(sequences, eval(parse(text = newick)))
   if(!quiet) cat("deriving profile hidden Markov model\n")
-  omniphmm <- derivePHMM(msa1, seqweights = seqweights, DI = DI, ID = ID, pseudocounts = "background")
+  omniphmm <- derive.PHMM(msa1, seqweights = seqweights, DI = DI, ID = ID,
+                          pseudocounts = "background")
   if(refine == "Viterbi"){
     if(!quiet) cat("refining model\n")
     finalphmm <- train(omniphmm, sequences, method = refine,
@@ -107,7 +110,7 @@ align <- function(sequences, type = "semiglobal", residues = NULL,
 #' alignpair(x, z)
 #'
 alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
-                      type = "semiglobal", offset = 0, windowspace = "all",
+                      type = "semiglobal", offset = 0, windowspace = "WilburLipman",
                       pseudocounts = "background",
                       residues = NULL, gapchar = "-", cpp = TRUE){
   DNA <- is.DNA(x)
@@ -188,7 +191,7 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     }
     #residues <- alphadetect(x, residues = residues, gapchar = gapchar)
     n <- nrow(x)
-    z <- derivePHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
+    z <- derive.PHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     l <- z$size
     alig <- Viterbi(z, y, qe = qe, logspace = TRUE, type = type,
                     offset = offset, windowspace = windowspace, cpp = cpp)
@@ -229,8 +232,8 @@ alignpair <- function(x, y, d = 8, e = 2, S = NULL, qe = NULL,
     #residues <- alphadetect(x, residues = residues, gapchar = gapchar)
     nx <- nrow(x)
     ny <- nrow(y)
-    zx <- derivePHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
-    zy <- derivePHMM(y, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
+    zx <- derive.PHMM(x, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
+    zy <- derive.PHMM(y, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     lx <- zx$size
     ly <- zy$size
     alig <- Viterbi(zx, zy, qe = qe, logspace = TRUE, type = type,
@@ -306,52 +309,23 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
   AA <- is.AA(sequences)
   gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
   if(!is.list(sequences)){
-    if(DNA | AA){
-      if(is.matrix(sequences)){
-        nseq <- nrow(sequences)
-        seqnames <- rownames(sequences)
-        tmp <- structure(vector(mode = "list", length = nseq), class = if(DNA) "DNAbin" else "AAbin")
-        for(i in 1: nseq){
-          seqi <- as.vector(sequences[i, ])
-          tmp[[i]] <- seqi[seqi != gapchar]
-        }
-        names(tmp) <- seqnames
-      }else{
-        tmp <- structure(list(sequences), class = if(DNA) "DNAbin" else "AAbin")
-        names(tmp) <- deparse(substitute(sequences))
-      }
-      sequences <- tmp
-    }else if(is.matrix(sequences)){
-      if(mode(sequences[1, 1]) != "character") stop("invalid mode") ### remove [1,1]
-      nseq <- nrow(sequences)
-      seqnames <- rownames(sequences)
-      tmp <- structure(vector(mode = "list", length = nseq))
-      for(i in 1: nseq){
-        seqi <- as.vector(sequences[i, ])
-        tmp[[i]] <- seqi[seqi != gapchar]
-      }
-      names(tmp) <- seqnames
-      sequences <- tmp
-    }else if(is.null(dim(sequences))){
-      if(mode(sequences) == "character"){
-        seqname <- deparse(substitute(sequences))
-        sequences <- list(sequences)
-        names(sequences) <- seqname
-      }else stop("invalid mode")
-    }else stop("invalid 'sequences' argument")
+    if(is.null(dim(sequences))){
+      seqname <- deparse(substitute(sequences))
+      sequences <- list(sequences)
+      names(sequences) <- seqname
+    }else{
+      sequences <- unalign(sequences)
+    }
   }
-  #
-  #out <- vector(length(sequences) * (2 * model$size + 1),
-  #              mode = if(DNA) "raw" else "character")
-  #out <- matrix(out, nrow = length(sequences))
   l <- model$size
-  out <- matrix(nrow = length(sequences), ncol = 2 * l + 1)
+  nseq <- length(sequences)
+  out <- matrix(nrow = nseq, ncol = 2 * l + 1)
   rownames(out) <- attr(sequences, "names")
   colnames(out) <- rep("I", 2 * l + 1)
   if(l > 0) colnames(out)[seq(2, 2 * l, by = 2)] <- 1:l
   score <- 0
-  for(i in 1:length(sequences)){
-    alignment <- Viterbi(model, sequences[i], type = "global", ...  = ...)
+  for(i in 1:nseq){
+    alignment <- Viterbi(model, sequences[i], ... = ...)
     score <- score + alignment$score
     newrow <- rep(gapchar, length(alignment$path))
     if(DNA | AA){
@@ -391,30 +365,62 @@ align2phmm <- function(sequences, model, gapchar = "-", ...){
     newrow2[indices] <- newrow
     out[i,] <- newrow2
   }
-  discardcols <- apply(out, 2 ,function(v) all(v == if(DNA | AA) "-" else gapchar))
+  discardcols <- apply(out, 2, function(v) all(v == if(DNA | AA) "-" else gapchar))
   matchcols <- c(FALSE, rep(c(TRUE, FALSE), l))
   out <- out[, matchcols | !discardcols, drop = FALSE]
   out <- as.list(as.data.frame(out, stringsAsFactors = F))
   fun <- function(e){
     ee <- strsplit(e, split = "")
     elengths <- sapply(ee, length)
+    if(all(elengths == 1)) return(unlist(ee))
     maxlen <- max(elengths)
     no.gapstoappend <- maxlen - elengths
-    appges <- lapply(no.gapstoappend, function(v) rep(gapchar, v))
-    res <- t(mapply(c, ee, appges))
-    res
+    appges <- lapply(no.gapstoappend, function(v) rep(if(DNA | AA) "-" else gapchar, v))
+    return(t(mapply(c, ee, appges)))
   }
   out[names(out) == "I"] <- lapply(out[names(out) == "I"], fun)
-  #res <- matrix(unlist(out), nrow = length(sequences))
-  res <- as.matrix(as.data.frame(out, stringsAsFactors = F, optional = T))
-  #res <- matrix(gapchar, nrow = nrow(out), ncol = ncol(out))
-  #for(i in 1:length(sequences)) res[i, ] <- out[i, ]
-  #res[] <- out[]
-  inserts <- sapply(colnames(res), function(v) grepl("I", v))
-  colnames(res)[inserts] <- "I"
+  ncols <- sapply(out, function(e) if(is.null(dim(e))) 1 else ncol(e))
+  totcols <- sum(ncols)
+  res <- matrix(nrow = nseq, ncol = totcols)
   rownames(res) <- names(sequences)
+  rescolnames <- vector(mode = "character", length = totcols)
+  counter <- 1
+  for(i in seq_along(ncols)){
+    if(ncols[i] == 1){
+      res[, counter] <- out[[i]]
+      rescolnames[counter] <- names(out)[i]
+    }else{
+      endrange <- counter + ncols[i] - 1
+      res[, counter:endrange] <- out[[i]]
+      rescolnames[counter:endrange] <- rep("I", ncols[i])
+    }
+    counter <- counter + ncols[i]
+  }
+  colnames(res) <- rescolnames
+  inserts <- sapply(colnames(res), function(v) grepl("I", v))
+  #colnames(res)[inserts] <- "I"
+  #rownames(res) <- names(sequences)
   if(DNA) res <- ape::as.DNAbin(res) else if(AA) res <- ape::as.AAbin(res)
   attr(res, "score") <- score
   attr(res, "inserts") <- unname(inserts)
+  return(res)
+}
+
+
+unalign <- function(x, gapchar = "-"){
+  #x is a matrix representing an alignment
+  DNA <- is.DNA(x)
+  AA <- is.AA(x)
+  gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
+  res <- vector(mode = "list", length = nrow(x))
+  for(i in 1:nrow(x)) res[[i]] <- x[i, x[i, ] != gapchar, drop = TRUE]
+  if(AA){
+    res <- lapply(res, unclass)
+    class(res) <- "AAbin"
+  }else if(DNA){
+    res <- lapply(res, unclass)
+    class(res) <- "DNAbin"
+  }
+  names(res) <- rownames(x)
   return(res)
 }

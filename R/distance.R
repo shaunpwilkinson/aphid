@@ -13,7 +13,8 @@ kdistance <- function(x, k = 5, alpha = "Dayhoff6", ...){
 
 kdistance.AAbin <- function(x, k = 5, alpha = "Dayhoff6", ...){
   #x <- lapply(x, compress.AA, alpha = compress)
-  x <- compress.AA(x, na.rm = TRUE)
+  if(min(sapply(x, length)) < k) stop("minimum sequence length is shorter than k")
+  x <- encode.AA(x, arity = 6, na.rm = TRUE)
   arity <- switch(alpha, "Dayhoff6" = 6) #placeholder
   tuplecount <- function(y, k, arity){
     tuplemat <- matrix(nrow = k, ncol = length(y) - k + 1)
@@ -29,6 +30,7 @@ kdistance.AAbin <- function(x, k = 5, alpha = "Dayhoff6", ...){
 }
 
 kdistance.DNAbin <- function(x, k = 5, alpha = NULL, ...){
+  if(min(sapply(x, length)) < k) stop("minimum sequence length is shorter than k")
   counts <- kcount_DNA(x, k = k)
   denoms <- sapply(x, length) - k + 1
   freqs <- counts/denoms
@@ -36,6 +38,7 @@ kdistance.DNAbin <- function(x, k = 5, alpha = NULL, ...){
 }
 
 kdistance.default <- function(x, k = 5, alpha = "autodetect", ...){
+  if(min(sapply(x, length)) < k) stop("minimum sequence length is shorter than k")
   if(identical(alpha, "autodetect")) alpha <- unique(unlist(x))
   arity <- length(alpha)
   modes <- lapply(x, mode)

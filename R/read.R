@@ -9,6 +9,7 @@
 #' @param strip.edges a logical value indicating whether edge weights
 #' provided in the Newick string should be ignored.
 #' @param ... further arguments to be passed to \code{scan}.
+#' @details discards comments enclosed in square brackets
 #'
 #' @return an object of class \code{"dendrogram"}.
 #'
@@ -31,37 +32,70 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
     warning("empty character string.")
     return(NULL)
   }
+  # collapse vector to a single string if necessary
   x <- paste0(x, collapse = "")
-  # these subs will be rectified post-parse
-  x <- gsub("('.*)\\((.*')", "\\1openbracket\\2", x)
-  x <- gsub("('.*)\\)(.*')", "\\1closebracket\\2", x)
-  x <- gsub("([[:alpha:]]) ([[:alpha:]])", "\\1_\\2", x)
-  # only certain characters allowed at this stage
-  x <- gsub("[^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_:;\\(\\),.]", "", x)
-  #x <- gsub("([\\(\\),])(,)", "\\1unnamednode\\2", x)
-  x <- gsub("\\(,", "\\(unnamedleaf,", x)
-  while(grepl(",,", x)) x <- gsub(",,", ",unnamedleaf,", x)
-  x <- gsub(",\\)", ",unnamedleaf\\)", x)
-  x <- gsub("\\)[^,:;\\(\\)]+([,:;\\(\\)])", "\\)\\1", x) # remove inner nodes (for now)
   # enclose entire string in brackets (excluding ;)
-  if(grepl("[^\\)];", x)) x <- gsub("(.+);", "\\(\\1\\);", x)
-  if(strip.edges) x <- gsub(":([0-9.]+)", "", x)
-  hasedges <- grepl(":", x)
-  if(hasedges){
-    tmp <- gsub("([\\(,])([^\\(\\),]+):", "\\1\\(\"\\2\"):", x)
-    #tmp <- gsub("([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.]+):", "\\(\"\\1\"):", x)
-    tmp <- gsub(";", ":1", tmp)
-  }else{
-    tmp <- gsub("([\\(,])([^\\(\\),]+)", "\\1\\(\"\\2\")", x)
-    #tmp <- gsub("([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_.]+)", "\\(\"\\1\")", x)
-    tmp <- gsub("(\\))","\\1:1", tmp)
-    tmp <- gsub(";", "", tmp)
+  xsplit <- strsplit(x, split = "")[[1]]
+  if(xsplit[length(xsplit) - 1] != ")"){
+    xsplit <- c("(", xsplit[-length(xsplit)], ");")
+    x <- paste0(xsplit, collapse = "")
   }
-  tmp <- gsub("\\(", "structure\\(\\(", tmp)
+  # remove comments
+  #tmp <- strsplit(x, split = "[[\\[][\\]]]") doesn't work for some reason
+  has.comments <- grepl("\\[", x) | grepl("\\]", x)
+  if(has.comments){
+    opens <- which(xsplit == "[")
+    closes <- which(xsplit == "]")
+    if(length(opens) != length(closes)) stop("Invalid metacharacters in Newick string")
+    comments <- unlist(mapply(":", opens, closes))
+    xsplit <- xsplit[-comments]
+    x <- paste0(xsplit, collapse = "")
+  }
+  if(strip.edges) {
+    x <- gsub(":([-0-9Ee.]+)", "", x)
+    has.edges <- FALSE
+  }else{
+    has.edges <- grepl(":", x)
+  }
+  x <- gsub("''", "singlequote", x) # rectified later
+  fun1 <- function(s){ # a string
+    # applied to odds (not enclosed in single quotes)
+    s <- gsub("_", "", s) # Underscore characters outside unquoted labels are converted to blanks.
+    s <- gsub("\\( *,", "\\(unnamedleaf,", s) # rectified later
+    while(grepl(", *,", s)) s <- gsub(", *,", ",unnamedleaf,", s)
+    s <- gsub(", *\\)", ",unnamedleaf\\)", s)
+    s <- gsub("\\)[^,:;\\(\\)]+([,:;\\(\\)])", "\\)\\1", s) # remove inner nodes (for now)
+    if(has.edges){
+      s <- gsub("([\\(,])([^\\(\\),]+):", "\\1\\(\"\\2\"):", s)
+      s <- gsub(";", ":1", s)
+    }else{
+      s <- gsub("([\\(,])([^\\(\\),]+)", "\\1\\(\"\\2\")", s)
+      s <- gsub("\\)","\\):1", s)
+      s <- gsub(";", "", s)
+    }
+    s <- gsub("\\(", "structure\\(\\(", s)
+    s <- gsub(":([^\\),]+)", ",edge=\\1\\)", s)
+    #s <- gsub(":([0-9.]+)", ",edge=\\1)", s)
+    return(s)
+  }
+  fun2 <- function(s) gsub("(.*)", "structure\\(\\(\"\\1\")", s)
+  fun3 <- function(s) gsub("(.*)", "\\1,edge=1\\)", s)
+  # applied to evens (labels enclosed in single quotes)
+  has.singlequotes <- grepl("'", x)
+  if(has.singlequotes){
+    tmp <- strsplit(x, split = "'")
+    evens <- seq(from = 2, to = length(tmp[[1]]), by = 2)
+    odds <- seq(from = 1, to = length(tmp[[1]]), by = 2)
+    tmp[[1]][odds] <- unname(sapply(tmp[[1]][odds], fun1))
+    tmp[[1]][evens] <- unname(sapply(tmp[[1]][evens], fun2))
+    if(!has.edges) tmp[[1]][evens] <- unname(sapply(tmp[[1]][evens], fun3))
+    tmp <- paste0(tmp[[1]], collapse = "")
+  }else{
+    tmp <- fun1(x)
+  }
   while(grepl("structure\\(\\(structure", tmp)){
     tmp <- gsub("structure\\(\\(structure", "structure\\(list\\(structure", tmp)
   }
-  tmp <- gsub(":([0-9.]+)", ",edge = \\1)", tmp)
   tmp <- eval(parse(text = tmp))
   attr(tmp, "edge") <- 0
   # convert nested list to dendrogram object by setting attributes recursvely
@@ -105,14 +139,12 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
   res <- dendrapply(res, function(y){
     attr(y, "height") <- attr(y, "height") - min.height
     if(!(is.list(y))){
-      attr(y, "label") <- gsub("openbracket", "\\(", attr(y, "label"))
-      attr(y, "label") <- gsub("closebracket", "\\)", attr(y, "label"))
-      attr(y, "label") <- gsub("_", " ", attr(y, "label"))
       attr(y, "label") <- gsub("unnamedleaf", "", attr(y, "label"))
+      attr(y, "label") <- gsub("singlequote", "'", attr(y, "label"))
     }
     y
   })
-  if(!hasedges){
+  if(!has.edges){
     res <- dendrapply(res, function(y){
       if(is.leaf(y)){
         attr(y, "height") <- 0
@@ -123,6 +155,19 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
   if(length(res) == 1 & length(res[[1]]) == 1) res <- res[[1]]
   return(res)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

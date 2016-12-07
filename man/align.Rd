@@ -5,23 +5,28 @@
 \title{Multiple sequence alignment.}
 \usage{
 align(sequences, type = "semiglobal", residues = NULL, gapchar = "-",
-  DI = FALSE, ID = FALSE, refine = "Viterbi", quiet = FALSE,
+  k = 5, refine = "Viterbi", DI = FALSE, ID = FALSE, quiet = FALSE,
   cpp = TRUE, ...)
 }
 \arguments{
 \item{sequences}{a list of character vectors consisting of symbols from
-the residue alphabet}
+the residue alphabet.}
 
 \item{residues}{either NULL (default; emitted residues are automatically
 detected from the list of sequences), or a case sensitive character vector specifying the
-residue alphabet (e.g. c(A, C, G, T) for DNA).
-Note that the former option can be slow for large lists of character vectors;
+residue alphabet (e.g. c(A, C, G, T) for DNA). The character strings "RNA", "DNA", "AA",
+and "AMINO"are also accepted.
+Note that the default option can be slow for large lists of character vectors;
 therefore specifying the residue alphabet can increase speed in these cases.
 Also note that the default setting \code{residues = NULL} will not
 detect rare residues that are not present in the sequence list, and thus will
 not assign them emission probabilities.}
 
 \item{gapchar}{the character used to represent gaps in the alignment matrix.}
+
+\item{refine}{the method used to refine the model following progressive alignment.
+Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
+Baum Welch parameter optimization (\code{refine = "BaumWelch"}).}
 
 \item{DI}{logical indicating whether delete -> insert transitions should be allowed
 in the profile HMM. Defaults to FALSE, and not recommended for small training sets when
@@ -33,16 +38,15 @@ in the profile HMM. Defaults to FALSE, and similar to DI, not recommended for sm
 training sets when \code{refine = "BaumWelch"} due
 to the tendency to converge to suboptimal local optima.}
 
-\item{refine}{the method used to refine the model following progressive alignment.
-Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
-Baum Welch parameter optimization (\code{refine = "BaumWelch"}).}
+\item{quiet}{logical argument indicating whether feedback should be printed
+to the console.}
 
 \item{...}{aditional arguments to pass to \code{"train"}.}
 }
 \description{
 \code{align} finds the optimal alignment for a list of sequences using a hybrid
-algorithm that involves a progressive alignment, the generation of a a profile
+algorithm involving a progressive multiple sequence alignment, the generation of a profile
 HMM, an iterative model refinement step, and finally the alignment of the sequences
-to the model.
+back to the model.
 }
 

@@ -51,7 +51,8 @@ backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
         class(y) <- "DNAbin"
       }else stop("Invalid input object y: multi-sequence list")
     }
-    y <- DNA2pentadecimal(y, na.rm = TRUE)
+    #y <- DNA2pentadecimal(y, na.rm = TRUE)
+    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
   }else if(AA){
     colnames(x$E) <- toupper(colnames(x$E))
     PFAMorder <- sapply(colnames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -66,7 +67,8 @@ backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
         class(y) <- "AAbin"
       }else stop("Invalid input object y: multi-sequence list")
     }
-    y <- AA2heptovigesimal(y, na.rm = TRUE)
+    #y <- AA2heptovigesimal(y, na.rm = TRUE)
+    y <- encode.AA(y, arity = 27, na.rm = TRUE)
   }else{
     if(is.list(y)){
       if(length(y) == 1){
@@ -158,7 +160,8 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }else stop("Invalid input object y: multi-sequence list")
     }
     y.DNAbin <- y
-    y <- DNA2pentadecimal(y, na.rm = TRUE)
+    #y <- DNA2pentadecimal(y, na.rm = TRUE)
+    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
   }else if(pa){
     rownames(x$E) <- toupper(rownames(x$E))
     PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -174,7 +177,8 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }else stop("Invalid input object y: multi-sequence list")
     }
     y.AAbin <- y
-    y <- AA2heptovigesimal(y, na.rm = TRUE)
+    #y <- AA2heptovigesimal(y, na.rm = TRUE)
+    y <- encode.AA(y, arity = 27, na.rm = TRUE)
   }else if(pc){
     if(is.list(y)){
       if(length(y) == 1){
@@ -231,11 +235,12 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE, AA = pa, DNA = pd)
       if(pd){
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
-        yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
+        #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
+        yqt <- encode.DNA(y.DNAbin, arity = 4, na.rm = TRUE)
         windowspace <- WilburLipman(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
-        y.comp <- compress.AA(y.AAbin, alpha = "Dayhoff6", na.rm = TRUE)
-        xseq.comp <- compress.AA(xseq, alpha = "Dayhoff6", na.rm = TRUE)
+        y.comp <- encode.AA(y.AAbin, arity = 6, na.rm = TRUE)
+        xseq.comp <- encode.AA(xseq, arity = 6, na.rm = TRUE)
         windowspace <- WilburLipman(xseq.comp, y.comp, arity = 6, k = 5)
       }else{
         xseq <- match(xseq, rownames(x$E)) - 1

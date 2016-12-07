@@ -24,6 +24,9 @@ an object of class \code{"dendrogram"}.
 Reads a file or character string in Newick (New Hampshire) format into
 an object of class \code{dendrogram}.
 }
+\details{
+discards comments enclosed in square brackets
+}
 \examples{
 mynewick <- "(A:1,(B:0.5,C:0.2):0.6);"
 mydendrogram <- read.dendrogram(text = mynewick)

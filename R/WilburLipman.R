@@ -12,11 +12,12 @@
 #' significant...
 
 
-WilburLipman <- function(x, y, arity = "autodetect", k = 4, w = 20, threshold = 5){
+WilburLipman <- function(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5){
   # x and y coded as integers starting from 0
   if(arity == "autodetect") arity <- max(c(x, y)) + 1
   N1 <- length(x)
   N2 <- length(y)
+  if(N1 < w | N2 < w) return(c(-N1, N2))
   xkm <- matrix(nrow = k, ncol = N1 - k + 1) # kmers for x
   ykm <- matrix(nrow = k, ncol = N2 - k + 1) # kmers for y
   for(i in 1:k){

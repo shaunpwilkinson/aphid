@@ -121,19 +121,19 @@ double logsum(NumericVector x) {
 //'
 // [[Rcpp::export]]
 int whichmax(NumericVector x, int start = 1){
-  int max = 0;
+  int maxind = 0;
   bool ties = false;
   IntegerVector backups(x.size());
   int counter = 0;
   for(int i = 1; i < x.size(); i++){
-    if(x[i] > x[max]){
-      max = i;
+    if(x[i] > x[maxind]){
+      maxind = i;
       if(ties){
         for(int j = 0; j < counter; j++) backups[j] = 0;
         counter = 0;
         ties = false;
       }
-    }else if(x[i] == x[max]){
+    }else if(x[i] == x[maxind]){
       backups[counter] = i;
       counter++;
       ties = true;
@@ -141,20 +141,20 @@ int whichmax(NumericVector x, int start = 1){
     //checkUserInterrupt();
   }
   if(ties){
-    backups[counter] = max;
+    backups[counter] = maxind;
     double rando = R::runif(0, 1);
     double counternum = counter;
     double increment = 1/(counternum + 1);
     double ceiling = increment;
     for(int i = 0; i <= counter; i++){
       if(rando < ceiling){
-        return(backups[i]);
+        return(backups[i] + start);
       }else{
         ceiling += increment;
       }
     }
   }
-  return(max + start);
+  return(maxind + start);
 }
 
 

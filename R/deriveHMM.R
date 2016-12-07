@@ -1,6 +1,6 @@
 #' Derive a HMM from training sequences.
 #'
-#' \code{deriveHMM} calculates the maximum likelihood hidden Markov model from
+#' \code{derive.HMM} calculates the maximum likelihood hidden Markov model from
 #' a list of training sequences, each a vector of residues named according
 #' the state from which they were emitted.
 #'
@@ -32,7 +32,7 @@
 #' modeled. Defaults to FALSE.
 #'
 
-deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, modelend = FALSE,
+derive.HMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, modelend = FALSE,
                       pseudocounts = "background", logspace = FALSE, k = 1){
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
@@ -70,14 +70,15 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mode
   indices <- setNames(0:(nstates - 2), states[-1])
   statescoded <- lapply(x, function(e) indices[names(e)])
   if(DNA){
-    rescoded <- lapply(x, DNA2quaternary)
+    #rescoded <- lapply(x, DNA2quaternary)
+    rescoded <- lapply(x, encode.DNA, arity = 4)
   }else if(AA){
-    rescoded <- lapply(x, AA2vigesimal)
+    #rescoded <- lapply(x, AA2vigesimal)
+    rescoded <- lapply(x, encode.AA, arity = 20)
   }else{
     indices <- setNames(0:(nres - 1), residues)
     rescoded <- lapply(x, function(e) indices[e])
   }
-  #rescoded <- lapply(x, if(DNA) DNA2quaternary else if(AA) AA2vigesimal else function(e) indices[e])
   Ecounts <- emissioncount(statescoded[[1]], nstates - 1, rescoded[[1]], nres) * seqweights[1]
   if(n > 1) for(i in 2:n){
     Ecountsi <- emissioncount(statescoded[[i]], nstates - 1, rescoded[[i]], nres) * seqweights[i]

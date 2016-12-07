@@ -53,6 +53,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          windowspace = "all", DI = TRUE, ID = TRUE, cpp = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   if(!(type %in% c("global", "semiglobal", "local"))) stop("invalid type")
+  if(!odds) stop("Full probability scores are not available for Viterbi yet")
   pp <- inherits(y, "PHMM")
   pd <- is.DNA(y)
   pa <- is.AA(y)
@@ -73,7 +74,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }else stop("Invalid input object y: multi-sequence list")
     }
     y.DNAbin <- y
-    y <- DNA2pentadecimal(y, na.rm = TRUE)
+    #y <- DNA2pentadecimal(y, na.rm = TRUE)
+    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
   }else if(pa){
     rownames(x$E) <- toupper(rownames(x$E))
     PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -89,7 +91,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }else stop("Invalid input object y: multi-sequence list")
     }
     y.AAbin <- y
-    y <- AA2heptovigesimal(y, na.rm = TRUE)
+    #y <- AA2heptovigesimal(y, na.rm = TRUE)
+    y <- encode.AA(y, arity = 27, na.rm = TRUE)
   }else if(pc){
     if(is.list(y)){
       if(length(y) == 1){
@@ -99,7 +102,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
     if(mode(y) == "character"){
       y <- match(y, rownames(x$E)) - 1
-      if(any(is.na(y))) {
+      if(any(is.na(y))){
         warning("residues in sequence(s) are missing from the model")
         y <- y[!is.na(y)]
       }
@@ -143,7 +146,8 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     if(!odds) stop("Full probability scores for PHMM-PHMM alignment are not supported")
     if(logdetect(y) != logspace) stop("Both models must be in the same logspace format")
     if(identical(windowspace, "WilburLipman")){
-      stop("No WilburLipman method available for PHMM=PHMM comparison yet")
+      #warning("No WilburLipman method available for PHMM=PHMM comparison yet")
+      windowspace <- c(-x$size, y$size)
       # xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE)
       # xseq <- setNames(seq_along(rownames(x$E)) - 1,  rownames(x$E))[xseq]
       # yseq <- generate.PHMM(y, size = 10 * ncol(y$A), random = FALSE)
@@ -303,11 +307,12 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE, AA = pa, DNA = pd)
       if(pd){
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
-        yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
+        #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
+        yqt <- encode.DNA(y.DNAbin, arity = 4, na.rm = TRUE)
         windowspace <- WilburLipman(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
-        y.comp <- compress.AA(y.AAbin, alpha = "Dayhoff6", na.rm = TRUE)
-        xseq.comp <- compress.AA(xseq, alpha = "Dayhoff6", na.rm = TRUE)
+        y.comp <- encode.AA(y.AAbin, arity = 6, na.rm = TRUE)
+        xseq.comp <- encode.AA(xseq, arity = 6, na.rm = TRUE)
         windowspace <- WilburLipman(xseq.comp, y.comp, arity = 6, k = 5)
       }else{
         xseq <- match(xseq, rownames(x$E)) - 1
@@ -316,7 +321,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, length(y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
-    qey <- if(odds) {
+    qey <- if(odds){
       rep(0, m - 1)
     }else if(pd){
       sapply(y, DNAprobC2, qe)
@@ -370,12 +375,12 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       V[1, 1, 2] <- 0
       if(type == 0){
         V[-1, 1, 1] <- cumsum(c(0, A["DD", 2:(n - 1)])) + A["MD", 1]
-        #V[2, 1, "D"] <- A["MD", 1]
-        #for(i in 3:n) V[i, 1, "D"] <- V[i - 1, 1, "D"] + A["DD", i - 1]
         V[1, 2, "I"] <- A["MI", 1] + qey[1]
         for(j in 3:m) V[1, j, "I"] <- V[1, j - 1, "I"] + A["II", 1] + qey[j - 1]
       }else{
-        V[-1, 1, 1] <- V[1, -1, 3] <- 0 ### check this - should be qey??
+        V[-1, 1, 1] <- 0
+        V[1, -1, 3] <- cumsum(qey)
+        #V[-1, 1, 1] <- V[1, -1, 3] <- 0 ### check this - should be qey??
       }
       for(i in 2:n){
         for(j in 2:m){
@@ -509,7 +514,8 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
         class(y) <- "DNAbin"
       }else stop("Invalid input object y: multi-sequence list")
     }
-    y <- DNA2pentadecimal(y, na.rm = TRUE)
+    #y <- DNA2pentadecimal(y, na.rm = TRUE)
+    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
   }else if(AA){
     colnames(x$E) <- toupper(colnames(x$E))
     PFAMorder <- sapply(colnames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -524,7 +530,8 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
         class(y) <- "AAbin"
       }else stop("Invalid input object y: multi-sequence list")
     }
-    y <- AA2heptovigesimal(y, na.rm = TRUE)
+    #y <- AA2heptovigesimal(y, na.rm = TRUE)
+    y <- encode.AA(y, arity = 27, na.rm = TRUE)
   }else{
     if(is.list(y)){
       if(length(y) == 1){
@@ -638,12 +645,16 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
       }
     }
     if(identical(windowspace, "WilburLipman")){
-      windowspace <- WilburLipman(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
+      #windowspace <- WilburLipman(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
+      windowspace <- WilburLipman(encode.DNA(x, arity = 4, na.rm = TRUE),
+                                  encode.DNA(y, arity = 4, na.rm = TRUE), arity = 4)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
-    x <- DNA2pentadecimal(x, na.rm = TRUE)
-    y <- DNA2pentadecimal(y, na.rm = TRUE)
+    #x <- DNA2pentadecimal(x, na.rm = TRUE)
+    #y <- DNA2pentadecimal(y, na.rm = TRUE)
+    x <- encode.DNA(x, arity = 15, na.rm = TRUE)
+    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
   }else if(AA){
     if(!is.AA(y)) stop("x is an AAbin object but y is not")
     if(is.list(x)){
@@ -670,16 +681,21 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
       }
     }
     if(identical(windowspace, "WilburLipman")){
-      windowspace <- WilburLipman(compress.AA(x, na.rm = TRUE), compress.AA(y, na.rm = TRUE), arity = 6)
+      windowspace <- WilburLipman(encode.AA(x, arity = 6, na.rm = TRUE),
+                                  encode.AA(y, arity = 6, na.rm = TRUE), arity = 6)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
     if(identical(S, GONNET)){
-      x <- AA2duovigesimal(x, na.rm = TRUE)
-      y <- AA2duovigesimal(y, na.rm = TRUE)
+      #x <- AA2duovigesimal(x, na.rm = TRUE)
+      #y <- AA2duovigesimal(y, na.rm = TRUE)
+      x <- encode.AA(x, arity = 22, na.rm = TRUE)
+      y <- encode.AA(y, arity = 22, na.rm = TRUE)
     }else{
-      x <- AA2quadrovigesimal(x, na.rm = TRUE)
-      y <- AA2quadrovigesimal(y, na.rm = TRUE)
+      #x <- AA2quadrovigesimal(x, na.rm = TRUE)
+      #y <- AA2quadrovigesimal(y, na.rm = TRUE)
+      x <- encode.AA(x, arity = 24, na.rm = TRUE)
+      y <- encode.AA(y, arity = 24, na.rm = TRUE)
     }
     ### need some conditions here
   }else{

@@ -8,12 +8,11 @@
 #' and/or vectors
 #'
 alphadetect <- function(sequences, residues = NULL, gapchar = "-", endchar = "?"){
-  if(identical(residues, "RNA") | identical(residues, "rna")){
+  if(identical(toupper(residues), "RNA")){
     residues <- c("A", "C", "G", "U")
-  }else if(is.DNA(sequences) | identical(residues, "DNA") | identical(residues, "dna")){
+  }else if(is.DNA(sequences) | identical(toupper(residues), "DNA")){
     residues <- c("A", "C", "G", "T")
-  }else if(is.AA(sequences) | identical(residues, "AA") |
-           identical(residues, "amino") | identical (residues, "AMINO")){
+  }else if(is.AA(sequences) | identical(residues, "AA") | identical (toupper(residues), "AMINO")){
     residues <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
   }
   else if(is.null(residues)){
@@ -28,6 +27,57 @@ alphadetect <- function(sequences, residues = NULL, gapchar = "-", endchar = "?"
     stop("invalid residues argument")
   }
   return(residues)
+}
+
+#' Detect if model parameters are in log space.
+logdetect <- function(x){
+  if(inherits(x, "HMM")){
+    if(all(x$A <= 0) & all(x$E <= 0)){
+      return(TRUE)
+    } else if(all(x$A >= 0) & all(x$A <= 1) & all(x$E >= 0) & all(x$E <= 1)){
+      return(FALSE)
+    } else stop("unable to detect if model probabilities are in log space")
+  } else if(inherits(x, "PHMM")){
+    if(all(x$A <= 0) & all(x$E <= 0) & all(x$qa <= 0) & all(x$qe <= 0)){
+      return(TRUE)
+    } else if(all(x$A >= 0) & all(x$A <= 1) & all(x$E >= 0) & all(x$E <= 1) &
+              all(x$qa >= 0) & all(x$qa <= 1) & all(x$qe >= 0) & all(x$qe <= 1)){
+      return(FALSE)
+    } else stop("unable to detect if model probabilities are in log space")
+  } else stop("x must be an object of class 'HMM' or 'PHMM'")
+}
+
+decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
+
+trim <- function(x, gapchar = "-", endchar = "?", DNA = FALSE, AA = FALSE){
+  #X is a raw or character matrix
+  # gapchar can have length > 1
+  gapchar <- if(DNA) as.raw(c(4, 240)) else if(AA) as.raw(c(45, 88)) else gapchar
+  endchar <- if(DNA) as.raw(2) else if (AA) as.raw(63) else endchar
+  L <- ncol(x)
+  n <- nrow(x)
+  if(!any(x[, 1] %in% gapchar) & !any(x[, L] %in% gapchar)) return(x)
+  for(i in 1:n){
+    if(x[i, 1] %in% gapchar){
+      counter <- 1
+      advance = TRUE
+      while(advance & counter <= L){
+        x[i, counter] <- endchar
+        counter <- counter + 1
+        advance <- if(counter <= L) x[i, counter] %in% gapchar else FALSE
+      }
+    }
+    if(x[i, L] %in% gapchar){
+      counter <- L
+      advance = TRUE
+      while(advance & counter >= 1){
+        x[i, counter] <- endchar
+        counter <- counter - 1
+        advance <- if(counter >= 1) x[i, counter] %in% gapchar else FALSE
+      }
+    }
+  }
+  return(x)
 }
 
 is.DNA <- function(x){
@@ -71,8 +121,6 @@ is.AA <- function(x){
     return(FALSE)
   }
 }
-
-decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
 
 tabulate.char <- function(x, residues, seqweights = NULL){
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
@@ -151,157 +199,6 @@ tabulate.AA <- function(x, ambiguities = FALSE, seqweights = NULL){
   }
   return(res)
 }
-
-compress.AA <- function(x, alpha = "Dayhoff6", na.rm = FALSE){
-  if(!identical(alpha, "Dayhoff6")) stop("only Dayhoff6 alphabet supported in this version")
-  fun <- function(y){
-    y <- unclass(y)
-    bits <- 65:90
-    ints <- c(0, 2, 1, 2, 2, 3, 0, 4, 5, 5, 4, 5, 5, 2, 4, 0, 2, 4, 0, 0, 1, 5, 3, NA, 3, 2)
-    res <- ints[match(as.numeric(y), bits)]
-    attributes(res) <- attributes(y)
-    if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
-    return(res)
-  }
-  if(is.list(x)) lapply(x, fun) else fun(x)
-}
-
-trim <- function(x, gapchar = "-", endchar = "?", DNA = FALSE, AA = FALSE){
-  #X is a raw or character matrix
-  # gapchar can have length > 1
-  gapchar <- if(DNA) as.raw(c(4, 240)) else if(AA) as.raw(c(45, 88)) else gapchar
-  endchar <- if(DNA) as.raw(2) else if (AA) as.raw(63) else endchar
-  L <- ncol(x)
-  n <- nrow(x)
-  if(!any(c(x[, 1], x[, L]) %in% gapchar)) return(x)
-  for(i in 1:n){
-    if(x[i, 1] %in% gapchar){
-      counter <- 1
-      advance = TRUE
-      while(advance & counter <= L){
-        x[i, counter] <- endchar
-        counter <- counter + 1
-        advance <- if(counter <= L) x[i, counter] %in% gapchar else FALSE
-      }
-    }
-    if(x[i, L] %in% gapchar){
-      counter <- L
-      advance = TRUE
-      while(advance & counter >= 1){
-        x[i, counter] <- endchar
-        counter <- counter - 1
-        advance <- if(counter >= 1) x[i, counter] %in% gapchar else FALSE
-      }
-    }
-  }
-  return(x)
-}
-
-#' Diagnostic model checks.
-validate <- function(x){
-  if(inherits(x, "HMM")){
-    states <- rownames(x$A)
-    if(is.null(colnames(x$A)) | is.null(colnames(x$E))){
-      message('both A and E must have dimnames attributes')
-    } else if(!(identical(states, colnames(x$A)) & identical(states[-1], rownames(x$E)))){
-      message("rownames and colnames of the transitions matrix (A), and
-              rownames of the emissions matrix (E) must all be non-NULL
-              and identical")
-    } else if(rownames(x$A)[1] != "BeginEnd") {
-      message("transition probability matrix (A) should include a 'BeginEnd'
-              state at row 1 and col 1")
-    } else {
-      return(TRUE)
-    }
-    return(FALSE)
-  } else if(inherits(x, "PHMM")){
-    states <- c("M", "I", "D")
-    if(!(all(dimnames(x$A)[[1]] == states) & all(dimnames(x$A)[[3]] == states))){
-      message("names for dimensions 1 and 3 of transitions
-              array (A) must be c('D', 'M', 'I')")
-    } else if(!(ncol(x$A) == ncol(x$E) + 1)){
-      message("transitions array (A) should include a begin state")
-    } else if(!all(names(x$qe) == rownames(x$E))){
-      message("residue names for background emissions vector (qe) should be identical
-              to rownames of emissions matrix (E)")
-    } else if(!(all(colnames(x$qa) == states) & all(rownames(x$qa) == states))){
-      message("rownames and colnames of background transitions matrix
-              must be c('D', 'M', 'I')")
-    } else {
-      return(TRUE)
-    }
-    return(FALSE)
-  } else {
-    stop("x must be an object of class 'HMM' or 'PHMM'")
-  }
-}
-
-#' Detect if model parameters are in log space.
-logdetect <- function(x){
-  if(inherits(x, "HMM")){
-    if(all(x$A <= 0) & all(x$E <= 0)){
-      return(TRUE)
-    } else if(all(x$A >= 0) & all(x$A <= 1) & all(x$E >= 0) & all(x$E <= 1)){
-      return(FALSE)
-    } else stop("unable to detect if model probabilities are in log space")
-  } else if(inherits(x, "PHMM")){
-    if(all(x$A <= 0) & all(x$E <= 0) & all(x$qa <= 0) & all(x$qe <= 0)){
-      return(TRUE)
-    } else if(all(x$A >= 0) & all(x$A <= 1) & all(x$E >= 0) & all(x$E <= 1) &
-             all(x$qa >= 0) & all(x$qa <= 1) & all(x$qe >= 0) & all(x$qe <= 1)){
-      return(FALSE)
-    } else stop("unable to detect if model probabilities are in log space")
-  } else stop("x must be an object of class 'HMM' or 'PHMM'")
-}
-
-probDNA <- function(a, probs = rep(0.25, 4)){
-  # a is a raw byte in Paradis (2007) format
-  # probs is a 4-element numeric vector of probabilities for the set {a,c,g,t}
-  # returns the weighted average probability
-  if(a <= 4){
-    stop("Input sequence contains gaps or unknown characters")
-  }else if(length(probs) != 4){
-    stop("Vector of probabilities should be of length 4")
-  }else{
-    if((a & as.raw(55)) == as.raw(0)){ # is purine?
-      if(a == 136){
-        probs[1] # A
-      } else if(a == 72){
-        probs[3] # G
-      } else{
-        mean(probs[c(1, 3)]) # A or G  ### what if probs are logged??
-      }
-    } else if((a & as.raw(199)) == as.raw(0)){
-      if(a == 40){
-        probs[2] # C
-      } else if(a == 24){
-        probs[4] # T
-      } else{
-        mean(probs[c(2, 4)]) # A or G  ### what if probs are logged??
-      }
-    } else if(a == 160){
-      mean(probs[1:2])# M (A or C)
-    }else if(a == 144){
-      mean(probs[c(1, 4)])# W (A or T)
-    }else if(a == 96){
-      mean(probs[2:3])# S (G or C)
-    }else if(a == 80){
-      mean(probs[3:4])# K (G or T)
-    }else if(a == 224){
-      mean(probs[-4]) # V (A or C or G)
-    } else if(a == 176){
-      mean(probs[-3]) # H (A or C or T)
-    } else if(a == 208){
-      mean(probs[-2]) # D (A or G or T)
-    } else if(a == 112){
-      mean(probs[-1]) # B (C or G or T)
-    } else if(a == 240){
-      mean(probs) #N
-    } else stop("invalid byte")
-  }
-}
-
-is.ambiguous.DNA <- function(a) a != 4 & (a & as.raw(8)) != 8
 
 disambiguate.DNA <- function(a, probs = rep(0.25, 4), random = TRUE){
   # a is a raw byte in Paradis (2007) format
@@ -411,153 +308,170 @@ disambiguate.AA <- function(a, probs = rep(0.05, 20)){
   }else stop("invalid byte for class 'AAbin'")
 }
 
-DNA2quaternary <- function(x, probs = rep(0.25, 4), random = TRUE, na.rm = FALSE){
-  fun <- function(v){
-    # v is a raw vector in Paradis (2007) scheme, possibly containing ambiguities
+encode.DNA <- function(x, arity = 4, probs = NULL, random = TRUE, na.rm = FALSE){
+  # x is a raw vector in Paradis (2007) coding scheme, possibly containing ambiguities
+  # arity is an integer either 4 or 15
+  if(arity == 4){
     #converts A to 0, T to 1, G to 2, and C to 3
-    v <- unclass(v)
-    ambigs <- (v & as.raw(8)) != 8
-    if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.DNA, probs, random)
-    bits <- c(136, 24, 72, 40)
-    ints <- 0:3
-    res <- ints[match(as.numeric(v), bits)]
-    attributes(res) <- attributes(v)
-    if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
-    return(res)
-  }
+    if(is.null(probs)) probs <- rep(0.25, 4)
+    fun <- function(v){
+      v <- unclass(v)
+      ambigs <- (v & as.raw(8)) != 8
+      if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.DNA, probs, random)
+      bits <- c(136, 24, 72, 40)
+      ints <- 0:3
+      res <- ints[match(as.numeric(v), bits)]
+      attributes(res) <- attributes(v)
+      if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
+      return(res)
+    }
+  }else if(arity == 15){
+    fun <- function(v){
+      # return order A, T, G, C, S, W, R, Y, K, M, B, V, H, D, N (same as NUC4.4)
+      bits <- c(136, 24, 72, 40, 96, 144, 192, 48, 80 ,160, 112, 224, 176, 208, 240)
+      ints <- 0:14
+      res <- ints[match(as.numeric(v), bits)]
+      attributes(res) <- attributes(unclass(v))
+      if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
+      return(res)
+    }
+  }else stop("invalid 'arity' argument")
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
 
-DNA2pentadecimal <- function(x, na.rm = FALSE){
-  fun <- function(v){
-    # v is a raw vector in Paradis (2007) scheme, possibly containing ambiguities
-    #converts A to 0, T to 1, G to 2, and C to 3
-    # return order A, T, G, C, S, W, R, Y, K, M, B, V, H, D, N (same as NUC4.4)
-    bits <- c(136, 24, 72, 40, 96, 144, 192, 48, 80 ,160, 112, 224, 176, 208, 240)
-    ints <- 0:14
-    res <- ints[match(as.numeric(v), bits)]
-    attributes(res) <- attributes(unclass(v))
-    if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
-    return(res)
-  }
+encode.AA <- function(x, arity = 20, probs = NULL, random = TRUE, na.rm = FALSE){
+  # x is a vector in AAbin format, possibly containing ambiguties
+  # arity is an integer, either 20, 22, 24, 26, 27, or 6 (Dayhoff6 compression)
+  if(is.null(probs)) probs <- rep(0.05, 20)
+  if(arity == 20){
+    fun <- function(v){
+      ambigs <- !(v %in% as.raw((65:89)[-c(2, 10, 15, 21, 24)]))
+      if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.AA, probs)
+      bits <- (65:89)[-c(2, 10, 15, 21, 24)]
+      ints <- 0:19
+      res <- ints[match(as.numeric(v), bits)]
+      attributes(res) <- attributes(unclass(v))
+      if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
+      return(res)
+    }
+  }else if(arity == 22){
+    # for use with Gonnet matrix
+    # return order "C" "S" "T" "P" "A" "G" "N" "D" "E" "Q" "H" "R"
+    # "K" "M" "I" "L" "V" "F" "Y" "W" "X" "*"
+    # Ambig codes B, J and Z, special codes O and Z, are returned as 20 (X),
+    # and gaps are returned as NA
+    fun <- function(v){
+      bits <- c(67, 83, 84, 80, 65, 71, 78, 68, 69, 81, 72, 82, 75, 77,
+                73, 76, 86, 70, 89, 87, 88, 42, 66, 74, 79, 85, 90)
+      ints <- c(0:21, rep(20, 5))
+      res <- ints[match(as.numeric(v), bits)]
+      attributes(res) <- attributes(unclass(v))
+      isnares <- is.na(res) #placeholder for ambig treatment
+      if(na.rm) if(any(isnares)) res <- res[!isnares]
+      return(res)
+    }
+  }else if(arity == 24){
+    # for use with PAM and BLOSUM matrices
+    # return order "A" "R" "N" "D" "C" "Q" "E" "G" "H" "I" "L" "K" "M"
+    # "F" "P" "S" "T" "W" "Y" "V" "B" "Z" "X" "*"
+    # Ambig code J, and special codes O and U are returned as 22 (X).
+    # Gaps are returned as NA or removed if na.rm = T
+    fun <- function(v){
+      bits <- c(65, 82, 78, 68, 67, 81, 69, 71, 72, 73, 76, 75,
+                77, 70, 80, 83, 84, 87, 89, 86, 66, 90, 88, 42, 74, 79, 85)
+      ints <- c(0:23, 22, 22, 22)
+      res <- ints[match(as.numeric(v), bits)]
+      attributes(res) <- attributes(unclass(v))
+      isnares <- is.na(res)
+      if(na.rm) if(any(isnares)) res <- res[!isnares]
+      return(res)
+    }
+  }else if(arity == 26){
+    ### return order = LETTERS
+    fun <- function(v){
+      res <- as.integer(v) - 65
+      res[res < 0 | res > 25] <- NA
+      attributes(res) <- attributes(unclass(v))
+      if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
+      return(res)
+    }
+  }else if(arity == 27){
+    ### return order ACDEFGHIKLMNPQRSTVWY, X, BJZ, OU, *
+    ### for input into AAprobC2
+    fun <- function(v){
+      bits <- c(65, 67, 68, 69, 70, 71, 72, 73, 75, 76, 77, 78, 80,
+                81, 82, 83, 84, 86, 87, 89, 88, 66, 74, 90,  79,85, 42)
+      ints <- c(0:26)
+      res <- ints[match(as.numeric(v), bits)]
+      attributes(res) <- attributes(unclass(v))
+      isnares <- is.na(res)
+      if(na.rm) if(any(isnares)) res <- res[!isnares]
+      return(res)
+    }
+  }else if(arity == 6){
+    fun <- function(y){
+      y <- unclass(y)
+      bits <- 65:90
+      ints <- c(0, 2, 1, 2, 2, 3, 0, 4, 5, 5, 4, 5, 5, 2, 4, 0, 2, 4, 0, 0, 1, 5, 3, NA, 3, 2)
+      res <- ints[match(as.numeric(y), bits)]
+      attributes(res) <- attributes(y)
+      if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
+      return(res)
+    }
+  }else stop("invalid 'arity' argument")
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
 
-AA2hexavigesimal <- function(x, na.rm = FALSE){
-  ### return order = LETTERS
-  fun <- function(v){
-    res <- as.integer(v) - 65
-    res[res < 0 | res > 25] <- NA
-    attributes(res) <- attributes(unclass(v))
-    if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
-    return(res)
-  }
-  if(is.list(x)) lapply(x, fun) else fun(x)
+# given logical vector, how many falses are after each true?
+# note - also outputs a zero position
+insertlengths <- function(x){
+  tuples <- rbind(c(T, x), c(x, T))
+  decs <- apply(tuples, 2, decimal, 2)
+  startsl <- decs == 2
+  starts <- which(startsl) #insert start positions
+  ends <- which(decs == 1)
+  lengths <- ends - starts
+  tmp <- as.numeric(c(T, x))
+  tmp[startsl] <- lengths
+  tmp[!startsl] <- 0
+  res <- tmp[c(T, x)]
+  names(res) <- 0:(length(res) - 1)
+  res
 }
+#x <- c(F,F,T,T,T,F,F,T,T,T,F,T,T,F,F,F,F,F,T,F,F,F)
+#insertlengths(x)
 
-AA2heptovigesimal <- function(x, na.rm = FALSE){
-  ### return order ACDEFGHIKLMNPQRSTVWY, X, BJZ, OU, *
-  ### for input into AAprobC2
-  fun <- function(v){
-    bits <- c(65, 67, 68, 69, 70, 71, 72, 73, 75, 76, 77, 78, 80,
-              81, 82, 83, 84, 86, 87, 89, 88, 66, 74, 90,  79,85, 42)
-    ints <- c(0:26)
-    res <- ints[match(as.numeric(v), bits)]
-    attributes(res) <- attributes(unclass(v))
-    isnares <- is.na(res)
-    if(na.rm) if(any(isnares)) res <- res[!isnares]
-    return(res)
+insertgaps <- function(x, positions, lengths, gapchar = "-"){
+  if(length(lengths) != length(positions)){
+    stop("arguments 'lengths' and 'positions' should of be equal length")
   }
-  if(is.list(x)) lapply(x, fun) else fun(x)
+  if(length(lengths) == 0) return(x)
+  #positions: vector, which matrix columns should the gaps be inserted after?
+  # (can include zero)
+  #lengths: vector, how long is each gap?
+  xisvec <- is.vector(x)
+  if(xisvec) x <- matrix(x, nrow = 1)
+  n <- nrow(x)
+  m <- ncol(x)
+  tmp <- rep(TRUE, ncol(x) + sum(lengths))
+  tab <- rep(0, m + 1)
+  names(tab) <- 0:m
+  tab[positions + 1] <- lengths
+  fun <- function(e) if(e == 0) TRUE else c(TRUE, rep(FALSE, e))
+  notgap <- unlist(lapply(tab, fun))[-1]   #remember to delete true #1
+  indices <- as.numeric(notgap)
+  indices[notgap] <- 1:m
+  indices <- indices + 1
+  gapcol <- matrix(rep(gapchar, n), ncol = 1, dimnames = list(rownames(x), NULL))
+  res <- cbind(gapcol, x, deparse.level = 0)[, indices]
+  #res <- cbind(gapcol, x)[, indices]
+  if(xisvec) res <- as.vector(res)
+  return(res)
 }
+# x <- rbind(c("A","B","C","D","E","F","G","H"), c("A","B","C","D","E","F","G","H"))
+# insertgaps(x, positions = c(0, 8), lengths = c(3, 5))
+# x <- c("A","B","C","D","E","F","G","H")
+# insertgaps(x, positions = c(2, 6), lengths = c(3, 5))
+#x <- 1:10
+#insertgaps(x, positions = c(2, 6), lengths = c(3, 5), gapchar = NA)
 
-AA2vigesimal <- function(x, probs = rep(0.05, 20), random = TRUE, na.rm = FALSE){
-  # return order "A" "C" "D" "E" "F" "G" "H" "I" "K" "L" "M" "N" "P" "Q" "R" "S" "T" "V" "W" "Y"
-  fun <- function(v){
-    ambigs <- !(v %in% as.raw((65:89)[-c(2, 10, 15, 21, 24)]))
-    if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.AA, probs)
-    bits <- (65:89)[-c(2, 10, 15, 21, 24)]
-    ints <- 0:19
-    res <- ints[match(as.numeric(v), bits)]
-    attributes(res) <- attributes(unclass(v))
-    if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
-    return(res)
-  }
-  if(is.list(x)) lapply(x, fun) else fun(x)
-}
-
-AA2quadrovigesimal <- function(x, na.rm = FALSE){
-  # for use with PAM and BLOSUM matrices
-  # return order "A" "R" "N" "D" "C" "Q" "E" "G" "H" "I" "L" "K" "M" "F" "P" "S" "T" "W" "Y" "V" "B" "Z" "X" "*"
-  # Ambig code J, and special codes O and U are returned as 22 (X). Gaps are returned as NA or removed if na.rm = T
-  fun <- function(v){
-    bits <- c(65, 82, 78, 68, 67, 81, 69, 71, 72, 73, 76, 75,
-              77, 70, 80, 83, 84, 87, 89, 86, 66, 90, 88, 42, 74, 79, 85)
-    ints <- c(0:23, 22, 22, 22)
-    res <- ints[match(as.numeric(v), bits)]
-    attributes(res) <- attributes(unclass(v))
-    isnares <- is.na(res)
-    if(na.rm) if(any(isnares)) res <- res[!isnares]
-    return(res)
-  }
-  if(is.list(x)) lapply(x, fun) else fun(x)
-}
-
-AA2duovigesimal <- function(x, na.rm = FALSE){
-  # for use with Gonnet matrix
-  # return order "C" "S" "T" "P" "A" "G" "N" "D" "E" "Q" "H" "R" "K" "M" "I" "L" "V" "F" "Y" "W" "X" "*"
-  # Ambig codes B, J and Z, special codes O and Z, are returned as 20 (X), and gaps are returned as NA
-  fun <- function(v){
-    bits <- c(67, 83, 84, 80, 65, 71, 78, 68, 69, 81, 72, 82, 75, 77, 73, 76, 86, 70, 89, 87, 88, 42, 66, 74, 79, 85, 90)
-    ints <- c(0:21, rep(20, 5))
-    res <- ints[match(as.numeric(v), bits)]
-    attributes(res) <- attributes(unclass(v))
-    isnares <- is.na(res) #placeholder for ambig treatment
-    if(na.rm) if(any(isnares)) res <- res[!isnares]
-    return(res)
-  }
-  if(is.list(x)) lapply(x, fun) else fun(x)
-}
-
-JC69 <- function(x, fivecharstates = TRUE){
-  if(!fivecharstates) x <- x[, x[1,] != "-" & x[2,] != "-"]
-  d <- sum(x[1,] != x[2,])/ncol(x)
-  if(fivecharstates){
-    if(!(d < 0.8)) stop("fraction of differing sites should not exceed 4/5")
-    K <- (-4/5) * log(1 - ((5 * d)/ 4))
-    VarK <- d * (1 - d)/(n * ((1 - ((5/4) * d))^2))
-  }else{
-    if(!(d < 0.75)) stop("fraction of differing sites should not exceed 3/4")
-    K <- (-3/4) * log(1 - ((4 * d)/ 3))
-    VarK <- d * (1 - d)/(n * ((1 - ((4/3) * d))^2))
-  }
-  list(K = K, VarK = VarK)
-}
-
-
-
-# whichismax <- function(v){
-#   ind <- which(v == max(v, na.rm = TRUE))
-#   if(length(ind) > 1) ind <- sample(ind, 1)
-#   ind
-# }
-
-#
-# progression <- function(x){ # an object of class "Viterbi"
-#   res <- matrix(nrow = 2, ncol = length(x$path))
-#   xpos <- res[1, 1] <- x$start[1]
-#   ypos <- res[2,1 ] <- x$start[2]
-#   for(i in 1:(length(x$path) - 1)){
-#     if(x$path[i] == 0) {
-#       xpos <- xpos + 1
-#     } else if(x$path[i] == 1){
-#       xpos <- xpos + 1
-#       ypos <- ypos + 1
-#     } else if(x$path[i] == 2){
-#       ypos <- ypos + 1
-#     } else stop("path contains unknown elements")
-#     res [1, i + 1] <- xpos
-#     res [2, i + 1] <- ypos
-#   }
-#   res
-# }
