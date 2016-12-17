@@ -50,7 +50,7 @@ train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autod
                   maxiter = if(method == "Viterbi") 10 else 100,
                   quiet = FALSE, deltaLL = 1E-07, modelend = FALSE, pseudocounts = "Laplace",
                   gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
-                  threshold = 0.5, lambda = 0, DI = TRUE, ID = TRUE, cpp = TRUE, ...){
+                  threshold = 0.5, lambda = 0, ...){
   UseMethod("train")
 }
 
@@ -60,8 +60,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                        logspace = "autodetect", quiet = FALSE, deltaLL = 1E-07,
                        pseudocounts = "background", gapchar = "-",
                        fixqa = FALSE, fixqe = FALSE,
-                       inserts = "map", threshold = 0.5, lambda = 0,
-                       DI = TRUE, ID = TRUE, cpp = TRUE, ...){
+                       inserts = "map", threshold = 0.5, lambda = 0, ...){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   #note any changes below also need apply to align2phmm
   DNA <- is.DNA(y)
@@ -128,7 +127,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
   if(!is.null(x$qa)){
     if(!logspace) x$qa <- log(x$qa)
   }else{
-    alignment <- align2phmm(y, x, cpp = cpp)
+    alignment <- align(y, x, cpp = cpp)
     gaps <- alignment == gapchar
     inserts <- apply(gaps, 2, sum) > 0.5 * n
     xtr <- matrix(nrow = n, ncol = ncol(alignment))
@@ -145,18 +144,18 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
   }
   out <- x
   if(method  == "Viterbi"){
-    alignment <- align2phmm(y, out, logspace = TRUE, cpp = cpp, windowspace = "WilburLipman")
+    alignment <- align(y, out, logspace = TRUE, ... = ...)
     #scores <- attr(alignment, "score")
     #maxscore <- attr(alignment, "score")
     for(i in 1:maxiter){
       if(!quiet) cat("Iteration", i, "\n")
       out <- derive.PHMM(alignment, seqweights = seqweights, residues = residues,
-                        inserts = inserts,
+                        inserts = inserts, lambda = lambda, threshold = threshold,
                         pseudocounts = pseudocounts, logspace = TRUE,
                         qa = if(fixqa) out$qa else NULL,
-                        qe = if(fixqe) out$qe else NULL,
-                        DI = DI, ID = ID) ### add others too, could just use ... = ...?
-      newalig <- align2phmm(y, out, logspace = TRUE, cpp = cpp, ... = ...)
+                        qe = if(fixqe) out$qe else NULL) ### add others too, could just use ... = ...?
+      ### what about DI and ID
+      newalig <- align(y, out, logspace = TRUE, ... = ...)
       #score <- attr(newalig, "score")
       #newscore <- attr(newalig, "score")
       #if(!identical(alignment, newalig) & !(score %in% scores)){
@@ -171,11 +170,11 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           out$qa <- exp(out$qa)
           out$qe <- exp(out$qe)
         }
-        if(!quiet) cat("converged after", i, "iterations\n")
+        if(!quiet) cat("Converged after", i, "iterations\n")
         return(out)
       }
     }
-    if(!quiet) cat("note: sequential alignments were not identical after", i, "iterations\n")
+    if(!quiet) cat("Note: sequential alignments were not identical after", i, "iterations\n")
     return(out)
     #stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
   }else if(method == "BaumWelch"){
@@ -249,7 +248,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           Rj <- forwj$array
           logPxj <- forwj$score
           tmplogPx[j] <- logPxj
-          backj <- backward(out, yj, logspace = TRUE, odds = FALSE)
+          backj <- backward(out, yj, logspace = TRUE, odds = FALSE, ... = ...)
           Bj <- backj$array
           tmpEj <- tmpE
           tmpAj <- tmpA
@@ -326,7 +325,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                       maxiter = if(method == "Viterbi") 10 else 100,
                       deltaLL = 1E-07,
                       logspace = "autodetect", quiet = FALSE, modelend = FALSE,
-                      pseudocounts = "Laplace", cpp = TRUE, ...){
+                      pseudocounts = "Laplace", ...){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   if(is.list(y)){
   } else if(is.vector(y, mode = "character")){
@@ -348,7 +347,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     for(i in 1:maxiter){
       samename <- logical(n)
       for(j in 1:n){
-        vitj <- Viterbi(out, y[[j]], logspace = TRUE, cpp = cpp, ... = ...)
+        vitj <- Viterbi(out, y[[j]], logspace = TRUE, ... = ...)
         pathchar <- states[-1][vitj$path + 1]
         if(identical(pathchar, names(y[[j]]))) samename[j] <- TRUE
         # need to be named to feed into derive.HMM
@@ -383,7 +382,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       stopifnot(identical(dim(pseudocounts[[2]]), dim(x$E)))
       Apseudocounts[] <- pseudocounts[[1]]
       Epseudocounts[] <- pseudocounts[[2]]
-    } else if(!identical(pseudocounts, "none")) stop("invalid 'pseudocounts' argument")
+    } else if(!identical(pseudocounts, "none")) stop("Invalid 'pseudocounts' argument")
     E <- out$E
     A <- out$A
     LL <- -1E12

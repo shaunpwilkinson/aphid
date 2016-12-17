@@ -475,3 +475,10 @@ insertgaps <- function(x, positions, lengths, gapchar = "-"){
 #x <- 1:10
 #insertgaps(x, positions = c(2, 6), lengths = c(3, 5), gapchar = NA)
 
+
+# this function is used in alignpair for matrix x matrix alignment
+insert <- function(x, into, at){
+  if(ncol(x) == 0) return(into)
+  into[, at:(at + ncol(x) - 1)] <- x
+  return(into)
+}

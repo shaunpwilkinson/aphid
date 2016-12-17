@@ -18,8 +18,8 @@ Viterbi(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal",
 \method{Viterbi}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
 
 \method{Viterbi}{default}(x, y, type = "semiglobal", d = 8, e = 2,
-  residues = NULL, gapchar = "-", S = NULL, windowspace = "all",
-  offset = 0, cpp = TRUE)
+  residues = NULL, S = NULL, windowspace = "all", offset = 0,
+  cpp = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{HMM} or \code{PHMM}, or a character vector.}

@@ -51,9 +51,10 @@ Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "semiglobal", odds = TRUE, offset = 0,
                          windowspace = "all", DI = TRUE, ID = TRUE, cpp = TRUE){
+  if(type != "global" & !odds) stop("Non-odds option only available for global alignment")
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   if(!(type %in% c("global", "semiglobal", "local"))) stop("invalid type")
-  if(!odds) stop("Full probability scores are not available for Viterbi yet")
+  #if(!odds) stop("Full probability scores are not available for Viterbi yet")
   pp <- inherits(y, "PHMM")
   pd <- is.DNA(y)
   pa <- is.AA(y)
@@ -614,7 +615,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
 
 #' @rdname Viterbi
 Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
-                            residues = NULL, gapchar = "-", S = NULL,
+                            residues = NULL, S = NULL,
                             windowspace = "all", offset = 0, cpp = TRUE){
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
   DNA <- is.DNA(x)
@@ -700,7 +701,7 @@ Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
     ### need some conditions here
   }else{
     if(is.null(S)){
-      residues <- alphadetect(list(x, y), residues = residues, gapchar = gapchar)
+      residues <- alphadetect(list(x, y), residues = residues)
       S <- diag(2, nrow = length(residues)) - 1
       dimnames(S) <- list(residues, residues)
     }else{

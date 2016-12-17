@@ -38,6 +38,11 @@ kdistance.DNAbin <- function(x, k = 5, alpha = NULL, ...){
 }
 
 kdistance.default <- function(x, k = 5, alpha = "autodetect", ...){
+  if(is.DNA(x)){
+    return(kdistance.DNAbin(x, k = k, alpha = NULL, ... = ...))
+  }else if(is.AA(x)){
+    return(kdistance.DNAbin(x, k = k, alpha = "Dayhoff6", ... = ...))
+  }
   if(min(sapply(x, length)) < k) stop("minimum sequence length is shorter than k")
   if(identical(alpha, "autodetect")) alpha <- unique(unlist(x))
   arity <- length(alpha)

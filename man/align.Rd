@@ -4,13 +4,20 @@
 \alias{align}
 \title{Multiple sequence alignment.}
 \usage{
-align(sequences, type = "semiglobal", residues = NULL, gapchar = "-",
-  k = 5, refine = "Viterbi", DI = FALSE, ID = FALSE, quiet = FALSE,
-  cpp = TRUE, ...)
+align(sequences, model = NULL, refine = "Viterbi", inserts = "map",
+  lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
+  gapchar = "-", k = 5, pseudocounts = "background", ...)
 }
 \arguments{
 \item{sequences}{a list of character vectors consisting of symbols from
 the residue alphabet.}
+
+\item{refine}{the method used to refine the model following progressive alignment.
+Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
+Baum Welch parameter optimization (\code{refine = "BaumWelch"}).}
+
+\item{quiet}{logical argument indicating whether feedback should be printed
+to the console.}
 
 \item{residues}{either NULL (default; emitted residues are automatically
 detected from the list of sequences), or a case sensitive character vector specifying the
@@ -24,9 +31,7 @@ not assign them emission probabilities.}
 
 \item{gapchar}{the character used to represent gaps in the alignment matrix.}
 
-\item{refine}{the method used to refine the model following progressive alignment.
-Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
-Baum Welch parameter optimization (\code{refine = "BaumWelch"}).}
+\item{...}{aditional arguments to pass to \code{"train"}.}
 
 \item{DI}{logical indicating whether delete -> insert transitions should be allowed
 in the profile HMM. Defaults to FALSE, and not recommended for small training sets when
@@ -37,11 +42,6 @@ to the tendency to converge to suboptimal local optima.}
 in the profile HMM. Defaults to FALSE, and similar to DI, not recommended for small
 training sets when \code{refine = "BaumWelch"} due
 to the tendency to converge to suboptimal local optima.}
-
-\item{quiet}{logical argument indicating whether feedback should be printed
-to the console.}
-
-\item{...}{aditional arguments to pass to \code{"train"}.}
 }
 \description{
 \code{align} finds the optimal alignment for a list of sequences using a hybrid

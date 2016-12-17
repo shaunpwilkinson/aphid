@@ -63,7 +63,9 @@ dynamic programming method outlined in Durbin et al. (1998).}
 
 \item{threshold}{the maximum proportion of gaps for an alignment column
 to be considered a module in the PHMM (defaults to 0.5). Only applicable for
-\code{inserts = "threshold"}.}
+\code{inserts = "threshold"}. Note that the maximum \emph{a posteriori} method works
+poorly for small alignments so the 'threshold' method is automatically used when 
+the number of sequences is fewer than 10.}
 
 \item{lambda}{penalty parameter used to favour models with fewer match states. Equivalent
 to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).

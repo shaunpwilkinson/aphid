@@ -48,7 +48,9 @@
 #' dynamic programming method outlined in Durbin et al. (1998).
 #' @param threshold the maximum proportion of gaps for an alignment column
 #' to be considered a module in the PHMM (defaults to 0.5). Only applicable for
-#' \code{inserts = "threshold"}.
+#' \code{inserts = "threshold"}. Note that the maximum \emph{a posteriori} method works
+#' poorly for small alignments so the 'threshold' method is automatically used when 
+#' the number of sequences is fewer than 10.
 #' @param lambda penalty parameter used to favour models with fewer match states. Equivalent
 #' to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).
 #' Only applicable for \code{inserts = "map"}.
@@ -107,7 +109,7 @@ derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
   gaps <- x == gapchar
   #ends <- x == endchar
   gapweights <- gaps * seqweights
-  if(identical(inserts, "threshold")){
+  if(identical(inserts, "threshold") | n < 10){
     inserts <- apply(gapweights, 2, sum) > threshold * n
   }else if(identical(inserts, "map")){
     inserts <- !map(x, residues = residues, gapchar = gapchar, endchar = endchar,
@@ -220,7 +222,7 @@ derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
 
   res <- structure(list(name = name, description = description,
                         size = l, alphabet = alphabet,
-                        A = A, E = E, qa = qa, qe = qe,
+                        A = A, E = E, qa = qa, qe = qe, inserts = inserts,
                         insertlengths = inslens, alignment = alignment,
                         date = date(), nseq = n, weights = seqweights,
                         reference = reference, mask = mask),
@@ -269,7 +271,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
   if(!is.matrix(x)) stop("x must be a matrix")
   L <- ncol(x)
   n <- nrow(x)
-  if(n < 3) return(setNames(rep(TRUE, L), 1:L))
+  if(n < 4) return(setNames(rep(TRUE, L), 1:L))
   AA <- is.AA(x)
   DNA <- is.DNA(x)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
@@ -405,7 +407,6 @@ map <- function(x, seqweights = NULL, residues = NULL,
       sigma[j] <- whichmax(tmp)
       S[j] <- tmp[sigma[j]]
     }
-
     res <- structure(logical(L + 2), names = 0:(L + 1))
     res[L + 2] <- TRUE
     j <- sigma[L + 2]
