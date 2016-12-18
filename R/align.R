@@ -7,6 +7,9 @@
 #'
 #' @param sequences a list of character vectors consisting of symbols from
 #' the residue alphabet.
+#' @param model an optional profile hidden Markov model (object of class \code{"PHMM"})
+#' to align the sequences to.
+#' @param refine the method used to iteratively train the model.
 #' @param gapchar the character used to represent gaps in the alignment matrix.
 #' @param residues either NULL (default; emitted residues are automatically
 #' detected from the list of sequences), or a case sensitive character vector specifying the
@@ -30,36 +33,60 @@
 #' to the tendency to converge to suboptimal local optima.
 #' @param quiet logical argument indicating whether feedback should be printed
 #' to the console.
-#' @param ... aditional arguments to pass to \code{"train"}.
+#' @param ... aditional arguments to pass to \code{"Viterbi"} (for Viterbi training refinement) or
+#' \code{"forward"} (for Baum Welch model training).
+#' @return a character matrix of aligned sequences.
+#' @references Soding...
+#' @examples
+#' x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
+#' y <- c("P", "A", "W", "H", "E", "A", "E")
+#' z <- align(x, y)
 #'
 #'
-#'
-#'
+#' @name Viterbi
 align <- function(sequences, model = NULL, refine = "Viterbi", inserts = "map", lambda = 0,
-                  threshold = 0.5,
-                  quiet = FALSE,
-                  residues = NULL, gapchar = "-", k = 5, pseudocounts = "background", ...){
+                  threshold = 0.5, quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
+                  pseudocounts = "background", ...){
   UseMethod("align")
 }
 
-align.DNAbin <- function(sequences, model = NULL, refine = "Viterbi", inserts = "map", lambda = 0,
-                         threshold = 0.5, quiet = FALSE,
-                         residues = NULL, gapchar = "-", k = 5, pseudocounts = "background", ...){
+#' @rdname align
+align.DNAbin <- function(sequences, model = NULL, refine = "Viterbi", inserts = "map",
+                         lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
+                         gapchar = "-", k = 5, pseudocounts = "background", ...){
   if(is.list(sequences)){
-    align.list(sequences, model = model, refine = refine, quiet = quiet,
-               residues = residues, gapchar = gapchar, k = k, ... = ...)
+    align.list(sequences, model = model, refine = refine, inserts = inserts,
+               lambda = lambda, threshold = threshold, quiet = quiet, residues = residues,
+               gapchar = gapchar, k = k, pseudocounts = pseudocounts, ... = ...)
   }else{
-    align.default(sequences, model = model, residues = residues, gapchar = gapchar,
-                  pseudocounts = pseudocounts, ... = ...)
+    align.default(sequences, model = model, residues = residues, quiet = quiet,
+                  gapchar = gapchar, pseudocounts = pseudocounts, ... = ...)
   }
 }
 
-align.list <- function(sequences, model = NULL, refine = "Viterbi", inserts = "map", lambda = 0,
-                       threshold = 0.5, quiet = FALSE,
-                  residues = NULL, gapchar = "-", k = 5, pseudocounts = "background", ...){
+#' @rdname align
+align.AAbin <- function(sequences, model = NULL, refine = "Viterbi", inserts = "map",
+                         lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
+                         gapchar = "-", k = 5, pseudocounts = "background", ...){
+  if(is.list(sequences)){
+    align.list(sequences, model = model, refine = refine, inserts = inserts,
+               lambda = lambda, threshold = threshold, quiet = quiet, residues = residues,
+               gapchar = gapchar, k = k, pseudocounts = pseudocounts, ... = ...)
+  }else{
+    align.default(sequences, model = model, residues = residues, quiet = quiet,
+                  gapchar = gapchar, pseudocounts = pseudocounts, ... = ...)
+  }
+}
 
+#' @rdname align
+align.list <- function(sequences, model = NULL, refine = "Viterbi", inserts = "map",
+                       lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
+                       gapchar = "-", k = 5, pseudocounts = "background", ...){
   nsq <- length(sequences)
-  #if(is.null(attr(sequences, "names")))
+  if(nsq == 2 & is.null(model)){
+    align.default(sequences, model = NULL, residues = residues, quiet = quiet,
+                  gapchar = gapchar, pseudocounts = pseudocounts, ... = ...)
+  }
   DNA <- is.DNA(sequences)
   AA <- is.AA(sequences)
   residues <- alphadetect(sequences, residues = residues, gapchar = gapchar)
@@ -204,37 +231,11 @@ align.list <- function(sequences, model = NULL, refine = "Viterbi", inserts = "m
   }
 }
 
-#' Pairwise alignment of sequences and/or multiple sequence alignments.
-#'
-#' \code{alignpair} uses the Viterbi algorithm to find the optimal alignment
-#' between two sequences, a sequence and an alignment, or two alignments.
-#'
-#' @param x,y character vectors or character matrices of aligned sequences.
-#' @param d,e gap opening and gap extension penalties for pairwise sequence
-#' alignment.
-#' @param S an optional substitution matrix with \code{dimnames} attributes
-#' corresponding to the residue alphabet. If NULL matches are
-#' scored as 1 and mismatches as -1.
-#' @param type a character string specifying whether the alignment should be
-#' 'global' (penalized end gaps), 'semiglobal' (default; free end gaps) or
-#' local (highest scoring subalignment).
-#' @param residues either NULL (default; emitted residues are automatically
-#' detected from the input sequences), or a case sensitive character vector specifying the
-#' residue alphabet (e.g. c(A, C, G, T) for DNA).
-#' Note that the former option can be slow for large character vectors;
-#' therefore specifying the residue alphabet can increase speed in these cases.
-#' Also note that the default setting \code{residues = NULL} will not
-#' detect rare residues that are not present in the input sequences, and thus will
-#' not assign them emission probabilities.
-#' @return a character matrix of aligned sequences.
-#' @references Soding...
-#' @examples
-#' x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
-#' y <- c("P", "A", "W", "H", "E", "A", "E")
-#' z <- align(x, y)
-#' alignpair(x, z)
-#'
-align.default <- function(sequences, model, pseudocounts = "background", residues = NULL, gapchar = "-", ...){
+
+#' @rdname align
+align.default <- function(sequences, model, pseudocounts = "background",
+                          residues = NULL, gapchar = "-", quiet = FALSE, ...){
+  if(is.null(model)) return(sequences)
   DNA <- is.DNA(sequences)
   AA <- is.AA(sequences)
   if(DNA){
@@ -288,6 +289,7 @@ align.default <- function(sequences, model, pseudocounts = "background", residue
   }else{
     if(!is.matrix(sequences)){
       sequences <- matrix(sequences, nrow = 1, dimnames = list(deparse(substitute(sequences)), NULL))
+      #rownames(sequences) <-
     }
     if(!is.matrix(model)){
       model <- matrix(model, nrow = 1, dimnames = list(deparse(substitute(model)), NULL))
@@ -319,7 +321,6 @@ align.default <- function(sequences, model, pseudocounts = "background", residue
     l <- z$size
     alignment <- Viterbi(z, model, ... = ...) ### changed from alig
     path <- alignment$path
-
     # lay x out as list with insert elements
     newrow <- vector(length = l * 2 + 1, mode = "list")
     odds <- seq(from = 1, to = length(newrow), by = 2) #insert columns
@@ -333,11 +334,9 @@ align.default <- function(sequences, model, pseudocounts = "background", residue
     }
     newrow <- lapply(newrow, function(e) if(is.null(e)) 0 else e)
     newx <- lapply(newrow, function(e) sequences[, e, drop = FALSE])
-
     # analogous list for y but witout insert elements
     newrow <- lapply(1:ncol(model), function(e) e)
     newy <- lapply(newrow, function(e) model[, e, drop = FALSE])
-
     #
     newxrows <- matrix(gapchar, nrow = n, ncol = ncol(sequences) + ncol(model))
     rownames(newxrows) <- rownames(sequences)
@@ -351,7 +350,6 @@ align.default <- function(sequences, model, pseudocounts = "background", residue
       class(newxrows) <- "AAbin"
       class(newyrow) <- "AAbin"
     }
-
     position <- 1
     xcounter <- 2 * alignment$start[1]
     ycounter <- alignment$start[2]
@@ -402,7 +400,6 @@ align.default <- function(sequences, model, pseudocounts = "background", residue
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     return(res)
   }else if(nrow(sequences) > 1 & nrow(model) > 1){
-    #residues <- alphadetect(x, residues = residues, gapchar = gapchar)
     nx <- nrow(sequences)
     ny <- nrow(model)
     zx <- derive.PHMM(sequences, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
@@ -411,7 +408,6 @@ align.default <- function(sequences, model, pseudocounts = "background", residue
     ly <- zy$size
     alignment <- Viterbi(zx, zy, ... = ...)
     path <- alignment$path
-
     # lay x out as list with insert elements
     newrow <- vector(length = lx * 2 + 1, mode = "list")
     odds <- seq(from = 1, to = length(newrow), by = 2) #insert columns
@@ -425,7 +421,6 @@ align.default <- function(sequences, model, pseudocounts = "background", residue
     }
     newrow <- lapply(newrow, function(e) if(is.null(e)) 0 else e)
     newx <- lapply(newrow, function(e) sequences[, e, drop = FALSE])
-
     # lay y out as list with insert elements
     newrow <- vector(length = ly * 2 + 1, mode = "list")
     odds <- seq(from = 1, to = length(newrow), by = 2) #insert columns
@@ -439,10 +434,11 @@ align.default <- function(sequences, model, pseudocounts = "background", residue
     }
     newrow <- lapply(newrow, function(e) if(is.null(e)) 0 else e)
     newy <- lapply(newrow, function(e) model[, e, drop = FALSE])
-
     #create output alignment
-    newxrows <- matrix(gapchar, nrow = nx, ncol = ncol(sequences) + ncol(model), dimnames = list(rownames(sequences), NULL))
-    newyrows <- matrix(gapchar, nrow = ny, ncol = ncol(sequences) + ncol(model), dimnames = list(rownames(model), NULL))
+    newxrows <- matrix(gapchar, nrow = nx, ncol = ncol(sequences) + ncol(model))
+    rownames(newxrows) <- rownames(sequences)
+    newyrows <- matrix(gapchar, nrow = ny, ncol = ncol(sequences) + ncol(model))
+    rownames(newyrows) <- rownames(model)
     is.insert <- vector(mode = "logical", length = ncol(sequences) + ncol(model))
     if(DNA){
       class(newxrows) <- "DNAbin"
@@ -513,8 +509,9 @@ align.default <- function(sequences, model, pseudocounts = "background", residue
 }
 
 
-
-
+#' Deconstruct an alignment to its component sequences.
+#'
+#'
 unalign <- function(x, gapchar = "-"){
   #x is a matrix representing an alignment
   DNA <- is.DNA(x)
