@@ -2,19 +2,48 @@
 % Please edit documentation in R/align.R
 \name{align}
 \alias{align}
+\alias{align.AAbin}
+\alias{align.DNAbin}
+\alias{align.default}
+\alias{align.list}
 \title{Multiple sequence alignment.}
 \usage{
-align(sequences, model = NULL, refine = "Viterbi", inserts = "map",
-  lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
-  gapchar = "-", k = 5, pseudocounts = "background", ...)
+align(sequences, model = NULL, seqweights = "Gerstein",
+  refine = "Viterbi", inserts = "map", lambda = 0, threshold = 0.5,
+  quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
+  pseudocounts = "background", ...)
+
+\method{align}{DNAbin}(sequences, model = NULL, seqweights = "Gerstein",
+  refine = "Viterbi", inserts = "map", lambda = 0, threshold = 0.5,
+  quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
+  pseudocounts = "background", ...)
+
+\method{align}{AAbin}(sequences, model = NULL, seqweights = "Gerstein",
+  refine = "Viterbi", inserts = "map", lambda = 0, threshold = 0.5,
+  quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
+  pseudocounts = "background", ...)
+
+\method{align}{list}(sequences, model = NULL, seqweights = "Gerstein",
+  refine = "Viterbi", inserts = "map", lambda = 0, threshold = 0.5,
+  quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
+  pseudocounts = "background", ...)
+
+\method{align}{default}(sequences, model, pseudocounts = "background",
+  residues = NULL, gapchar = "-", quiet = FALSE, ...)
 }
 \arguments{
-\item{sequences}{a list of character vectors consisting of symbols from
-the residue alphabet.}
+\item{sequences}{a list of vectors consisting of symbols emitted from
+the residue alphabet. The vectors can be of mode "character", or raw bytes in the "DNAbin" or
+"AAbin" coding scheme (Paradis 2007).}
 
-\item{refine}{the method used to refine the model following progressive alignment.
-Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
-Baum Welch parameter optimization (\code{refine = "BaumWelch"}).}
+\item{model}{an optional profile hidden Markov model (object of class \code{"PHMM"})
+to align the sequences to.}
+
+\item{refine}{the method used to iteratively train the model following the
+initial progressive alignment step.
+Current supported methods are \code{refine = "Viterbi"} (Viterbi training)
+and \code{refine = "BaumWelch"}
+(parameter optimization with the Expectation-Maximization algorithm).}
 
 \item{quiet}{logical argument indicating whether feedback should be printed
 to the console.}
@@ -23,30 +52,33 @@ to the console.}
 detected from the list of sequences), or a case sensitive character vector specifying the
 residue alphabet (e.g. c(A, C, G, T) for DNA). The character strings "RNA", "DNA", "AA",
 and "AMINO"are also accepted.
-Note that the default option can be slow for large lists of character vectors;
-therefore specifying the residue alphabet can increase speed in these cases.
-Also note that the default setting \code{residues = NULL} will not
+Note that the default setting \code{residues = NULL} will not
 detect rare residues that are not present in the sequence list, and thus will
-not assign them emission probabilities.}
+not assign them emission probabilities.
+Also note that the default option can be slow for large lists of character vectors;
+therefore specifying the residue alphabet can increase speed in these cases.}
 
 \item{gapchar}{the character used to represent gaps in the alignment matrix.}
 
-\item{...}{aditional arguments to pass to \code{"train"}.}
-
-\item{DI}{logical indicating whether delete -> insert transitions should be allowed
-in the profile HMM. Defaults to FALSE, and not recommended for small training sets when
-\code{refine = "BaumWelch"} due
-to the tendency to converge to suboptimal local optima.}
-
-\item{ID}{logical indicating whether insert -> delete transitions should be allowed
-in the profile HMM. Defaults to FALSE, and similar to DI, not recommended for small
-training sets when \code{refine = "BaumWelch"} due
-to the tendency to converge to suboptimal local optima.}
+\item{...}{aditional arguments to pass to \code{"Viterbi"} for Viterbi training refinement or
+\code{"forward"} if using Baum Welch model training.}
+}
+\value{
+a character matrix of aligned sequences.
 }
 \description{
 \code{align} finds the optimal alignment for a list of sequences using a hybrid
 algorithm involving a progressive multiple sequence alignment, the generation of a profile
 HMM, an iterative model refinement step, and finally the alignment of the sequences
 back to the model.
+}
+\examples{
+x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
+y <- c("P", "A", "W", "H", "E", "A", "E")
+z <- align(x, y)
+
+}
+\references{
+Durbin et al, Soding, Paradis 2007.
 }
 

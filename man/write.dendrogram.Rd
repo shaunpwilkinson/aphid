@@ -4,8 +4,8 @@
 \alias{write.dendrogram}
 \title{Write dendrogram as a Newick string.}
 \usage{
-write.dendrogram(x, file = "", append = FALSE, strip.edges = FALSE,
-  dec.places = 2)
+write.dendrogram(x, file = "", append = FALSE, edges = TRUE,
+  digits = NULL)
 }
 \arguments{
 \item{x}{an object of class \code{"dendrogram"}.}

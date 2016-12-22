@@ -5,57 +5,50 @@
 #' HMM, an iterative model refinement step, and finally the alignment of the sequences
 #' back to the model.
 #'
-#' @param sequences a list of character vectors consisting of symbols from
-#' the residue alphabet.
+#' @param sequences a list of vectors consisting of symbols emitted from
+#' the residue alphabet. The vectors can be of mode "character", or raw bytes in the "DNAbin" or
+#' "AAbin" coding scheme (Paradis 2007).
 #' @param model an optional profile hidden Markov model (object of class \code{"PHMM"})
 #' to align the sequences to.
-#' @param refine the method used to iteratively train the model.
+#' @param refine the method used to iteratively train the model following the
+#' initial progressive alignment step.
+#' Current supported methods are \code{refine = "Viterbi"} (Viterbi training)
+#' and \code{refine = "BaumWelch"}
+#' (parameter optimization with the Expectation-Maximization algorithm).
 #' @param gapchar the character used to represent gaps in the alignment matrix.
 #' @param residues either NULL (default; emitted residues are automatically
 #' detected from the list of sequences), or a case sensitive character vector specifying the
 #' residue alphabet (e.g. c(A, C, G, T) for DNA). The character strings "RNA", "DNA", "AA",
 #' and "AMINO"are also accepted.
-#' Note that the default option can be slow for large lists of character vectors;
-#' therefore specifying the residue alphabet can increase speed in these cases.
-#' Also note that the default setting \code{residues = NULL} will not
+#' Note that the default setting \code{residues = NULL} will not
 #' detect rare residues that are not present in the sequence list, and thus will
 #' not assign them emission probabilities.
-#' @param refine the method used to refine the model following progressive alignment.
-#' Current supported methods are Viterbi training (\code{refine = "Viterbi"}) and
-#' Baum Welch parameter optimization (\code{refine = "BaumWelch"}).
-#' @param DI logical indicating whether delete -> insert transitions should be allowed
-#' in the profile HMM. Defaults to FALSE, and not recommended for small training sets when
-#' \code{refine = "BaumWelch"} due
-#' to the tendency to converge to suboptimal local optima.
-#' @param ID logical indicating whether insert -> delete transitions should be allowed
-#' in the profile HMM. Defaults to FALSE, and similar to DI, not recommended for small
-#' training sets when \code{refine = "BaumWelch"} due
-#' to the tendency to converge to suboptimal local optima.
+#' Also note that the default option can be slow for large lists of character vectors;
+#' therefore specifying the residue alphabet can increase speed in these cases.
 #' @param quiet logical argument indicating whether feedback should be printed
 #' to the console.
-#' @param ... aditional arguments to pass to \code{"Viterbi"} (for Viterbi training refinement) or
-#' \code{"forward"} (for Baum Welch model training).
+#' @param ... aditional arguments to pass to \code{"Viterbi"} for Viterbi training refinement or
+#' \code{"forward"} if using Baum Welch model training.
 #' @return a character matrix of aligned sequences.
-#' @references Soding...
+#' @references Durbin et al, Soding, Paradis 2007.
 #' @examples
 #' x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
 #' y <- c("P", "A", "W", "H", "E", "A", "E")
 #' z <- align(x, y)
 #'
-#'
-#' @name Viterbi
-align <- function(sequences, model = NULL, refine = "Viterbi", inserts = "map", lambda = 0,
+#' @name align
+align <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", inserts = "map", lambda = 0,
                   threshold = 0.5, quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
                   pseudocounts = "background", ...){
   UseMethod("align")
 }
 
 #' @rdname align
-align.DNAbin <- function(sequences, model = NULL, refine = "Viterbi", inserts = "map",
+align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", inserts = "map",
                          lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
                          gapchar = "-", k = 5, pseudocounts = "background", ...){
   if(is.list(sequences)){
-    align.list(sequences, model = model, refine = refine, inserts = inserts,
+    align.list(sequences, model = model, seqweights = seqweights, refine = refine, inserts = inserts,
                lambda = lambda, threshold = threshold, quiet = quiet, residues = residues,
                gapchar = gapchar, k = k, pseudocounts = pseudocounts, ... = ...)
   }else{
@@ -65,11 +58,11 @@ align.DNAbin <- function(sequences, model = NULL, refine = "Viterbi", inserts = 
 }
 
 #' @rdname align
-align.AAbin <- function(sequences, model = NULL, refine = "Viterbi", inserts = "map",
+align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", inserts = "map",
                          lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
                          gapchar = "-", k = 5, pseudocounts = "background", ...){
   if(is.list(sequences)){
-    align.list(sequences, model = model, refine = refine, inserts = inserts,
+    align.list(sequences, model = model, seqweights = seqweights, refine = refine, inserts = inserts,
                lambda = lambda, threshold = threshold, quiet = quiet, residues = residues,
                gapchar = gapchar, k = k, pseudocounts = pseudocounts, ... = ...)
   }else{
@@ -79,20 +72,21 @@ align.AAbin <- function(sequences, model = NULL, refine = "Viterbi", inserts = "
 }
 
 #' @rdname align
-align.list <- function(sequences, model = NULL, refine = "Viterbi", inserts = "map",
+align.list <- function(sequences, model = NULL, seqweights = "Gerstein",
+                       refine = "Viterbi", inserts = "map",
                        lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
                        gapchar = "-", k = 5, pseudocounts = "background", ...){
   nsq <- length(sequences)
-  if(nsq == 2 & is.null(model)){
-    align.default(sequences, model = NULL, residues = residues, quiet = quiet,
-                  gapchar = gapchar, pseudocounts = pseudocounts, ... = ...)
-  }
   DNA <- is.DNA(sequences)
   AA <- is.AA(sequences)
   residues <- alphadetect(sequences, residues = residues, gapchar = gapchar)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
   if(is.null(model)){
+    if(nsq == 2){
+      align.default(sequences, model = NULL, residues = residues, quiet = quiet,
+                    gapchar = gapchar, pseudocounts = pseudocounts, ... = ...)
+    }
     if(!quiet) cat("Calculating pairwise distances\n")
     tmp <- names(sequences)
     names(sequences) <- paste0("S", 1:nsq)
@@ -100,10 +94,22 @@ align.list <- function(sequences, model = NULL, refine = "Viterbi", inserts = "m
     qds <- kdistance(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
     if(!quiet) cat("Building guide tree\n")
     guidetree <- as.dendrogram(hclust(qds, method = "average"))
-    if(!quiet) cat("Calculating sequence weights\n")
-    seqweights <- weight(guidetree, method = "Gerstein")
+    if(identical(seqweights, "Gerstein")){
+      if(!quiet) cat("Calculating sequence weights\n")
+      seqweights <- weight(guidetree, method = "Gerstein")[names(sequences)]
+    }else if(is.null(seqweights)){
+      seqweights <- rep(1, nsq)
+    }
+    # else{
+    #   if(round(sum(seqweights), 2) != nsq){
+    #     if(round(sum(seqweights), 2) == 1){
+    #       seqweights <- seqweights * nsq
+    #     }else stop("invalid seqweights argument")
+    #   }
+    # }
+    if(length(seqweights) != nsq) stop("invalid seqweights argument")
     ## add embed step here
-    newick <- write.dendrogram(guidetree, strip.edges = TRUE)
+    newick <- write.dendrogram(guidetree, edges = FALSE)
     newick <- gsub(";", "", newick)
     newick <- gsub("\\(", "align\\(", newick)
     newick <- gsub("\\)", ", ... = ...\\)", newick)
@@ -117,13 +123,13 @@ align.list <- function(sequences, model = NULL, refine = "Viterbi", inserts = "m
                             inserts = inserts, lambda = lambda, threshold = threshold)
     if(refine %in% c("Viterbi", "BaumWelch")){
       if(!quiet) cat("Refining model\n")
-      finalphmm <- train(omniphmm, sequences, method = refine, quiet = quiet, ... = ...)
+      finalphmm <- train(omniphmm, sequences, method = refine, seqweights = seqweights, quiet = quiet, ... = ...)
     }else if (refine == "none"){
       finalphmm <- omniphmm
     }else stop("Argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none' (case sensitive).")
     if(!quiet) cat("Aligning sequences to model\n")
     if(!is.null(tmp)) names(sequences) <- tmp
-    res <- align(sequences, model = finalphmm)
+    res <- align(sequences, model = finalphmm, ... = ...)
     if(!quiet) cat("Done\n")
     return(res)
   }else{

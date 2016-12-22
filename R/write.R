@@ -19,7 +19,7 @@
 #' write.dendrogram(arrests.den)
 #'
 write.dendrogram <- function(x, file = "", append = FALSE,
-                             strip.edges = FALSE, dec.places = 2){
+                             edges = TRUE, digits = NULL){#dec.places = 2){
   if(!(inherits(x, "dendrogram"))) stop("Input object must be of class 'dendrogram'")
   renameLeaves <- function(y){
     if(is.leaf(y)){
@@ -32,11 +32,20 @@ write.dendrogram <- function(x, file = "", append = FALSE,
     y
   }
   x <- dendrapply(x, renameLeaves)
+  xnames <- unlist(x)
+  ynames <- paste0("S", seq_along(xnames) + 10000)
+  renameLeaves2 <- function(y){
+    if(is.leaf(y)){
+      y[1] <- ynames[match(y[1], xnames)]
+    }
+    y
+  }
+  x <- dendrapply(x, renameLeaves2)
   x <- dendrapply(x, unclass)
   addEdges <- function(y){
     if(is.list(y)){
       y[] <- lapply(y, function(z){
-        attr(z, "edge") <- format(attr(y, "height") - attr(z, "height"), scientific = FALSE)
+        attr(z, "edge") <- format(attr(y, "height") - attr(z, "height"), digits = digits)#scientific = FALSE)
         z
       })
       attributes(y)[names(attributes(y)) != "edge"] <- NULL
@@ -51,20 +60,34 @@ write.dendrogram <- function(x, file = "", append = FALSE,
   tmp <- deparse(x)
   tmp <- paste0(tmp, collapse = "")
   tmp <- gsub(" ", "", tmp)
-  fun <- function(taxon, edge=1) paste0("(", taxon, ":", edge, ")")
-  tmp <- gsub("structure", "fun", tmp)
-  tmp <- gsub("list", "paste", tmp)
-  res <- eval(parse(text = tmp))
-  res <- gsub(") \\(", ",", res)
-  res <- substr(res, start = 2, stop = nchar(res)-3)
-  res <- paste0(res, ";")
-  if(strip.edges){
-    res <- gsub(":[-0-9Ee.]+", "", res)
-  }else{
-    target <- paste0(c("(\\.", rep("[0-9]", dec.places), ")[0-9]+"), collapse = "")
-    res <- gsub(target, "\\1", res) ### maybe signif places better? format?
-    if(dec.places == 0) res <- gsub("\\.", "", res)
+  tmp <- gsub("edge=\"([-0-9Ee.]+)\"", "edge=\\1", tmp)
+  #for(i in seq_along(xnames)) tmp <- gsub(xnames[i], ynames[i], tmp)
+  tmp2 <- gsub("list", ";", tmp) # needs to be a special single char - alternative?
+  while(grepl("structure", tmp2)){
+    tmp2 <- gsub("structure\\(\"([^\"]*)\",edge=([-0-9Ee.]+)\\)", "\\1:\\2", tmp2)
+    tmp2 <- gsub(";\\(([^;\\)]*)\\)", "\"openbracket\\1closebracket\"", tmp2)
   }
+  tmp3 <- gsub("openbracket", "\\(", tmp2)
+  tmp3 <- gsub("closebracket", "\\)", tmp3)
+  res <- gsub("(.*):0$", "\\1;", tmp3)
+  if(!edges){
+    res <- gsub(":[-0-9Ee.]+", "", res)
+  }
+  for(i in seq_along(xnames)) res <- gsub(ynames[i], xnames[i], res)
+  # fun <- function(taxon, edge=1) paste0("(", taxon, ":", edge, ")")
+  # tmp <- gsub("structure", "fun", tmp)
+  # tmp <- gsub("list", "paste", tmp)
+  # res <- eval(parse(text = tmp))
+  # res <- gsub(") \\(", ",", res)
+  # res <- substr(res, start = 2, stop = nchar(res)-3)
+  # res <- paste0(res, ";")
+  # if(strip.edges){
+  #   res <- gsub(":[-0-9Ee.]+", "", res)
+  # }else{
+  #   target <- paste0(c("(\\.", rep("[0-9]", dec.places), ")[0-9]+"), collapse = "")
+  #   res <- gsub(target, "\\1", res) ### maybe signif places better? format?
+  #   if(dec.places == 0) res <- gsub("\\.", "", res)
+  # }
   if(file == ""){
     return(res)
   }else{

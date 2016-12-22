@@ -97,7 +97,6 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     }else if(is.null(dim(y))){
       if(mode(y) == "character"){
         yname <- deparse(substitute(y))
-        #y <- list(matrix(y, nrow = 1, dimnames = list(yname, NULL)))
         y <- list(y)
         names(y) <- yname
       }else stop("invalid mode")
@@ -121,7 +120,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       apply(t(sapply(y, tabulate.AA, ambiguities = TRUE)) * seqweights, 2, sum) + 1
     }else{
       apply(t(sapply(y, tabulate.char, residues = residues)) * seqweights, 2, sum) + 1
-    } #tab(unlist(y), residues = residues) + 1 ### needs fixing
+    }
     x$qe <- log(allecs/sum(allecs))
   }
   if(!is.null(x$qa)){
@@ -186,7 +185,6 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         stop("Invalid model for DNA, residue alphabet does not correspond to
               nucleotide alphabet")
       }
-      #y <- DNA2quaternary(y, random = FALSE)
       y <- encode.DNA(y, arity = 4, random = FALSE, na.rm = TRUE)
     }else if(AA){
       rownames(x$E) <- toupper(rownames(x$E))
@@ -196,7 +194,6 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         stop("Invalid model residue alphabet does not correspond to
               20-letter amino acid alphabet")
       }
-      #y <- AA2vigesimal(y, random = FALSE)
       y <- encode.AA(y, arity = 20, random = FALSE, na.rm = TRUE)
     }else{
       y <- lapply(y, function(e) match(e, residues) - 1)
@@ -432,12 +429,12 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           out$A <- exp(out$A)
           out$E <- exp(out$E)
         }
-        if(!quiet) cat("convergence threshold reached after", i, "EM iterations\n")
+        if(!quiet) cat("Convergence threshold reached after", i, "EM iterations\n")
         return(out)
       }
       LL <- logPx
     }
     stop("Failed to converge on a local maximum. Try increasing 'maxiter',
         decreasing 'deltaLL' or modifying start parameters")
-  }else stop("invalid argument given for 'method'")
+  }else stop("Invalid argument given for 'method'")
 }

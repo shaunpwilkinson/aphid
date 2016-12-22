@@ -7,9 +7,8 @@
 derive.PHMM(x, seqweights = NULL, residues = NULL, gapchar = "-",
   endchar = "?", pseudocounts = "background", logspace = TRUE,
   qa = NULL, qe = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
-  name = deparse(substitute(x)), description = NULL, compo = FALSE,
-  consensus = FALSE)
+  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
+  description = NULL, compo = FALSE, consensus = FALSE)
 }
 \arguments{
 \item{x}{a character matrix of aligned sequences.}
@@ -64,7 +63,7 @@ dynamic programming method outlined in Durbin et al. (1998).}
 \item{threshold}{the maximum proportion of gaps for an alignment column
 to be considered a module in the PHMM (defaults to 0.5). Only applicable for
 \code{inserts = "threshold"}. Note that the maximum \emph{a posteriori} method works
-poorly for small alignments so the 'threshold' method is automatically used when 
+poorly for small alignments so the 'threshold' method is automatically used when
 the number of sequences is fewer than 10.}
 
 \item{lambda}{penalty parameter used to favour models with fewer match states. Equivalent

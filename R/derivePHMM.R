@@ -49,7 +49,7 @@
 #' @param threshold the maximum proportion of gaps for an alignment column
 #' to be considered a module in the PHMM (defaults to 0.5). Only applicable for
 #' \code{inserts = "threshold"}. Note that the maximum \emph{a posteriori} method works
-#' poorly for small alignments so the 'threshold' method is automatically used when 
+#' poorly for small alignments so the 'threshold' method is automatically used when
 #' the number of sequences is fewer than 10.
 #' @param lambda penalty parameter used to favour models with fewer match states. Equivalent
 #' to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).
@@ -61,7 +61,8 @@ derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
                        logspace = TRUE, qa = NULL, qe = NULL,
                        inserts = "map", threshold = 0.5,
                        lambda = 0, DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
-                       name = deparse(substitute(x)), description = NULL,
+                       name = NULL,
+                       description = NULL,
                        compo = FALSE, consensus = FALSE){
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
   DNA <- is.DNA(x) # raw DNA bytes
@@ -70,6 +71,9 @@ derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
   endchar <- if(DNA) as.raw(2) else if(AA) as.raw(63) else endchar
   if(omit.endgaps) x <- trim(x, gapchar = gapchar, endchar = endchar, DNA = DNA, AA = AA)
   residues <- alphadetect(x, residues = residues, gapchar = gapchar, endchar = endchar)
+  if(is.null(name)) name <- unname(sapply(match.call()[2], deparse))
+  #cat(sapply(match.call()[2], deparse))
+  #cat(str(deparse(match.call()[2])))
   nres <- length(residues)
   n <- nrow(x)
   m <- ncol(x)
@@ -77,13 +81,14 @@ derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
   transitions <- c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
   if(is.null(seqweights)){
     seqweights <- rep(1, n)
-  }else{
-    if(round(sum(seqweights), 2) != n){
-      if(round(sum(seqweights), 2) == 1){
-        seqweights <- seqweights * n
-      }else stop("invalid seqweights argument")
-    }
   }
+  # }else{
+  #   if(round(sum(seqweights), 2) != n){
+  #     if(round(sum(seqweights), 2) == 1){
+  #       seqweights <- seqweights * n
+  #     }else stop("invalid seqweights argument")
+  #   }
+  # }
   if(length(seqweights) != n) stop("invalid seqweights argument")
   # background emission probabilities (qe)
   if(is.null(qe)){
@@ -219,7 +224,6 @@ derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
   }else if(identical(toupper(sort(residues)), LETTERS[-c(2, 10, 15, 21, 24, 26)])){
     "amino"
   } else "custom"
-
   res <- structure(list(name = name, description = description,
                         size = l, alphabet = alphabet,
                         A = A, E = E, qa = qa, qe = qe, inserts = inserts,
@@ -282,13 +286,14 @@ map <- function(x, seqweights = NULL, residues = NULL,
   S <- sigma <- c(0, rep(NA, L + 1))
   if(is.null(seqweights)){
     seqweights <- rep(1, n)
-  }else{
-    if(round(sum(seqweights), 2) != n){
-      if(round(sum(seqweights), 2) == 1){
-        seqweights <- seqweights * n
-      }else stop("invalid seqweights argument")
-    }
   }
+  # else{
+  #   if(round(sum(seqweights), 2) != n){
+  #     if(round(sum(seqweights), 2) == 1){
+  #       seqweights <- seqweights * n
+  #     }else stop("invalid seqweights argument")
+  #   }
+  # }
   if(length(seqweights) != n) stop("invalid seqweights argument")
   if(AA){
     ecs <- apply(x, 2, tabulate.AA, ambiguities = TRUE, seqweights = seqweights)
