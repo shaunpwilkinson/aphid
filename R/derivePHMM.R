@@ -56,14 +56,156 @@
 #' Only applicable for \code{inserts = "map"}.
 #' @references Durbin..
 #'
-derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
+#'
+#' @name derive.PHMM
+derive.PHMM <- function(x, seqweights = "Gerstein", k = 5, residues = NULL,
+                        gapchar = "-", endchar = "?", pseudocounts = "background",
+                        logspace = TRUE, qa = NULL, qe = NULL,
+                        inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1E-07,
+                        DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
+                        name = NULL, description = NULL, compo = FALSE, consensus = FALSE,
+                        seeds = "all", refine = "Viterbi",
+                        maxiter = if(refine == "Viterbi") 10 else 100,
+                        cpp = TRUE, quiet = FALSE, ...){
+  UseMethod("derive.PHMM")
+}
+
+#' @rdname derive.PHMM
+derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", k = 5, residues = NULL,
+                               gapchar = "-", endchar = "?", pseudocounts = "background",
+                               logspace = TRUE, qa = NULL, qe = NULL,
+                               inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1E-07,
+                               DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
+                               name = NULL, description = NULL,
+                               compo = FALSE, consensus = FALSE, seeds = "all", refine = "Viterbi",
+                               maxiter = if(refine == "Viterbi") 10 else 100,
+                               cpp = cpp, quiet = FALSE, ...){
+  if(is.list(x)){
+    derive.PHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
+                     seqweights = seqweights,
+                     k = k, residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
+                     logspace = logspace, qa = qa, qe = qe,
+                     inserts = inserts, lambda = lambda, DI = DI, ID = ID,
+                     threshold = threshold, deltaLL = deltaLL, omit.endgaps = omit.endgaps,
+                     name = name, description = description, compo = compo, consensus = consensus,
+                     cpp = cpp, quiet = quiet, ... = ...)
+  }else{
+    derive.PHMM.default(x, seqweights = seqweights, k = k, residues = residues,
+                        gapchar = gapchar, endchar = endchar, pseudocounts = pseudocounts,
+                        logspace = logspace, qa = qa, qe = qe,
+                        inserts = inserts, threshold = threshold,
+                        lambda = lambda, DI = DI, ID = ID, omit.endgaps = omit.endgaps,
+                        name = name, description = description,
+                        compo = compo, consensus = consensus, cpp = cpp, quiet = quiet)
+  }
+}
+
+
+#' @rdname derive.PHMM
+derive.PHMM.AAbin <- function(x, seqweights = "Gerstein", k = 5, residues = NULL,
+                              gapchar = "-", endchar = "?", pseudocounts = "background",
+                              logspace = TRUE, qa = NULL, qe = NULL,
+                              inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1E-07,
+                              DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
+                              name = NULL, description = NULL,
+                              compo = FALSE, consensus = FALSE, seeds = "all", refine = "Viterbi",
+                              maxiter = if(refine == "Viterbi") 10 else 100,
+                              cpp = TRUE, quiet = FALSE, ...){
+  if(is.list(x)){
+    derive.PHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
+                     seqweights = seqweights,
+                     k = k, residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
+                     logspace = logspace, qa = qa, qe = qe,
+                     inserts = inserts, lambda = lambda, DI = DI, ID = ID,
+                     threshold = threshold, deltaLL = deltaLL, omit.endgaps = omit.endgaps,
+                     name = name, description = description, compo = compo, consensus = consensus,
+                     cpp = cpp, quiet = quiet, ... = ...)
+  }else{
+    derive.PHMM.default(x, seqweights = seqweights, k = k, residues = residues,
+                        gapchar = gapchar, endchar = endchar, pseudocounts = pseudocounts,
+                        logspace = logspace, qa = qa, qe = qe,
+                        inserts = inserts, threshold = threshold,
+                        lambda = lambda, DI = DI, ID = ID, omit.endgaps = omit.endgaps,
+                        name = name, description = description,
+                        compo = compo, consensus = consensus, cpp = cpp, quiet = quiet)
+  }
+}
+
+#' @rdname derive.PHMM
+derive.PHMM.list <- function(x, seeds = "all", refine = "Viterbi",
+                             maxiter = if(refine == "Viterbi") 10 else 100,
+                             seqweights = "Gerstein",
+                             k = 5, residues = NULL, gapchar = "-", pseudocounts = "background",
+                             logspace = TRUE, qa = NULL, qe = NULL,
+                             inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
+                             threshold = 0.5, deltaLL = 1E-07, omit.endgaps = TRUE,
+                             name = NULL, description = NULL, compo = FALSE, consensus = FALSE,
+                             cpp = TRUE, quiet = FALSE, ...){
+  nsq <- length(x)
+  DNA <- is.DNA(x)
+  AA <- is.AA(x)
+  residues <- alphadetect(x, residues = residues, gapchar = gapchar)
+  gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
+  for(i in 1:length(x)) x[[i]] <- x[[i]][x[[i]] != gapchar]
+  if(!quiet) cat("Calculating pairwise distances\n")
+  names(x) <- paste0("S", 1:nsq)
+  if(DNA) class(x) <- "DNAbin" else if(AA) class(x) <- "AAbin"
+  if(identical(seeds, "all")) seeds <- seq_along(x)
+  qds <- kdistance(x[seeds], k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+  if(!quiet) cat("Building guide tree\n")
+  guidetree <- as.dendrogram(hclust(qds, method = "average"))
+  seedweights <- weight(guidetree, method = "Gerstein")[names(x)[seeds]]
+  newick <- write.dendrogram(guidetree, edges = FALSE)
+  newick <- gsub(";", "", newick)
+  newick <- gsub("\\(", "align\\(", newick)
+  newick <- gsub("\\)", ", ... = ...\\)", newick)
+  #newick <- gsub("\\)", ", type='global'\\)", newick)
+  if(!quiet) cat("Aligning seed sequences\n")
+  msa1 <- with(x, eval(parse(text = newick)))
+  if(!quiet) cat("Deriving profile hidden Markov model\n")
+  omniphmm <- derive.PHMM.default(msa1, seqweights = seedweights, k = k, residues = residues,
+                          gapchar = gapchar, pseudocounts = pseudocounts, logspace = logspace,
+                          qa = qa, qe = qe, DI = DI, ID = ID, omit.endgaps = omit.endgaps,
+                          inserts = inserts, lambda = lambda, threshold = threshold,
+                          name = name, description = description, compo = compo, consensus = consensus,
+                          cpp = cpp, quiet = quiet)
+  if(is.null(refine)) refine <- "NONE"
+  refine <- toupper(refine)
+  if(refine %in% c("VITERBI", "BAUMWELCH")){
+    if(identical(seqweights, "Gerstein")){
+      if(!quiet) cat("Calculating sequence weights\n")
+      if(identical(sort(seeds), seq_along(x))){
+        seqweights <- seedweights
+      }else{
+        qds <- kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+        guidetree <- as.dendrogram(hclust(qds, method = "average"))
+        seqweights <- weight(guidetree, method = "Gerstein")[names(x)]
+      }
+    }else if(is.null(seqweights)){
+      seqweights <- rep(1, nsq)
+    }
+    if(length(seqweights) != nsq) stop("invalid seqweights argument")
+    if(!quiet) cat("Refining model\n")
+    finalphmm <- train(omniphmm, x, method = refine, seqweights = seqweights,
+                       maxiter = maxiter, pseudocounts = pseudocounts,
+                       inserts = inserts, lambda = lambda, threshold = threshold, deltaLL = deltaLL,
+                       quiet = quiet, ... = ...)
+    #finalphmm <- train(omniphmm, x, method = refine, seqweights = seqweights, quiet = quiet, type = "global")
+  }else if (refine == "NONE"){
+    finalphmm <- omniphmm
+  }else stop("Argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none'.")
+  return(finalphmm)
+}
+
+
+#'@rdname derive.PHMM
+derive.PHMM.default <- function(x, seqweights = "Gerstein", k = 5, residues = NULL,
                        gapchar = "-", endchar = "?", pseudocounts = "background",
                        logspace = TRUE, qa = NULL, qe = NULL,
                        inserts = "map", threshold = 0.5,
                        lambda = 0, DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
-                       name = NULL,
-                       description = NULL,
-                       compo = FALSE, consensus = FALSE){
+                       name = NULL, description = NULL,
+                       compo = FALSE, consensus = FALSE, cpp = TRUE, quiet = FALSE){
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
   DNA <- is.DNA(x) # raw DNA bytes
   AA <- is.AA(x) # raw AA bytes
@@ -72,8 +214,6 @@ derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
   if(omit.endgaps) x <- trim(x, gapchar = gapchar, endchar = endchar, DNA = DNA, AA = AA)
   residues <- alphadetect(x, residues = residues, gapchar = gapchar, endchar = endchar)
   if(is.null(name)) name <- unname(sapply(match.call()[2], deparse))
-  #cat(sapply(match.call()[2], deparse))
-  #cat(str(deparse(match.call()[2])))
   nres <- length(residues)
   n <- nrow(x)
   m <- ncol(x)
@@ -81,14 +221,12 @@ derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
   transitions <- c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
   if(is.null(seqweights)){
     seqweights <- rep(1, n)
+  }else if(identical(seqweights, "Gerstein")){
+    xlist <- unalign(x, gapchar = gapchar)
+    qds <- kdistance(xlist, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+    guidetree <- as.dendrogram(hclust(qds, method = "average"))
+    seqweights <- weight(guidetree, method = "Gerstein")[names(xlist)]
   }
-  # }else{
-  #   if(round(sum(seqweights), 2) != n){
-  #     if(round(sum(seqweights), 2) == 1){
-  #       seqweights <- seqweights * n
-  #     }else stop("invalid seqweights argument")
-  #   }
-  # }
   if(length(seqweights) != n) stop("invalid seqweights argument")
   # background emission probabilities (qe)
   if(is.null(qe)){
@@ -117,8 +255,8 @@ derive.PHMM <- function(x, seqweights = NULL, residues = NULL,
   if(identical(inserts, "threshold") | n < 10){
     inserts <- apply(gapweights, 2, sum) > threshold * n
   }else if(identical(inserts, "map")){
-    inserts <- !map(x, residues = residues, gapchar = gapchar, endchar = endchar,
-                    seqweights = seqweights, pseudocounts = pseudocounts,
+    inserts <- !map(x, seqweights = seqweights, residues = residues,
+                    gapchar = gapchar, endchar = endchar, pseudocounts = pseudocounts,
                     qa = qa, qe = qe)
     if(sum(!inserts) < 3) inserts <- apply(gapweights, 2, sum) > threshold * n
   }else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){

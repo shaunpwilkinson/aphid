@@ -37,107 +37,130 @@
 #' z <- align(x, y)
 #'
 #' @name align
-align <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", inserts = "map", lambda = 0,
-                  threshold = 0.5, quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
-                  pseudocounts = "background", ...){
+align <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
+                  maxiter = if(refine == "Viterbi") 10 else 100,
+                  inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07, DI = FALSE, ID = FALSE,
+                  residues = NULL, gapchar = "-", pseudocounts = "background",
+                  qa = NULL, qe = NULL, quiet = FALSE, ...){
   UseMethod("align")
 }
 
 #' @rdname align
-align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", inserts = "map",
-                         lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
-                         gapchar = "-", k = 5, pseudocounts = "background", ...){
+align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
+                        maxiter = if(refine == "Viterbi") 10 else 100,
+                        inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07, DI = FALSE, ID = FALSE,
+                        residues = NULL, gapchar = "-", pseudocounts = "background",
+                        qa = NULL, qe = NULL, quiet = FALSE, ...){
   if(is.list(sequences)){
-    align.list(sequences, model = model, seqweights = seqweights, refine = refine, inserts = inserts,
-               lambda = lambda, threshold = threshold, quiet = quiet, residues = residues,
-               gapchar = gapchar, k = k, pseudocounts = pseudocounts, ... = ...)
+    align.list(sequences, model = model, seqweights = seqweights, refine = refine, k = k, maxiter = maxiter,
+               inserts = inserts, lambda = lambda, threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
+               residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
+               qa = qa, qe = qe, quiet = quiet, ... = ...)
   }else{
-    align.default(sequences, model = model, residues = residues, quiet = quiet,
-                  gapchar = gapchar, pseudocounts = pseudocounts, ... = ...)
+    align.default(sequences, model = model, residues = residues, gapchar = gapchar,
+                  pseudocounts = pseudocounts, quiet = quiet, ... = ...)
   }
 }
 
 #' @rdname align
-align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", inserts = "map",
-                         lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
-                         gapchar = "-", k = 5, pseudocounts = "background", ...){
+align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
+                        maxiter = if(refine == "Viterbi") 10 else 100,
+                        inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07, DI = FALSE, ID = FALSE,
+                        residues = NULL, gapchar = "-", pseudocounts = "background",
+                        qa = NULL, qe = NULL, quiet = FALSE, ...){
   if(is.list(sequences)){
-    align.list(sequences, model = model, seqweights = seqweights, refine = refine, inserts = inserts,
-               lambda = lambda, threshold = threshold, quiet = quiet, residues = residues,
-               gapchar = gapchar, k = k, pseudocounts = pseudocounts, ... = ...)
+    align.list(sequences, model = model, seqweights = seqweights, refine = refine, k = k, maxiter = maxiter,
+               inserts = inserts, lambda = lambda, threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
+               residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
+               qa = qa, qe = qe, quiet = quiet, ... = ...)
   }else{
-    align.default(sequences, model = model, residues = residues, quiet = quiet,
-                  gapchar = gapchar, pseudocounts = pseudocounts, ... = ...)
+    align.default(sequences, model = model, residues = residues, gapchar = gapchar,
+                  pseudocounts = pseudocounts, quiet = quiet, ... = ...)
   }
 }
 
 #' @rdname align
-align.list <- function(sequences, model = NULL, seqweights = "Gerstein",
-                       refine = "Viterbi", inserts = "map",
-                       lambda = 0, threshold = 0.5, quiet = FALSE, residues = NULL,
-                       gapchar = "-", k = 5, pseudocounts = "background", ...){
-  nsq <- length(sequences)
+align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
+                       refine = "Viterbi", maxiter = if(refine == "Viterbi") 10 else 100,
+                       inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07, DI = FALSE, ID = FALSE,
+                       residues = NULL, gapchar = "-",
+                       pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...){
+  nseq <- length(sequences)
   DNA <- is.DNA(sequences)
   AA <- is.AA(sequences)
+  if(DNA) class(sequences) <- "DNAbin" else if(AA) class(sequences) <- "AAbin"
   residues <- alphadetect(sequences, residues = residues, gapchar = gapchar)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
   if(is.null(model)){
-    if(nsq == 2){
-      align.default(sequences, model = NULL, residues = residues, quiet = quiet,
-                    gapchar = gapchar, pseudocounts = pseudocounts, ... = ...)
+    if(nseq == 2){
+      align.default(sequences, model = NULL, residues = residues,  gapchar = gapchar,
+                    pseudocounts = pseudocounts, quiet = quiet,... = ...)
     }
     if(!quiet) cat("Calculating pairwise distances\n")
-    tmp <- names(sequences)
-    names(sequences) <- paste0("S", 1:nsq)
-    if(DNA) class(sequences) <- "DNAbin" else if(AA) class(sequences) <- "AAbin"
-    qds <- kdistance(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-    if(!quiet) cat("Building guide tree\n")
-    guidetree <- as.dendrogram(hclust(qds, method = "average"))
+    if(nseq > 30){
+      nseeds <- min(nseq, 30 + ceiling(log(nseq, 2)))
+      seeds <- sample(1:length(sequences), size = nseeds)
+    }else seeds <- seq_along(sequences)
+
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")
-      seqweights <- weight(guidetree, method = "Gerstein")[names(sequences)]
+      qds <- kdistance(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+      guidetree <- as.dendrogram(hclust(qds, method = "average"))
+      myseqweights <- weight(guidetree, method = "Gerstein")[names(sequences)]
     }else if(is.null(seqweights)){
-      seqweights <- rep(1, nsq)
+      myseqweights <- rep(1, nseq)
     }
-    # else{
-    #   if(round(sum(seqweights), 2) != nsq){
-    #     if(round(sum(seqweights), 2) == 1){
-    #       seqweights <- seqweights * nsq
-    #     }else stop("invalid seqweights argument")
-    #   }
-    # }
-    if(length(seqweights) != nsq) stop("invalid seqweights argument")
-    ## add embed step here
-    newick <- write.dendrogram(guidetree, edges = FALSE)
-    newick <- gsub(";", "", newick)
-    newick <- gsub("\\(", "align\\(", newick)
-    newick <- gsub("\\)", ", ... = ...\\)", newick)
-    #if(type == "global") newick <- gsub("\\)", ", type='global'\\)", newick)
-    if(!quiet) cat("Building initial alignment\n")
+    phmm <- derive.PHMM.list(sequences, seeds = seeds, refine = refine, maxiter = maxiter,
+                                  seqweights = myseqweights, k = k, residues = residues, gapchar = gapchar,
+                                  inserts = inserts, lambda = lambda, threshold = threshold, deltaLL = deltaLL,
+                                  DI = DI, ID = ID, pseudocounts = pseudocounts, logspace = TRUE, qa = qa, qe = qe,
+                                  quiet = quiet, ... = ...)
+    # tmp <- names(sequences)
+    # names(sequences) <- paste0("S", 1:nseq)
+    #
+    #
+    # if(!quiet) cat("Building guide tree\n")
 
-    ### gets messy here
-    msa1 <- with(sequences, eval(parse(text = newick)))
-    if(!quiet) cat("Deriving profile hidden Markov model\n")
-    omniphmm <- derive.PHMM(msa1, seqweights = seqweights, pseudocounts = pseudocounts,
-                            inserts = inserts, lambda = lambda, threshold = threshold)
-    if(refine %in% c("Viterbi", "BaumWelch")){
-      if(!quiet) cat("Refining model\n")
-      finalphmm <- train(omniphmm, sequences, method = refine, seqweights = seqweights, quiet = quiet, ... = ...)
-    }else if (refine == "none"){
-      finalphmm <- omniphmm
-    }else stop("Argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none' (case sensitive).")
-    if(!quiet) cat("Aligning sequences to model\n")
-    if(!is.null(tmp)) names(sequences) <- tmp
-    res <- align(sequences, model = finalphmm, ... = ...)
+
+    # # else{
+    # #   if(round(sum(seqweights), 2) != nseq){
+    # #     if(round(sum(seqweights), 2) == 1){
+    # #       seqweights <- seqweights * nseq
+    # #     }else stop("invalid seqweights argument")
+    # #   }
+    # # }
+    # if(length(seqweights) != nseq) stop("invalid seqweights argument")
+    # ## add embed step here
+    # newick <- write.dendrogram(guidetree, edges = FALSE)
+    # newick <- gsub(";", "", newick)
+    # newick <- gsub("\\(", "align\\(", newick)
+    # newick <- gsub("\\)", ", ... = ...\\)", newick)
+    # #if(type == "global") newick <- gsub("\\)", ", type='global'\\)", newick)
+    # if(!quiet) cat("Building initial alignment\n")
+    #
+    # ### gets messy here
+    # msa1 <- with(sequences, eval(parse(text = newick)))
+    # if(!quiet) cat("Deriving profile hidden Markov model\n")
+    # omniphmm <- derive.PHMM(msa1, seqweights = seqweights, pseudocounts = pseudocounts,
+    #                         inserts = inserts, lambda = lambda, threshold = threshold)
+    # if(refine %in% c("Viterbi", "BaumWelch")){
+    #   if(!quiet) cat("Refining model\n")
+    #   finalphmm <- train(omniphmm, sequences, method = refine, seqweights = seqweights, quiet = quiet, ... = ...)
+    # }else if (refine == "none"){
+    #   finalphmm <- omniphmm
+    # }else stop("Argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none' (case sensitive).")
+    # if(!quiet) cat("Aligning sequences to model\n")
+    # if(!is.null(tmp)) names(sequences) <- tmp
+    res <- align.list(sequences, model = phmm, ... = ...)
     if(!quiet) cat("Done\n")
     return(res)
   }else{
     #note changes here also need apply to 'train'
     stopifnot(class(model) == "PHMM")
-    DNA <- is.DNA(sequences)
-    AA <- is.AA(sequences)
-    gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
+    # DNA <- is.DNA(sequences)
+    # AA <- is.AA(sequences)
+    # gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
     if(!is.list(sequences)){
       if(is.null(dim(sequences))){
         seqname <- deparse(substitute(sequences))
@@ -148,7 +171,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein",
       }
     }
     l <- model$size
-    nseq <- length(sequences)
+    #nseq <- length(sequences)
     out <- matrix(nrow = nseq, ncol = 2 * l + 1)
     rownames(out) <- attr(sequences, "names")
     colnames(out) <- rep("I", 2 * l + 1)
@@ -323,7 +346,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
       rm(tmp) # the old switcharoo
     }
     n <- nrow(sequences)
-    z <- derive.PHMM(sequences, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
+    z <- derive.PHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     l <- z$size
     alignment <- Viterbi(z, model, ... = ...) ### changed from alig
     path <- alignment$path
@@ -408,8 +431,8 @@ align.default <- function(sequences, model, pseudocounts = "background",
   }else if(nrow(sequences) > 1 & nrow(model) > 1){
     nx <- nrow(sequences)
     ny <- nrow(model)
-    zx <- derive.PHMM(sequences, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
-    zy <- derive.PHMM(model, pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
+    zx <- derive.PHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
+    zy <- derive.PHMM(model,  seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     lx <- zx$size
     ly <- zy$size
     alignment <- Viterbi(zx, zy, ... = ...)

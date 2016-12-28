@@ -6,8 +6,8 @@
 #' @param file the name of the file to read the data from.
 #' @param text character string: if a text argument is provided instead of a
 #' file path then data are read from the value of text via a text connection.
-#' @param strip.edges a logical value indicating whether edge weights
-#' provided in the Newick string should be ignored.
+#' @param edges a logical value indicating whether edge weights
+#' provided in the Newick string should be retained (defaults to TRUE).
 #' @param ... further arguments to be passed to \code{scan}.
 #' @details discards comments enclosed in square brackets
 #'
@@ -20,7 +20,7 @@
 #' mydendrogram <- read.dendrogram(text = mynewick)
 #' plot(mydendrogram)
 #'
-read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
+read.dendrogram <- function(file = "", text = NULL, edges = TRUE, ...){
   if(!is.null(text)){
     if(!is.character(text))
       stop("argument 'text' must be of mode character.")
@@ -51,7 +51,7 @@ read.dendrogram <- function(file = "", text = NULL, strip.edges = FALSE, ...){
     xsplit <- xsplit[-comments]
     x <- paste0(xsplit, collapse = "")
   }
-  if(strip.edges) {
+  if(!edges) {
     x <- gsub(":([-0-9Ee.]+)", "", x)
     has.edges <- FALSE
   }else{

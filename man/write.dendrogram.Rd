@@ -4,8 +4,7 @@
 \alias{write.dendrogram}
 \title{Write dendrogram as a Newick string.}
 \usage{
-write.dendrogram(x, file = "", append = FALSE, edges = TRUE,
-  digits = NULL)
+write.dendrogram(x, file = "", append = FALSE, edges = TRUE, ...)
 }
 \arguments{
 \item{x}{an object of class \code{"dendrogram"}.}
@@ -16,11 +15,11 @@ If no file path is specified or \code{file = ""} the result will be printed to t
 \item{append}{a logical value indicating whether the output should be appended to the file.
 If \code{append = FALSE} the contents of the file will be overwritten (the default setting).}
 
-\item{strip.edges}{a logical value indicating whether edge weights should be
-removed from the output.}
+\item{edges}{a logical value indicating whether edge weights should be
+included in the output string.}
 
-\item{dec.places}{an integer incidating how many decimal places the edge weights should
-be rounded to.}
+\item{...}{further arguments to be passed to \code{format} to specify the numbering style
+of the edge weights (assuming edges = TRUE).}
 }
 \description{
 Writes a dendrogram object to a file or connection in Newick

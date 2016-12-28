@@ -8,18 +8,17 @@
 #' If no file path is specified or \code{file = ""} the result will be printed to the console.
 #' @param append a logical value indicating whether the output should be appended to the file.
 #' If \code{append = FALSE} the contents of the file will be overwritten (the default setting).
-#' @param strip.edges a logical value indicating whether edge weights should be
-#' removed from the output.
-#' @param dec.places an integer incidating how many decimal places the edge weights should
-#' be rounded to.
+#' @param edges a logical value indicating whether edge weights should be
+#' included in the output string.
+#' @param ... further arguments to be passed to \code{format} to specify the numbering style
+#' of the edge weights (assuming edges = TRUE).
 #' @seealso \code{\link{read.dendrogram}} to create a \code{"dendrogram"} object from a
 #' text file.
 #' @examples arrests.hc <- hclust(dist(USArrests[1:6,]), "ave")
 #' arrests.den <- as.dendrogram(arrests.hc)
 #' write.dendrogram(arrests.den)
 #'
-write.dendrogram <- function(x, file = "", append = FALSE,
-                             edges = TRUE, digits = NULL){#dec.places = 2){
+write.dendrogram <- function(x, file = "", append = FALSE, edges = TRUE, ...){
   if(!(inherits(x, "dendrogram"))) stop("Input object must be of class 'dendrogram'")
   renameLeaves <- function(y){
     if(is.leaf(y)){
@@ -45,7 +44,7 @@ write.dendrogram <- function(x, file = "", append = FALSE,
   addEdges <- function(y){
     if(is.list(y)){
       y[] <- lapply(y, function(z){
-        attr(z, "edge") <- format(attr(y, "height") - attr(z, "height"), digits = digits)#scientific = FALSE)
+        attr(z, "edge") <- format(attr(y, "height") - attr(z, "height"), ... = ...)#scientific = FALSE)
         z
       })
       attributes(y)[names(attributes(y)) != "edge"] <- NULL

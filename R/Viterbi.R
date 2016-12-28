@@ -41,7 +41,7 @@
 #' y <- c("P", "A", "W", "H", "E", "A", "E")
 #' Viterbi(x, y,  d = 8, e = 2)
 #'
-Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal",
+Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
                     odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, windowspace = "all",
                     DI = TRUE, ID = TRUE, cpp = TRUE){
   UseMethod("Viterbi")
@@ -49,7 +49,7 @@ Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal
 
 #' @rdname Viterbi
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
-                         type = "semiglobal", odds = TRUE, offset = 0,
+                         type = "global", odds = TRUE, offset = 0,
                          windowspace = "all", DI = TRUE, ID = TRUE, cpp = TRUE){
   if(type != "global" & !odds) stop("Non-odds option only available for global alignment")
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
@@ -614,7 +614,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
 
 
 #' @rdname Viterbi
-Viterbi.default <- function(x, y, type = "semiglobal", d = 8, e = 2,
+Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
                             residues = NULL, S = NULL,
                             windowspace = "all", offset = 0, cpp = TRUE){
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")

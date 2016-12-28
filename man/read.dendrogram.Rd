@@ -4,7 +4,7 @@
 \alias{read.dendrogram}
 \title{Read dendrogram from parenthetic text}
 \usage{
-read.dendrogram(file = "", text = NULL, strip.edges = FALSE, ...)
+read.dendrogram(file = "", text = NULL, edges = TRUE, ...)
 }
 \arguments{
 \item{file}{the name of the file to read the data from.}
@@ -12,8 +12,8 @@ read.dendrogram(file = "", text = NULL, strip.edges = FALSE, ...)
 \item{text}{character string: if a text argument is provided instead of a
 file path then data are read from the value of text via a text connection.}
 
-\item{strip.edges}{a logical value indicating whether edge weights
-provided in the Newick string should be ignored.}
+\item{edges}{a logical value indicating whether edge weights
+provided in the Newick string should be retained (defaults to TRUE).}
 
 \item{...}{further arguments to be passed to \code{scan}.}
 }

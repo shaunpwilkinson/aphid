@@ -31,6 +31,7 @@ kdistance.AAbin <- function(x, k = 5, alpha = "Dayhoff6", ...){
 
 kdistance.DNAbin <- function(x, k = 5, alpha = NULL, ...){
   if(min(sapply(x, length)) < k) stop("minimum sequence length is shorter than k")
+  x <- lapply(x, function(y) y[y != as.raw(2)])
   counts <- kcount_DNA(x, k = k)
   denoms <- sapply(x, length) - k + 1
   freqs <- counts/denoms
