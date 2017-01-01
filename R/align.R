@@ -116,41 +116,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
                                   inserts = inserts, lambda = lambda, threshold = threshold, deltaLL = deltaLL,
                                   DI = DI, ID = ID, pseudocounts = pseudocounts, logspace = TRUE, qa = qa, qe = qe,
                                   quiet = quiet, ... = ...)
-    # tmp <- names(sequences)
-    # names(sequences) <- paste0("S", 1:nseq)
-    #
-    #
-    # if(!quiet) cat("Building guide tree\n")
-
-
-    # # else{
-    # #   if(round(sum(seqweights), 2) != nseq){
-    # #     if(round(sum(seqweights), 2) == 1){
-    # #       seqweights <- seqweights * nseq
-    # #     }else stop("invalid seqweights argument")
-    # #   }
-    # # }
-    # if(length(seqweights) != nseq) stop("invalid seqweights argument")
-    # ## add embed step here
-    # newick <- write.dendrogram(guidetree, edges = FALSE)
-    # newick <- gsub(";", "", newick)
-    # newick <- gsub("\\(", "align\\(", newick)
-    # newick <- gsub("\\)", ", ... = ...\\)", newick)
-    # #if(type == "global") newick <- gsub("\\)", ", type='global'\\)", newick)
-    # if(!quiet) cat("Building initial alignment\n")
-    #
-    # ### gets messy here
-    # msa1 <- with(sequences, eval(parse(text = newick)))
-    # if(!quiet) cat("Deriving profile hidden Markov model\n")
-    # omniphmm <- derive.PHMM(msa1, seqweights = seqweights, pseudocounts = pseudocounts,
-    #                         inserts = inserts, lambda = lambda, threshold = threshold)
-    # if(refine %in% c("Viterbi", "BaumWelch")){
-    #   if(!quiet) cat("Refining model\n")
-    #   finalphmm <- train(omniphmm, sequences, method = refine, seqweights = seqweights, quiet = quiet, ... = ...)
-    # }else if (refine == "none"){
-    #   finalphmm <- omniphmm
-    # }else stop("Argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none' (case sensitive).")
-    # if(!quiet) cat("Aligning sequences to model\n")
+    if(!quiet) cat("Aligning sequences to model\n")
     # if(!is.null(tmp)) names(sequences) <- tmp
     res <- align.list(sequences, model = phmm, ... = ...)
     if(!quiet) cat("Done\n")

@@ -194,6 +194,7 @@ derive.PHMM.list <- function(x, seeds = "all", refine = "Viterbi",
   }else if (refine == "NONE"){
     finalphmm <- omniphmm
   }else stop("Argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none'.")
+  if(!quiet) cat("Done\n")
   return(finalphmm)
 }
 
@@ -425,13 +426,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
   if(is.null(seqweights)){
     seqweights <- rep(1, n)
   }
-  # else{
-  #   if(round(sum(seqweights), 2) != n){
-  #     if(round(sum(seqweights), 2) == 1){
-  #       seqweights <- seqweights * n
-  #     }else stop("invalid seqweights argument")
-  #   }
-  # }
+
   if(length(seqweights) != n) stop("invalid seqweights argument")
   if(AA){
     ecs <- apply(x, 2, tabulate.AA, ambiguities = TRUE, seqweights = seqweights)

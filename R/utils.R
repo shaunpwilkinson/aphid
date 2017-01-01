@@ -209,7 +209,7 @@ disambiguate.DNA <- function(a, probs = rep(0.25, 4), random = TRUE){
       if(random){
         sample(as.raw(c(136, 72)), size = 1, prob = probs[c(1, 3)]) # unknown A or G
       }else{
-        as.raw(c(136, 72))[whichmax(probs[c(1, 3)])]
+        as.raw(c(136, 72))[which.max(probs[c(1, 3)])]
       }
     }else{
       return(a) #known base A or G
@@ -219,7 +219,7 @@ disambiguate.DNA <- function(a, probs = rep(0.25, 4), random = TRUE){
       if(random){
         sample(as.raw(c(40, 24)), size = 1, prob = probs[c(2, 4)]) # unknown base C or T
       }else{
-        as.raw(c(40, 24))[whichmax(probs[c(2, 4)])]
+        as.raw(c(40, 24))[which.max(probs[c(2, 4)])]
       }
     }else{
       return(a) # known base C or T
@@ -229,81 +229,95 @@ disambiguate.DNA <- function(a, probs = rep(0.25, 4), random = TRUE){
     if(random){
       sample(as.raw(c(136, 40)), size = 1, prob = probs[1:2])
     }else{
-      as.raw(c(136, 40))[whichmax(probs[c(1, 2)])]
+      as.raw(c(136, 40))[which.max(probs[c(1, 2)])]
     }
   }else if(a == 144){ # W (A or T)
     if(random){
       sample(as.raw(c(136, 24)), size = 1, prob = probs[c(1, 4)])
     }else{
-      as.raw(c(136, 24))[whichmax(probs[c(1, 4)])]
+      as.raw(c(136, 24))[which.max(probs[c(1, 4)])]
     }
   }else if(a == 96){ # S (G or C)
     if(random){
       sample(as.raw(c(40, 72)), size = 1, prob = probs[c(2, 3)])
     }else{
-      as.raw(c(40, 72))[whichmax(probs[c(2, 3)])]
+      as.raw(c(40, 72))[which.max(probs[c(2, 3)])]
     }
   }else if(a == 80){ # K (G or T)
     if(random){
       sample(as.raw(c(72, 24)), size = 1, prob = probs[c(3, 4)])
     }else{
-      as.raw(c(72, 24))[whichmax(probs[c(3, 4)])]
+      as.raw(c(72, 24))[which.max(probs[c(3, 4)])]
     }
   }else if(a == 224){ # V (A or C or G)
     if(random){
       sample(as.raw(c(136, 40, 72)), size = 1, prob = probs[-4])
     }else{
-      as.raw(c(136, 40, 72))[whichmax(probs[-4])]
+      as.raw(c(136, 40, 72))[which.max(probs[-4])]
     }
   }else if(a == 176){
     if(random){
       sample(as.raw(c(136, 40, 24)), size = 1, prob = probs[-3]) # H (A or C or T)
     }else{
-      as.raw(c(136, 40, 24))[whichmax(probs[-3])]
+      as.raw(c(136, 40, 24))[which.max(probs[-3])]
     }
   }else if(a == 208){
     if(random){
       sample(as.raw(c(136, 72, 24)), size = 1, prob = probs[-2]) # D (A or G or T)
     }else{
-      as.raw(c(136, 72, 24))[whichmax(probs[-2])]
+      as.raw(c(136, 72, 24))[which.max(probs[-2])]
     }
   }else if(a == 112){
     if(random){
       sample(as.raw(c(40, 72, 24)), size = 1, prob = probs[-1]) # B (C or G or T)
     }else{
-      as.raw(c(40, 72, 24))[whichmax(probs[-1])]
+      as.raw(c(40, 72, 24))[which.max(probs[-1])]
     }
   }else if(a == 240){
     if(random){
       sample(as.raw(c(136, 40, 72, 24)), size = 1, prob = probs) #N
     }else{
-      as.raw(c(136, 40, 72, 24))[whichmax(probs)]
+      as.raw(c(136, 40, 72, 24))[which.max(probs)]
     }
   }else if(a == 2 | a == 4){
     return(a)
   }else stop("invalid byte for class 'DNAbin'")
 }
 
-disambiguate.AA <- function(a, probs = rep(0.05, 20)){
+disambiguate.AA <- function(a, probs = rep(0.05, 20), random = TRUE){
   # a is a raw byte in AAbin format
   guide <- as.raw(c(65:90, 42, 45)) #length = 28
   nonambigs <- guide[1:25][-c(2, 10, 15, 21, 24)]
    #structure(guide, class = "AAbin")
   if(a == guide[24]){
-    sample(nonambigs, size = 1, prob = probs)
+    if(random){
+      sample(nonambigs, size = 1, prob = probs)
+    }else{
+      return(nonambigs[which.max(probs)])
+    }
   }else if(a == guide[2]){# B
-    sample(nonambigs[c(3, 12)], size = 1, prob = probs[c(3, 12)]) # D or N
+    if(random){
+      sample(nonambigs[c(3, 12)], size = 1, prob = probs[c(3, 12)]) # D or N
+    }else{
+      return(nonambigs[which.max(probs[c(3, 12)])])
+    }
   }else if(a == guide[10]){# J
-    sample(nonambigs[c(8, 10)], size = 1, prob = probs[c(8, 10)]) # I or L
+    if(random){
+      sample(nonambigs[c(8, 10)], size = 1, prob = probs[c(8, 10)]) # I or L
+    }else{
+      return(nonambigs[which.max(probs[c(8, 10)])])
+    }
   }else if(a == guide[26]){ # Z
-    sample(nonambigs[c(4, 14)], size = 1, prob = probs[c(4, 14)]) # E or Q
+    if(random){
+      sample(nonambigs[c(4, 14)], size = 1, prob = probs[c(4, 14)]) # E or Q
+    }else{
+      return(nonambigs[which.max(probs[c(4, 14)])])
+    }
   }else if(a == guide[15]){# O (Pyrrolysine)
     return(nonambigs[9]) # K (Lysine)
   }else if(a == guide[21]){# U (Selenocysteine)
     return(nonambigs[2]) #C )(Cysteine)
-  }else if(a == guide[26]){ # Z
-    sample(nonambigs[c(4, 14)], size = 1, prob = probs[c(4, 14)]) # E or Q
-  }else if(a == guide[27] | a == guide[27]) {
+  }else if(a == guide[27] | a == guide[28]) {
     return(NULL)
   }else stop("invalid byte for class 'AAbin'")
 }

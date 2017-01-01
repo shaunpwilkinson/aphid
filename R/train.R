@@ -48,19 +48,18 @@
 #'
 train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
                   maxiter = if(method == "Viterbi") 10 else 100,
-                  quiet = FALSE, deltaLL = 1E-07, modelend = FALSE, pseudocounts = "Laplace",
+                  deltaLL = 1E-07, modelend = FALSE, pseudocounts = "Laplace",
                   gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
-                  threshold = 0.5, lambda = 0, ...){
+                  threshold = 0.5, lambda = 0, quiet = FALSE,...){
   UseMethod("train")
 }
 
 #' @rdname train
-train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
+train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
                        maxiter = if(method == "Viterbi") 10 else 100,
-                       logspace = "autodetect", quiet = FALSE, deltaLL = 1E-07,
-                       pseudocounts = "background", gapchar = "-",
-                       fixqa = FALSE, fixqe = FALSE,
-                       inserts = "map", threshold = 0.5, lambda = 0, ...){
+                       deltaLL = 1E-07, pseudocounts = "background",
+                       gapchar = "-", fixqa = FALSE, fixqe = FALSE,
+                       inserts = "map", threshold = 0.5, lambda = 0, quiet = FALSE, ...){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   #note any changes below also need apply to align2phmm
   DNA <- is.DNA(y)
@@ -68,7 +67,6 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
   DI <- !all(x$A["DI", ] == if(logspace) -Inf else 0)
   ID <- !all(x$A["ID", ] == if(logspace) -Inf else 0)
   method <- toupper(method)
-  # DNA <- inherits(y, "DNAbin")
   gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
   if(!is.list(y)){
     if(DNA | AA){
@@ -144,18 +142,19 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     if(!ID) transtotals[7] <- 0
     x$qa <- log(transtotals/sum(transtotals)) ### needs tidying up
   }
-  out <- x
+
   if(method  == "VITERBI"){
-    alignment <- align(y, out, logspace = TRUE, ... = ...)
+    alignment <- align(y, model = x, logspace = TRUE, ... = ...)
     #scores <- attr(alignment, "score")
     #maxscore <- attr(alignment, "score")
     for(i in 1:maxiter){
       if(!quiet) cat("Iteration", i, "\n")
       out <- derive.PHMM(alignment, seqweights = seqweights, residues = residues,
+                         gapchar = gapchar, DI = DI, ID = ID,
                         inserts = inserts, lambda = lambda, threshold = threshold,
                         pseudocounts = pseudocounts, logspace = TRUE,
-                        qa = if(fixqa) out$qa else NULL,
-                        qe = if(fixqe) out$qe else NULL) ### add others too, could just use ... = ...?
+                        qa = if(fixqa) x$qa else NULL,
+                        qe = if(fixqe) x$qe else NULL)
       ### what about DI and ID
       newalig <- align(y, out, logspace = TRUE, ... = ...)
       #score <- attr(newalig, "score")
@@ -181,23 +180,24 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     #stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
   }else if(method == "BAUMWELCH"){
     if(DNA){
-      rownames(x$E) <- toupper(rownames(x$E))
-      NUCorder <- sapply(rownames(x$E), match, c("A", "T", "G", "C"))
+      NUCorder <- sapply(toupper(rownames(x$E)), match, c("A", "T", "G", "C"))
       x$E <- x$E[NUCorder, ]
-      if(!(identical(rownames(x$E), c("A", "T", "G", "C")))){
+      x$qe <- x$qe[NUCorder]
+      if(!(identical(toupper(rownames(x$E)), c("A", "T", "G", "C")))){
         stop("Invalid model for DNA, residue alphabet does not correspond to
               nucleotide alphabet")
       }
-      y <- encode.DNA(y, arity = 4, random = FALSE, na.rm = TRUE)
+      y <- encode.DNA(y, arity = 4, probs = exp(x$qe), random = FALSE, na.rm = TRUE)
     }else if(AA){
-      rownames(x$E) <- toupper(rownames(x$E))
-      PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
+      #rownames(x$E) <- toupper(rownames(x$E))
+      PFAMorder <- sapply(toupper(rownames(x$E)), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
       x$E <- x$E[PFAMorder, ]
-      if(!(identical(rownames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
-        stop("Invalid model residue alphabet does not correspond to
+      x$qe <- x$qe[PFAMorder]
+      if(!(identical(toupper(rownames(x$E)), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
+        stop("Invalid model for AA, residue alphabet does not correspond to
               20-letter amino acid alphabet")
       }
-      y <- encode.AA(y, arity = 20, random = FALSE, na.rm = TRUE)
+      y <- encode.AA(y, arity = 20, probs = exp(x$qe), random = FALSE, na.rm = TRUE)
     }else{
       y <- lapply(y, function(e) match(e, residues) - 1)
       if(any(is.na(y))) stop("Residues in sequence(s) are missing from the model")
@@ -228,10 +228,11 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     Apseudocounts[1:3, 1] <- Apseudocounts[c(1, 4, 7), l + 1] <- 0
     if(!DI) Apseudocounts["DI", ] <- 0
     if(!ID) Apseudocounts["ID", ] <- 0
-    E <- out$E
-    A <- out$A
-    qe <- out$qe
+    E <- x$E
+    A <- x$A
+    qe <- x$qe
     LL <- -1E12
+    out <- x
     for(i in 1:maxiter){
       tmpA <- Apseudocounts
       tmpE <- Epseudocounts
@@ -289,7 +290,9 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           tmpqe <- tmpqe + tmpqej * seqweights[j]
         }
       }
+      tmpE <- t(tmpE)
       tmpE <- log(tmpE/apply(tmpE, 1, sum))
+      tmpE <- t(tmpE)
       tmpqe <- log(tmpqe/sum(tmpqe))
       tmpA <- t(tmpA)
       for(X in c(1, 4, 7)) tmpA[, X:(X + 2)] <- log(tmpA[, X:(X + 2)]/apply(tmpA[, X:(X + 2)], 1, sum))
@@ -310,12 +313,32 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           out$E <- exp(out$E)
           out$qe <- exp(out$qe)
         }
+        if(DNA){
+          out$E <- out$E[NUCorder, ]
+          out$qe <- out$qe[NUCorder]
+        }else if(AA){
+          out$E <- out$E[PFAMorder, ]
+          out$qe <- out$qe[PFAMorder]
+        }
         if(!quiet) cat("Convergence threshold reached after", i, "EM iterations\n")
         return(out)
       }
       LL <- logPx
     }
-    stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
+    warning("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
+    if(!logspace){
+      out$A <- exp(out$A)
+      out$E <- exp(out$E)
+      out$qe <- exp(out$qe)
+    }
+    if(DNA){
+      out$E <- out$E[NUCorder, ]
+      out$qe <- out$qe[NUCorder]
+    }else if(AA){
+      out$E <- out$E[PFAMorder, ]
+      out$qe <- out$qe[PFAMorder]
+    }
+    return(out)
   }else stop("Invalid argument given for 'method'")
 
 }

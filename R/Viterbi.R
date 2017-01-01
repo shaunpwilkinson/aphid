@@ -43,14 +43,14 @@
 #'
 Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
                     odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, windowspace = "all",
-                    DI = TRUE, ID = TRUE, cpp = TRUE){
+                    DI = FALSE, ID = FALSE, cpp = TRUE){
   UseMethod("Viterbi")
 }
 
 #' @rdname Viterbi
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "global", odds = TRUE, offset = 0,
-                         windowspace = "all", DI = TRUE, ID = TRUE, cpp = TRUE){
+                         windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE){
   if(type != "global" & !odds) stop("Non-odds option only available for global alignment")
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   if(!(type %in% c("global", "semiglobal", "local"))) stop("invalid type")

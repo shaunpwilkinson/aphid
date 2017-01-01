@@ -7,17 +7,17 @@
 \alias{Viterbi.default}
 \title{Find the optimal sequence path recursively}
 \usage{
-Viterbi(x, y, qe = NULL, logspace = "autodetect", type = "semiglobal",
+Viterbi(x, y, qe = NULL, logspace = "autodetect", type = "global",
   odds = TRUE, offset = 0, d = 8, e = 2, S = NULL,
-  windowspace = "all", DI = TRUE, ID = TRUE, cpp = TRUE)
+  windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE)
 
 \method{Viterbi}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
-  type = "semiglobal", odds = TRUE, offset = 0, windowspace = "all",
-  DI = TRUE, ID = TRUE, cpp = TRUE)
+  type = "global", odds = TRUE, offset = 0, windowspace = "all",
+  DI = FALSE, ID = FALSE, cpp = TRUE)
 
 \method{Viterbi}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
 
-\method{Viterbi}{default}(x, y, type = "semiglobal", d = 8, e = 2,
+\method{Viterbi}{default}(x, y, type = "global", d = 8, e = 2,
   residues = NULL, S = NULL, windowspace = "all", offset = 0,
   cpp = TRUE)
 }

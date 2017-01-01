@@ -4,21 +4,17 @@
 \alias{forward}
 \alias{forward.HMM}
 \alias{forward.PHMM}
-\alias{forward.default}
 \title{Forward algorithm.}
 \usage{
 forward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
-  windowspace = "all", type = "global", eta = 0.01, DI = TRUE,
-  ID = TRUE, cpp = TRUE)
+  windowspace = "all", type = "global", eta = 0.01, DI = FALSE,
+  ID = FALSE, cpp = TRUE)
 
 \method{forward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
-  type = "global", odds = TRUE, windowspace = "all", DI = TRUE,
-  ID = TRUE, cpp = TRUE)
+  type = "global", odds = TRUE, windowspace = "all", DI = FALSE,
+  ID = FALSE, cpp = TRUE)
 
 \method{forward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
-
-\method{forward}{default}(x, y, type = "global", d = 8, e = 2, S = NULL,
-  windowspace = "all")
 }
 \arguments{
 \item{x}{an object of class \code{PHMM} or \code{HMM}.}

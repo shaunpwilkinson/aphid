@@ -32,6 +32,7 @@ mynewick <- "(A:1,(B:0.5,C:0.2):0.6);"
 mydendrogram <- read.dendrogram(text = mynewick)
 plot(mydendrogram)
 
+
 }
 \seealso{
 \code{\link{write.dendrogram}} to write an object of

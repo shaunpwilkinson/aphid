@@ -8,15 +8,15 @@
 \usage{
 train(x, y, method = "Viterbi", seqweights = NULL,
   logspace = "autodetect", maxiter = if (method == "Viterbi") 10 else 100,
-  quiet = FALSE, deltaLL = 1e-07, modelend = FALSE,
-  pseudocounts = "Laplace", gapchar = "-", fixqa = FALSE, fixqe = FALSE,
-  inserts = "map", threshold = 0.5, lambda = 0, ...)
+  deltaLL = 1e-07, modelend = FALSE, pseudocounts = "Laplace",
+  gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
+  threshold = 0.5, lambda = 0, quiet = FALSE, ...)
 
 \method{train}{PHMM}(x, y, method = "Viterbi", seqweights = NULL,
-  maxiter = if (method == "Viterbi") 10 else 100, logspace = "autodetect",
-  quiet = FALSE, deltaLL = 1e-07, pseudocounts = "background",
-  gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
-  threshold = 0.5, lambda = 0, ...)
+  logspace = "autodetect", maxiter = if (method == "Viterbi") 10 else 100,
+  deltaLL = 1e-07, pseudocounts = "background", gapchar = "-",
+  fixqa = FALSE, fixqe = FALSE, inserts = "map", threshold = 0.5,
+  lambda = 0, quiet = FALSE, ...)
 
 \method{train}{HMM}(x, y, method = "Viterbi", seqweights = NULL,
   maxiter = if (method == "Viterbi") 10 else 100, deltaLL = 1e-07,
@@ -43,10 +43,6 @@ large models with many parameters.}
 \item{maxiter}{the maximum number of EM iterations before the cycling process is terminated
 with an error.}
 
-\item{quiet}{logical argument indicating whether the iteration progress should
-be printed to the console (\code{quiet = FALSE}; default) or suppressed
-(\code{quiet = TRUE}).}
-
 \item{deltaLL}{a numeric value giving the change in log likelihood to specify as the convergence
 threshold. Only applicable if \code{method = "BaumWelch"}}
 
@@ -62,6 +58,10 @@ The first row and column of the transition matrix must be 'BeginEnd'. Background
 pseudocounts are recommended for small training sets,
 since Laplacian counts can overinflate insert and delete transition probabilities
 leading to convergence at suboptimal local maxima.}
+
+\item{quiet}{logical argument indicating whether the iteration progress should
+be printed to the console (\code{quiet = FALSE}; default) or suppressed
+(\code{quiet = TRUE}).}
 }
 \description{
 Update model parameters using a list of training sequences. Methods available include

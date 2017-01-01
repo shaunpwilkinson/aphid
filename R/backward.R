@@ -28,116 +28,15 @@
 #'
 backward <- function(x, y, qe = NULL, logspace = "autodetect",  odds = TRUE,
                      windowspace = "all",
-                     type = "global", DI = TRUE, ID = TRUE, cpp = TRUE){
+                     type = "global", DI = FALSE, ID = FALSE, cpp = TRUE){
   UseMethod("backward")
-}
-
-#' @rdname backward
-backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
-  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
-  DNA <- is.DNA(y)
-  AA <- is.AA(y)
-  if(DNA){
-    colnames(x$E) <- toupper(colnames(x$E))
-    NUCorder <- sapply(colnames(x$E), match, c("A", "T", "G", "C"))
-    x$E <- x$E[, NUCorder]
-    if(!(identical(colnames(x$E), c("A", "T", "G", "C")))){
-      stop("invalid model for DNA, residue alphabet does not correspond to
-           nucleotide alphabet")
-    }
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-        class(y) <- "DNAbin"
-      }else stop("Invalid input object y: multi-sequence list")
-    }
-    #y <- DNA2pentadecimal(y, na.rm = TRUE)
-    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
-  }else if(AA){
-    colnames(x$E) <- toupper(colnames(x$E))
-    PFAMorder <- sapply(colnames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
-    x$E <- x$E[, PFAMorder]
-    if(!(identical(colnames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
-      stop("invalid model for AA, residue alphabet does not correspond to
-           20-letter amino acid alphabet")
-    }
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-        class(y) <- "AAbin"
-      }else stop("Invalid input object y: multi-sequence list")
-    }
-    #y <- AA2heptovigesimal(y, na.rm = TRUE)
-    y <- encode.AA(y, arity = 27, na.rm = TRUE)
-  }else{
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- y[[1]]
-      }else stop("Invalid input object y: multi-sequence list")
-    }
-    if(mode(y) == "character") y <- match(y, colnames(x$E)) - 1
-  }
-  n <- length(y)
-  E <- if(logspace) x$E else log(x$E)
-  A <- if(logspace) x$A else log(x$A)
-  states <- rownames(E)
-  H <- length(states)
-  if(length(y) == 0) structure(list(score = A[1, 1], array = NULL), class = 'fullprob')
-  if(cpp){
-    res <- backward_HMM(y, A, E)
-    rownames(res$array) <- states
-  }else{
-    B <- array(NA, dim = c(H, n))#, dimnames = list(state = states, rolls = 1:n))
-    rownames(B) = states
-    B[, n] <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H) #ak0
-    tmp <- matrix(nrow = H, ncol = H)
-    if(DNA){
-      for (i in n:2){
-        for(k in 1:H){
-          for(l in 1:H){
-            tmp[k, l] <- A[k + 1, l + 1] + DNAprobC2(y[i], E[l, ]) + B[l, i]
-          }
-        }
-        B[, i - 1] <- apply(tmp, 1, logsum)
-      }
-    }else if(AA){
-      for (i in n:2){
-        for(k in 1:H){
-          for(l in 1:H){
-            tmp[k, l] <- A[k + 1, l + 1] + AAprobC2(y[i], E[l, ]) + B[l, i]
-          }
-        }
-        B[, i - 1] <- apply(tmp, 1, logsum)
-      }
-    }else{
-      y <- y + 1
-      for (i in n:2){
-        for(k in 1:H){
-          for(l in 1:H){
-            tmp[k, l] <- A[k + 1, l + 1] + E[l, y[i]] + B[l, i]
-          }
-        }
-        B[, i - 1] <- apply(tmp, 1, logsum)
-      }
-    }
-    logprobs <- numeric(H)
-    #names(logprobs) <- states
-    for(l in 1:H){
-      p <- if(DNA) DNAprobC2(y[1], E[l, ]) else if(AA) AAprobC2(y[1], E[l, ]) else E[l, y[1]]
-      logprobs[l] <- A[1, l + 1] + p + B[l, 1] #termination
-    }
-    score <- logsum(logprobs)
-    res <- structure(list(score = score, array = B, odds = FALSE),
-                     class = 'fullprob')
-  }
-  return(res)
 }
 
 
 #' @rdname backward
 backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
-                         type = "global", odds = TRUE,
-                         windowspace = "all", DI = TRUE, ID = TRUE, cpp = TRUE){
+                          type = "global", odds = TRUE,
+                          windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   pp <- inherits(y, "PHMM")
   if(pp) stop("PHMM vs PHMM back comparison is not supported")
@@ -162,38 +61,38 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     y.DNAbin <- y
     #y <- DNA2pentadecimal(y, na.rm = TRUE)
     y <- encode.DNA(y, arity = 15, na.rm = TRUE)
-  }else if(pa){
-    rownames(x$E) <- toupper(rownames(x$E))
-    PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
-    x$E <- x$E[PFAMorder, ]
-    if(!(identical(rownames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
-      stop("invalid model for AA, residue alphabet does not correspond to
-           20-letter amino acid alphabet")
-    }
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-        class(y) <- "AAbin"
-      }else stop("Invalid input object y: multi-sequence list")
-    }
-    y.AAbin <- y
-    #y <- AA2heptovigesimal(y, na.rm = TRUE)
-    y <- encode.AA(y, arity = 27, na.rm = TRUE)
-  }else if(pc){
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- y[[1]]
-      }else stop("Invalid input object y: multi-sequence list")
-    }
-    #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
-    if(mode(y) == "character"){
-      y <- match(y, rownames(x$E)) - 1
-      if(any(is.na(y))) {
-        warning("residues in sequence(s) are missing from the model")
-        y <- y[!is.na(y)]
+    }else if(pa){
+      rownames(x$E) <- toupper(rownames(x$E))
+      PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
+      x$E <- x$E[PFAMorder, ]
+      if(!(identical(rownames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
+        stop("invalid model for AA, residue alphabet does not correspond to
+             20-letter amino acid alphabet")
       }
-    }#else if length(unique(y)) > nrow(x$E) stop("")
-  }
+      if(is.list(y)){
+        if(length(y) == 1){
+          y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+          class(y) <- "AAbin"
+        }else stop("Invalid input object y: multi-sequence list")
+      }
+      y.AAbin <- y
+      #y <- AA2heptovigesimal(y, na.rm = TRUE)
+      y <- encode.AA(y, arity = 27, na.rm = TRUE)
+      }else if(pc){
+        if(is.list(y)){
+          if(length(y) == 1){
+            y <- y[[1]]
+          }else stop("Invalid input object y: multi-sequence list")
+        }
+        #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
+        if(mode(y) == "character"){
+          y <- match(y, rownames(x$E)) - 1
+          if(any(is.na(y))) {
+            warning("residues in sequence(s) are missing from the model")
+            y <- y[!is.na(y)]
+          }
+        }#else if length(unique(y)) > nrow(x$E) stop("")
+      }
   n <- ncol(x$E) + 1
   m <- if(pp) ncol(y$E) + 1 else length(y) + 1
   # if(identical(windowspace, "WilburLipman") | identical(windowspace, "all")){
@@ -315,11 +214,114 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       res <- structure(list(score = score,
                             odds = odds,
                             array = B),
-                            # Dmatrix = B[, , 1],
-                            # Mmatrix = B[, , 2],
-                            # Imatrix = B[, , 3]),
+                       # Dmatrix = B[, , 1],
+                       # Mmatrix = B[, , 2],
+                       # Imatrix = B[, , 3]),
                        class = 'fullprob')
     }
   }
   return(res)
   }
+
+
+#' @rdname backward
+backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
+  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
+  DNA <- is.DNA(y)
+  AA <- is.AA(y)
+  if(DNA){
+    colnames(x$E) <- toupper(colnames(x$E))
+    NUCorder <- sapply(colnames(x$E), match, c("A", "T", "G", "C"))
+    x$E <- x$E[, NUCorder]
+    if(!(identical(colnames(x$E), c("A", "T", "G", "C")))){
+      stop("invalid model for DNA, residue alphabet does not correspond to
+           nucleotide alphabet")
+    }
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+        class(y) <- "DNAbin"
+      }else stop("Invalid input object y: multi-sequence list")
+    }
+    #y <- DNA2pentadecimal(y, na.rm = TRUE)
+    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
+  }else if(AA){
+    colnames(x$E) <- toupper(colnames(x$E))
+    PFAMorder <- sapply(colnames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
+    x$E <- x$E[, PFAMorder]
+    if(!(identical(colnames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
+      stop("invalid model for AA, residue alphabet does not correspond to
+           20-letter amino acid alphabet")
+    }
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+        class(y) <- "AAbin"
+      }else stop("Invalid input object y: multi-sequence list")
+    }
+    #y <- AA2heptovigesimal(y, na.rm = TRUE)
+    y <- encode.AA(y, arity = 27, na.rm = TRUE)
+  }else{
+    if(is.list(y)){
+      if(length(y) == 1){
+        y <- y[[1]]
+      }else stop("Invalid input object y: multi-sequence list")
+    }
+    if(mode(y) == "character") y <- match(y, colnames(x$E)) - 1
+  }
+  n <- length(y)
+  E <- if(logspace) x$E else log(x$E)
+  A <- if(logspace) x$A else log(x$A)
+  states <- rownames(E)
+  H <- length(states)
+  if(length(y) == 0) structure(list(score = A[1, 1], array = NULL), class = 'fullprob')
+  if(cpp){
+    res <- backward_HMM(y, A, E)
+    rownames(res$array) <- states
+  }else{
+    B <- array(NA, dim = c(H, n))#, dimnames = list(state = states, rolls = 1:n))
+    rownames(B) = states
+    B[, n] <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H) #ak0
+    tmp <- matrix(nrow = H, ncol = H)
+    if(DNA){
+      for (i in n:2){
+        for(k in 1:H){
+          for(l in 1:H){
+            tmp[k, l] <- A[k + 1, l + 1] + DNAprobC2(y[i], E[l, ]) + B[l, i]
+          }
+        }
+        B[, i - 1] <- apply(tmp, 1, logsum)
+      }
+    }else if(AA){
+      for (i in n:2){
+        for(k in 1:H){
+          for(l in 1:H){
+            tmp[k, l] <- A[k + 1, l + 1] + AAprobC2(y[i], E[l, ]) + B[l, i]
+          }
+        }
+        B[, i - 1] <- apply(tmp, 1, logsum)
+      }
+    }else{
+      y <- y + 1
+      for (i in n:2){
+        for(k in 1:H){
+          for(l in 1:H){
+            tmp[k, l] <- A[k + 1, l + 1] + E[l, y[i]] + B[l, i]
+          }
+        }
+        B[, i - 1] <- apply(tmp, 1, logsum)
+      }
+    }
+    logprobs <- numeric(H)
+    #names(logprobs) <- states
+    for(l in 1:H){
+      p <- if(DNA) DNAprobC2(y[1], E[l, ]) else if(AA) AAprobC2(y[1], E[l, ]) else E[l, y[1]]
+      logprobs[l] <- A[1, l + 1] + p + B[l, 1] #termination
+    }
+    score <- logsum(logprobs)
+    res <- structure(list(score = score, array = B, odds = FALSE),
+                     class = 'fullprob')
+  }
+  return(res)
+}
+

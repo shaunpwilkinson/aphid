@@ -9,24 +9,28 @@
 \title{Multiple sequence alignment.}
 \usage{
 align(sequences, model = NULL, seqweights = "Gerstein",
-  refine = "Viterbi", inserts = "map", lambda = 0, threshold = 0.5,
-  quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
-  pseudocounts = "background", ...)
+  refine = "Viterbi", k = 5, maxiter = if (refine == "Viterbi") 10 else
+  100, inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
+  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
+  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
 
 \method{align}{DNAbin}(sequences, model = NULL, seqweights = "Gerstein",
-  refine = "Viterbi", inserts = "map", lambda = 0, threshold = 0.5,
-  quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
-  pseudocounts = "background", ...)
+  refine = "Viterbi", k = 5, maxiter = if (refine == "Viterbi") 10 else
+  100, inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
+  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
+  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
 
 \method{align}{AAbin}(sequences, model = NULL, seqweights = "Gerstein",
-  refine = "Viterbi", inserts = "map", lambda = 0, threshold = 0.5,
-  quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
-  pseudocounts = "background", ...)
+  refine = "Viterbi", k = 5, maxiter = if (refine == "Viterbi") 10 else
+  100, inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
+  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
+  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
 
 \method{align}{list}(sequences, model = NULL, seqweights = "Gerstein",
-  refine = "Viterbi", inserts = "map", lambda = 0, threshold = 0.5,
-  quiet = FALSE, residues = NULL, gapchar = "-", k = 5,
-  pseudocounts = "background", ...)
+  k = 5, refine = "Viterbi", maxiter = if (refine == "Viterbi") 10 else
+  100, inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
+  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
+  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
 
 \method{align}{default}(sequences, model, pseudocounts = "background",
   residues = NULL, gapchar = "-", quiet = FALSE, ...)
@@ -45,9 +49,6 @@ Current supported methods are \code{refine = "Viterbi"} (Viterbi training)
 and \code{refine = "BaumWelch"}
 (parameter optimization with the Expectation-Maximization algorithm).}
 
-\item{quiet}{logical argument indicating whether feedback should be printed
-to the console.}
-
 \item{residues}{either NULL (default; emitted residues are automatically
 detected from the list of sequences), or a case sensitive character vector specifying the
 residue alphabet (e.g. c(A, C, G, T) for DNA). The character strings "RNA", "DNA", "AA",
@@ -59,6 +60,9 @@ Also note that the default option can be slow for large lists of character vecto
 therefore specifying the residue alphabet can increase speed in these cases.}
 
 \item{gapchar}{the character used to represent gaps in the alignment matrix.}
+
+\item{quiet}{logical argument indicating whether feedback should be printed
+to the console.}
 
 \item{...}{aditional arguments to pass to \code{"Viterbi"} for Viterbi training refinement or
 \code{"forward"} if using Baum Welch model training.}
