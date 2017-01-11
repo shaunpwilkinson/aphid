@@ -82,8 +82,8 @@ align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine
 #' @rdname align
 align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
                        refine = "Viterbi", maxiter = if(refine == "Viterbi") 10 else 100,
-                       inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07, DI = FALSE, ID = FALSE,
-                       residues = NULL, gapchar = "-",
+                       inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
+                       DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
                        pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...){
   nseq <- length(sequences)
   DNA <- is.DNA(sequences)
@@ -94,12 +94,14 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
   if(is.null(model)){
     if(nseq == 2){
-      align.default(sequences, model = NULL, residues = residues,  gapchar = gapchar,
-                    pseudocounts = pseudocounts, quiet = quiet,... = ...)
+      return(align.default(sequences, model = NULL, residues = residues,  gapchar = gapchar,
+                    pseudocounts = pseudocounts, quiet = quiet,... = ...))
+    }else if(nseq == 1){
+      return(matrix(sequences[[1]], nrow = 1))
     }
     if(!quiet) cat("Calculating pairwise distances\n")
-    if(nseq > 30){
-      nseeds <- min(nseq, 30 + ceiling(log(nseq, 2)))
+    if(nseq > 20){
+      nseeds <- min(nseq, 20 + ceiling(log(nseq, 2)))
       seeds <- sample(1:length(sequences), size = nseeds)
     }else seeds <- seq_along(sequences)
 

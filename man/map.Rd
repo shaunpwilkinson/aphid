@@ -2,7 +2,7 @@
 % Please edit documentation in R/derivePHMM.R
 \name{map}
 \alias{map}
-\title{Optimal profile HMM construction.}
+\title{Optimized profile HMM construction.}
 \usage{
 map(x, seqweights = NULL, residues = NULL, gapchar = "-", endchar = "?",
   pseudocounts = "background", lambda = 0, qa = NULL, qe = NULL,
