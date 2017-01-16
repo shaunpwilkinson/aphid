@@ -173,7 +173,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
     msa1 <- with(x, eval(parse(text = newick)))
   }else if(nsq == 2){
     if(!quiet) cat("Aligning seed sequences\n")
-    msa1 <- align(x[1], x[2], residues = residues, gapchar = gapchar,  ... = ...)
+    msa1 <- align(x[[1]], x[[2]], residues = residues, gapchar = gapchar,  ... = ...)
     seedweights <- c(1, 1)
   }else if(nsq == 1){
     msa1 <- matrix(x[[1]], nrow = 1)
@@ -282,13 +282,28 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
   gaps <- x == gapchar
   #ends <- x == endchar
   gapweights <- gaps * seqweights
-  if(identical(inserts, "threshold") | n < 10){
+  if(identical(inserts, "none")){
+    inserts <- rep(FALSE, m)
+  }else if(identical(inserts, "inherited")){
+    inserts <- attr(x, "inserts")
+    if(is.null(inserts)) stop("No inserts available to inherit from alignment")
+  }else if(identical(inserts, "threshold")){
     inserts <- apply(gapweights, 2, sum) > threshold * n
   }else if(identical(inserts, "map")){
-    inserts <- !map(x, seqweights = seqweights, residues = residues,
-                    gapchar = gapchar, endchar = endchar, pseudocounts = pseudocounts,
-                    qa = qa, qe = qe)
-    if(sum(!inserts) < 3) inserts <- apply(gapweights, 2, sum) > threshold * n
+    if(n < 5){
+      if(!quiet) cat("Maximum a priori insert assignment unsuitable for fewer than five sequences.
+                     Switching to threshold method\n")
+      inserts <- apply(gapweights, 2, sum) > threshold * n
+    }else{
+      inserts <- !map(x, seqweights = seqweights, residues = residues,
+                      gapchar = gapchar, endchar = endchar, pseudocounts = pseudocounts,
+                      qa = qa, qe = qe)
+      if(sum(!inserts) < 3) {
+        if(!quiet) cat("Maximum a priori insert assignment produced model with fewer than three modules.
+                       Switching to threshold method\n")
+        inserts <- apply(gapweights, 2, sum) > threshold * n
+      }
+    }
   }else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
     stop("invalid inserts argument")
   }

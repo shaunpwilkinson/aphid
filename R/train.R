@@ -50,7 +50,7 @@ train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autod
                   maxiter = if(method == "Viterbi") 10 else 100,
                   deltaLL = 1E-07, modelend = FALSE, pseudocounts = "Laplace",
                   gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
-                  threshold = 0.5, lambda = 0, quiet = FALSE,...){
+                  threshold = 0.5, lambda = 0, quiet = FALSE, ...){
   UseMethod("train")
 }
 
@@ -156,11 +156,11 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
                         qa = if(fixqa) x$qa else NULL,
                         qe = if(fixqe) x$qe else NULL)
       ### what about DI and ID
-      newalig <- align(y, out, logspace = TRUE, ... = ...)
+      newalig <- align(y, model = out, logspace = TRUE, ... = ...)
       #score <- attr(newalig, "score")
       #newscore <- attr(newalig, "score")
       #if(!identical(alignment, newalig) & !(score %in% scores)){
-      if(!identical(alignment, newalig)){
+      if(!identical(as.vector(alignment), as.vector(newalig))){
         alignment <- newalig
         #scores <- c(scores, score)
         #maxscore <- newscore
