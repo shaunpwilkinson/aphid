@@ -10,8 +10,11 @@
 #' (\code{method = "Gerstein"}).
 #' @return a named vector of weights, the sum of which is equal to
 #' the total number of sequences.
-#' @examples den <- read.dendrogram(text = "(A:1,((B:0.5,C:0.2):0.2,(D:0.4,E:0.3):0.25):0.1);")
-#' seqweights <- weight(den)
+#' @examples
+#' data(woodmouse)
+#' wood_dist <- kdistance(unalign(woodmouse))
+#' wood_den <- as.dendrogram(hclust(wood_dist, method = "average"))
+#' wood_weights <- weight(wood_den, method = "Gerstein")
 #'
 weight <- function(x, method = "Gerstein"){
   if(!identical(method, "Gerstein")) stop("Only Gerstein et al. 1994 method supported")

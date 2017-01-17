@@ -1,27 +1,17 @@
 #' Forward algorithm.
 #'
-#' Forward algorithm for calculating the full log-odds
-#' of a sequence given a HMM or PHMM and its random equivalent.
+#' Forward algorithm for calculating the full (log) probability or odds
+#' of a sequence given a hidden Markov model or profile HMM.
 #'
 #' @param x an object of class \code{PHMM} or \code{HMM}.
 #' @param y a character vector representing a single instance of a sequence
 #' hypothetically emitted by the model.
-#' @param logspace logical argument indicating whether the emission and transition
-#' probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
-#' \code{logspace = "autodetect"} (default), the function will automatically detect
-#' if the probabilities are in log space, returning an error if inconsistencies are found.
-#' Note that choosing the latter option increases the computational
-#' overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
-#' @param odds logical indicating whether the scores in th edynamic programming matrix
-#' should be odds ratios (TRUE; default) or full (log) probabilities.
 #' @param type character string indicating whether insert and delete states
 #' at the beginning and end of the path should count towards the final score
 #' ('global'; default). Note that semiglobal and local models
 #' are not currently supported in this version.
-#' @param DI logical. should delete -> insert transitions be allowed? Only applicable for
-#' objects of class \code{"PHMM"}.
-#' @param ID logical. should insert -> delete transitions be allowed? Only applicable for
-#' objects of class \code{"PHMM"}.
+#' @inheritParams Viterbi
+#'
 #' @name forward
 forward <- function(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
                     windowspace = "all", type = "global", eta = 0.01,

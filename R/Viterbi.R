@@ -5,35 +5,37 @@
 #'
 #' @param x an object of class \code{HMM} or \code{PHMM}, or a character vector.
 #' @param y a character vector consisting of residues emitted by the
-#' HMM or PHMM.
+#'   HMM or PHMM.
 #' @param qe an optional named vector of background residue frequencies. If NULL
-#' background residue frequencies from the PHMMs are used. If these are not available
-#' equal background residue frequencies are assumed.
+#'   background residue frequencies from the PHMMs are used. If these are not available
+#'   equal background residue frequencies are assumed.
 #' @param logspace logical argument indicating whether the emission and transition
-#' probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
-#' \code{logspace = "autodetect"} (default), the function will automatically detect
-#' if the probabilities are in log space, returning an error if inconsistencies are found.
-#' Note that choosing the latter option increases the computational
-#' overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
+#'   probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
+#'   \code{logspace = "autodetect"} (default), the function will automatically detect
+#'   if the probabilities are in log space, returning an error if inconsistencies are found.
+#'   Note that choosing the latter option increases the computational
+#'   overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
 #' @param type character string indicating whether insert and delete states
-#' at the beginning and end of the path should count towards the final score
-#' ('global'; default), or not ('semiglobal'), or whether the highest scoring
-#' sub-path should be returned ('local').
+#'   at the beginning and end of the path should count towards the final score
+#'   ('global'; default), or not ('semiglobal'), or whether the highest scoring
+#'   sub-path should be returned ('local').
+#' @param odds logical indicating whether the scores in the dynamic programming matrix
+#'   should be odds ratios (TRUE) or full logged probabilities (FALSE).
 #' @param S an optional scoring matrix with rows and columns named according
-#' to the residue alphabet. Note that for local alignments scores for
-#' mismatches should generally take negative values or else spurious
-#' alignments could occur. If NULL matches are scored as 1 and
-#' mismatches scored as -1.
+#'   to the residue alphabet. Note that for local alignments scores for
+#'   mismatches should generally take negative values or else spurious
+#'   alignments could occur. If NULL matches are scored as 1 and
+#'   mismatches scored as -1.
 #' @param offset column score offset to specify level of greediness. Defaults to
-#' -0.1 bits as recommended by Soding (2005).
+#'   -0.1 bits as recommended by Soding (2005).
 #' @param itertab an optional two column matrix of row and column indices used
-#' to iterate through a subset of the viterbi array.
+#'   to iterate through a subset of the viterbi array.
 #' @param d gap opening penalty for sequence vs. sequence alignment
 #' @param e gap extension penalty for sequence vs. sequence alignment
 #' @param DI logical. should delete-insert transitions be allowed? Only applicable for
-#' objects of class \code{"PHMM"}.
+#'   objects of class \code{"PHMM"}.
 #' @param ID logical. should insert-delete transitions be allowed? Only applicable for
-#' objects of class \code{"PHMM"}.
+#'   objects of class \code{"PHMM"}.
 #' @name Viterbi
 #'
 #' @examples

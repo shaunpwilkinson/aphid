@@ -163,14 +163,34 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
     if(!quiet) cat("Building guide tree\n")
     guidetree <- as.dendrogram(hclust(qds, method = "average"))
     seedweights <- weight(guidetree, method = "Gerstein")[names(x)[seeds]]
-    ### next few lines need to be rewritten TODO
-    newick <- write.dendrogram(guidetree, edges = FALSE)
-    newick <- gsub(";", "", newick)
-    newick <- gsub("\\(", "align\\(", newick)
-    newick <- gsub("\\)", ", ... = ...\\)", newick)
-    #newick <- gsub("\\)", ", type='global'\\)", newick)
+    attachseqs <- function(tree, sequences){
+      if(!is.list(tree)) attr(tree, "sequences") <- sequences[attr(tree, "label")]
+      return(tree)
+    }
+    guidetree <- dendrapply(guidetree, attachseqs, sequences = x)
+    progressive <- function(tree, ...){
+      if(is.list(tree)){
+        if(!is.null(attr(tree[[1]], "sequences")) & !is.null(attr(tree[[2]], "sequences"))){
+          attr(tree, "sequences") <- align.default(attr(tree[[1]], "sequences"), attr(tree[[2]], "sequences"), ... = ...)
+        }
+      }
+      return(tree)
+    }
+    progressive1 <- function(tree, ...){
+      tree <- progressive(tree, ... = ...)
+      if(is.list(tree)) tree[] <- lapply(tree, progressive1, ... = ...)
+      return(tree)
+    }
     if(!quiet) cat("Aligning seed sequences\n")
-    msa1 <- with(x, eval(parse(text = newick)))
+    while(is.null(attr(guidetree, "sequences"))) guidetree <- progressive1(guidetree, ... = ...)
+    msa1 <- attr(guidetree, "sequences")
+    # ### next few lines need to be rewritten TODO
+    # newick <- write.dendrogram(guidetree, edges = FALSE)
+    # newick <- gsub(";", "", newick)
+    # newick <- gsub("\\(", "align\\(", newick)
+    # newick <- gsub("\\)", ", ... = ...\\)", newick)
+    # #newick <- gsub("\\)", ", type='global'\\)", newick)
+    # msa1 <- with(x, eval(parse(text = newick)))
   }else if(nsq == 2){
     if(!quiet) cat("Aligning seed sequences\n")
     msa1 <- align(x[[1]], x[[2]], residues = residues, gapchar = gapchar,  ... = ...)
@@ -205,7 +225,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
     }else if(is.null(seqweights)){
       seqweights <- rep(wfactor, nsq)
     }else{
-      if(length(seqweights) != n) stop("invalid seqweights argument")
+      if(length(seqweights) != nsq) stop("invalid seqweights argument")
       seqweights <- seqweights * wfactor
     }
     if(length(seqweights) != nsq) stop("invalid seqweights argument")
@@ -291,8 +311,8 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
     inserts <- apply(gapweights, 2, sum) > threshold * n
   }else if(identical(inserts, "map")){
     if(n < 5){
-      if(!quiet) cat("Maximum a priori insert assignment unsuitable for fewer than five sequences.
-                     Switching to threshold method\n")
+      # if(!quiet) cat("Maximum a priori insert assignment unsuitable for fewer than five sequences.
+      #                Switching to threshold method\n")
       inserts <- apply(gapweights, 2, sum) > threshold * n
     }else{
       inserts <- !map(x, seqweights = seqweights, residues = residues,

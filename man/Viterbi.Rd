@@ -43,6 +43,9 @@ at the beginning and end of the path should count towards the final score
 ('global'; default), or not ('semiglobal'), or whether the highest scoring
 sub-path should be returned ('local').}
 
+\item{odds}{logical indicating whether the scores in the dynamic programming matrix
+should be odds ratios (TRUE) or full logged probabilities (FALSE).}
+
 \item{offset}{column score offset to specify level of greediness. Defaults to
 -0.1 bits as recommended by Soding (2005).}
 

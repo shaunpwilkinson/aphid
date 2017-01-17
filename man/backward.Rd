@@ -22,6 +22,10 @@ backward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
 \item{y}{a character vector representing a single instance of a sequence
 hypothetically emitted by the model.}
 
+\item{qe}{an optional named vector of background residue frequencies. If NULL
+background residue frequencies from the PHMMs are used. If these are not available
+equal background residue frequencies are assumed.}
+
 \item{logspace}{logical argument indicating whether the emission and transition
 probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
 \code{logspace = "autodetect"} (default), the function will automatically detect
@@ -29,10 +33,8 @@ if the probabilities are in log space, returning an error if inconsistencies are
 Note that choosing the latter option increases the computational
 overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
 
-\item{odds}{logical indicating whether the scores in th edynamic programming matrix
-should be odds ratios (TRUE; default) or full (log) probabilities.
-(\code{FALSE}; default) or if the log-odds score should be returned
-(\code{TRUE}).}
+\item{odds}{logical indicating whether the scores in the dynamic programming matrix
+should be odds ratios (TRUE) or full logged probabilities (FALSE).}
 
 \item{type}{character string indicating whether insert and delete states
 at the beginning and end of the path should count towards the final score
@@ -46,7 +48,7 @@ objects of class \code{"PHMM"}.}
 objects of class \code{"PHMM"}.}
 }
 \description{
-Backward algorithm for calculating the full (log) probability
-of a sequence given a hidden Markov model.
+Backward algorithm for calculating the full (log) probability or odds
+of a sequence given a hidden Markov model or profile HMM.
 }
 
