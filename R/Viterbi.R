@@ -36,12 +36,12 @@
 #'   objects of class \code{"PHMM"}.
 #' @param ID logical. should insert-delete transitions be allowed? Only applicable for
 #'   objects of class \code{"PHMM"}.
-#' @name Viterbi
-#'
 #' @examples
 #' x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
 #' y <- c("P", "A", "W", "H", "E", "A", "E")
 #' Viterbi(x, y,  d = 8, e = 2)
+#' @name Viterbi
+#' @export
 #'
 Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
                     odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, windowspace = "all",
@@ -49,7 +49,10 @@ Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
   UseMethod("Viterbi")
 }
 
+
 #' @rdname Viterbi
+#' @export
+#'
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "global", odds = TRUE, offset = 0,
                          windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE){
@@ -498,7 +501,10 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   return(res)
 }
 
+
 #' @rdname Viterbi
+#' @export
+#'
 Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   DNA <- is.DNA(y)
@@ -616,6 +622,8 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
 
 
 #' @rdname Viterbi
+#' @export
+#'
 Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
                             residues = NULL, S = NULL,
                             windowspace = "all", offset = 0, cpp = TRUE){

@@ -6,20 +6,26 @@
 #'
 #' @param x an object of class \code{"dendrogram"}.
 #' @param method a character string indicating the weighting method to be used.
-#' Currently only that of Gerstein et al. (1994) is supported
-#' (\code{method = "Gerstein"}).
+#'     Currently only that of Gerstein et al. (1994) is supported
+#'     (\code{method = "Gerstein"}).
 #' @return a named vector of weights, the sum of which is equal to
-#' the total number of sequences.
+#'    the total number of sequences.
 #' @examples
 #' data(woodmouse)
 #' wood_dist <- kdistance(unalign(woodmouse))
 #' wood_den <- as.dendrogram(hclust(wood_dist, method = "average"))
 #' wood_weights <- weight(wood_den, method = "Gerstein")
+#' @name weight
+#' @export
 #'
 weight <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
   UseMethod("weight")
 }
 
+
+#' @rdname weight
+#' @export
+#'
 weight.DNAbin <- function(x, method = "Gerstein", k = 5){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
@@ -29,6 +35,10 @@ weight.DNAbin <- function(x, method = "Gerstein", k = 5){
   }
 }
 
+
+#' @rdname weight
+#' @export
+#'
 weight.AAbin <- function(x, method = "Gerstein", k = 5){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
@@ -39,6 +49,9 @@ weight.AAbin <- function(x, method = "Gerstein", k = 5){
 }
 
 
+#' @rdname weight
+#' @export
+#'
 weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
   nsq <- length(x)
   DNA <- is.DNA(x)
@@ -66,6 +79,9 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar 
 }
 
 
+#' @rdname weight
+#' @export
+#'
 weight.dendrogram <- function(x, method = "Gerstein"){
   if(!identical(method, "Gerstein")) stop("Only Gerstein et al. 1994 method supported")
   acal <- function(d) !any(sapply(d, is.list)) # all children are leaves?
@@ -114,6 +130,9 @@ weight.dendrogram <- function(x, method = "Gerstein"){
 }
 
 
+#' @rdname weight
+#' @export
+#'
 weight.default <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
   x <- unalign(x, gapchar = gapchar)
   weight.list(x, method = method, k = k, residues = residues, gapchar = gapchar)

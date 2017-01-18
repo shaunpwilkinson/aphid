@@ -45,6 +45,7 @@
 #' Speech...
 #' @references Durbin...
 #' @name train
+#' @export
 #'
 train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
                   maxiter = if(method == "Viterbi") 10 else 100,
@@ -54,7 +55,10 @@ train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autod
   UseMethod("train")
 }
 
+
 #' @rdname train
+#' @export
+#'
 train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
                        maxiter = if(method == "Viterbi") 10 else 100,
                        deltaLL = 1E-07, pseudocounts = "background",
@@ -344,7 +348,10 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
 
 }
 
+
 #' @rdname train
+#' @export
+#'
 train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                       maxiter = if(method == "Viterbi") 10 else 100,
                       deltaLL = 1E-07,

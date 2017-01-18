@@ -1,11 +1,4 @@
-#' Detect residue alphabet.
-#'
-#' \code{"alphadetect"} performs checks on the format of the "residues" argument
-#' to be passed to a variety of other functions. Single-element string arguments
-#' such as "DNA" and "AA" are
-#' converted to their respective alphabet in a character vector format.
-#' @param sequences a character matrix or vector, or a list of character matrices
-#' and/or vectors
+#' Internal profile functions.
 #'
 alphadetect <- function(sequences, residues = NULL, gapchar = "-", endchar = "?"){
   if(identical(toupper(residues), "RNA")){

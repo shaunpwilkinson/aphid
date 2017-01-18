@@ -5,13 +5,13 @@
 #' backward algorithms.
 #' @param x,y integer vectors.
 #' @param arity integer indicating the numbering system that x and y are coded in,
-#' for example 4 for DNA, 20 for proteins
-#' @param threshold the number of standard deviations above the mean
-#' number of k-tuple matches
-#' for all diagonals with k-tuple matches for a diagonal to be be considered
-#' significant...
-
-
+#'     for example, 4 for DNA, and 20 for proteins.
+#' @param threshold the number of standard deviations above the mean number of k-tuple matches
+#'     for all diagonals with k-tuple matches for a diagonal to be be considered significant.
+#' @return length 2 integer vector giving the bounds of the significant window space
+#'     to fill the dynamic programming matrices.
+#' @export
+#'
 WilburLipman <- function(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5){
   # x and y coded as integers starting from 0
   if(arity == "autodetect") arity <- max(c(x, y)) + 1
