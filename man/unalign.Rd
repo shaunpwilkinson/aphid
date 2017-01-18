@@ -2,11 +2,21 @@
 % Please edit documentation in R/align.R
 \name{unalign}
 \alias{unalign}
-\title{Deconstruct an alignment to its component sequences.}
+\title{Deconstruct an alignment.}
 \usage{
 unalign(x, gapchar = "-")
 }
+\arguments{
+\item{x}{a matrix consisting of aligned sequences}
+
+\item{gapchar}{the character used to represent gaps in the alignment matrix. Ignored for
+"DNAbin" and "AAbin" objects.}
+}
+\value{
+a list of sequences in the same coding scheme as the input alignment (ie DNAbin,
+AAbin, or plain ASCII characters).
+}
 \description{
-Deconstruct an alignment to its component sequences.
+\code{unalign} deconstructs an alignment to its component sequences.
 }
 

@@ -2,12 +2,21 @@
 % Please edit documentation in R/distance.R
 \name{kdistance}
 \alias{kdistance}
+\alias{kdistance.AAbin}
+\alias{kdistance.DNAbin}
+\alias{kdistance.default}
 \title{K-mer distance matrix calculation.}
 \usage{
 kdistance(x, k = 5, alpha = "Dayhoff6", ...)
+
+\method{kdistance}{AAbin}(x, k = 5, alpha = "Dayhoff6", ...)
+
+\method{kdistance}{DNAbin}(x, k = 5, alpha = NULL, ...)
+
+\method{kdistance}{default}(x, k = 5, alpha = "autodetect", ...)
 }
 \arguments{
-\item{x}{a list of sequences, can be an object of class \code{"DNAbin"} or \code{"AAbin"}.}
+\item{x}{a list of sequences, possibly an object of class \code{"DNAbin"} or \code{"AAbin"}.}
 
 \item{k}{an integer specifying the size of the k-tuples.}
 
@@ -15,7 +24,11 @@ kdistance(x, k = 5, alpha = "Dayhoff6", ...)
 
 \item{...}{further arguments to be passed to \code{"dist"}.}
 }
+\value{
+a distance matrix of class \code{"dist"}
+}
 \description{
-Computes the distance matrix ...
+Computes the matrix of k-tuple distances between all pairwise comparisons
+of the input sequence set.
 }
 

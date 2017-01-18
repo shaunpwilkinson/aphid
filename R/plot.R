@@ -1,3 +1,46 @@
+#' Plot profile hidden Markov models.
+#'
+#' \code{plot.PHMM} provides a visual representation of a profile hidden Markov model.
+#'
+#' Since the plotted models are generally much longer than they are
+#' high, it is usually recommended to output the plot to a PDF file as demonstrated
+#' in the example below.
+#'
+#' @param x an object of class \code{"PHMM"}
+#' @param from an integer giving the module number from where to begin the plot sequence.
+#'     Defaults to "start" which is converted to 0. Only applicable when plotting \code{"PHMM"} objects.
+#' @param to an integer giving the module number at which to to finish the plot sequence.
+#'     Defaults to "start" which is converted to the total number of internal modules in the
+#'     model plus two (to account for the begin and end states).
+#'     Only applicable when plotting \code{"PHMM"} objects.
+#' @param just a character string giving the justfication of the plot relative to the device.
+#'     Accepted values are "left", "center" and "right".
+#' @param arrexp the expansion factor to be applied to the arrows in the plot.
+#' @param textexp the expansion factor to be applied to the text in the plot.
+#' @examples
+#' library(ape)
+#' data(woodmouse)
+#' woodmouse.PHMM <- derive.PHMM(woodmouse)
+#'
+#' ## plot partial model to viewer device
+#' plot(woodmouse.PHMM, from = 0, to = 5)
+#'
+#' ## plot the entire model to a PDF
+#' nr <- ceiling((woodmouse.PHMM$size + 2)/10)
+#' pdf(file = "woodmouse.pdf",
+#'    width = 8.27, height = nr * 2)
+#' par(mfrow = c(nr, 1), mar = c(0, 0, 0, 0) + 0.1)
+#' from <- 0
+#' to <- 10
+#' for(i in 1:nr){
+#'   plot(woodmouse.PHMM, from = from, to = to, just = "left")
+#'   from <- from + 10
+#'   to <- min(to + 10, woodmouse.PHMM$size + 1)
+#' }
+#' dev.off()
+#'
+#' @export
+#'
 plot.PHMM <- function(x, from = "start", to = "end", just = "center",
                       arrexp = 1, textexp = 1, ...){
   logspace <- logdetect(x)
@@ -134,21 +177,45 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
   }
 }
 
-plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
-                     includebegin = FALSE, ...){
+
+#' Plot standard hidden Markov models.
+#'
+#' \code{plot.HMM} provides a visual representation of a standard hidden Markov model.
+#'
+#' @param x an object of class \code{"HMM"}
+#' @param begin logical indicating whether the begin/end state should be plotted.
+#'     Defaults to FALSE.
+#' @inheritParams plot.PHMM
+#' @references Durbin et al. (1998).
+#' @examples
+#' ## the dishonest casino example from Durbin et al. (1998).
+#' A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9), nrow = 3)
+#' states <- c("Begin", "Fair", "Loaded")
+#' dimnames(A) <- list(from = states, to = states)
+#' E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
+#'               (1/10),(1/10),(1/10),(1/10),(1/10),(1/2)),
+#'             nrow = 2, byrow = TRUE)
+#' dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
+#' x <- structure(list(A = A, E = E), class = "HMM")
+#' plot(x)
+#' plot(x, begin)
+#'
+#' @export
+#'
+plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1, begin = FALSE, ...){
   logspace <- logdetect(x)
   if(logspace){
     x$A <- exp(x$A)
     x$E <- exp(x$E)
   }
-  plot(0:1, 0:1, type = 'n', axes = FALSE, ylab = "", xlab = "")#, ... = ...)
+  plot(0:1, 0:1, type = 'n', axes = FALSE, ylab = "", xlab = "", ... = ...)
   parusr <- par()$usr
   states <- rownames(x$E)
   residues <- colnames(x$E)
   statelen <- length(states)
   symblen <- length(residues)
   maxemiss <- max(x$E)
-  no.boxes <- if(includebegin) statelen + 1 else statelen
+  no.boxes <- if(begin) statelen + 1 else statelen
   boxhgt <- symblen/4 # in yunits
   plotwid <- 2 * no.boxes # in xunits
   plothgt <- (no.boxes - 1) * boxhgt # in yunits
@@ -170,7 +237,7 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
   if(just == 'center') coords[, 1] <- coords[, 1] + (1 - plotwid)/2
   if(just == 'right') coords[, 1] <- coords[, 1] + (1 - plotwid)
   coords[, 2] <- 0.5
-  if(includebegin){
+  if(begin){
     coords1 <- coords[1,]
     coords <- coords[-1,]
     #self arrow

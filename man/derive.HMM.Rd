@@ -40,6 +40,9 @@ according to the residues (column names of emission matrix) and states
 (row and column names of the transition matrix and row names of the emission matrix).
 The first row and column of the transition matrix must be 'BeginEnd'.}
 }
+\value{
+an object of class \code{"HMM"}
+}
 \description{
 \code{derive.HMM} calculates the maximum likelihood hidden Markov model from
 a list of training sequences, each a vector of residues named according

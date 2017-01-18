@@ -111,6 +111,9 @@ the number of sequences is fewer than 10.}
 to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).
 Only applicable for \code{inserts = "map"}.}
 }
+\value{
+an object of class \code{"PHMM"}
+}
 \description{
 \code{derive.PHMM} generates a profile HMM from a given multiple sequence alignment.
 }
@@ -120,6 +123,6 @@ This function is the homologue of \code{hmmbuild} in HMMER3.1 (http://hmmer.org/
 (https://compbio.soe.ucsc.edu/sam.html).
 }
 \references{
-Durbin..
+Durbin et al. 1998.
 }
 

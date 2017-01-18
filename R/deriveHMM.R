@@ -30,8 +30,9 @@
 #' The first row and column of the transition matrix must be 'BeginEnd'.
 #' @param modelend logical indicating whether transitions to the 'end' state should be
 #' modeled. Defaults to FALSE.
+#' @return an object of class \code{"HMM"}
+#' @export
 #'
-
 derive.HMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, modelend = FALSE,
                       pseudocounts = "background", logspace = FALSE, k = 1){
   if(!(is.list(x))) stop("x must be a list of named vectors")

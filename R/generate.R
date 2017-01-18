@@ -18,6 +18,7 @@
 #' @return a named character vector giving the sequence of residues emitted by the model,
 #' with "names" attribute representing the hidden states.
 #' @name generate
+#' @export
 #'
 generate <- function(x, size, logspace = "autodetect", gapchar = "-", random = TRUE,
                      DNA = FALSE, AA = FALSE){
@@ -25,6 +26,8 @@ generate <- function(x, size, logspace = "autodetect", gapchar = "-", random = T
 }
 
 #' @rdname generate
+#' @export
+#'
 generate.HMM <- function (x, size, logspace = "autodetect", random = TRUE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   A <- if(logspace) exp(x$A) else x$A
@@ -58,6 +61,8 @@ generate.HMM <- function (x, size, logspace = "autodetect", random = TRUE){
 }
 
 #' @rdname generate
+#' @export
+#'
 generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-", random = TRUE,
                            DNA = FALSE, AA = FALSE){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)

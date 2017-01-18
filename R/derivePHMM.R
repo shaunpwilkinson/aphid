@@ -54,10 +54,11 @@
 #' @param lambda penalty parameter used to favour models with fewer match states. Equivalent
 #' to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).
 #' Only applicable for \code{inserts = "map"}.
-#' @references Durbin..
-#'
-#'
+#' @return an object of class \code{"PHMM"}
+#' @references Durbin et al. 1998.
 #' @name derive.PHMM
+#' @export
+#'
 derive.PHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                         gapchar = "-", endchar = "?", pseudocounts = "background",
                         logspace = TRUE, qa = NULL, qe = NULL,
@@ -71,6 +72,8 @@ derive.PHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues
 }
 
 #' @rdname derive.PHMM
+#' @export
+#'
 derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                                gapchar = "-", endchar = "?", pseudocounts = "background",
                                logspace = TRUE, qa = NULL, qe = NULL,
@@ -102,6 +105,8 @@ derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, r
 
 
 #' @rdname derive.PHMM
+#' @export
+#'
 derive.PHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                               gapchar = "-", endchar = "?", pseudocounts = "background",
                               logspace = TRUE, qa = NULL, qe = NULL,
@@ -132,6 +137,8 @@ derive.PHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, re
 }
 
 #' @rdname derive.PHMM
+#' @export
+#'
 derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                              maxiter = if(refine == "Viterbi") 10 else 100,
                              seqweights = "Gerstein", wfactor = 1,
@@ -244,6 +251,8 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
 
 
 #'@rdname derive.PHMM
+#'@export
+#'
 derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                        gapchar = "-", endchar = "?", pseudocounts = "background",
                        logspace = TRUE, qa = NULL, qe = NULL,
@@ -471,7 +480,10 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
 #' to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).
 #' @return a logical vector of length = ncol(x) indicating the columns to be assigned
 #' as match states (\code{TRUE}) and those assigned as inserts (\code{FALSE}).
+#' @return a logical vector indicating the columns of the input matrix that were allocated as
+#' insert states
 #' @references Durbin...
+#' @export
 #'
 map <- function(x, seqweights = NULL, residues = NULL,
                 gapchar = "-", endchar = "?", pseudocounts = "background",

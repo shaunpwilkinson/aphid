@@ -32,7 +32,7 @@
 #' as its second. If a list is supplied both matrices must have row and column names
 #' according to the residues (column names of emission matrix) and states
 #' (row and column names of the transition matrix and row names of the emission matrix).
-#' The first row and column of the transition matrix must be 'BeginEnd'. Background
+#' The first row and column of the transition matrix must be labeled 'Begin'. Background
 #' pseudocounts are recommended for small training sets,
 #' since Laplacian counts can overinflate insert and delete transition probabilities
 #' leading to convergence at suboptimal local maxima.

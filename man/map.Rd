@@ -40,6 +40,9 @@ to the log of the prior probability of marking each column (Durbin et al. 1998, 
 \value{
 a logical vector of length = ncol(x) indicating the columns to be assigned
 as match states (\code{TRUE}) and those assigned as inserts (\code{FALSE}).
+
+a logical vector indicating the columns of the input matrix that were allocated as
+insert states
 }
 \description{
 Assigns columns to insert states using the maximum \emph{a posteriori} method

@@ -59,7 +59,8 @@ not assign them emission probabilities.
 Also note that the default option can be slow for large lists of character vectors;
 therefore specifying the residue alphabet can increase speed in these cases.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix.}
+\item{gapchar}{the character used to represent gaps in the alignment matrix. Ignored for
+"DNAbin" and "AAbin" objects.}
 
 \item{quiet}{logical argument indicating whether feedback should be printed
 to the console.}

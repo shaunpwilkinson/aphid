@@ -47,6 +47,9 @@ objects of class \code{"PHMM"}.}
 \item{ID}{logical. should insert-delete transitions be allowed? Only applicable for
 objects of class \code{"PHMM"}.}
 }
+\value{
+a list containing the score and dynamic programming arrays.
+}
 \description{
 Backward algorithm for calculating the full (log) probability or odds
 of a sequence given a hidden Markov model or profile HMM.

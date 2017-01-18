@@ -11,8 +11,10 @@
 #' ('global'; default). Note that semiglobal and local models
 #' are not currently supported in this version.
 #' @inheritParams Viterbi
-#'
+#' @return a list containing the score and forward dynamic programming arrays.
 #' @name forward
+#' @export
+#'
 forward <- function(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
                     windowspace = "all", type = "global", eta = 0.01,
                     DI = FALSE, ID = FALSE, cpp = TRUE){
@@ -21,6 +23,8 @@ forward <- function(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
 
 
 #' @rdname forward
+#' @export
+#'
 forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "global", odds = TRUE,
                          windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE){
@@ -224,6 +228,8 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 
 
 #' @rdname forward
+#' @export
+#'
 forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   DNA <- is.DNA(y)

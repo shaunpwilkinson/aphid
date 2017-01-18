@@ -1,16 +1,24 @@
 #' K-mer distance matrix calculation.
 #'
-#' Computes the distance matrix ...
+#' Computes the matrix of k-tuple distances between all pairwise comparisons
+#' of the input sequence set.
 #'
-#' @param x a list of sequences, can be an object of class \code{"DNAbin"} or \code{"AAbin"}.
+#' @param x a list of sequences, possibly an object of class \code{"DNAbin"} or \code{"AAbin"}.
 #' @param k an integer specifying the size of the k-tuples.
 #' @param alpha the residue alphabet.
 #' @param ... further arguments to be passed to \code{"dist"}.
+#' @return a distance matrix of class \code{"dist"}
+#' @name kdistance
+#' @export
 #'
 kdistance <- function(x, k = 5, alpha = "Dayhoff6", ...){
   UseMethod("kdistance")
 }
 
+
+#' @rdname kdistance
+#' @export
+#'
 kdistance.AAbin <- function(x, k = 5, alpha = "Dayhoff6", ...){
   #x <- lapply(x, compress.AA, alpha = compress)
   if(min(sapply(x, length)) < k) stop("minimum sequence length is shorter than k")
@@ -29,6 +37,10 @@ kdistance.AAbin <- function(x, k = 5, alpha = "Dayhoff6", ...){
   return(dist(freqs, ... = ...))
 }
 
+
+#' @rdname kdistance
+#' @export
+#'
 kdistance.DNAbin <- function(x, k = 5, alpha = NULL, ...){
   if(min(sapply(x, length)) < k) stop("minimum sequence length is shorter than k")
   x <- lapply(x, function(y) y[y != as.raw(2)])
@@ -38,6 +50,10 @@ kdistance.DNAbin <- function(x, k = 5, alpha = NULL, ...){
   return(dist(freqs, ... = ...))
 }
 
+
+#' @rdname kdistance
+#' @export
+#'
 kdistance.default <- function(x, k = 5, alpha = "autodetect", ...){
   if(is.DNA(x)){
     return(kdistance.DNAbin(x, k = k, alpha = NULL, ... = ...))

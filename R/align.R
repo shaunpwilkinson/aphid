@@ -15,7 +15,8 @@
 #' Current supported methods are \code{refine = "Viterbi"} (Viterbi training)
 #' and \code{refine = "BaumWelch"}
 #' (parameter optimization with the Expectation-Maximization algorithm).
-#' @param gapchar the character used to represent gaps in the alignment matrix.
+#' @param gapchar the character used to represent gaps in the alignment matrix. Ignored for
+#' "DNAbin" and "AAbin" objects.
 #' @param residues either NULL (default; emitted residues are automatically
 #' detected from the list of sequences), or a case sensitive character vector specifying the
 #' residue alphabet (e.g. c(A, C, G, T) for DNA). The character strings "RNA", "DNA", "AA",
@@ -37,6 +38,8 @@
 #' z <- align(x, y)
 #'
 #' @name align
+#' @export
+#'
 align <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
                   maxiter = if(refine == "Viterbi") 10 else 100,
                   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07, DI = FALSE, ID = FALSE,
@@ -46,6 +49,8 @@ align <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Vi
 }
 
 #' @rdname align
+#' @export
+#'
 align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
                         maxiter = if(refine == "Viterbi") 10 else 100,
                         inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07, DI = FALSE, ID = FALSE,
@@ -63,6 +68,8 @@ align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refin
 }
 
 #' @rdname align
+#' @export
+#'
 align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
                         maxiter = if(refine == "Viterbi") 10 else 100,
                         inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07, DI = FALSE, ID = FALSE,
@@ -80,6 +87,8 @@ align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine
 }
 
 #' @rdname align
+#' @export
+#'
 align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
                        refine = "Viterbi", maxiter = if(refine == "Viterbi") 10 else 100,
                        inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
@@ -230,6 +239,8 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
 
 
 #' @rdname align
+#' @export
+#'
 align.default <- function(sequences, model, pseudocounts = "background",
                           residues = NULL, gapchar = "-", quiet = FALSE, ...){
   if(is.null(model)) return(sequences)
@@ -506,8 +517,15 @@ align.default <- function(sequences, model, pseudocounts = "background",
 }
 
 
-#' Deconstruct an alignment to its component sequences.
+#' Deconstruct an alignment.
 #'
+#' \code{unalign} deconstructs an alignment to its component sequences.
+#'
+#' @param x a matrix consisting of aligned sequences
+#' @inheritParams align
+#' @return a list of sequences in the same coding scheme as the input alignment (ie DNAbin,
+#' AAbin, or plain ASCII characters).
+#' @export
 #'
 unalign <- function(x, gapchar = "-"){
   #x is a matrix representing an alignment

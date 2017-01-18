@@ -2,14 +2,20 @@
 % Please edit documentation in R/posterior.R
 \name{posterior}
 \alias{posterior}
+\alias{posterior.HMM}
+\alias{posterior.PHMM}
 \title{Posterior decoding.}
 \usage{
 posterior(x, y, logspace = "autodetect", cpp = TRUE)
+
+\method{posterior}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
+
+\method{posterior}{PHMM}(x, y, logspace = "autodetect", cpp = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'}.}
 
-\item{y}{a character vector...}
+\item{y}{a character vector.}
 
 \item{logspace}{logical argument indicating whether the emission and transition
 probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
@@ -18,7 +24,10 @@ if the probabilities are in log space, returning an error if inconsistencies are
 Note that choosing the latter option increases the computational
 overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
 }
+\value{
+a vector or matrix of posterior probabilities.
+}
 \description{
-Calculates the posterior probability of a sequence given a model.
+Calculate the posterior probability of a sequence given a model.
 }
 
