@@ -66,6 +66,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
   AA <- is.AA(y)
   DI <- !all(x$A["DI", ] == if(logspace) -Inf else 0)
   ID <- !all(x$A["ID", ] == if(logspace) -Inf else 0)
+  maxiter <- maxiter
   method <- toupper(method)
   gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
   if(!is.list(y)){

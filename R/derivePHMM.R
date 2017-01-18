@@ -172,6 +172,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
       if(is.list(tree)){
         if(!is.null(attr(tree[[1]], "sequences")) & !is.null(attr(tree[[2]], "sequences"))){
           attr(tree, "sequences") <- align.default(attr(tree[[1]], "sequences"), attr(tree[[2]], "sequences"), ... = ...)
+          attr(tree[[1]], "sequences") <- attr(tree[[2]], "sequences") <- NULL
         }
       }
       return(tree)
