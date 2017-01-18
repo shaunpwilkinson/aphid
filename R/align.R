@@ -514,6 +514,16 @@ unalign <- function(x, gapchar = "-"){
   DNA <- is.DNA(x)
   AA <- is.AA(x)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
+  if(is.list(x)){
+    if(length(x) == 1){
+      tmpname <- names(x)
+      x <- x[[1]]
+      if(is.null(dim(x))){
+        x <- matrix(x, nrow = 1)
+        rownames(x) <- tmpname
+      }
+    }
+  }
   res <- vector(mode = "list", length = nrow(x))
   for(i in 1:nrow(x)) res[[i]] <- x[i, x[i, ] != gapchar, drop = TRUE]
   if(AA){

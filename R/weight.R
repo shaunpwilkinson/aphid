@@ -16,7 +16,57 @@
 #' wood_den <- as.dendrogram(hclust(wood_dist, method = "average"))
 #' wood_weights <- weight(wood_den, method = "Gerstein")
 #'
-weight <- function(x, method = "Gerstein"){
+weight <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
+  UseMethod("weight")
+}
+
+weight.DNAbin <- function(x, method = "Gerstein", k = 5){
+  if(is.list(x)){
+    weight.list(x, method = method, k = k)
+  }else{
+    x <- unalign(x, gapchar = as.raw(4))
+    weight.list(x, method = method, k = k)
+  }
+}
+
+weight.AAbin <- function(x, method = "Gerstein", k = 5){
+  if(is.list(x)){
+    weight.list(x, method = method, k = k)
+  }else{
+    x <- unalign(x, gapchar = as.raw(45))
+    weight.list(x, method = method, k = k)
+  }
+}
+
+
+weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
+  nsq <- length(x)
+  DNA <- is.DNA(x)
+  AA <- is.AA(x)
+  if(DNA) class(x) <- "DNAbin" else if(AA) class(x) <- "AAbin"
+  residues <- alphadetect(x, residues = residues, gapchar = gapchar)
+  gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
+  for(i in 1:nsq) x[[i]] <- x[[i]][x[[i]] != gapchar]
+  # cache names for later
+  tmpnames <- names(x)
+  names(x) <- paste0("S", 1:nsq)
+  if(nsq > 2){
+    qds <- kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+    guidetree <- as.dendrogram(hclust(qds, method = "average"))
+    res <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)]
+  }else if(nsq == 2){
+    res <- c(0.5, 0.5)
+  }else if(nsq == 1){
+    res <- 1
+  }else{
+    res <- numeric(0)
+  }
+  names(res) <- tmpnames
+  return(res)
+}
+
+
+weight.dendrogram <- function(x, method = "Gerstein"){
   if(!identical(method, "Gerstein")) stop("Only Gerstein et al. 1994 method supported")
   acal <- function(d) !any(sapply(d, is.list)) # all children are leaves?
   md <- function(d) all(sapply(d, acal)) & !acal(d) # mergable dendro?
@@ -30,7 +80,7 @@ weight <- function(x, method = "Gerstein"){
       grandchildheights <- lapply(x[childisdendro], ch) #  list same length as childedges
       grandchildedges <- mapply("-", childheights, grandchildheights, SIMPLIFY = FALSE)
       grandchildedges <- lapply(grandchildedges, function(e) e + 0.0000001) # this just
-      # safeguards against 0 denominators (but its a bit of a hack)
+      # safeguards against 0 denominators (but is a bit of a hack)
       ratios <- lapply(grandchildedges, function(v) v/sum(v))
       inheritances <- mapply("*", childedges, ratios, SIMPLIFY = FALSE)
       newgrandchildedges <- mapply("+", grandchildedges, inheritances, SIMPLIFY = FALSE)
@@ -64,4 +114,8 @@ weight <- function(x, method = "Gerstein"){
 }
 
 
+weight.default <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
+  x <- unalign(x, gapchar = gapchar)
+  weight.list(x, method = method, k = k, residues = residues, gapchar = gapchar)
+}
 

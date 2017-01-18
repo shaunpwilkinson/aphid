@@ -4,7 +4,7 @@
 \alias{weight}
 \title{Tree-based sequence weighting.}
 \usage{
-weight(x, method = "Gerstein")
+weight(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-")
 }
 \arguments{
 \item{x}{an object of class \code{"dendrogram"}.}

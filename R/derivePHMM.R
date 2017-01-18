@@ -79,7 +79,7 @@ derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, r
                                name = NULL, description = NULL,
                                compo = FALSE, consensus = FALSE, seeds = "random", refine = "Viterbi",
                                maxiter = if(refine == "Viterbi") 10 else 100,
-                               cpp = cpp, quiet = FALSE, ...){
+                               cpp = cpp, quiet = FALSE, ...){ ##TODO don't need gapchar, residues etc?
   if(is.list(x)){
     derive.PHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
                      seqweights = seqweights, wfactor = wfactor,
@@ -147,7 +147,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
   if(DNA) class(x) <- "DNAbin" else if(AA) class(x) <- "AAbin"
   residues <- alphadetect(x, residues = residues, gapchar = gapchar)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
-  for(i in 1:length(x)) x[[i]] <- x[[i]][x[[i]] != gapchar]
+  for(i in 1:nsq) x[[i]] <- x[[i]][x[[i]] != gapchar]
   if(nsq > 2){
     if(!quiet) cat("Calculating pairwise distances\n")
     names(x) <- paste0("S", 1:nsq)
@@ -162,7 +162,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
     qds <- kdistance(x[seeds], k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
     if(!quiet) cat("Building guide tree\n")
     guidetree <- as.dendrogram(hclust(qds, method = "average"))
-    seedweights <- weight(guidetree, method = "Gerstein")[names(x)[seeds]]
+    seedweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)[seeds]]
     attachseqs <- function(tree, sequences){
       if(!is.list(tree)) attr(tree, "sequences") <- sequences[attr(tree, "label")]
       return(tree)
@@ -221,7 +221,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
       }else{
         qds <- kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
         guidetree <- as.dendrogram(hclust(qds, method = "average"))
-        seqweights <- weight(guidetree, method = "Gerstein")[names(x)] * wfactor
+        seqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)] * wfactor
       }
     }else if(is.null(seqweights)){
       seqweights <- rep(wfactor, nsq)
