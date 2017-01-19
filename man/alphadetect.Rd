@@ -2,18 +2,11 @@
 % Please edit documentation in R/utils.R
 \name{alphadetect}
 \alias{alphadetect}
-\title{Detect residue alphabet.}
+\title{Internal profile functions.}
 \usage{
 alphadetect(sequences, residues = NULL, gapchar = "-", endchar = "?")
 }
-\arguments{
-\item{sequences}{a character matrix or vector, or a list of character matrices
-and/or vectors}
-}
 \description{
-\code{"alphadetect"} performs checks on the format of the "residues" argument
-to be passed to a variety of other functions. Single-element string arguments
-such as "DNA" and "AA" are
-converted to their respective alphabet in a character vector format.
+Internal profile functions.
 }
 

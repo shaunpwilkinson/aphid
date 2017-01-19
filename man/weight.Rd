@@ -2,9 +2,26 @@
 % Please edit documentation in R/weight.R
 \name{weight}
 \alias{weight}
+\alias{weight.AAbin}
+\alias{weight.DNAbin}
+\alias{weight.default}
+\alias{weight.dendrogram}
+\alias{weight.list}
 \title{Tree-based sequence weighting.}
 \usage{
 weight(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-")
+
+\method{weight}{DNAbin}(x, method = "Gerstein", k = 5)
+
+\method{weight}{AAbin}(x, method = "Gerstein", k = 5)
+
+\method{weight}{list}(x, method = "Gerstein", k = 5, residues = NULL,
+  gapchar = "-")
+
+\method{weight}{dendrogram}(x, method = "Gerstein")
+
+\method{weight}{default}(x, method = "Gerstein", k = 5, residues = NULL,
+  gapchar = "-")
 }
 \arguments{
 \item{x}{an object of class \code{"dendrogram"}.}
@@ -15,7 +32,7 @@ Currently only that of Gerstein et al. (1994) is supported
 }
 \value{
 a named vector of weights, the sum of which is equal to
-the total number of sequences.
+   the total number of sequences.
 }
 \description{
 Takes a dendogram object and returns a vector of sequence weights following
@@ -27,6 +44,5 @@ data(woodmouse)
 wood_dist <- kdistance(unalign(woodmouse))
 wood_den <- as.dendrogram(hclust(wood_dist, method = "average"))
 wood_weights <- weight(wood_den, method = "Gerstein")
-
 }
 

@@ -7,15 +7,18 @@
 WilburLipman(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5)
 }
 \arguments{
-\item{x, y}{integer vectors.}
+\item{x, y}{integer vectors representing sequences coded in a specific numbering scheme
+(for example AT).}
 
 \item{arity}{integer indicating the numbering system that x and y are coded in,
-for example 4 for DNA, 20 for proteins}
+for example, 4 for DNA, and 20 for proteins.}
 
-\item{threshold}{the number of standard deviations above the mean
-number of k-tuple matches
-for all diagonals with k-tuple matches for a diagonal to be be considered
-significant...}
+\item{threshold}{the number of standard deviations above the mean number of k-tuple matches
+for all diagonals with k-tuple matches for a diagonal to be be considered significant.}
+}
+\value{
+length 2 integer vector giving the bounds of the significant window space
+    to fill the dynamic programming matrices.
 }
 \description{
 Implement the algorithm of Wilbur & Lipman (1983) to define windowspace for

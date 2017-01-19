@@ -3,7 +3,8 @@
 #' Implement the algorithm of Wilbur & Lipman (1983) to define windowspace for
 #' downstream dynammic programming applications such as the Viterbi, forward and
 #' backward algorithms.
-#' @param x,y integer vectors.
+#' @param x,y integer vectors representing sequences coded in a specific numbering scheme
+#' (for example DNA residues A, T, G, C coded as 0, 1, 2, 3).
 #' @param arity integer indicating the numbering system that x and y are coded in,
 #'     for example, 4 for DNA, and 20 for proteins.
 #' @param threshold the number of standard deviations above the mean number of k-tuple matches

@@ -76,6 +76,5 @@ or PHMM and returns its log-odds score.
 x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
 y <- c("P", "A", "W", "H", "E", "A", "E")
 Viterbi(x, y,  d = 8, e = 2)
-
 }
 
