@@ -71,7 +71,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
   DI <- !all(x$A["DI", ] == if(logspace) -Inf else 0)
   ID <- !all(x$A["ID", ] == if(logspace) -Inf else 0)
   maxiter <- maxiter
-  method <- toupper(method)
+  #method <- toupper(method)
   gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
   if(!is.list(y)){
     if(DNA | AA){
@@ -147,8 +147,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
     if(!ID) transtotals[7] <- 0
     x$qa <- log(transtotals/sum(transtotals)) ### needs tidying up
   }
-
-  if(method  == "VITERBI"){
+  if(method  == "Viterbi"){
     alignment <- align(y, model = x, logspace = TRUE, ... = ...)
     #scores <- attr(alignment, "score")
     #maxscore <- attr(alignment, "score")
@@ -183,7 +182,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
     if(!quiet) cat("Note: sequential alignments were not identical after", i, "iterations\n")
     return(out)
     #stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
-  }else if(method == "BAUMWELCH"){
+  }else if(method == "BaumWelch"){
     if(DNA){
       NUCorder <- sapply(toupper(rownames(x$E)), match, c("A", "T", "G", "C"))
       x$E <- x$E[NUCorder, ]
@@ -358,7 +357,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                       logspace = "autodetect", quiet = FALSE, modelend = FALSE,
                       pseudocounts = "Laplace", ...){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
-  method <- toupper(method)
+  #method <- toupper(method)
   if(is.list(y)){
   } else if(is.vector(y, mode = "character")){
     y <- list(y)
@@ -375,7 +374,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     out$E <- log(out$E)
     out$A <- log(out$A)
   }
-  if(method == "VITERBI"){
+  if(method == "Viterbi"){
     for(i in 1:maxiter){
       samename <- logical(n)
       for(j in 1:n){
@@ -400,7 +399,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       }
     }
     stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
-  }else if(method == "BAUMWELCH"){
+  }else if(method == "BaumWelch"){
     Apseudocounts <- matrix(0, nrow = nstates, ncol = nstates)
     Epseudocounts <- matrix(0, nrow = nstates - 1, ncol = nres)
     dimnames(Apseudocounts) <- list(from = states, to =  states)
