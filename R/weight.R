@@ -68,7 +68,7 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar 
     guidetree <- as.dendrogram(hclust(qds, method = "average"))
     res <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)]
   }else if(nsq == 2){
-    res <- c(0.5, 0.5)
+    res <- c(1, 1)
   }else if(nsq == 1){
     res <- 1
   }else{

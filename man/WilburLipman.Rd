@@ -8,7 +8,7 @@ WilburLipman(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5)
 }
 \arguments{
 \item{x, y}{integer vectors representing sequences coded in a specific numbering scheme
-(for example AT).}
+(for example DNA residues A, T, G, C coded as 0, 1, 2, 3).}
 
 \item{arity}{integer indicating the numbering system that x and y are coded in,
 for example, 4 for DNA, and 20 for proteins.}
