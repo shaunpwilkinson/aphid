@@ -556,7 +556,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(cpp){
     res <- Viterbi_HMM(y, A, E, DNA, AA)
   }else{
-    H <- length(states) # not including BeginEnd state
+    H <- length(states) # not including Begin state
     path <- integer(n)
     V <- array(-Inf, dim = c(H, n), dimnames = list(state = states, roll = 1:n))
     P <- V + NA # pointer array

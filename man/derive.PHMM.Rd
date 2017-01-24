@@ -61,7 +61,7 @@ sequences in the alignment, so that mean(seqweights) = 1.}
 
 \item{residues}{either NULL (default; emitted residues are automatically
 detected from the alignment), or a case sensitive character vector specifying the
-residue alphabet (e.g. A, C, G, T for DNA).
+residue alphabet (e.g. \code{c("A", "T", "G", "C")} for DNA).
 Note that the former option can be slow for large character matrices;
 therefore specifying the residue alphabet can increase speed in these cases.
 Also note that the default setting \code{residues = NULL} will not
@@ -73,39 +73,40 @@ Not required for \code{"DNAbin"} or \code{"AAbin"} objects.}
 
 \item{pseudocounts}{the method used to account for the possible absence of certain
 character states in the alignment. Currently only \code{"Laplace"}
-and \code{"background"} are supported. If \code{pseudocounts = "background"} and
+and \code{"background"} or \code{"none"} are supported.
+If \code{pseudocounts = "background"} and
 some transition/emission types are absent from the alignment, Laplacean
 pseudocounts are automatically added.}
 
 \item{logspace}{logical indicating whether the emission and transition
 probability on the returned model should be logged.}
 
-\item{qa}{an optional named 3 x 3 matrix of background transition probabilities with
-\code{dimnames(qa) = list(from = c('D', 'M', 'I'), to = c('D', 'M', 'I'))},
-where M, I and D represent matches, inserts and deletions, respectively. If
+\item{qa}{an optional named 9-element vector of background transition probabilities with
+\code{dimnames(qa) = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")},
+where M, I and D represent match, insert and delete states, respectively. If
 \code{NULL}, background transition probabilities are generated from the alignment.}
 
 \item{qe}{an optional named vector of background emission probabilities the
 same length as the residue alphabet (i.e. 4 for nucleotides and 20 for
-amino acids) and with  corresponding names
-(i.e. A C D E F G H I K L M N P Q R S T V W Y for amino acids or
-A C G T for nucleotides). If \code{NULL}, background emission probabilities are
-generated from the alignment.}
+amino acids) and with corresponding names
+(e.g. \code{c("A", "T", "G", "C")} for DNA).
+If \code{NULL}, background emission probabilities are generated from the alignment.}
 
-\item{inserts}{model construction method. Either 'threshold' (default),'map',
+\item{inserts}{model construction method. Either 'threshold' (default),'map', 'inherited',
 or if insert columns are to be specified manually, a logical vector of length ncol(x),
 specifying the columns of x that should be designated
 as inserts (\code{TRUE} for insert columns, \code{FALSE} for match states).
 If \code{inserts = "threshold"} columns are assigned as insert states if the proportion of
 gap characters in the column is higher than a specified threshold (defaults to 0.5).
 If set to 'map' insert columns are found using the maximum \emph{a posteriori}
-dynamic programming method outlined in Durbin et al. (1998).}
+dynamic programming method outlined in Durbin et al. (1998). If set to 'inherited' the
+function looks for an 'inserts' attribute from the alignment.}
 
 \item{threshold}{the maximum proportion of gaps for an alignment column
 to be considered a module in the PHMM (defaults to 0.5). Only applicable for
 \code{inserts = "threshold"}. Note that the maximum \emph{a posteriori} method works
 poorly for small alignments so the 'threshold' method is automatically used when
-the number of sequences is fewer than 10.}
+the number of sequences is fewer than 5.}
 
 \item{lambda}{penalty parameter used to favour models with fewer match states. Equivalent
 to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).

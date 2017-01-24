@@ -38,7 +38,7 @@ transition pseudocounts as its first element and a matrix of emission pseudocoun
 as its second. If a list is supplied both matrices must have row and column names
 according to the residues (column names of emission matrix) and states
 (row and column names of the transition matrix and row names of the emission matrix).
-The first row and column of the transition matrix must be 'BeginEnd'.}
+The first row and column of the transition matrix must be 'Begin'.}
 }
 \value{
 an object of class \code{"HMM"}

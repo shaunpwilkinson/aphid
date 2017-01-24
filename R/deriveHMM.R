@@ -27,7 +27,7 @@
 #' as its second. If a list is supplied both matrices must have row and column names
 #' according to the residues (column names of emission matrix) and states
 #' (row and column names of the transition matrix and row names of the emission matrix).
-#' The first row and column of the transition matrix must be 'BeginEnd'.
+#' The first row and column of the transition matrix must be 'Begin'.
 #' @param modelend logical indicating whether transitions to the 'end' state should be
 #' modeled. Defaults to FALSE.
 #' @return an object of class \code{"HMM"}
@@ -44,7 +44,7 @@ derive.HMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mod
   if(!(namesok)) stop("x must be a list of named vectors")
   residues <- alphadetect(x, residues = residues)
   if(is.null(states)) states <- unique(unlist(lapply(x, names)))
-  if(states[1] != "BeginEnd") states <- c("BeginEnd", states)
+  if(states[1] != "Begin") states <- c("Begin", states)
   nres <- length(residues)
   nstates <- length(states)
   n <- length(x)
@@ -61,7 +61,7 @@ derive.HMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mod
   indices <- setNames(seq_along(states) - 1, states)
   #indices <- 0:(nstates - 1)
   #names(indices) <- states
-  pathscoded <- lapply(x, function(e) indices[c("BeginEnd", names(e), "BeginEnd")])
+  pathscoded <- lapply(x, function(e) indices[c("Begin", names(e), "Begin")])
   Acounts <- transitioncount(pathscoded[[1]], arity = nstates) * seqweights[1]
   if(n > 1){
     for(i in 2:n){

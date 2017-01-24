@@ -151,6 +151,8 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
     alignment <- align(y, model = x, logspace = TRUE, ... = ...)
     #scores <- attr(alignment, "score")
     #maxscore <- attr(alignment, "score")
+    alig_cache <- list()
+    alig_cache[[1]] <- as.vector(alignment)
     for(i in 1:maxiter){
       if(!quiet) cat("Iteration", i, "\n")
       out <- derive.PHMM(alignment, seqweights = seqweights, residues = residues,
@@ -161,10 +163,13 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
                         qe = if(fixqe) x$qe else NULL)
       ### what about DI and ID
       newalig <- align(y, model = out, logspace = TRUE, ... = ...)
+      newaligv <- as.vector(newalig)
+      if(!any(sapply(alig_cache, identical, newaligv))){
+        alig_cache[[i + 1]] <- newaligv
       #score <- attr(newalig, "score")
       #newscore <- attr(newalig, "score")
       #if(!identical(alignment, newalig) & !(score %in% scores)){
-      if(!identical(as.vector(alignment), as.vector(newalig))){
+      #if(!identical(as.vector(alignment), as.vector(newalig))){
         alignment <- newalig
         #scores <- c(scores, score)
         #maxscore <- newscore
@@ -344,7 +349,6 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
     }
     return(out)
   }else stop("Invalid argument given for 'method'")
-
 }
 
 
