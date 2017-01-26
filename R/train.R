@@ -1,4 +1,4 @@
-#' Iterative refinement of model parameters.
+#' Iterative model refinement.
 #'
 #' Update model parameters using a list of training sequences. Methods available include
 #' Viterbi training (also known as the segmental K-means algorithm (Juang & Rabiner 1990)),
@@ -6,12 +6,12 @@
 #' that iteratively finds the local (but not necessarily global) optimal parameters of a HMM or PHMM.
 #'
 #' @param x an object of class \code{'HMM'} or \code{'PHMM'} specifying the
-#' starting parameter values.
+#' initial parameter values.
 #' @param y a list of training sequences (character vectors) whose hidden states are unknown.
 #' @param method a character string specifying the iterative model training method to use.
 #' Must be set to either \code{method = "Viterbi"} (default) or \code{method = "BaumWelch"}.
 #' @param maxiter the maximum number of EM iterations before the cycling process is terminated
-#' with an error.
+#' with a warning.
 #' @param deltaLL a numeric value giving the change in log likelihood to specify as the convergence
 #' threshold. Only applicable if \code{method = "BaumWelch"}
 #' @param logspace logical argument indicating whether the emission and transition
@@ -154,13 +154,13 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
     alig_cache <- list()
     alig_cache[[1]] <- as.vector(alignment)
     for(i in 1:maxiter){
-      if(!quiet) cat("Iteration", i, "\n")
       out <- derive.PHMM(alignment, seqweights = seqweights, residues = residues,
                          gapchar = gapchar, DI = DI, ID = ID,
                         inserts = inserts, lambda = lambda, threshold = threshold,
                         pseudocounts = pseudocounts, logspace = TRUE,
                         qa = if(fixqa) x$qa else NULL,
                         qe = if(fixqe) x$qe else NULL)
+      if(!quiet) cat("Iteration", i, ", derived PHMM with", out$size, "internal modules\n")
       ### what about DI and ID
       newalig <- align(y, model = out, logspace = TRUE, ... = ...)
       newaligv <- as.vector(newalig)
