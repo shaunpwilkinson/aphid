@@ -4,7 +4,7 @@
 \alias{train}
 \alias{train.HMM}
 \alias{train.PHMM}
-\title{Iterative refinement of model parameters.}
+\title{Iterative model refinement.}
 \usage{
 train(x, y, method = "Viterbi", seqweights = NULL,
   logspace = "autodetect", maxiter = if (method == "Viterbi") 10 else 100,
@@ -25,7 +25,7 @@ train(x, y, method = "Viterbi", seqweights = NULL,
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'} specifying the
-starting parameter values.}
+initial parameter values.}
 
 \item{y}{a list of training sequences (character vectors) whose hidden states are unknown.}
 
@@ -41,7 +41,7 @@ overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the runnin
 large models with many parameters.}
 
 \item{maxiter}{the maximum number of EM iterations before the cycling process is terminated
-with an error.}
+with a warning.}
 
 \item{deltaLL}{a numeric value giving the change in log likelihood to specify as the convergence
 threshold. Only applicable if \code{method = "BaumWelch"}}
