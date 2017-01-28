@@ -1,3 +1,3 @@
-# profile
-Profile hidden Markov models for sequence analysis  
+# aphid
+Analysis with profile hidden Markov models  
 Package in development
