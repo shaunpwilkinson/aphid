@@ -1,2 +1,2 @@
-# aphidOLD
-Depreciated
+# aphid
+Analysis with profile hidden Markov models
