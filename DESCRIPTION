@@ -1,14 +1,14 @@
-Package: profile
+Package: aphid
 Type: Package
-Title: Profile hidden Markov models for sequence analysis
+Title: Analysis with profile hidden Markov models
 Version: 0.0.0.9000
 Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
 Description: Contains functions for the creation, application and visualization
     of profile hidden Markov models for bioinformatic sequence analysis.
 License: GPL-3
-URL: http://github.com/shaunpwilkinson/profile
-BugReports: http://github.com/shaunpwilkinson/profile/issues
+URL: http://github.com/shaunpwilkinson/aphid
+BugReports: http://github.com/shaunpwilkinson/aphid/issues
 Depends:
     R (>= 3.2.0)
 LazyData: TRUE
