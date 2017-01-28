@@ -160,7 +160,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
                         pseudocounts = pseudocounts, logspace = TRUE,
                         qa = if(fixqa) x$qa else NULL,
                         qe = if(fixqe) x$qe else NULL)
-      if(!quiet) cat("Iteration", i, ", derived PHMM with", out$size, "internal modules\n")
+      if(!quiet) cat("Iteration", i, "PHMM with", out$size, "internal modules\n")
       ### what about DI and ID
       newalig <- align(y, model = out, logspace = TRUE, ... = ...)
       newaligv <- as.vector(newalig)

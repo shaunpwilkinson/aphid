@@ -109,8 +109,8 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
       return(matrix(sequences[[1]], nrow = 1))
     }
     if(!quiet) cat("Calculating pairwise distances\n")
-    if(nseq > 20){
-      nseeds <- min(nseq, 20 + ceiling(log(nseq, 2)))
+    if(nseq > 100){
+      nseeds <- min(nseq, 100 + 2 * ceiling(log(nseq, 2)))
       seeds <- sample(1:length(sequences), size = nseeds)
     }else seeds <- seq_along(sequences)
 
@@ -148,8 +148,10 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
       }
     }
     l <- model$size
+    if(!quiet) cat("Model size:", l, "internal modules\n")
     #nseq <- length(sequences)
     out <- matrix(nrow = nseq, ncol = 2 * l + 1)
+    cat("Check\n")
     rownames(out) <- attr(sequences, "names")
     colnames(out) <- rep("I", 2 * l + 1)
     if(l > 0) colnames(out)[seq(2, 2 * l, by = 2)] <- 1:l
@@ -325,7 +327,8 @@ align.default <- function(sequences, model, pseudocounts = "background",
       rm(tmp) # the old switcharoo
     }
     n <- nrow(sequences)
-    z <- derive.PHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
+    z <- derive.PHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts, 
+                     residues = residues, logspace = TRUE)
     l <- z$size
     alignment <- Viterbi(z, model, ... = ...) ### changed from alig
     path <- alignment$path
@@ -406,6 +409,12 @@ align.default <- function(sequences, model, pseudocounts = "background",
     is.insert <- is.insert[1:position]
     res <- rbind(newxrows, newyrow)
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
+    res.list <- unalign(res)
+    res.weights <- weight(res.list, method = "Gerstein", k = 5)
+    res.phmm <- derive.PHMM.default(res, seqweights = res.weights)
+    res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 10, 
+                      logspace = TRUE, quiet = TRUE, ... = ...)
+    res <- align.list(sequences = res.list, model = res.phmm, ... = ...)
     return(res)
   }else if(nrow(sequences) > 1 & nrow(model) > 1){
     nx <- nrow(sequences)
@@ -510,6 +519,12 @@ align.default <- function(sequences, model, pseudocounts = "background",
     is.insert <- is.insert[1:position]
     res <- rbind(newxrows, newyrows)
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
+    res.list <- unalign(res)
+    res.weights <- weight(res.list, method = "Gerstein", k = 5)
+    res.phmm <- derive.PHMM.default(res, seqweights = res.weights)
+    res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 10, 
+                      logspace = TRUE, quiet = TRUE, ... = ...)
+    res <- align.list(sequences = res.list, model = res.phmm, ... = ...)
     return(res)
   }else{
     stop("invalid arguments provided for sequences and or y")

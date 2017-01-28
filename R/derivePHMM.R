@@ -160,8 +160,8 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
     if(!quiet) cat("Calculating pairwise distances\n")
     names(x) <- paste0("S", 1:nsq)
     if(identical(seeds, "random")){
-      if(nsq > 20){
-        nseeds <- min(nsq, 20 + ceiling(log(nsq, 2)))
+      if(nsq > 100){
+        nseeds <- min(nsq, 100 + 2 * ceiling(log(nsq, 2)))
         seeds <- sample(1:length(x), size = nseeds)
       }else seeds <- seq_along(x)
     }else if(identical(seeds, "all")){
