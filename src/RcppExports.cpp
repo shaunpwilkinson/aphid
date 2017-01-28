@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // kcount_DNA
 NumericMatrix kcount_DNA(List x, int k);
-RcppExport SEXP profile_kcount_DNA(SEXP xSEXP, SEXP kSEXP) {
+RcppExport SEXP aphid_kcount_DNA(SEXP xSEXP, SEXP kSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -19,7 +19,7 @@ END_RCPP
 }
 // mapC
 LogicalVector mapC(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts, NumericVector seqweights, NumericVector qe, double lambda);
-RcppExport SEXP profile_mapC(SEXP ecsSEXP, SEXP notgapsSEXP, SEXP pseudocountsSEXP, SEXP seqweightsSEXP, SEXP qeSEXP, SEXP lambdaSEXP) {
+RcppExport SEXP aphid_mapC(SEXP ecsSEXP, SEXP notgapsSEXP, SEXP pseudocountsSEXP, SEXP seqweightsSEXP, SEXP qeSEXP, SEXP lambdaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -35,7 +35,7 @@ END_RCPP
 }
 // returnmod
 List returnmod(List x);
-RcppExport SEXP profile_returnmod(SEXP xSEXP) {
+RcppExport SEXP aphid_returnmod(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -46,7 +46,7 @@ END_RCPP
 }
 // progression
 IntegerMatrix progression(IntegerVector path, IntegerVector start);
-RcppExport SEXP profile_progression(SEXP pathSEXP, SEXP startSEXP) {
+RcppExport SEXP aphid_progression(SEXP pathSEXP, SEXP startSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -58,7 +58,7 @@ END_RCPP
 }
 // progression2
 IntegerMatrix progression2(IntegerVector path, IntegerVector start);
-RcppExport SEXP profile_progression2(SEXP pathSEXP, SEXP startSEXP) {
+RcppExport SEXP aphid_progression2(SEXP pathSEXP, SEXP startSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -70,7 +70,7 @@ END_RCPP
 }
 // transitioncount
 IntegerVector transitioncount(IntegerVector x, int arity);
-RcppExport SEXP profile_transitioncount(SEXP xSEXP, SEXP aritySEXP) {
+RcppExport SEXP aphid_transitioncount(SEXP xSEXP, SEXP aritySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -82,7 +82,7 @@ END_RCPP
 }
 // emissioncount
 IntegerVector emissioncount(IntegerVector states, int statearity, IntegerVector residues, int resarity);
-RcppExport SEXP profile_emissioncount(SEXP statesSEXP, SEXP statearitySEXP, SEXP residuesSEXP, SEXP resaritySEXP) {
+RcppExport SEXP aphid_emissioncount(SEXP statesSEXP, SEXP statearitySEXP, SEXP residuesSEXP, SEXP resaritySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -96,7 +96,7 @@ END_RCPP
 }
 // tab9C
 NumericMatrix tab9C(IntegerMatrix x, NumericVector seqweights);
-RcppExport SEXP profile_tab9C(SEXP xSEXP, SEXP seqweightsSEXP) {
+RcppExport SEXP aphid_tab9C(SEXP xSEXP, SEXP seqweightsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -108,7 +108,7 @@ END_RCPP
 }
 // DNAprobC2
 double DNAprobC2(int x, NumericVector probs);
-RcppExport SEXP profile_DNAprobC2(SEXP xSEXP, SEXP probsSEXP) {
+RcppExport SEXP aphid_DNAprobC2(SEXP xSEXP, SEXP probsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -120,7 +120,7 @@ END_RCPP
 }
 // AAprobC2
 double AAprobC2(int x, NumericVector probs);
-RcppExport SEXP profile_AAprobC2(SEXP xSEXP, SEXP probsSEXP) {
+RcppExport SEXP aphid_AAprobC2(SEXP xSEXP, SEXP probsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -132,7 +132,7 @@ END_RCPP
 }
 // logsum
 double logsum(NumericVector x);
-RcppExport SEXP profile_logsum(SEXP xSEXP) {
+RcppExport SEXP aphid_logsum(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -143,7 +143,7 @@ END_RCPP
 }
 // whichmax
 int whichmax(NumericVector x, int start);
-RcppExport SEXP profile_whichmax(SEXP xSEXP, SEXP startSEXP) {
+RcppExport SEXP aphid_whichmax(SEXP xSEXP, SEXP startSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -155,7 +155,7 @@ END_RCPP
 }
 // Viterbi_default
 List Viterbi_default(IntegerVector x, IntegerVector y, int type, double d, double e, NumericMatrix S, IntegerVector windowspace, double offset);
-RcppExport SEXP profile_Viterbi_default(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP dSEXP, SEXP eSEXP, SEXP SSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
+RcppExport SEXP aphid_Viterbi_default(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP dSEXP, SEXP eSEXP, SEXP SSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -173,7 +173,7 @@ END_RCPP
 }
 // Viterbi_HMM
 List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
-RcppExport SEXP profile_Viterbi_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
+RcppExport SEXP aphid_Viterbi_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -188,7 +188,7 @@ END_RCPP
 }
 // Viterbi_PHMM
 List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, double offset, bool DI, bool ID, bool DNA, bool AA);
-RcppExport SEXP profile_Viterbi_PHMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
+RcppExport SEXP aphid_Viterbi_PHMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -210,7 +210,7 @@ END_RCPP
 }
 // Viterbi_PP
 List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay, NumericMatrix Ex, NumericMatrix Ey, NumericVector qe, int type, IntegerVector windowspace, double offset);
-RcppExport SEXP profile_Viterbi_PP(SEXP AxSEXP, SEXP AySEXP, SEXP ExSEXP, SEXP EySEXP, SEXP qeSEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
+RcppExport SEXP aphid_Viterbi_PP(SEXP AxSEXP, SEXP AySEXP, SEXP ExSEXP, SEXP EySEXP, SEXP qeSEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -228,7 +228,7 @@ END_RCPP
 }
 // forward_HMM
 List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
-RcppExport SEXP profile_forward_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
+RcppExport SEXP aphid_forward_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -243,7 +243,7 @@ END_RCPP
 }
 // forward_PHMM
 List forward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, bool DI, bool ID, bool DNA, bool AA);
-RcppExport SEXP profile_forward_PHMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
+RcppExport SEXP aphid_forward_PHMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -264,7 +264,7 @@ END_RCPP
 }
 // backward_HMM
 List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
-RcppExport SEXP profile_backward_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
+RcppExport SEXP aphid_backward_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -279,7 +279,7 @@ END_RCPP
 }
 // backward_PHMM
 List backward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, bool DI, bool ID, bool DNA, bool AA);
-RcppExport SEXP profile_backward_PHMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
+RcppExport SEXP aphid_backward_PHMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;

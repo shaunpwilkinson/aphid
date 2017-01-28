@@ -2,23 +2,23 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 kcount_DNA <- function(x, k = 5L) {
-    .Call('profile_kcount_DNA', PACKAGE = 'profile', x, k)
+    .Call('aphid_kcount_DNA', PACKAGE = 'aphid', x, k)
 }
 
 mapC <- function(ecs, notgaps, pseudocounts, seqweights, qe, lambda = 0) {
-    .Call('profile_mapC', PACKAGE = 'profile', ecs, notgaps, pseudocounts, seqweights, qe, lambda)
+    .Call('aphid_mapC', PACKAGE = 'aphid', ecs, notgaps, pseudocounts, seqweights, qe, lambda)
 }
 
 returnmod <- function(x) {
-    .Call('profile_returnmod', PACKAGE = 'profile', x)
+    .Call('aphid_returnmod', PACKAGE = 'aphid', x)
 }
 
 progression <- function(path, start) {
-    .Call('profile_progression', PACKAGE = 'profile', path, start)
+    .Call('aphid_progression', PACKAGE = 'aphid', path, start)
 }
 
 progression2 <- function(path, start) {
-    .Call('profile_progression2', PACKAGE = 'profile', path, start)
+    .Call('aphid_progression2', PACKAGE = 'aphid', path, start)
 }
 
 #' Count transition frequencies.
@@ -30,15 +30,15 @@ progression2 <- function(path, start) {
 #' 2 for binary, 3 for ternary, etc.
 #'
 transitioncount <- function(x, arity) {
-    .Call('profile_transitioncount', PACKAGE = 'profile', x, arity)
+    .Call('aphid_transitioncount', PACKAGE = 'aphid', x, arity)
 }
 
 emissioncount <- function(states, statearity, residues, resarity) {
-    .Call('profile_emissioncount', PACKAGE = 'profile', states, statearity, residues, resarity)
+    .Call('aphid_emissioncount', PACKAGE = 'aphid', states, statearity, residues, resarity)
 }
 
 tab9C <- function(x, seqweights) {
-    .Call('profile_tab9C', PACKAGE = 'profile', x, seqweights)
+    .Call('aphid_tab9C', PACKAGE = 'aphid', x, seqweights)
 }
 
 #' DNA ambiguity probabilities.
@@ -48,7 +48,7 @@ tab9C <- function(x, seqweights) {
 #' @param x a pentadecimal integer (arity = 15).
 #' @param probs a length-4 vector of logged probabilities.
 DNAprobC2 <- function(x, probs) {
-    .Call('profile_DNAprobC2', PACKAGE = 'profile', x, probs)
+    .Call('aphid_DNAprobC2', PACKAGE = 'aphid', x, probs)
 }
 
 #' AA ambiguity probabilities.
@@ -58,7 +58,7 @@ DNAprobC2 <- function(x, probs) {
 #' @param x a heptovigdecimal integer (arity = 27).
 #' @param probs a length-20 vector of logged probab.
 AAprobC2 <- function(x, probs) {
-    .Call('profile_AAprobC2', PACKAGE = 'profile', x, probs)
+    .Call('aphid_AAprobC2', PACKAGE = 'aphid', x, probs)
 }
 
 #' Sum of logged probabilities.
@@ -67,7 +67,7 @@ AAprobC2 <- function(x, probs) {
 #'
 #' @param x a vector of logged probabilities.
 logsum <- function(x) {
-    .Call('profile_logsum', PACKAGE = 'profile', x)
+    .Call('aphid_logsum', PACKAGE = 'aphid', x)
 }
 
 #' Find the index of the maximum with ties broken at random.
@@ -77,7 +77,7 @@ logsum <- function(x) {
 #' @param x a numeric or integer vector.
 #'
 whichmax <- function(x, start = 1L) {
-    .Call('profile_whichmax', PACKAGE = 'profile', x, start)
+    .Call('aphid_whichmax', PACKAGE = 'aphid', x, start)
 }
 
 #' Optimal path of sequence through model.
@@ -92,19 +92,19 @@ whichmax <- function(x, start = 1L) {
 #' and transmission probabilities for the model(s) are logged.
 #' @name ViterbiC
 Viterbi_default <- function(x, y, type, d, e, S, windowspace, offset = 0) {
-    .Call('profile_Viterbi_default', PACKAGE = 'profile', x, y, type, d, e, S, windowspace, offset)
+    .Call('aphid_Viterbi_default', PACKAGE = 'aphid', x, y, type, d, e, S, windowspace, offset)
 }
 
 Viterbi_HMM <- function(y, A, E, DNA = FALSE, AA = FALSE) {
-    .Call('profile_Viterbi_HMM', PACKAGE = 'profile', y, A, E, DNA, AA)
+    .Call('aphid_Viterbi_HMM', PACKAGE = 'aphid', y, A, E, DNA, AA)
 }
 
 Viterbi_PHMM <- function(y, A, E, qe, qey, type, windowspace, offset = 0, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
-    .Call('profile_Viterbi_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA, AA)
+    .Call('aphid_Viterbi_PHMM', PACKAGE = 'aphid', y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA, AA)
 }
 
 Viterbi_PP <- function(Ax, Ay, Ex, Ey, qe, type, windowspace, offset = 0) {
-    .Call('profile_Viterbi_PP', PACKAGE = 'profile', Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
+    .Call('aphid_Viterbi_PP', PACKAGE = 'aphid', Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
 }
 
 #' Full probability of a sequence given a model.
@@ -114,18 +114,18 @@ Viterbi_PP <- function(Ax, Ay, Ex, Ey, qe, type, windowspace, offset = 0) {
 #' @param y an integer vector with same arity as number of columns of E
 #'
 forward_HMM <- function(y, A, E, DNA = FALSE, AA = FALSE) {
-    .Call('profile_forward_HMM', PACKAGE = 'profile', y, A, E, DNA, AA)
+    .Call('aphid_forward_HMM', PACKAGE = 'aphid', y, A, E, DNA, AA)
 }
 
 forward_PHMM <- function(y, A, E, qe, qey, type, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
-    .Call('profile_forward_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA)
+    .Call('aphid_forward_PHMM', PACKAGE = 'aphid', y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA)
 }
 
 backward_HMM <- function(y, A, E, DNA = FALSE, AA = FALSE) {
-    .Call('profile_backward_HMM', PACKAGE = 'profile', y, A, E, DNA, AA)
+    .Call('aphid_backward_HMM', PACKAGE = 'aphid', y, A, E, DNA, AA)
 }
 
 backward_PHMM <- function(y, A, E, qe, qey, type, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
-    .Call('profile_backward_PHMM', PACKAGE = 'profile', y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA)
+    .Call('aphid_backward_PHMM', PACKAGE = 'aphid', y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA)
 }
 
