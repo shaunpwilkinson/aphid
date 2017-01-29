@@ -50,7 +50,7 @@
 train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
                   maxiter = if(method == "Viterbi") 10 else 100,
                   deltaLL = 1E-07, modelend = FALSE, pseudocounts = "Laplace",
-                  gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
+                  gapchar = "-", fixqa = FALSE, fixqe = FALSE, setsize = NULL, inserts = "map",
                   threshold = 0.5, lambda = 0, quiet = FALSE, ...){
   UseMethod("train")
 }
@@ -62,7 +62,7 @@ train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autod
 train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
                        maxiter = if(method == "Viterbi") 10 else 100,
                        deltaLL = 1E-07, pseudocounts = "background",
-                       gapchar = "-", fixqa = FALSE, fixqe = FALSE,
+                       gapchar = "-", fixqa = FALSE, fixqe = FALSE, setsize = NULL,
                        inserts = "map", threshold = 0.5, lambda = 0, quiet = FALSE, ...){
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   #note any changes below also need apply to align2phmm
@@ -154,8 +154,8 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
     alig_cache <- list()
     alig_cache[[1]] <- as.vector(alignment)
     for(i in 1:maxiter){
-      out <- derive.PHMM(alignment, seqweights = seqweights, residues = residues,
-                         gapchar = gapchar, DI = DI, ID = ID,
+      out <- derive.PHMM.default(alignment, seqweights = seqweights, residues = residues,
+                         gapchar = gapchar, DI = DI, ID = ID, setsize = setsize,
                         inserts = inserts, lambda = lambda, threshold = threshold,
                         pseudocounts = pseudocounts, logspace = TRUE,
                         qa = if(fixqa) x$qa else NULL,
