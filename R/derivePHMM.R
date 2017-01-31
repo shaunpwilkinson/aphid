@@ -180,7 +180,8 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
       if(is.list(tree)){
         if(!is.null(attr(tree[[1]], "sequences")) & !is.null(attr(tree[[2]], "sequences"))){
           attr(tree, "sequences") <- align.default(attr(tree[[1]], "sequences"),
-                                                   attr(tree[[2]], "sequences"), ... = ...)
+                                                   attr(tree[[2]], "sequences"),
+                                                   setsize = setsize, ... = ...)
           attr(tree[[1]], "sequences") <- attr(tree[[2]], "sequences") <- NULL
         }
       }
@@ -320,9 +321,12 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
     #   setsize <- eval(call(setsize, seqlens))
     # }
     setsize <- as.integer(setsize)
-    if(setsize > m | setsize < 3) {
+    if(setsize < 3){
       stop("setsize argument is out of bounds")
-    }else if(setsize == m){
+    }else if(setsize > m){
+      setsize <- m
+    }
+    if(setsize == m){
       inserts <- rep(FALSE, m)
     }else{
       gapnos <- apply(gapweights, 2, sum)

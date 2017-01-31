@@ -64,7 +64,7 @@ align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refin
                qa = qa, qe = qe, quiet = quiet, ... = ...)
   }else{
     align.default(sequences, model = model, residues = residues, gapchar = gapchar,
-                  pseudocounts = pseudocounts, quiet = quiet, ... = ...)
+                  pseudocounts = pseudocounts, setsize = setsize, quiet = quiet, ... = ...)
   }
 }
 
@@ -85,7 +85,7 @@ align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine
                qa = qa, qe = qe, quiet = quiet, ... = ...)
   }else{
     align.default(sequences, model = model, residues = residues, gapchar = gapchar,
-                  pseudocounts = pseudocounts, quiet = quiet, ... = ...)
+                  pseudocounts = pseudocounts, setsize = setsize, quiet = quiet, ... = ...)
   }
 }
 
@@ -134,7 +134,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     if(!quiet) cat("Aligning sequences to model\n")
     # if(!is.null(tmp)) names(sequences) <- tmp
     res <- align.list(sequences, model = phmm, ... = ...)
-    if(!quiet) cat("Done\n")
+    if(!quiet) cat("Produced alignment with", ncol(res), "columns (including inserts)\n")
     return(res)
   }else{
     #note changes here also need apply to 'train'
@@ -152,7 +152,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
       }
     }
     l <- model$size
-    # if(!quiet) cat("Model size:", l, "internal modules\n")
+    if(!quiet) cat("Model size:", l, "internal modules\n")
     #nseq <- length(sequences)
     out <- matrix(nrow = nseq, ncol = 2 * l + 1)
     rownames(out) <- attr(sequences, "names")
@@ -247,7 +247,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
 #' @export
 #'
 align.default <- function(sequences, model, pseudocounts = "background",
-                          residues = NULL, gapchar = "-", quiet = FALSE, ...){
+                          residues = NULL, gapchar = "-", setsize = NULL, quiet = FALSE, ...){
   if(is.null(model)) return(sequences)
   DNA <- is.DNA(sequences)
   AA <- is.AA(sequences)
@@ -412,12 +412,12 @@ align.default <- function(sequences, model, pseudocounts = "background",
     is.insert <- is.insert[1:position]
     res <- rbind(newxrows, newyrow)
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
-    res.list <- unalign(res)
-    res.weights <- weight(res.list, method = "Gerstein", k = 5)
-    res.phmm <- derive.PHMM.default(res, seqweights = res.weights, quiet = TRUE)
-    res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 10,
-                      logspace = TRUE, quiet = TRUE, ... = ...)
-    res <- align.list(sequences = res.list, model = res.phmm, quiet = TRUE, ... = ...)
+    # res.list <- unalign(res)
+    # res.weights <- weight(res.list, method = "Gerstein", k = 5)
+    # res.phmm <- derive.PHMM.default(res, seqweights = res.weights, quiet = TRUE)
+    # res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 10,
+    #                   logspace = TRUE, quiet = TRUE, ... = ...)
+    # res <- align.list(sequences = res.list, model = res.phmm, quiet = TRUE, ... = ...)
     return(res)
   }else if(nrow(sequences) > 1 & nrow(model) > 1){
     nx <- nrow(sequences)
@@ -524,9 +524,12 @@ align.default <- function(sequences, model, pseudocounts = "background",
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     res.list <- unalign(res)
     res.weights <- weight(res.list, method = "Gerstein", k = 5)
-    res.phmm <- derive.PHMM.default(res, seqweights = res.weights)
-    res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 10,
-                      logspace = TRUE, quiet = TRUE, ... = ...)
+    cat("\n", setsize, "\n")
+    cat(sum(apply(res, 2, function(v) !any(v == gapchar))), "\n\n")
+    newsetsize <- if(is.null(setsize)) NULL else max(c(sum(apply(res, 2, function(v) !any(v == gapchar))), setsize))
+    res.phmm <- derive.PHMM.default(res, seqweights = res.weights, setsize = newsetsize)
+    res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 5, setsize = newsetsize,
+                      logspace = TRUE, quiet = FALSE, ... = ...)
     res <- align.list(sequences = res.list, model = res.phmm, ... = ...)
     return(res)
   }else{
