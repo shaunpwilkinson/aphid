@@ -41,7 +41,7 @@
 #' @export
 #'
 align <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
-                  maxiter = if(refine == "Viterbi") 10 else 100, setsize = NULL,
+                  maxiter = if(refine == "Viterbi") 10 else 100, maxsize = NULL,
                   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
                   DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
                   pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...){
@@ -52,19 +52,19 @@ align <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Vi
 #' @export
 #'
 align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi",
-                         k = 5, maxiter = if(refine == "Viterbi") 10 else 100, setsize = NULL,
+                         k = 5, maxiter = if(refine == "Viterbi") 10 else 100, maxsize = NULL,
                         inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
                         DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
                         pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...){
   if(is.list(sequences)){
     align.list(sequences, model = model, seqweights = seqweights, refine = refine, k = k,
-               maxiter = maxiter, setsize = setsize, inserts = inserts, lambda = lambda,
+               maxiter = maxiter, maxsize = maxsize, inserts = inserts, lambda = lambda,
                threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
                residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
                qa = qa, qe = qe, quiet = quiet, ... = ...)
   }else{
     align.default(sequences, model = model, residues = residues, gapchar = gapchar,
-                  pseudocounts = pseudocounts, setsize = setsize, quiet = quiet, ... = ...)
+                  pseudocounts = pseudocounts, maxsize = maxsize, quiet = quiet, ... = ...)
   }
 }
 
@@ -72,20 +72,20 @@ align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refin
 #' @export
 #'
 align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
-                        maxiter = if(refine == "Viterbi") 10 else 100, setsize = NULL,
+                        maxiter = if(refine == "Viterbi") 10 else 100, maxsize = NULL,
                         inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
                         DI = FALSE, ID = FALSE,
                         residues = NULL, gapchar = "-", pseudocounts = "background",
                         qa = NULL, qe = NULL, quiet = FALSE, ...){
   if(is.list(sequences)){
     align.list(sequences, model = model, seqweights = seqweights, refine = refine, k = k,
-               maxiter = maxiter, setsize = setsize, inserts = inserts, lambda = lambda,
+               maxiter = maxiter, maxsize = maxsize, inserts = inserts, lambda = lambda,
                threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
                residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
                qa = qa, qe = qe, quiet = quiet, ... = ...)
   }else{
     align.default(sequences, model = model, residues = residues, gapchar = gapchar,
-                  pseudocounts = pseudocounts, setsize = setsize, quiet = quiet, ... = ...)
+                  pseudocounts = pseudocounts, maxsize = maxsize, quiet = quiet, ... = ...)
   }
 }
 
@@ -94,7 +94,7 @@ align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine
 #'
 align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
                        refine = "Viterbi", maxiter = if(refine == "Viterbi") 10 else 100,
-                       setsize = NULL, inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
+                       maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
                        DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
                        pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...){
   nseq <- length(sequences)
@@ -127,7 +127,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     }
     phmm <- derive.PHMM.list(sequences, seeds = seeds, refine = refine, maxiter = maxiter,
                         seqweights = myseqweights, k = k, residues = residues, gapchar = gapchar,
-                        setsize = setsize, inserts = inserts, lambda = lambda,
+                        maxsize = maxsize, inserts = inserts, lambda = lambda,
                         threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
                         pseudocounts = pseudocounts, logspace = TRUE, qa = qa, qe = qe,
                         quiet = quiet, ... = ...)
@@ -247,7 +247,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
 #' @export
 #'
 align.default <- function(sequences, model, pseudocounts = "background",
-                          residues = NULL, gapchar = "-", setsize = NULL, quiet = FALSE, ...){
+                          residues = NULL, gapchar = "-", maxsize = NULL, quiet = FALSE, ...){
   if(is.null(model)) return(sequences)
   DNA <- is.DNA(sequences)
   AA <- is.AA(sequences)
@@ -524,12 +524,16 @@ align.default <- function(sequences, model, pseudocounts = "background",
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     res.list <- unalign(res)
     res.weights <- weight(res.list, method = "Gerstein", k = 5)
-    cat("\n", setsize, "\n")
-    cat(sum(apply(res, 2, function(v) !any(v == gapchar))), "\n\n")
-    newsetsize <- if(is.null(setsize)) NULL else max(c(sum(apply(res, 2, function(v) !any(v == gapchar))), setsize))
-    res.phmm <- derive.PHMM.default(res, seqweights = res.weights, setsize = newsetsize)
-    res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 5, setsize = newsetsize,
-                      logspace = TRUE, quiet = FALSE, ... = ...)
+    # cat("\n", maxsize, "\n")
+    # cat(sum(apply(res, 2, function(v) !any(v == gapchar))), "\n\n")
+    newmaxsize <- if(is.null(maxsize)){
+      NULL
+    }else{
+      max(c(sum(apply(res, 2, function(v) !any(v == gapchar))), maxsize))
+    }
+    res.phmm <- derive.PHMM.default(res, seqweights = res.weights, maxsize = newmaxsize)
+    res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 3,
+                      maxsize = newmaxsize, logspace = TRUE, quiet = TRUE, ... = ...)
     res <- align.list(sequences = res.list, model = res.phmm, ... = ...)
     return(res)
   }else{

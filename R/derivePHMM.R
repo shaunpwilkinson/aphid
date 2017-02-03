@@ -62,7 +62,7 @@
 #'
 derive.PHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                         gapchar = "-", endchar = "?", pseudocounts = "background",
-                        logspace = TRUE, qa = NULL, qe = NULL, setsize = NULL,
+                        logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
                         inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1E-07,
                         DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
                         name = NULL, description = NULL, compo = FALSE, consensus = FALSE,
@@ -77,7 +77,7 @@ derive.PHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues
 #'
 derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                                gapchar = "-", endchar = "?", pseudocounts = "background",
-                               logspace = TRUE, qa = NULL, qe = NULL, setsize = NULL,
+                               logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
                                inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1E-07,
                                DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
                                name = NULL, description = NULL,
@@ -88,7 +88,7 @@ derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, r
     derive.PHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
                      seqweights = seqweights, wfactor = wfactor,
                      k = k, residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
-                     logspace = logspace, qa = qa, qe = qe, setsize = setsize,
+                     logspace = logspace, qa = qa, qe = qe, maxsize = maxsize,
                      inserts = inserts, lambda = lambda, DI = DI, ID = ID,
                      threshold = threshold, deltaLL = deltaLL, omit.endgaps = omit.endgaps,
                      name = name, description = description, compo = compo, consensus = consensus,
@@ -96,7 +96,7 @@ derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, r
   }else{
     derive.PHMM.default(x, seqweights = seqweights, wfactor = wfactor, k = k, residues = residues,
                         gapchar = gapchar, endchar = endchar, pseudocounts = pseudocounts,
-                        logspace = logspace, qa = qa, qe = qe, setsize = setsize,
+                        logspace = logspace, qa = qa, qe = qe, maxsize = maxsize,
                         inserts = inserts, threshold = threshold,
                         lambda = lambda, DI = DI, ID = ID, omit.endgaps = omit.endgaps,
                         name = name, description = description,
@@ -110,7 +110,7 @@ derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, r
 #'
 derive.PHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                               gapchar = "-", endchar = "?", pseudocounts = "background",
-                              logspace = TRUE, qa = NULL, qe = NULL, setsize = NULL,
+                              logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
                               inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1E-07,
                               DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
                               name = NULL, description = NULL,
@@ -121,7 +121,7 @@ derive.PHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, re
     derive.PHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
                      seqweights = seqweights, wfactor = wfactor,
                      k = k, residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
-                     logspace = logspace, qa = qa, qe = qe, setsize = setsize,
+                     logspace = logspace, qa = qa, qe = qe, maxsize = maxsize,
                      inserts = inserts, lambda = lambda, DI = DI, ID = ID,
                      threshold = threshold, deltaLL = deltaLL, omit.endgaps = omit.endgaps,
                      name = name, description = description, compo = compo, consensus = consensus,
@@ -129,7 +129,7 @@ derive.PHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, re
   }else{
     derive.PHMM.default(x, seqweights = seqweights, wfactor = wfactor, k = k, residues = residues,
                         gapchar = gapchar, endchar = endchar, pseudocounts = pseudocounts,
-                        logspace = logspace, qa = qa, qe = qe, setsize = setsize,
+                        logspace = logspace, qa = qa, qe = qe, maxsize = maxsize,
                         inserts = inserts, threshold = threshold,
                         lambda = lambda, DI = DI, ID = ID, omit.endgaps = omit.endgaps,
                         name = name, description = description,
@@ -144,7 +144,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                              maxiter = if(refine == "Viterbi") 10 else 100,
                              seqweights = "Gerstein", wfactor = 1,
                              k = 5, residues = NULL, gapchar = "-", pseudocounts = "background",
-                             logspace = TRUE, qa = NULL, qe = NULL, setsize = NULL,
+                             logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
                              inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
                              threshold = 0.5, deltaLL = 1E-07, omit.endgaps = TRUE,
                              name = NULL, description = NULL, compo = FALSE, consensus = FALSE,
@@ -181,7 +181,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
         if(!is.null(attr(tree[[1]], "sequences")) & !is.null(attr(tree[[2]], "sequences"))){
           attr(tree, "sequences") <- align.default(attr(tree[[1]], "sequences"),
                                                    attr(tree[[2]], "sequences"),
-                                                   setsize = setsize, ... = ...)
+                                                   maxsize = maxsize, ... = ...)
           attr(tree[[1]], "sequences") <- attr(tree[[2]], "sequences") <- NULL
         }
       }
@@ -214,7 +214,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
   omniphmm <- derive.PHMM.default(msa1, seqweights = seedweights, wfactor = wfactor, k = k, residues = residues,
                           gapchar = gapchar, pseudocounts = pseudocounts, logspace = logspace,
                           qa = qa, qe = qe, DI = DI, ID = ID, omit.endgaps = omit.endgaps,
-                          setsize = setsize, inserts = inserts, lambda = lambda, threshold = threshold,
+                          maxsize = maxsize, inserts = inserts, lambda = lambda, threshold = threshold,
                           name = name, description = description, compo = compo, consensus = consensus,
                           cpp = cpp, quiet = quiet)
   if(nsq < 3){
@@ -242,7 +242,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
     if(length(seqweights) != nsq) stop("invalid seqweights argument")
     if(!quiet) cat("Refining model\n")
     finalphmm <- train(omniphmm, x, method = refine, seqweights = seqweights,
-                       maxiter = maxiter, pseudocounts = pseudocounts, setsize = setsize,
+                       maxiter = maxiter, pseudocounts = pseudocounts, maxsize = maxsize,
                        inserts = inserts, lambda = lambda, threshold = threshold, deltaLL = deltaLL,
                        quiet = quiet, ... = ...)
   }else if (refine == "none"){
@@ -258,7 +258,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
 #'
 derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                        gapchar = "-", endchar = "?", pseudocounts = "background",
-                       logspace = TRUE, qa = NULL, qe = NULL, setsize = NULL,
+                       logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
                        inserts = "map", lambda = 0, threshold = 0.5,
                        DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
                        name = NULL, description = NULL,
@@ -315,29 +315,7 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
   gaps <- x == gapchar
   #ends <- x == endchar
   gapweights <- gaps * seqweights
-  if(!is.null(setsize)){
-    # if(!mode(setsize) %in% c("numeric", "integer")){
-    #   seqlens <- lapply(xlist, length)
-    #   setsize <- eval(call(setsize, seqlens))
-    # }
-    setsize <- as.integer(setsize)
-    if(setsize < 3){
-      stop("setsize argument is out of bounds")
-    }else if(setsize > m){
-      setsize <- m
-    }
-    if(setsize == m){
-      inserts <- rep(FALSE, m)
-    }else{
-      gapnos <- apply(gapweights, 2, sum)
-      gapords <- order(gapnos)
-      matches <- logical(m)
-      matches[gapords[1:setsize]] <- TRUE
-      #matches <- c(rep(TRUE, setsize), rep(FALSE, m - setsize))[order(gapnos)]
-      #matches <- matches[gapords]
-      inserts <- !matches
-    }
-  }else if(identical(inserts, "none")){
+  if(identical(inserts, "none")){
     inserts <- rep(FALSE, m)
   }else if(identical(inserts, "inherited")){
     inserts <- attr(x, "inserts")
@@ -354,8 +332,10 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
                       gapchar = gapchar, endchar = endchar, pseudocounts = pseudocounts,
                       qa = qa, qe = qe)
       if(sum(!inserts) < 3) {
-        if(!quiet) cat("Maximum a priori insert assignment produced model with fewer than three modules.
-                       Switching to threshold method\n")
+        if(!quiet){
+          cat("Maximum a priori insert assignment produced model with fewer than three modules\n")
+          cat("Switching to threshold method\n")
+        }
         inserts <- apply(gapweights, 2, sum) > threshold * n
       }
     }
@@ -363,6 +343,16 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
     stop("invalid inserts argument")
   }
   l <- sum(!inserts) # PHMM length (excluding B & E positions)
+  if(!is.null(maxsize)){
+    maxsize <- as.integer(maxsize)
+    if(maxsize < 3) stop("maxsize argument too low")
+    if(maxsize < l){
+      gapnos <- apply(gapweights[, !inserts, drop = FALSE], 2, sum)
+      inserts[!inserts][order(gapnos)[(maxsize + 1):l]] <- TRUE
+      l <- sum(!inserts)
+    }
+  }
+
   # emission counts
   ecs <- if(AA){
     apply(x[, !inserts, drop = F], 2, tabulate.AA,
