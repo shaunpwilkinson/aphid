@@ -1,2 +1,2 @@
-.onUnload <- function (libpath) library.dynam.unload("profile", libpath)
+.onUnload <- function (libpath) library.dynam.unload("aphid", libpath)
 
