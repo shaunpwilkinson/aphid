@@ -152,7 +152,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
       }
     }
     l <- model$size
-    if(!quiet) cat("Model size:", l, "internal modules\n")
+    # if(!quiet) cat("Model size:", l, "internal modules\n")
     #nseq <- length(sequences)
     out <- matrix(nrow = nseq, ncol = 2 * l + 1)
     rownames(out) <- attr(sequences, "names")
