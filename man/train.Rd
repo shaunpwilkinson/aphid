@@ -9,14 +9,14 @@
 train(x, y, method = "Viterbi", seqweights = NULL,
   logspace = "autodetect", maxiter = if (method == "Viterbi") 10 else 100,
   deltaLL = 1e-07, modelend = FALSE, pseudocounts = "Laplace",
-  gapchar = "-", fixqa = FALSE, fixqe = FALSE, inserts = "map",
-  threshold = 0.5, lambda = 0, quiet = FALSE, ...)
+  gapchar = "-", fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
+  inserts = "map", threshold = 0.5, lambda = 0, quiet = FALSE, ...)
 
 \method{train}{PHMM}(x, y, method = "Viterbi", seqweights = NULL,
   logspace = "autodetect", maxiter = if (method == "Viterbi") 10 else 100,
   deltaLL = 1e-07, pseudocounts = "background", gapchar = "-",
-  fixqa = FALSE, fixqe = FALSE, inserts = "map", threshold = 0.5,
-  lambda = 0, quiet = FALSE, ...)
+  fixqa = FALSE, fixqe = FALSE, maxsize = NULL, inserts = "map",
+  threshold = 0.5, lambda = 0, quiet = FALSE, ...)
 
 \method{train}{HMM}(x, y, method = "Viterbi", seqweights = NULL,
   maxiter = if (method == "Viterbi") 10 else 100, deltaLL = 1e-07,

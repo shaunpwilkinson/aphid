@@ -10,30 +10,34 @@
 \usage{
 align(sequences, model = NULL, seqweights = "Gerstein",
   refine = "Viterbi", k = 5, maxiter = if (refine == "Viterbi") 10 else
-  100, inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
+  100, maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
+  deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL,
+  gapchar = "-", pseudocounts = "background", qa = NULL, qe = NULL,
+  quiet = FALSE, ...)
 
 \method{align}{DNAbin}(sequences, model = NULL, seqweights = "Gerstein",
   refine = "Viterbi", k = 5, maxiter = if (refine == "Viterbi") 10 else
-  100, inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
+  100, maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
+  deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL,
+  gapchar = "-", pseudocounts = "background", qa = NULL, qe = NULL,
+  quiet = FALSE, ...)
 
 \method{align}{AAbin}(sequences, model = NULL, seqweights = "Gerstein",
   refine = "Viterbi", k = 5, maxiter = if (refine == "Viterbi") 10 else
-  100, inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
+  100, maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
+  deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL,
+  gapchar = "-", pseudocounts = "background", qa = NULL, qe = NULL,
+  quiet = FALSE, ...)
 
 \method{align}{list}(sequences, model = NULL, seqweights = "Gerstein",
   k = 5, refine = "Viterbi", maxiter = if (refine == "Viterbi") 10 else
-  100, inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
+  100, maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
+  deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL,
+  gapchar = "-", pseudocounts = "background", qa = NULL, qe = NULL,
+  quiet = FALSE, ...)
 
 \method{align}{default}(sequences, model, pseudocounts = "background",
-  residues = NULL, gapchar = "-", quiet = FALSE, ...)
+  residues = NULL, gapchar = "-", maxsize = NULL, quiet = FALSE, ...)
 }
 \arguments{
 \item{sequences}{a list of vectors consisting of symbols emitted from
@@ -72,8 +76,8 @@ to the console.}
 a character matrix of aligned sequences.
 }
 \description{
-\code{align} finds the optimal alignment for a list of sequences using a hybrid
-algorithm involving a progressive multiple sequence alignment, the generation of a profile
+\code{align} finds the optimal alignment for a list of sequences involving a
+progressive multiple sequence alignment, followed by the generation of a profile
 HMM, an iterative model refinement step, and finally the alignment of the sequences
 back to the model.
 }

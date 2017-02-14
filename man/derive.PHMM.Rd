@@ -11,27 +11,27 @@
 derive.PHMM(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   residues = NULL, gapchar = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE,
+  maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
+  deltaLL = 1e-07, DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
+  name = NULL, description = NULL, compo = FALSE, consensus = FALSE,
   seeds = "random", refine = "Viterbi", maxiter = if (refine == "Viterbi")
   10 else 100, cpp = TRUE, quiet = FALSE, ...)
 
 \method{derive.PHMM}{DNAbin}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gapchar = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE,
+  maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
+  deltaLL = 1e-07, DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
+  name = NULL, description = NULL, compo = FALSE, consensus = FALSE,
   seeds = "random", refine = "Viterbi", maxiter = if (refine == "Viterbi")
   10 else 100, cpp = cpp, quiet = FALSE, ...)
 
 \method{derive.PHMM}{AAbin}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gapchar = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE,
+  maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
+  deltaLL = 1e-07, DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
+  name = NULL, description = NULL, compo = FALSE, consensus = FALSE,
   seeds = "random", refine = "Viterbi", maxiter = if (refine == "Viterbi")
   10 else 100, cpp = TRUE, quiet = FALSE, ...)
 
@@ -39,7 +39,7 @@ derive.PHMM(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   maxiter = if (refine == "Viterbi") 10 else 100, seqweights = "Gerstein",
   wfactor = 1, k = 5, residues = NULL, gapchar = "-",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
+  maxsize = NULL, inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
   threshold = 0.5, deltaLL = 1e-07, omit.endgaps = TRUE, name = NULL,
   description = NULL, compo = FALSE, consensus = FALSE, cpp = TRUE,
   quiet = FALSE, ...)
@@ -47,9 +47,10 @@ derive.PHMM(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 \method{derive.PHMM}{default}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gapchar = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  inserts = "map", lambda = 0, threshold = 0.5, DI = FALSE,
-  ID = FALSE, omit.endgaps = TRUE, name = NULL, description = NULL,
-  compo = FALSE, consensus = FALSE, cpp = TRUE, quiet = FALSE)
+  maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
+  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
+  description = NULL, compo = FALSE, consensus = FALSE, cpp = TRUE,
+  quiet = FALSE)
 }
 \arguments{
 \item{x}{a character matrix of aligned sequences.}

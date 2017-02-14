@@ -1,7 +1,7 @@
 #' Multiple sequence alignment.
 #'
-#' \code{align} finds the optimal alignment for a list of sequences using a hybrid
-#' algorithm involving a progressive multiple sequence alignment, the generation of a profile
+#' \code{align} finds the optimal alignment for a list of sequences involving a
+#' progressive multiple sequence alignment, followed by the generation of a profile
 #' HMM, an iterative model refinement step, and finally the alignment of the sequences
 #' back to the model.
 #'
