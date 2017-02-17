@@ -151,8 +151,10 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
     alignment <- align(y, model = x, logspace = TRUE, ... = ...)
     #scores <- attr(alignment, "score")
     #maxscore <- attr(alignment, "score")
-    alig_cache <- list()
-    alig_cache[[1]] <- as.vector(alignment)
+    alig_cache <- character(maxiter)
+    alig_cache[1] <- paste(openssl::md5(as.vector(alignment)))
+    # alig_cache <- list()
+    # alig_cache[[1]] <- as.vector(alignment)
     for(i in 1:maxiter){
       out <- derive.PHMM.default(alignment, seqweights = seqweights, residues = residues,
                          gapchar = gapchar, DI = DI, ID = ID, maxsize = maxsize,
@@ -163,9 +165,11 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
       if(!quiet) cat("Iteration", i, "PHMM with", out$size, "internal modules\n")
       ### what about DI and ID
       newalig <- align(y, model = out, logspace = TRUE, ... = ...)
-      newaligv <- as.vector(newalig)
+      # newaligv <- as.vector(newalig)
+      newaligv <- paste(openssl::md5(as.vector(newalig)))
       if(!any(sapply(alig_cache, identical, newaligv))){
-        alig_cache[[i + 1]] <- newaligv
+        # alig_cache[[i + 1]] <- newaligv
+        alig_cache[i + 1] <- newaligv
       #score <- attr(newalig, "score")
       #newscore <- attr(newalig, "score")
       #if(!identical(alignment, newalig) & !(score %in% scores)){

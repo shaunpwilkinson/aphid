@@ -116,7 +116,6 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
       nseeds <- min(nseq, 100 + 2 * ceiling(log(nseq, 2)))
       seeds <- sample(1:length(sequences), size = nseeds)
     }else seeds <- seq_along(sequences)
-
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")
       qds <- kdistance(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
