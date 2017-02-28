@@ -40,4 +40,3 @@ plot(x, begin)
 \references{
 Durbin et al. (1998).
 }
-

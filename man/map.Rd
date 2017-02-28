@@ -51,4 +51,3 @@ outlined in Durbin et al. (1998).
 \references{
 Durbin...
 }
-

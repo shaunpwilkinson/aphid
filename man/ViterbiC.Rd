@@ -20,4 +20,3 @@ and transmission probabilities for the model(s) are logged.}
 \code{ViterbiC} finds the optimal path of a sequence through a HMM
 or PHMM and returns its log-odds score.
 }
-

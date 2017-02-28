@@ -7,13 +7,19 @@
 #' (https://compbio.soe.ucsc.edu/sam.html).
 #'
 #' @param x a character matrix of aligned sequences.
-#' @param seqweights either NULL (default; all sequences are given a weight of 1)
-#' or a numeric vector of sequence weights used to
-#' derive the model. The sum of these weights should be equal to the number of
-#' sequences in the alignment, so that mean(seqweights) = 1.
+#' @param seqweights either NULL (default; all sequences are given an equal
+#'   weight of 1), a numeric vector the same length as \code{x} representing
+#'   the sequence weights used to derive the model, or a character string giving
+#'   the method to derive the weights from the sequences. Currently only the
+#'   \code{"Gerstein"} method is supported (the default). For this method, a
+#'   tree is first created by k-mer counting (see \code{\link{kdistance}}),
+#'   and sequence weights are derived from the tree using the 'bottom up'
+#'   algorithm of Gerstein et al. (1994). The sum of these weights are equal
+#'   to the number of sequences in the alignment (so that mean(seqweights) = 1;
+#'   Note this does not need to be the case if providing weights as a numeric vector).
 #' @param residues either NULL (default; emitted residues are automatically
 #' detected from the alignment), or a case sensitive character vector specifying the
-#' residue alphabet (e.g. \code{c("A", "T", "G", "C")} for DNA).
+#' residue alphabet (e.g. \code{c("A", "T", "G", "C")} for DNA).sequence weights are derived
 #' Note that the former option can be slow for large character matrices;
 #' therefore specifying the residue alphabet can increase speed in these cases.
 #' Also note that the default setting \code{residues = NULL} will not
@@ -56,7 +62,14 @@
 #' to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).
 #' Only applicable for \code{inserts = "map"}.
 #' @return an object of class \code{"PHMM"}
-#' @references Durbin et al. 1998.
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
+#'
+#'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
+#'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
+#'
 #' @name derive.PHMM
 #' @export
 #'

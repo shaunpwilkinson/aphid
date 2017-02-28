@@ -2,11 +2,11 @@
 % Please edit documentation in R/weight.R
 \name{weight}
 \alias{weight}
-\alias{weight.AAbin}
 \alias{weight.DNAbin}
-\alias{weight.default}
-\alias{weight.dendrogram}
+\alias{weight.AAbin}
 \alias{weight.list}
+\alias{weight.dendrogram}
+\alias{weight.default}
 \title{Tree-based sequence weighting.}
 \usage{
 weight(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-")
@@ -45,4 +45,3 @@ wood_dist <- kdistance(unalign(woodmouse))
 wood_den <- as.dendrogram(hclust(wood_dist, method = "average"))
 wood_weights <- weight(wood_den, method = "Gerstein")
 }
-

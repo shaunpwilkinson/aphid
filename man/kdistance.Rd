@@ -31,4 +31,3 @@ a distance matrix of class \code{"dist"}
 Computes the matrix of k-tuple distances between all pairwise comparisons
 of the input sequence set.
 }
-

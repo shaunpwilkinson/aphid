@@ -2,8 +2,8 @@
 % Please edit documentation in R/forward.R
 \name{forward}
 \alias{forward}
-\alias{forward.HMM}
 \alias{forward.PHMM}
+\alias{forward.HMM}
 \title{Forward algorithm.}
 \usage{
 forward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
@@ -54,4 +54,3 @@ a list containing the score and forward dynamic programming arrays.
 Forward algorithm for calculating the full (log) probability or odds
 of a sequence given a hidden Markov model or profile HMM.
 }
-

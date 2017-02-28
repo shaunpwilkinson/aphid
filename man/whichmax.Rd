@@ -12,4 +12,3 @@ whichmax(x, start = 1L)
 \description{
 Returns the location of the maximum value in a numeric or integer vector.
 }
-

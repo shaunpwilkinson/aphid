@@ -2,8 +2,8 @@
 % Please edit documentation in R/Viterbi.R
 \name{Viterbi}
 \alias{Viterbi}
-\alias{Viterbi.HMM}
 \alias{Viterbi.PHMM}
+\alias{Viterbi.HMM}
 \alias{Viterbi.default}
 \title{Find the optimal sequence path recursively}
 \usage{
@@ -77,4 +77,3 @@ x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
 y <- c("P", "A", "W", "H", "E", "A", "E")
 Viterbi(x, y,  d = 8, e = 2)
 }
-

@@ -14,4 +14,3 @@ DNAprobC2(x, probs)
 \description{
 Find DNA ambiguity probabilities.
 }
-

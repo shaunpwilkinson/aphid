@@ -25,4 +25,3 @@ Implement the algorithm of Wilbur & Lipman (1983) to define windowspace for
 downstream dynammic programming applications such as the Viterbi, forward and
 backward algorithms.
 }
-

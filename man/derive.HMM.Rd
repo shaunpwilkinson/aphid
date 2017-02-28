@@ -48,4 +48,3 @@ an object of class \code{"HMM"}
 a list of training sequences, each a vector of residues named according
 the state from which they were emitted.
 }
-

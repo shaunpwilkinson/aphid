@@ -30,4 +30,3 @@ a vector or matrix of posterior probabilities.
 \description{
 Calculate the posterior probability of a sequence given a model.
 }
-

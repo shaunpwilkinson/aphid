@@ -14,4 +14,3 @@ AAprobC2(x, probs)
 \description{
 Find AA ambiguity probabilities.
 }
-

@@ -110,6 +110,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
   }
   n <- length(y)
   if(is.null(seqweights)) seqweights <- rep(1, n)
+  ##### TODO else (seqweights used as numeric below)
   states <- c("D", "M", "I")
   residues <- rownames(x$E)
   l <- x$size
@@ -132,7 +133,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
   if(!is.null(x$qa)){
     if(!logspace) x$qa <- log(x$qa)
   }else{
-    alignment <- align(y, x, cpp = cpp)
+    alignment <- align(y, x, ... = ...)
     gaps <- alignment == gapchar
     inserts <- apply(gaps, 2, sum) > 0.5 * n
     xtr <- matrix(nrow = n, ncol = ncol(alignment))
@@ -141,7 +142,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
     xtr[!gaps & !insertsn] <- 1L # Match
     xtr[!gaps & insertsn] <- 2L # Insert
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
-    tcs <- tab9C(xtr, modules = sum(!inserts) + 2)
+    tcs <- tab9C(xtr, seqweights = seqweights)
     transtotals <- apply(tcs, 1, sum) + 1 # force addition of Laplacian pseudos
     if(!DI) transtotals[3] <- 0
     if(!ID) transtotals[7] <- 0

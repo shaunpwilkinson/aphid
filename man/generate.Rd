@@ -39,4 +39,3 @@ with "names" attribute representing the hidden states.
 \code{generate} outputs an instance of a sequence of residues randomly emitted by a
 given hidden Markov model.
 }
-

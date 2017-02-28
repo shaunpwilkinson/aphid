@@ -15,4 +15,3 @@ transitioncount(x, arity)
 \description{
 Summation of transition frequencies in an integer vector.
 }
-

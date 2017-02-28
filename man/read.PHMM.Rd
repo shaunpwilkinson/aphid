@@ -25,4 +25,3 @@ Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence sim
 \seealso{
 \code{\link{write.PHMM}} for writing PHMM objects in HMMER3 text format.
 }
-

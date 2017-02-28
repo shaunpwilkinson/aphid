@@ -12,4 +12,3 @@ logsum(x)
 \description{
 \code{"logsum"} takes a vector of logged probabilities and returns its sum.
 }
-

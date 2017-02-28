@@ -9,4 +9,3 @@ alphadetect(sequences, residues = NULL, gapchar = "-", endchar = "?")
 \description{
 Internal profile functions.
 }
-

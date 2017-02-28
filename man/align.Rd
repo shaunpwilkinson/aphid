@@ -2,10 +2,10 @@
 % Please edit documentation in R/align.R
 \name{align}
 \alias{align}
-\alias{align.AAbin}
 \alias{align.DNAbin}
-\alias{align.default}
+\alias{align.AAbin}
 \alias{align.list}
+\alias{align.default}
 \title{Multiple sequence alignment.}
 \usage{
 align(sequences, model = NULL, seqweights = "Gerstein",
@@ -90,4 +90,3 @@ z <- align(x, y)
 \references{
 Durbin et al, Soding, Paradis 2007.
 }
-

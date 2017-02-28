@@ -13,4 +13,3 @@ forward_HMM(y, A, E, DNA = FALSE, AA = FALSE)
 Implementation of the forward algorithm to caluclate the full (log) probability
 of a sequence through a given a HMM or profile HMM.
 }
-

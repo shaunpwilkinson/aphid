@@ -2,8 +2,8 @@
 % Please edit documentation in R/backward.R
 \name{backward}
 \alias{backward}
-\alias{backward.HMM}
 \alias{backward.PHMM}
+\alias{backward.HMM}
 \title{Backward algorithm.}
 \usage{
 backward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
@@ -54,4 +54,3 @@ a list containing the score and dynamic programming arrays.
 Backward algorithm for calculating the full (log) probability or odds
 of a sequence given a hidden Markov model or profile HMM.
 }
-

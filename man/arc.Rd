@@ -10,4 +10,3 @@ arc(x, y, radx, rady = radx, from = 0, to = 2 * pi, no.points = 100,
 \description{
 Geometric functions.
 }
-

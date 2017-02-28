@@ -5,107 +5,6 @@
 
 using namespace Rcpp;
 
-// kcount_DNA
-NumericMatrix kcount_DNA(List x, int k);
-RcppExport SEXP aphid_kcount_DNA(SEXP xSEXP, SEXP kSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    rcpp_result_gen = Rcpp::wrap(kcount_DNA(x, k));
-    return rcpp_result_gen;
-END_RCPP
-}
-// mapC
-LogicalVector mapC(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts, NumericVector seqweights, NumericVector qe, double lambda);
-RcppExport SEXP aphid_mapC(SEXP ecsSEXP, SEXP notgapsSEXP, SEXP pseudocountsSEXP, SEXP seqweightsSEXP, SEXP qeSEXP, SEXP lambdaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type ecs(ecsSEXP);
-    Rcpp::traits::input_parameter< LogicalMatrix >::type notgaps(notgapsSEXP);
-    Rcpp::traits::input_parameter< List >::type pseudocounts(pseudocountsSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type seqweights(seqweightsSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type qe(qeSEXP);
-    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
-    rcpp_result_gen = Rcpp::wrap(mapC(ecs, notgaps, pseudocounts, seqweights, qe, lambda));
-    return rcpp_result_gen;
-END_RCPP
-}
-// returnmod
-List returnmod(List x);
-RcppExport SEXP aphid_returnmod(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(returnmod(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// progression
-IntegerMatrix progression(IntegerVector path, IntegerVector start);
-RcppExport SEXP aphid_progression(SEXP pathSEXP, SEXP startSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
-    rcpp_result_gen = Rcpp::wrap(progression(path, start));
-    return rcpp_result_gen;
-END_RCPP
-}
-// progression2
-IntegerMatrix progression2(IntegerVector path, IntegerVector start);
-RcppExport SEXP aphid_progression2(SEXP pathSEXP, SEXP startSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
-    rcpp_result_gen = Rcpp::wrap(progression2(path, start));
-    return rcpp_result_gen;
-END_RCPP
-}
-// transitioncount
-IntegerVector transitioncount(IntegerVector x, int arity);
-RcppExport SEXP aphid_transitioncount(SEXP xSEXP, SEXP aritySEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type arity(aritySEXP);
-    rcpp_result_gen = Rcpp::wrap(transitioncount(x, arity));
-    return rcpp_result_gen;
-END_RCPP
-}
-// emissioncount
-IntegerVector emissioncount(IntegerVector states, int statearity, IntegerVector residues, int resarity);
-RcppExport SEXP aphid_emissioncount(SEXP statesSEXP, SEXP statearitySEXP, SEXP residuesSEXP, SEXP resaritySEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type states(statesSEXP);
-    Rcpp::traits::input_parameter< int >::type statearity(statearitySEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type residues(residuesSEXP);
-    Rcpp::traits::input_parameter< int >::type resarity(resaritySEXP);
-    rcpp_result_gen = Rcpp::wrap(emissioncount(states, statearity, residues, resarity));
-    return rcpp_result_gen;
-END_RCPP
-}
-// tab9C
-NumericMatrix tab9C(IntegerMatrix x, NumericVector seqweights);
-RcppExport SEXP aphid_tab9C(SEXP xSEXP, SEXP seqweightsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type x(xSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type seqweights(seqweightsSEXP);
-    rcpp_result_gen = Rcpp::wrap(tab9C(x, seqweights));
-    return rcpp_result_gen;
-END_RCPP
-}
 // DNAprobC2
 double DNAprobC2(int x, NumericVector probs);
 RcppExport SEXP aphid_DNAprobC2(SEXP xSEXP, SEXP probsSEXP) {
@@ -295,6 +194,107 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
     Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
     rcpp_result_gen = Rcpp::wrap(backward_PHMM(y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA));
+    return rcpp_result_gen;
+END_RCPP
+}
+// kcount_DNA
+NumericMatrix kcount_DNA(List x, int k);
+RcppExport SEXP aphid_kcount_DNA(SEXP xSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(kcount_DNA(x, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mapC
+LogicalVector mapC(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts, NumericVector seqweights, NumericVector qe, double lambda);
+RcppExport SEXP aphid_mapC(SEXP ecsSEXP, SEXP notgapsSEXP, SEXP pseudocountsSEXP, SEXP seqweightsSEXP, SEXP qeSEXP, SEXP lambdaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type ecs(ecsSEXP);
+    Rcpp::traits::input_parameter< LogicalMatrix >::type notgaps(notgapsSEXP);
+    Rcpp::traits::input_parameter< List >::type pseudocounts(pseudocountsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type seqweights(seqweightsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type qe(qeSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    rcpp_result_gen = Rcpp::wrap(mapC(ecs, notgaps, pseudocounts, seqweights, qe, lambda));
+    return rcpp_result_gen;
+END_RCPP
+}
+// returnmod
+List returnmod(List x);
+RcppExport SEXP aphid_returnmod(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(returnmod(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// progression
+IntegerMatrix progression(IntegerVector path, IntegerVector start);
+RcppExport SEXP aphid_progression(SEXP pathSEXP, SEXP startSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
+    rcpp_result_gen = Rcpp::wrap(progression(path, start));
+    return rcpp_result_gen;
+END_RCPP
+}
+// progression2
+IntegerMatrix progression2(IntegerVector path, IntegerVector start);
+RcppExport SEXP aphid_progression2(SEXP pathSEXP, SEXP startSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
+    rcpp_result_gen = Rcpp::wrap(progression2(path, start));
+    return rcpp_result_gen;
+END_RCPP
+}
+// transitioncount
+IntegerVector transitioncount(IntegerVector x, int arity);
+RcppExport SEXP aphid_transitioncount(SEXP xSEXP, SEXP aritySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type arity(aritySEXP);
+    rcpp_result_gen = Rcpp::wrap(transitioncount(x, arity));
+    return rcpp_result_gen;
+END_RCPP
+}
+// emissioncount
+IntegerVector emissioncount(IntegerVector states, int statearity, IntegerVector residues, int resarity);
+RcppExport SEXP aphid_emissioncount(SEXP statesSEXP, SEXP statearitySEXP, SEXP residuesSEXP, SEXP resaritySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< int >::type statearity(statearitySEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type residues(residuesSEXP);
+    Rcpp::traits::input_parameter< int >::type resarity(resaritySEXP);
+    rcpp_result_gen = Rcpp::wrap(emissioncount(states, statearity, residues, resarity));
+    return rcpp_result_gen;
+END_RCPP
+}
+// tab9C
+NumericMatrix tab9C(IntegerMatrix x, NumericVector seqweights);
+RcppExport SEXP aphid_tab9C(SEXP xSEXP, SEXP seqweightsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type seqweights(seqweightsSEXP);
+    rcpp_result_gen = Rcpp::wrap(tab9C(x, seqweights));
     return rcpp_result_gen;
 END_RCPP
 }

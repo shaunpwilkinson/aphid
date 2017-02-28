@@ -2,8 +2,8 @@
 % Please edit documentation in R/train.R
 \name{train}
 \alias{train}
-\alias{train.HMM}
 \alias{train.PHMM}
+\alias{train.HMM}
 \title{Iterative model refinement.}
 \usage{
 train(x, y, method = "Viterbi", seqweights = NULL,
@@ -82,4 +82,3 @@ Durbin...
 maximum-likelihood parameter estimation when training sequence states are
 known.
 }
-

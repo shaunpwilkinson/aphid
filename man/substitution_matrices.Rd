@@ -20,4 +20,3 @@ A dataset containing several of the more popular substitution scoring matrices
 for DNA and amino acids.
 }
 \keyword{datasets}
-

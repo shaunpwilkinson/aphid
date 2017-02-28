@@ -19,4 +19,3 @@ AAbin, or plain ASCII characters).
 \description{
 \code{unalign} deconstructs an alignment to its component sequences.
 }
-

@@ -9,4 +9,3 @@ logdetect(x)
 \description{
 Detect if model parameters are in log space.
 }
-

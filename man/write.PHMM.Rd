@@ -30,4 +30,3 @@ Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence sim
 \seealso{
 \code{\link{read.PHMM}} to parse a PHMM object from a HMMER3 text file.
 }
-
