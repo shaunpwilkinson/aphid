@@ -16,7 +16,8 @@ kdistance(x, k = 5, alpha = "Dayhoff6", ...)
 \method{kdistance}{default}(x, k = 5, alpha = "autodetect", ...)
 }
 \arguments{
-\item{x}{a list of sequences, possibly an object of class \code{"DNAbin"} or \code{"AAbin"}.}
+\item{x}{a list of sequences, possibly an object of class
+\code{"DNAbin"} or \code{"AAbin"}.}
 
 \item{k}{an integer specifying the size of the k-tuples.}
 

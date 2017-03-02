@@ -2,8 +2,8 @@
 using namespace Rcpp;
 
 
-// [[Rcpp::export]]
-LogicalVector mapC(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts,
+// [[Rcpp::export(name = ".map")]]
+LogicalVector map(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts,
                    NumericVector seqweights,
                    NumericVector qe, double lambda = 0){
   NumericVector Apscs = clone(VECTOR_ELT(pseudocounts, 0));

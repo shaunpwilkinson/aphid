@@ -1,44 +1,82 @@
-#' Multiple sequence alignment.
+#' Multiple sequence alignment in R.
 #'
-#' \code{align} finds the optimal alignment for a list of sequences involving a
-#' progressive multiple sequence alignment, followed by the generation of a profile
-#' HMM, an iterative model refinement step, and finally the alignment of the sequences
-#' back to the model.
+#' \code{align} finds the optimal alignment for a list of sequences using profile
+#' hidden Markov models.
 #'
 #' @param sequences a list of vectors consisting of symbols emitted from
-#' the residue alphabet. The vectors can be of mode "character", or raw bytes in the "DNAbin" or
-#' "AAbin" coding scheme (Paradis 2007).
+#' the residue alphabet. The vectors can either be of mode "character" or "raw",
+#' as in the "DNAbin" or "AAbin" coding scheme (Paradis 2007).
+#'
 #' @param model an optional profile hidden Markov model (object of class \code{"PHMM"})
-#' to align the sequences to.
-#' @param refine the method used to iteratively train the model following the
-#' initial progressive alignment step.
-#' Current supported methods are \code{refine = "Viterbi"} (Viterbi training)
-#' and \code{refine = "BaumWelch"}
-#' (parameter optimization with the Expectation-Maximization algorithm).
-#' @param gapchar the character used to represent gaps in the alignment matrix. Ignored for
-#' "DNAbin" and "AAbin" objects.
+#' to align the sequences to. If NULL a new model will be derived from the list of
+#' sequences, after which each sequence will be aligned back to the model to produce the
+#' multiple sequence alignment.
+#'
+#' @param seqweights either NULL (default; all sequences are given an equal
+#'   weight of 1), a numeric vector the same length as \code{x} representing
+#'   the sequence weights used to derive the model, or a character string giving
+#'   the method to derive the weights from the sequences. Currently only the
+#'   \code{"Gerstein"} method is supported (the default). For this method, a
+#'   tree is first created by k-mer counting (see \code{\link{kdistance}}),
+#'   and sequence weights are derived from the tree using the 'bottom up'
+#'   algorithm of Gerstein et al. (1994). The sum of these weights are equal
+#'   to the number of sequences in the alignment (so that mean(seqweights) = 1;
+#'   Note this does not need to be the case if providing weights as a numeric vector).
+#'
+#' @param refine the method used to iteratively refine the model parameters
+#' following the initial progressive alignment and model derivation step.
+#' Current supported options are \code{"Viterbi"} (Viterbi training;
+#' the default option), \code{"BaumWelch"} (a modified version of the
+#' Expectation-Maximization algorithm), and "none" (skip the model refinement
+#' step).
+#'
+#' @param gapchar the character used to represent gaps in the alignment matrix.
+#' Ingored for \code{"DNAbin"} or \code{"AAbin"} objects, defaults to "-" otherwise.
+#'
 #' @param residues either NULL (default; emitted residues are automatically
-#' detected from the list of sequences), or a case sensitive character vector specifying the
-#' residue alphabet (e.g. c(A, C, G, T) for DNA). The character strings "RNA", "DNA", "AA",
-#' and "AMINO"are also accepted.
-#' Note that the default setting \code{residues = NULL} will not
-#' detect rare residues that are not present in the sequence list, and thus will
-#' not assign them emission probabilities.
-#' Also note that the default option can be slow for large lists of character vectors;
-#' therefore specifying the residue alphabet can increase speed in these cases.
-#' @param quiet logical argument indicating whether feedback should be printed
+#' detected from the list of sequences), a case sensitive character vector specifying the
+#' residue alphabet, or one of the character strings
+#' "RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for large
+#' lists of character vectors. Furthermore, the default setting \code{residues = NULL}
+#' will not detect rare residues that are not present in the sequence list,
+#' and thus will not assign them emission probabilities. Hence specifying the residue
+#' alphabet is recommended unless the sequence list is a "DNAbin" or "AAbin" object.
+#'
+#' @param quiet logical indicating whether feedback should be printed
 #' to the console.
-#' @param ... aditional arguments to pass to \code{"Viterbi"} for Viterbi training refinement or
-#' \code{"forward"} if using Baum Welch model training.
-#' @return a character matrix of aligned sequences.
-#' @references Durbin et al, Soding, Paradis 2007.
+#'
+#' @param ... aditional arguments to be passed to \code{"Viterbi"} (if
+#' \code{refine = "Viterbi"}) or \code{"forward"} (if \code{refine = "BaumWelch"}).
+#'
+#' @return a matrix of aligned sequences, with the same mode or class as the
+#' input sequence list.
+#'
+#' @details The alignment procedure involves an initial
+#' progressive multiple sequence alignment, followed by the generation of a profile
+#' hidden Markov model (derived from the alignment), an iterative model refinement step,
+#' and finally the alignment of the sequences
+#' back to the model. If only two sequences are provided, the procedure reduces
+#' to a standard pairwise alignment.
+#'
+#' @author Shaun Wilkinson.
+#'
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
+#'
+#' @seealso \code{\link{unalign}}.
+#'
 #' @examples
+#' ## Protein alignment example from Chapter 2, Durbin et al. (1998).
 #' x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
 #' y <- c("P", "A", "W", "H", "E", "A", "E")
-#' z <- align(x, y)
+#' sequences <- list(x = x, y = y)
+#' z <- align(sequences)
+#' z
 #'
 #' @name align
-#' @export
+#'
 #'
 align <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
                   maxiter = if(refine == "Viterbi") 10 else 100, maxsize = NULL,
@@ -49,7 +87,7 @@ align <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Vi
 }
 
 #' @rdname align
-#' @export
+#'
 #'
 align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi",
                          k = 5, maxiter = if(refine == "Viterbi") 10 else 100, maxsize = NULL,
@@ -69,7 +107,7 @@ align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refin
 }
 
 #' @rdname align
-#' @export
+#'
 #'
 align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
                         maxiter = if(refine == "Viterbi") 10 else 100, maxsize = NULL,
@@ -90,7 +128,7 @@ align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein", refine
 }
 
 #' @rdname align
-#' @export
+#'
 #'
 align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
                        refine = "Viterbi", maxiter = if(refine == "Viterbi") 10 else 100,
@@ -106,10 +144,15 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
   if(is.null(model)){
     if(nseq == 2){
-      return(align.default(sequences, model = NULL, residues = residues,  gapchar = gapchar,
-                    pseudocounts = pseudocounts, quiet = quiet,... = ...))
+      alignment <- align.default(sequences[[1]], sequences[[2]], residues = residues,
+                                 gapchar = gapchar, pseudocounts = pseudocounts,
+                                 quiet = quiet, ... = ...)
+      rownames(alignment) <- names(sequences)
+      return(alignment)
     }else if(nseq == 1){
-      return(matrix(sequences[[1]], nrow = 1))
+      alignment <- matrix(sequences[[1]], nrow = 1)
+      rownames(alignment) <- names(sequences)
+      return(alignment)
     }
     if(!quiet) cat("Calculating pairwise distances\n")
     if(nseq > 100){
@@ -124,7 +167,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     }else if(is.null(seqweights)){
       myseqweights <- rep(1, nseq)
     }
-    phmm <- derive.PHMM.list(sequences, seeds = seeds, refine = refine, maxiter = maxiter,
+    phmm <- derivePHMM.list(sequences, seeds = seeds, refine = refine, maxiter = maxiter,
                         seqweights = myseqweights, k = k, residues = residues, gapchar = gapchar,
                         maxsize = maxsize, inserts = inserts, lambda = lambda,
                         threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
@@ -243,7 +286,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
 
 
 #' @rdname align
-#' @export
+#'
 #'
 align.default <- function(sequences, model, pseudocounts = "background",
                           residues = NULL, gapchar = "-", maxsize = NULL, quiet = FALSE, ...){
@@ -329,7 +372,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
       rm(tmp) # the old switcharoo
     }
     n <- nrow(sequences)
-    z <- derive.PHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts,
+    z <- derivePHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts,
                      residues = residues, logspace = TRUE)
     l <- z$size
     alignment <- Viterbi(z, model, ... = ...) ### changed from alig
@@ -413,7 +456,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     # res.list <- unalign(res)
     # res.weights <- weight(res.list, method = "Gerstein", k = 5)
-    # res.phmm <- derive.PHMM.default(res, seqweights = res.weights, quiet = TRUE)
+    # res.phmm <- derivePHMM.default(res, seqweights = res.weights, quiet = TRUE)
     # res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 10,
     #                   logspace = TRUE, quiet = TRUE, ... = ...)
     # res <- align.list(sequences = res.list, model = res.phmm, quiet = TRUE, ... = ...)
@@ -421,8 +464,8 @@ align.default <- function(sequences, model, pseudocounts = "background",
   }else if(nrow(sequences) > 1 & nrow(model) > 1){
     nx <- nrow(sequences)
     ny <- nrow(model)
-    zx <- derive.PHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
-    zy <- derive.PHMM(model,  seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
+    zx <- derivePHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
+    zy <- derivePHMM(model,  seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     lx <- zx$size
     ly <- zy$size
     alignment <- Viterbi(zx, zy, ... = ...)
@@ -530,7 +573,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     }else{
       max(c(sum(apply(res, 2, function(v) !any(v == gapchar))), maxsize))
     }
-    res.phmm <- derive.PHMM.default(res, seqweights = res.weights, maxsize = newmaxsize)
+    res.phmm <- derivePHMM.default(res, seqweights = res.weights, maxsize = newmaxsize)
     res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 3,
                       maxsize = newmaxsize, logspace = TRUE, quiet = TRUE, ... = ...)
     res <- align.list(sequences = res.list, model = res.phmm, ... = ...)
@@ -545,11 +588,34 @@ align.default <- function(sequences, model, pseudocounts = "background",
 #'
 #' \code{unalign} deconstructs an alignment to its component sequences.
 #'
-#' @param x a matrix consisting of aligned sequences
+#' @param x a matrix consisting of aligned sequences. Can be a "DNAbin" or "AAbin"
+#' matrix object or a standard character matrix.
+#'
+#' @param gapchar the character used to represent gaps in the alignment matrix.
+#' Ingored for \code{"DNAbin"} or \code{"AAbin"} objects, defaults to "-" otherwise.
+#'
 #' @inheritParams align
-#' @return a list of sequences in the same coding scheme as the input alignment (ie DNAbin,
-#' AAbin, or plain ASCII characters).
-#' @export
+#'
+#' @return a list of sequences of the same mode or class as the input alignment (ie
+#' "DNAbin", "AAbin", or plain ASCII characters).
+#'
+#' @details \code{unalign} works in the opposite way to align, reducing a matrix of
+#' aligned sequences to a list of sequences without gaps. "DNAbin" and "AAbin" objects
+#' are supported (and recommended for biological sequence data)
+#'
+#' @seealso \code{\link{align}}.
+#'
+#' @author Shaun Wilkinson.
+#'
+#' @examples
+#' ## Convert the woodmouse dataset in the \code{\link{[ape] ape}} package to
+#' ## a list of unaligned sequences
+#' library(ape)
+#' data(woodmouse)
+#' sequences <- unalign(woodmouse)
+#' sequences
+#'
+#'
 #'
 unalign <- function(x, gapchar = "-"){
   #x is a matrix representing an alignment

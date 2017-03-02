@@ -10,13 +10,14 @@
 #'     (\code{method = "Gerstein"}).
 #' @return a named vector of weights, the sum of which is equal to
 #'    the total number of sequences.
+#' @details see Durbin et al. (1998) chapter 5.8
 #' @examples
 #' data(woodmouse)
 #' wood_dist <- kdistance(unalign(woodmouse))
 #' wood_den <- as.dendrogram(hclust(wood_dist, method = "average"))
 #' wood_weights <- weight(wood_den, method = "Gerstein")
 #' @name weight
-#' @export
+#'
 #'
 weight <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
   UseMethod("weight")
@@ -24,7 +25,7 @@ weight <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"
 
 
 #' @rdname weight
-#' @export
+#'
 #'
 weight.DNAbin <- function(x, method = "Gerstein", k = 5){
   if(is.list(x)){
@@ -37,7 +38,7 @@ weight.DNAbin <- function(x, method = "Gerstein", k = 5){
 
 
 #' @rdname weight
-#' @export
+#'
 #'
 weight.AAbin <- function(x, method = "Gerstein", k = 5){
   if(is.list(x)){
@@ -50,7 +51,7 @@ weight.AAbin <- function(x, method = "Gerstein", k = 5){
 
 
 #' @rdname weight
-#' @export
+#'
 #'
 weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
   nsq <- length(x)
@@ -80,7 +81,7 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar 
 
 
 #' @rdname weight
-#' @export
+#'
 #'
 weight.dendrogram <- function(x, method = "Gerstein"){
   if(!identical(method, "Gerstein")) stop("Only Gerstein et al. 1994 method supported")
@@ -131,7 +132,7 @@ weight.dendrogram <- function(x, method = "Gerstein"){
 
 
 #' @rdname weight
-#' @export
+#'
 #'
 weight.default <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
   x <- unalign(x, gapchar = gapchar)

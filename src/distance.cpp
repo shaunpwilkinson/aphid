@@ -2,8 +2,8 @@
 using namespace Rcpp;
 
 
-// [[Rcpp::export]]
-NumericMatrix kcount_DNA(List x, int k = 5) {
+// [[Rcpp::export(name = ".kcountDNA")]]
+NumericMatrix kcountDNA(List x, int k = 5) {
   CharacterVector nms = x.attr("names");
   int nseq = x.size();
   double fourtopowerk = pow(4, k);

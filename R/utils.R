@@ -1,11 +1,13 @@
 #' Internal profile functions.
 #'
-alphadetect <- function(sequences, residues = NULL, gapchar = "-", endchar = "?"){
+alphadetect <- function(sequences, residues = NULL, gapchar = "-",
+                        endchar = "?"){
   if(identical(toupper(residues), "RNA")){
     residues <- c("A", "C", "G", "U")
   }else if(is.DNA(sequences) | identical(toupper(residues), "DNA")){
     residues <- c("A", "C", "G", "T")
-  }else if(is.AA(sequences) | identical(residues, "AA") | identical (toupper(residues), "AMINO")){
+  }else if(is.AA(sequences) | identical(residues, "AA") |
+           identical (toupper(residues), "AMINO")){
     residues <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
   }
   else if(is.null(residues)){
@@ -404,7 +406,7 @@ encode.AA <- function(x, arity = 20, probs = NULL, random = TRUE, na.rm = FALSE)
     }
   }else if(arity == 27){
     ### return order ACDEFGHIKLMNPQRSTVWY, X, BJZ, OU, *
-    ### for input into AAprobC2
+    ### for input into .probAA
     fun <- function(v){
       bits <- c(65, 67, 68, 69, 70, 71, 72, 73, 75, 76, 77, 78, 80,
                 81, 82, 83, 84, 86, 87, 89, 88, 66, 74, 90,  79,85, 42)

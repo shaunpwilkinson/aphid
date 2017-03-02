@@ -2,13 +2,31 @@
 % Please edit documentation in R/RcppExports.R
 \name{whichmax}
 \alias{whichmax}
-\title{Find the index of the maximum with ties broken at random.}
+\title{Find the position of the maximum value.}
 \usage{
 whichmax(x, start = 1L)
 }
 \arguments{
 \item{x}{a numeric or integer vector.}
+
+\item{start}{integer indicating the index of the first value
+of the vector. Defaults to 1 (consistent the indexing system used by R,
+as opposed to that used by C and C++ in which the first value is given
+an index of 0).}
+}
+\value{
+returns an integer representing the position (index) of the maximum
+  value in the input vector.
 }
 \description{
-Returns the location of the maximum value in a numeric or integer vector.
+Returns the position (index) of the maximum value in a numeric or integer vector,
+  with ties broken at random.
+}
+\details{
+This is a simple compiled function similar to which.max{base} but
+  with random breaking of ties. Unlike which.max{base}, logical vectors are
+  not accepted.
+}
+\author{
+Shaun P. Wilkinson
 }

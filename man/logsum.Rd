@@ -7,8 +7,20 @@
 logsum(x)
 }
 \arguments{
-\item{x}{a vector of logged probabilities.}
+\item{x}{a numeric vector of logged probabilities.}
+}
+\value{
+returns a single numeric value representing the logged sum of the
+  values in the input vector.
 }
 \description{
-\code{"logsum"} takes a vector of logged probabilities and returns its sum.
+\code{"logsum"} takes a vector of logged probabilities (neagtive values)
+  and returns its sum.
+}
+\details{
+This is a simple compiled function that exponentiates the values
+in the input vector, finds their sum, and returns the log of that value.
+}
+\author{
+Shaun P. Wilkinson
 }

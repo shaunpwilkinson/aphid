@@ -1,8 +1,9 @@
 #' Define search space for dynammic programming.
 #'
-#' Implement the algorithm of Wilbur & Lipman (1983) to define windowspace for
+#' Use the algorithm of Wilbur & Lipman (1983) to define windowspace for
 #' downstream dynammic programming applications such as the Viterbi, forward and
 #' backward algorithms.
+#'
 #' @param x,y integer vectors representing sequences coded in a specific numbering scheme
 #' (for example DNA residues A, T, G, C coded as 0, 1, 2, 3).
 #' @param arity integer indicating the numbering system that x and y are coded in,
@@ -11,9 +12,18 @@
 #'     for all diagonals with k-tuple matches for a diagonal to be be considered significant.
 #' @return length 2 integer vector giving the bounds of the significant window space
 #'     to fill the dynamic programming matrices.
-#' @export
 #'
-WilburLipman <- function(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5){
+#' @details TBA.
+#'
+#' @author Shaun P. Wilkinson.
+#'
+#' @references
+#'   Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and
+#'   protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{10}, 197-206.
+#'
+#'
+#'
+window <- function(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5){
   # x and y coded as integers starting from 0
   if(arity == "autodetect") arity <- max(c(x, y)) + 1
   N1 <- length(x)

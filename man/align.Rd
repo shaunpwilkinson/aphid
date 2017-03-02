@@ -6,7 +6,7 @@
 \alias{align.AAbin}
 \alias{align.list}
 \alias{align.default}
-\title{Multiple sequence alignment.}
+\title{Multiple sequence alignment in R.}
 \usage{
 align(sequences, model = NULL, seqweights = "Gerstein",
   refine = "Viterbi", k = 5, maxiter = if (refine == "Viterbi") 10 else
@@ -41,52 +41,83 @@ align(sequences, model = NULL, seqweights = "Gerstein",
 }
 \arguments{
 \item{sequences}{a list of vectors consisting of symbols emitted from
-the residue alphabet. The vectors can be of mode "character", or raw bytes in the "DNAbin" or
-"AAbin" coding scheme (Paradis 2007).}
+the residue alphabet. The vectors can either be of mode "character" or "raw",
+as in the "DNAbin" or "AAbin" coding scheme (Paradis 2007).}
 
 \item{model}{an optional profile hidden Markov model (object of class \code{"PHMM"})
-to align the sequences to.}
+to align the sequences to. If NULL a new model will be derived from the list of
+sequences, after which each sequence will be aligned back to the model to produce the
+multiple sequence alignment.}
 
-\item{refine}{the method used to iteratively train the model following the
-initial progressive alignment step.
-Current supported methods are \code{refine = "Viterbi"} (Viterbi training)
-and \code{refine = "BaumWelch"}
-(parameter optimization with the Expectation-Maximization algorithm).}
+\item{seqweights}{either NULL (default; all sequences are given an equal
+weight of 1), a numeric vector the same length as \code{x} representing
+the sequence weights used to derive the model, or a character string giving
+the method to derive the weights from the sequences. Currently only the
+\code{"Gerstein"} method is supported (the default). For this method, a
+tree is first created by k-mer counting (see \code{\link{kdistance}}),
+and sequence weights are derived from the tree using the 'bottom up'
+algorithm of Gerstein et al. (1994). The sum of these weights are equal
+to the number of sequences in the alignment (so that mean(seqweights) = 1;
+Note this does not need to be the case if providing weights as a numeric vector).}
+
+\item{refine}{the method used to iteratively refine the model parameters
+following the initial progressive alignment and model derivation step.
+Current supported options are \code{"Viterbi"} (Viterbi training;
+the default option), \code{"BaumWelch"} (a modified version of the
+Expectation-Maximization algorithm), and "none" (skip the model refinement
+step).}
 
 \item{residues}{either NULL (default; emitted residues are automatically
-detected from the list of sequences), or a case sensitive character vector specifying the
-residue alphabet (e.g. c(A, C, G, T) for DNA). The character strings "RNA", "DNA", "AA",
-and "AMINO"are also accepted.
-Note that the default setting \code{residues = NULL} will not
-detect rare residues that are not present in the sequence list, and thus will
-not assign them emission probabilities.
-Also note that the default option can be slow for large lists of character vectors;
-therefore specifying the residue alphabet can increase speed in these cases.}
+detected from the list of sequences), a case sensitive character vector specifying the
+residue alphabet, or one of the character strings
+"RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for large
+lists of character vectors. Furthermore, the default setting \code{residues = NULL}
+will not detect rare residues that are not present in the sequence list,
+and thus will not assign them emission probabilities. Hence specifying the residue
+alphabet is recommended unless the sequence list is a "DNAbin" or "AAbin" object.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix. Ignored for
-"DNAbin" and "AAbin" objects.}
+\item{gapchar}{the character used to represent gaps in the alignment matrix.
+Ingored for \code{"DNAbin"} or \code{"AAbin"} objects, defaults to "-" otherwise.}
 
-\item{quiet}{logical argument indicating whether feedback should be printed
+\item{quiet}{logical indicating whether feedback should be printed
 to the console.}
 
-\item{...}{aditional arguments to pass to \code{"Viterbi"} for Viterbi training refinement or
-\code{"forward"} if using Baum Welch model training.}
+\item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
+\code{refine = "Viterbi"}) or \code{"forward"} (if \code{refine = "BaumWelch"}).}
 }
 \value{
-a character matrix of aligned sequences.
+a matrix of aligned sequences, with the same mode or class as the
+input sequence list.
 }
 \description{
-\code{align} finds the optimal alignment for a list of sequences involving a
+\code{align} finds the optimal alignment for a list of sequences using profile
+hidden Markov models.
+}
+\details{
+The alignment procedure involves an initial
 progressive multiple sequence alignment, followed by the generation of a profile
-HMM, an iterative model refinement step, and finally the alignment of the sequences
-back to the model.
+hidden Markov model (derived from the alignment), an iterative model refinement step,
+and finally the alignment of the sequences
+back to the model. If only two sequences are provided, the procedure reduces
+to a standard pairwise alignment.
 }
 \examples{
+## Protein alignment example from Chapter 2, Durbin et al. (1998).
 x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
 y <- c("P", "A", "W", "H", "E", "A", "E")
-z <- align(x, y)
+sequences <- list(x = x, y = y)
+z <- align(sequences)
+z
 
 }
 \references{
-Durbin et al, Soding, Paradis 2007.
+Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+  sequence analysis: probabilistic models of proteins and nucleic acids.
+  Cambridge University Press, Cambridge, United Kingdom.
+}
+\seealso{
+\code{\link{unalign}}.
+}
+\author{
+Shaun Wilkinson.
 }

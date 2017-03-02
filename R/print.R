@@ -27,7 +27,7 @@ print.HMM <- function(x, digits = 7){
 print.fullprob <- function(x, digits = 7){
   if(x$odds){
     cat("Log odds score: ", x$score)
-  } else cat("Full (log) probability of sequence given model: ", x$score)
+  } else cat("Full (log) probability of sequence given model =", x$score)
 }
 
 print.Viterbi <- function(x, digits = 7){

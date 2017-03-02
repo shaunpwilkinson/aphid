@@ -1,6 +1,6 @@
 #' Derive a profile HMM from a multiple sequence alignment.
 #'
-#' \code{derive.PHMM} generates a profile HMM from a given multiple sequence alignment.
+#' \code{derivePHMM} generates a profile HMM from a given multiple sequence alignment.
 #'
 #' This function is the homologue of \code{hmmbuild} in HMMER3.1 (http://hmmer.org/) and
 #' \code{modelfromalign} and \code{buildmodel} in the SAM package
@@ -62,6 +62,12 @@
 #' to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).
 #' Only applicable for \code{inserts = "map"}.
 #' @return an object of class \code{"PHMM"}
+#' @details
+#' TBA
+#'
+#' @author Shaun P. Wilkinson
+#'
+#'
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
@@ -70,10 +76,14 @@
 #'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
 #'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 #'
-#' @name derive.PHMM
-#' @export
+#' @seealso \code{\link{deriveHMM}}, \code{\link{map}}
 #'
-derive.PHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
+#' @examples
+#' ## TBA
+#'
+#' @name derivePHMM
+#'
+derivePHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                         gapchar = "-", endchar = "?", pseudocounts = "background",
                         logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
                         inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1E-07,
@@ -82,13 +92,12 @@ derive.PHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues
                         seeds = "random", refine = "Viterbi",
                         maxiter = if(refine == "Viterbi") 10 else 100,
                         cpp = TRUE, quiet = FALSE, ...){
-  UseMethod("derive.PHMM")
+  UseMethod("derivePHMM")
 }
 
-#' @rdname derive.PHMM
-#' @export
+#' @rdname derivePHMM
 #'
-derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
+derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                                gapchar = "-", endchar = "?", pseudocounts = "background",
                                logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
                                inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1E-07,
@@ -98,7 +107,7 @@ derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, r
                                maxiter = if(refine == "Viterbi") 10 else 100,
                                cpp = cpp, quiet = FALSE, ...){ ##TODO don't need gapchar, residues etc?
   if(is.list(x)){
-    derive.PHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
+    derivePHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
                      seqweights = seqweights, wfactor = wfactor,
                      k = k, residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
                      logspace = logspace, qa = qa, qe = qe, maxsize = maxsize,
@@ -107,7 +116,7 @@ derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, r
                      name = name, description = description, compo = compo, consensus = consensus,
                      cpp = cpp, quiet = quiet, ... = ...)
   }else{
-    derive.PHMM.default(x, seqweights = seqweights, wfactor = wfactor, k = k, residues = residues,
+    derivePHMM.default(x, seqweights = seqweights, wfactor = wfactor, k = k, residues = residues,
                         gapchar = gapchar, endchar = endchar, pseudocounts = pseudocounts,
                         logspace = logspace, qa = qa, qe = qe, maxsize = maxsize,
                         inserts = inserts, threshold = threshold,
@@ -118,10 +127,10 @@ derive.PHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, r
 }
 
 
-#' @rdname derive.PHMM
-#' @export
+#' @rdname derivePHMM
 #'
-derive.PHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
+#'
+derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                               gapchar = "-", endchar = "?", pseudocounts = "background",
                               logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
                               inserts = "map", threshold = 0.5, lambda = 0, deltaLL = 1E-07,
@@ -131,7 +140,7 @@ derive.PHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, re
                               maxiter = if(refine == "Viterbi") 10 else 100,
                               cpp = TRUE, quiet = FALSE, ...){
   if(is.list(x)){
-    derive.PHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
+    derivePHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
                      seqweights = seqweights, wfactor = wfactor,
                      k = k, residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
                      logspace = logspace, qa = qa, qe = qe, maxsize = maxsize,
@@ -140,7 +149,7 @@ derive.PHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, re
                      name = name, description = description, compo = compo, consensus = consensus,
                      cpp = cpp, quiet = quiet, ... = ...)
   }else{
-    derive.PHMM.default(x, seqweights = seqweights, wfactor = wfactor, k = k, residues = residues,
+    derivePHMM.default(x, seqweights = seqweights, wfactor = wfactor, k = k, residues = residues,
                         gapchar = gapchar, endchar = endchar, pseudocounts = pseudocounts,
                         logspace = logspace, qa = qa, qe = qe, maxsize = maxsize,
                         inserts = inserts, threshold = threshold,
@@ -150,10 +159,10 @@ derive.PHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, re
   }
 }
 
-#' @rdname derive.PHMM
-#' @export
+#' @rdname derivePHMM
 #'
-derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
+#'
+derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                              maxiter = if(refine == "Viterbi") 10 else 100,
                              seqweights = "Gerstein", wfactor = 1,
                              k = 5, residues = NULL, gapchar = "-", pseudocounts = "background",
@@ -224,7 +233,7 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
     seedweights <- 1
   }else stop("Empty list")
   if(!quiet) cat("Deriving profile hidden Markov model\n")
-  omniphmm <- derive.PHMM.default(msa1, seqweights = seedweights, wfactor = wfactor, k = k, residues = residues,
+  omniphmm <- derivePHMM.default(msa1, seqweights = seedweights, wfactor = wfactor, k = k, residues = residues,
                           gapchar = gapchar, pseudocounts = pseudocounts, logspace = logspace,
                           qa = qa, qe = qe, DI = DI, ID = ID, omit.endgaps = omit.endgaps,
                           maxsize = maxsize, inserts = inserts, lambda = lambda, threshold = threshold,
@@ -266,10 +275,10 @@ derive.PHMM.list <- function(x, seeds = "random", refine = "Viterbi",
 }
 
 
-#'@rdname derive.PHMM
-#'@export
+#'@rdname derivePHMM
 #'
-derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
+#'
+derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
                        gapchar = "-", endchar = "?", pseudocounts = "background",
                        logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
                        inserts = "map", lambda = 0, threshold = 0.5,
@@ -337,7 +346,8 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
     inserts <- apply(gapweights, 2, sum) > threshold * n
   }else if(identical(inserts, "map")){
     if(n < 5){
-      # if(!quiet) cat("Maximum a priori insert assignment unsuitable for fewer than five sequences.
+      # if(!quiet) cat("Maximum a posteriori insert assignment unsuitable
+      #                for fewer than five sequences.
       #                Switching to threshold method\n")
       inserts <- apply(gapweights, 2, sum) > threshold * n
     }else{
@@ -346,7 +356,8 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
                       qa = qa, qe = qe)
       if(sum(!inserts) < 3) {
         if(!quiet){
-          cat("Maximum a priori insert assignment produced model with fewer than three modules\n")
+          cat("Maximum a posteriori insert assignment produced model
+              with fewer than three modules\n")
           cat("Switching to threshold method\n")
         }
         inserts <- apply(gapweights, 2, sum) > threshold * n
@@ -388,7 +399,7 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
   xtr[!gaps & !insertsn] <- 1L # Match
   xtr[!gaps & insertsn] <- 2L # Insert
   xtr <- cbind(1L, xtr, 1L) # append begin and end match states
-  tcs <- tab9C(xtr, seqweights = seqweights)
+  tcs <- .atab(xtr, seqweights = seqweights)
   alltcs <- apply(tcs, 1, sum) # forced addition of Laplacian pseudos
 
   # background transition probs
@@ -481,7 +492,8 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
 
 #' Optimized profile HMM construction.
 #'
-#' Assigns columns to insert states using the maximum \emph{a posteriori} method
+#' Assigns columns to match and insert states using the
+#' maximum \emph{a posteriori} method
 #' outlined in Durbin et al. (1998).
 #'
 #' @param x a matrix of aligned sequences.
@@ -510,8 +522,24 @@ derive.PHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, 
 #' as match states (\code{TRUE}) and those assigned as inserts (\code{FALSE}).
 #' @return a logical vector indicating the columns of the input matrix that were allocated as
 #' insert states
-#' @references Durbin...
-#' @export
+#' @details see Durbin et al. (1998) chapter 5.7 for a thorough explanation of
+#'   the maximum \emph{a posteriori} algorithm for match state assignment.
+#'
+#' @author Shaun P. Wilkinson
+#'
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
+#'
+#' @seealso \code{\link{derivePHMM}}
+#'
+#' @examples
+#' ## Maximum a posteriori assignment of match states to the small
+#' ## alignment example in Figure 5.3, Durbin et al. (1998)
+#' data(globins)
+#' map(globins)
+#'
 #'
 map <- function(x, seqweights = NULL, residues = NULL,
                 gapchar = "-", endchar = "?", pseudocounts = "background",
@@ -559,7 +587,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
     xtr[!gaps & !insertsn] <- 1L # Match
     xtr[!gaps & insertsn] <- 2L # Insert
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
-    tcs <- tab9C(xtr, seqweights) # modules = sum(!inserts) + 2)
+    tcs <- .atab(xtr, seqweights) # modules = sum(!inserts) + 2)
     alltcs <- apply(tcs, 1, sum)
     qa <- log((alltcs + 1)/sum(alltcs + 1)) # force addition of Laplace pseudos
   }else if(all(qa >= 0 & qa <= 1) & round(sum(qa), 2) == 1){
@@ -586,7 +614,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
     pseudocounts <- list(A = rep(0, 9), E = rep(0, nres))
   }else stop("invalid pseudocounts argument")
   if(cpp){
-    res <- mapC(ecs, notgaps, pseudocounts, seqweights, qe, lambda)
+    res <- .map(ecs, notgaps, pseudocounts, seqweights, qe, lambda)
   }else{
     ecs2 <- ecs + pseudocounts$E
     term2 <- t(t(ecs2)/apply(ecs2, 2, sum))

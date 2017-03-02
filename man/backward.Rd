@@ -19,8 +19,9 @@ backward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
 \arguments{
 \item{x}{an object of class \code{PHMM} or \code{HMM}.}
 
-\item{y}{a character vector representing a single instance of a sequence
-hypothetically emitted by the model.}
+\item{y}{a vector of mode "character" or "raw" (a "DNAbin" or "AAbin"
+object) representing a single sequence hypothetically emitted by
+the model in \code{x}.}
 
 \item{qe}{an optional named vector of background residue frequencies. If NULL
 background residue frequencies from the PHMMs are used. If these are not available
@@ -38,8 +39,8 @@ should be odds ratios (TRUE) or full logged probabilities (FALSE).}
 
 \item{type}{character string indicating whether insert and delete states
 at the beginning and end of the path should count towards the final score
-('global'; default). Note that semiglobal and local models
-are not currently supported in this version.}
+('global'; default). Note that unlike \code{link{Viterbi}}, semiglobal
+and local models are not currently supported.}
 
 \item{DI}{logical. should delete-insert transitions be allowed? Only applicable for
 objects of class \code{"PHMM"}.}
@@ -51,6 +52,57 @@ objects of class \code{"PHMM"}.}
 a list containing the score and dynamic programming arrays.
 }
 \description{
-Backward algorithm for calculating the full (log) probability or odds
-of a sequence given a hidden Markov model or profile HMM.
+Calculate the full (log) probability or odds
+of a sequence given a hidden Markov model or profile HMM with the
+backward dynamic programming algorithm.
+}
+\details{
+This function is a wrapper for a compiled C++ function that recursively
+  fills a dynamic programming matrix with logged probabilities, and
+  calculates the full (logged) probability of a sequence given a HMM or
+  PHMM.
+  For a thorough explanation of the backward, forward and Viterbi
+  algorithms, see Durbin et al. (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
+}
+\examples{
+## Use of the backward algorithm for HMMs
+## The dishonest casino example from Durbin et al. (1998) chapter 3.2
+A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
+            nrow = 3) # transition probability matrix
+dimnames(A) <- list(from = c("Begin", "Fair", "Loaded"),
+                    to = c("Begin", "Fair", "Loaded"))
+E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
+              (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
+            nrow = 2, byrow = TRUE) # emission probability matrix
+dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
+x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
+data(casino)
+backward(x, casino)
+
+## Use of the backward algorithm for profile HMMs
+## Small globin alignment data from Durbin et al. (1998) Figure 5.3
+data(globins)
+## derive a profile hidden Markov model from the alignment
+globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+## simulate a random sequence from the model
+set.seed(999)
+simulation <- generate(globins.PHMM, size = 20)
+simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
+## calculate the full (log) probability of the sequence given the model
+x <- backward(globins.PHMM, simulation, odds = FALSE)
+x # -23.0586
+## show dynammic programming array
+x$array
+
+}
+\references{
+Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+  sequence analysis: probabilistic models of proteins and nucleic acids.
+  Cambridge University Press, Cambridge, United Kingdom.
+}
+\seealso{
+\code{\link{forward}}, \code{\link{Viterbi}}.
+}
+\author{
+Shaun P. Wilkinson
 }

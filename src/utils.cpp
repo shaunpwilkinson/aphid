@@ -1,59 +1,12 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-// [[Rcpp::export]]
-IntegerMatrix progression(IntegerVector path, IntegerVector start){
-  IntegerMatrix res(2, path.size());
-  res(_, 0) = start;
-  int xpos = start[0];
-  int ypos = start[1];
-  for(int i = 0; i < path.size() - 1; i ++){
-    if(path[i] == 1){
-      xpos++;
-      ypos++;
-    }else if(path[i] == 0){
-      xpos++;
-    }else if(path[i] == 2){
-      ypos++;
-    }else throw Rcpp::exception("path contains unknown elements");
-    res (0, i + 1) = xpos;
-    res (1, i + 1) = ypos;
-  }
-  return(res);
-}
-
-// [[Rcpp::export]]
-IntegerMatrix progression2(IntegerVector path, IntegerVector start){
-  IntegerMatrix res(2, path.size());
-  res(_, 0) = start;
-  int xpos = start[0];
-  int ypos = start[1];
-  for(int i = 0; i < path.size() - 1; i ++){
-    if(path[i] == 2){
-      xpos++;
-      ypos++;
-    }else if(path[i] < 2){
-      xpos++;
-    }else if(path[i] > 2){
-      ypos++;
-    }
-    res (0, i + 1) = xpos;
-    res (1, i + 1) = ypos;
-  }
-  return(res);
-}
-
-
-//' Count transition frequencies.
-//'
-//' Summation of transition frequencies in an integer vector.
-//'
-//' @param x an integer vector.
-//' @param arity an integer representing the numbering system of the input vector,
-//' 2 for binary, 3 for ternary, etc.
-//'
-// [[Rcpp::export]]
-IntegerVector transitioncount(IntegerVector x, int arity){
+// [[Rcpp::export(name = ".acount")]]
+IntegerVector acount(IntegerVector x, int arity){
+  // x is an integer vector in a certain coding scheme (starting at 0)
+  // arity is an integer representing the numbering system of the input vector,
+  // 2 for binary, 3 for ternary, 4 for quarternary, etc.
+  // returns the transition frequencies as an integer vector
   int newarity = pow(arity, 2);
   IntegerVector guide = seq(0, newarity - 1);
   guide.attr("dim") = IntegerVector::create(arity, arity);
@@ -63,9 +16,8 @@ IntegerVector transitioncount(IntegerVector x, int arity){
   return(out);
 }
 
-
-// [[Rcpp::export]]
-IntegerVector emissioncount(IntegerVector states, int statearity,
+// [[Rcpp::export(name = ".ecount")]]
+IntegerVector ecount(IntegerVector states, int statearity,
                             IntegerVector residues, int resarity){
   int newarity = statearity * resarity;
   IntegerVector guide = seq(0, newarity - 1);
@@ -76,15 +28,15 @@ IntegerVector emissioncount(IntegerVector states, int statearity,
   return(out);
 }
 
-
-// elements of x can be 0, 1, 2, or NA
-// number of modules should include the begin and end states
-// outputs a 9 row count (integer) matrix with ncol = nmodules - 1 (doesn't include end)
-
-// [[Rcpp::export]]
-NumericMatrix tab9C(IntegerMatrix x, NumericVector seqweights){
+// [[Rcpp::export(name = ".atab")]]
+NumericMatrix atab(IntegerMatrix x, NumericVector seqweights){
+  // tabulates the 9 transition types found in PHMMs
   // x is a ternary matrix with ncol = phmm length + 2
   // length of seqweights should be same as nrow(x)
+  // elements of x can be 0, 1, 2, or NA
+  // number of modules should include the begin and end states
+  // outputs a 9 row count (integer) matrix with ncol =
+  // nmodules - 1 (doesn't include end)
   if(x.nrow() != seqweights.size()){
     throw Rcpp::exception("length of seqweights vector should equal number of sequences");
   }

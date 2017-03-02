@@ -36,7 +36,7 @@
 #' pseudocounts are recommended for small training sets,
 #' since Laplacian counts can overinflate insert and delete transition probabilities
 #' leading to convergence at suboptimal local maxima.
-#' @seealso \code{\link{derive.HMM}} and \code{\link{derive.PHMM}} for
+#' @seealso \code{\link{deriveHMM}} and \code{\link{derivePHMM}} for
 #' maximum-likelihood parameter estimation when training sequence states are
 #' known.
 #' @references Juang B-H & Rabiner L R (1990) The segmental K-means
@@ -45,7 +45,7 @@
 #' Speech...
 #' @references Durbin...
 #' @name train
-#' @export
+#'
 #'
 train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
                   maxiter = if(method == "Viterbi") 10 else 100,
@@ -57,7 +57,7 @@ train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autod
 
 
 #' @rdname train
-#' @export
+#'
 #'
 train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
                        maxiter = if(method == "Viterbi") 10 else 100,
@@ -142,7 +142,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
     xtr[!gaps & !insertsn] <- 1L # Match
     xtr[!gaps & insertsn] <- 2L # Insert
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
-    tcs <- tab9C(xtr, seqweights = seqweights)
+    tcs <- .atab(xtr, seqweights = seqweights)
     transtotals <- apply(tcs, 1, sum) + 1 # force addition of Laplacian pseudos
     if(!DI) transtotals[3] <- 0
     if(!ID) transtotals[7] <- 0
@@ -157,7 +157,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
     # alig_cache <- list()
     # alig_cache[[1]] <- as.vector(alignment)
     for(i in 1:maxiter){
-      out <- derive.PHMM.default(alignment, seqweights = seqweights, residues = residues,
+      out <- derivePHMM.default(alignment, seqweights = seqweights, residues = residues,
                          gapchar = gapchar, DI = DI, ID = ID, maxsize = maxsize,
                         inserts = inserts, lambda = lambda, threshold = threshold,
                         pseudocounts = pseudocounts, logspace = TRUE,
@@ -358,7 +358,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
 
 
 #' @rdname train
-#' @export
+#'
 #'
 train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                       maxiter = if(method == "Viterbi") 10 else 100,
@@ -390,7 +390,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         vitj <- Viterbi(out, y[[j]], logspace = TRUE, ... = ...)
         pathchar <- states[-1][vitj$path + 1]
         if(identical(pathchar, names(y[[j]]))) samename[j] <- TRUE
-        # need to be named to feed into derive.HMM
+        # need to be named to feed into deriveHMM
         names(y[[j]]) <- pathchar
       }
       if(all(samename)){
@@ -402,7 +402,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         return(out)
       }else{
         if(!quiet) cat("Iteration", i, "\n")
-        out <- derive.HMM(y, seqweights = seqweights, residues = residues,
+        out <- deriveHMM(y, seqweights = seqweights, residues = residues,
                          states = states, modelend = modelend,
                          pseudocounts = pseudocounts, logspace = TRUE)
       }

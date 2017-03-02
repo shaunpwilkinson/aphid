@@ -2,25 +2,34 @@
 #'
 #' \code{plot.PHMM} provides a visual representation of a profile hidden Markov model.
 #'
-#' Since the plotted models are generally much longer than they are
-#' high, it is usually recommended to output the plot to a PDF file as demonstrated
-#' in the example below.
-#'
-#' @param x an object of class \code{"PHMM"}
+#' @param x an object of class \code{"PHMM"}.
 #' @param from an integer giving the module number from where to begin the plot sequence.
-#'     Defaults to "start" which is converted to 0. Only applicable when plotting \code{"PHMM"} objects.
+#'     Defaults to "start" which is converted to 0. Only applicable when
+#'     plotting \code{"PHMM"} objects.
 #' @param to an integer giving the module number at which to to finish the plot sequence.
 #'     Defaults to "start" which is converted to the total number of internal modules in the
 #'     model plus two (to account for the begin and end states).
 #'     Only applicable when plotting \code{"PHMM"} objects.
-#' @param just a character string giving the justfication of the plot relative to the device.
-#'     Accepted values are "left", "center" and "right".
+#' @param just a character string giving the justfication of the plot relative
+#'   to the device. Accepted values are "left", "center" and "right".
 #' @param arrexp the expansion factor to be applied to the arrows in the plot.
 #' @param textexp the expansion factor to be applied to the text in the plot.
+#' @return NULL (invisibly).
+#'
+#' @details \code{"plot.PHMM"} Plots a \code{"PHMM"} object as a directed graph
+#'   with sequential modules consisting of squares, diamonds and circles
+#'   representing match, insert
+#'   and delete states, respectively. Modules are interconnected by directed
+#'   lines with line-weights proportional to the transition probabilities between
+#'   the states. Since the plotted models are generally much longer than they are
+#'   high, it is usually better to output the plot to a PDF file as demonstrated
+#'   in the example below.
+#'
 #' @examples
+#' \dontrun{
 #' library(ape)
 #' data(woodmouse)
-#' woodmouse.PHMM <- derive.PHMM(woodmouse)
+#' woodmouse.PHMM <- derivePHMM(woodmouse)
 #'
 #' ## plot partial model to viewer device
 #' plot(woodmouse.PHMM, from = 0, to = 5)
@@ -38,8 +47,9 @@
 #'   to <- min(to + 10, woodmouse.PHMM$size + 1)
 #' }
 #' dev.off()
+#' }
 #'
-#' @export
+#'
 #'
 plot.PHMM <- function(x, from = "start", to = "end", just = "center",
                       arrexp = 1, textexp = 1, ...){
@@ -200,7 +210,7 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
 #' plot(x)
 #' plot(x, begin)
 #'
-#' @export
+#'
 #'
 plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1, begin = FALSE, ...){
   logspace <- logdetect(x)

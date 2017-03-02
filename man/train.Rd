@@ -78,7 +78,7 @@ Speech...
 Durbin...
 }
 \seealso{
-\code{\link{derive.HMM}} and \code{\link{derive.PHMM}} for
+\code{\link{deriveHMM}} and \code{\link{derivePHMM}} for
 maximum-likelihood parameter estimation when training sequence states are
 known.
 }

@@ -1,19 +1,67 @@
 #' Forward algorithm.
 #'
-#' Forward algorithm for calculating the full (log) probability or odds
-#' of a sequence given a hidden Markov model or profile HMM.
+#' Calculate the full (log) probability or odds
+#' of a sequence given a hidden Markov model or profile HMM with the
+#' forward dynamic programming algorithm.
 #'
 #' @param x an object of class \code{PHMM} or \code{HMM}.
-#' @param y a character vector representing a single instance of a sequence
-#' hypothetically emitted by the model.
+#' @param y a vector of mode "character" or "raw" (a "DNAbin" or "AAbin"
+#'   object) representing a single sequence hypothetically emitted by
+#'   the model in \code{x}.
 #' @param type character string indicating whether insert and delete states
-#' at the beginning and end of the path should count towards the final score
-#' ('global'; default). Note that semiglobal and local models
-#' are not currently supported in this version.
+#'   at the beginning and end of the path should count towards the final score
+#'   ('global'; default). Note that unlike \code{link{Viterbi}}, semiglobal
+#'   and local models are not currently supported.
 #' @inheritParams Viterbi
-#' @return a list containing the score and forward dynamic programming arrays.
+#' @return a list containing the score and dynamic programming arrays.
+#' @details
+#'   This function is a wrapper for a compiled C++ function that recursively
+#'   fills a dynamic programming matrix with logged probabilities, and
+#'   calculates the full (logged) probability of a sequence given a HMM or
+#'   PHMM.
+#'   For a thorough explanation of the backward, forward and Viterbi
+#'   algorithms, see Durbin et al. (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
+#'
+#' @author Shaun P. Wilkinson
+#'
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
+#'
+#' @seealso \code{\link{backward}}, \code{\link{Viterbi}}.
+#'
+#' @examples
+#' ## Use of the forward algorithm for HMMs
+#' ## The dishonest casino example from Durbin et al. (1998) chapter 3.2
+#' A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
+#'             nrow = 3) # transition probability matrix
+#' dimnames(A) <- list(from = c("Begin", "Fair", "Loaded"),
+#'                     to = c("Begin", "Fair", "Loaded"))
+#' E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
+#'               (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
+#'             nrow = 2, byrow = TRUE) # emission probability matrix
+#' dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
+#' x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
+#' data(casino)
+#' forward(x, casino)
+#'
+#' ## Use of the forward algorithm for profile HMMs
+#' ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
+#' data(globins)
+#' ## derive a profile hidden Markov model from the alignment
+#' globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+#' ## simulate a random sequence from the model
+#' set.seed(999)
+#' simulation <- generate(globins.PHMM, size = 20)
+#' simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
+#' ## calculate the full (log) probability of the sequence given the model
+#' x <- forward(globins.PHMM, simulation, odds = FALSE)
+#' x # -23.0586
+#' ## show dynammic programming array
+#' x$array
+#'
 #' @name forward
-#' @export
 #'
 forward <- function(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
                     windowspace = "all", type = "global", eta = 0.01,
@@ -23,7 +71,7 @@ forward <- function(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
 
 
 #' @rdname forward
-#' @export
+#'
 #'
 forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "global", odds = TRUE,
@@ -128,14 +176,14 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
         #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
         yqt <- encode.DNA(y.DNAbin, arity = 4, na.rm = TRUE)
-        windowspace <- WilburLipman(xqt, yqt, arity = 4, k = 5)
+        windowspace <- window(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
         y.comp <- encode.AA(y.AAbin, arity = 6, na.rm = TRUE)
         xseq.comp <- encode.AA(xseq, arity = 6, na.rm = TRUE)
-        windowspace <- WilburLipman(xseq.comp, y.comp, arity = 6, k = 5)
+        windowspace <- window(xseq.comp, y.comp, arity = 6, k = 5)
       }else{
         xseq <- match(xseq, rownames(x$E)) - 1
-        windowspace <- WilburLipman(xseq, y, arity = nrow(x$E), k = 3)
+        windowspace <- window(xseq, y, arity = nrow(x$E), k = 3)
       }
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, length(y))
@@ -143,9 +191,9 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     qey <- if(odds) {
       rep(0, m - 1)
     }else if(pd){
-      sapply(y, DNAprobC2, qe)
+      sapply(y, .probDNA, qe)
     }else if(pa){
-      sapply(y, AAprobC2, qe)
+      sapply(y, .probAA, qe)
     }else qe[y + 1]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
@@ -167,7 +215,7 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     if(odds) E <- E - qe
     if(cpp){
-      res <- forward_PHMM(y, A, E, qe, qey, type, windowspace, DI, ID, DNA = pd, AA = pa)
+      res <- .forwardP(y, A, E, qe, qey, type, windowspace, DI, ID, DNA = pd, AA = pa)
       R[, , 1] <- res$Dmatrix
       R[, , 2] <- res$Mmatrix
       R[, , 3] <- res$Imatrix
@@ -185,9 +233,9 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         for(j in 2:m){
           if(j - i >= windowspace[1] & j - i <= windowspace[2]){
             if(pd){
-              sij <- DNAprobC2(y[j - 1], E[, i - 1])
+              sij <- .probDNA(y[j - 1], E[, i - 1])
             }else if(pa){
-              sij <- AAprobC2(y[j - 1], E[, i - 1])
+              sij <- .probAA(y[j - 1], E[, i - 1])
             }else{
               sij <- E[y[j - 1] + 1, i - 1]
             }
@@ -228,7 +276,7 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 
 
 #' @rdname forward
-#' @export
+#'
 #'
 forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
@@ -282,31 +330,31 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   H <- length(states)
   if(length(y) == 0) structure(list(score = A[1, 1], array = NULL), class = 'fullprob')
   if(cpp){
-    res <- forward_HMM(y, A, E, DNA, AA)
+    res <- .forwardH(y, A, E, DNA, AA)
     rownames(res$array) <- states
   }else{
     R <- array(NA, dim = c(H, n))#, dimnames = list(state = states, step = 1:n))
     rownames(R) <- states
     tmp <- matrix(nrow = H, ncol = H)
     if(DNA){
-      for(k in 1:H) R[k, 1] <- DNAprobC2(y[1], E[k, ]) + A[1, k + 1]
+      for(k in 1:H) R[k, 1] <- .probDNA(y[1], E[k, ]) + A[1, k + 1]
       for (i in 2:n){
         for(k in 1:H){
           for(l in 1:H){
             tmp[k, l] <- R[k, i - 1] + A[k + 1, l + 1]
           }
         }
-        for(k in 1:H) R[k, i] <- logsum(tmp[, k]) + DNAprobC2(y[i], E[k, ])
+        for(k in 1:H) R[k, i] <- logsum(tmp[, k]) + .probDNA(y[i], E[k, ])
       }
     }else if(AA){
-      for(k in 1:H) R[k, 1] <- AAprobC2(y[1], E[k, ]) + A[1, k + 1]
+      for(k in 1:H) R[k, 1] <- .probAA(y[1], E[k, ]) + A[1, k + 1]
       for (i in 2:n){
         for(k in 1:H){
           for(l in 1:H){
             tmp[k, l] <- R[k, i - 1] + A[k + 1, l + 1]
           }
         }
-        for(k in 1:H) R[k, i] <- logsum(tmp[, k]) + AAprobC2(y[i], E[k, ])
+        for(k in 1:H) R[k, i] <- logsum(tmp[, k]) + .probAA(y[i], E[k, ])
       }
     }else{
       y <- y + 1

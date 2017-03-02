@@ -5,30 +5,6 @@
 
 using namespace Rcpp;
 
-// DNAprobC2
-double DNAprobC2(int x, NumericVector probs);
-RcppExport SEXP aphid_DNAprobC2(SEXP xSEXP, SEXP probsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type x(xSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type probs(probsSEXP);
-    rcpp_result_gen = Rcpp::wrap(DNAprobC2(x, probs));
-    return rcpp_result_gen;
-END_RCPP
-}
-// AAprobC2
-double AAprobC2(int x, NumericVector probs);
-RcppExport SEXP aphid_AAprobC2(SEXP xSEXP, SEXP probsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type x(xSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type probs(probsSEXP);
-    rcpp_result_gen = Rcpp::wrap(AAprobC2(x, probs));
-    return rcpp_result_gen;
-END_RCPP
-}
 // logsum
 double logsum(NumericVector x);
 RcppExport SEXP aphid_logsum(SEXP xSEXP) {
@@ -52,9 +28,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Viterbi_default
-List Viterbi_default(IntegerVector x, IntegerVector y, int type, double d, double e, NumericMatrix S, IntegerVector windowspace, double offset);
-RcppExport SEXP aphid_Viterbi_default(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP dSEXP, SEXP eSEXP, SEXP SSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
+// probDNA
+double probDNA(int x, NumericVector probs);
+RcppExport SEXP aphid_probDNA(SEXP xSEXP, SEXP probsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type probs(probsSEXP);
+    rcpp_result_gen = Rcpp::wrap(probDNA(x, probs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// probAA
+double probAA(int x, NumericVector probs);
+RcppExport SEXP aphid_probAA(SEXP xSEXP, SEXP probsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type probs(probsSEXP);
+    rcpp_result_gen = Rcpp::wrap(probAA(x, probs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ViterbiD
+List ViterbiD(IntegerVector x, IntegerVector y, int type, double d, double e, NumericMatrix S, IntegerVector windowspace, double offset);
+RcppExport SEXP aphid_ViterbiD(SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP dSEXP, SEXP eSEXP, SEXP SSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -66,13 +66,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type S(SSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type windowspace(windowspaceSEXP);
     Rcpp::traits::input_parameter< double >::type offset(offsetSEXP);
-    rcpp_result_gen = Rcpp::wrap(Viterbi_default(x, y, type, d, e, S, windowspace, offset));
+    rcpp_result_gen = Rcpp::wrap(ViterbiD(x, y, type, d, e, S, windowspace, offset));
     return rcpp_result_gen;
 END_RCPP
 }
-// Viterbi_HMM
-List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
-RcppExport SEXP aphid_Viterbi_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
+// ViterbiH
+List ViterbiH(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
+RcppExport SEXP aphid_ViterbiH(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -81,13 +81,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
     Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
     Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
-    rcpp_result_gen = Rcpp::wrap(Viterbi_HMM(y, A, E, DNA, AA));
+    rcpp_result_gen = Rcpp::wrap(ViterbiH(y, A, E, DNA, AA));
     return rcpp_result_gen;
 END_RCPP
 }
-// Viterbi_PHMM
-List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, double offset, bool DI, bool ID, bool DNA, bool AA);
-RcppExport SEXP aphid_Viterbi_PHMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
+// ViterbiP
+List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, double offset, bool DI, bool ID, bool DNA, bool AA);
+RcppExport SEXP aphid_ViterbiP(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -103,13 +103,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type ID(IDSEXP);
     Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
     Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
-    rcpp_result_gen = Rcpp::wrap(Viterbi_PHMM(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA, AA));
+    rcpp_result_gen = Rcpp::wrap(ViterbiP(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA, AA));
     return rcpp_result_gen;
 END_RCPP
 }
-// Viterbi_PP
-List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay, NumericMatrix Ex, NumericMatrix Ey, NumericVector qe, int type, IntegerVector windowspace, double offset);
-RcppExport SEXP aphid_Viterbi_PP(SEXP AxSEXP, SEXP AySEXP, SEXP ExSEXP, SEXP EySEXP, SEXP qeSEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
+// ViterbiPP
+List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay, NumericMatrix Ex, NumericMatrix Ey, NumericVector qe, int type, IntegerVector windowspace, double offset);
+RcppExport SEXP aphid_ViterbiPP(SEXP AxSEXP, SEXP AySEXP, SEXP ExSEXP, SEXP EySEXP, SEXP qeSEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP offsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -121,13 +121,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type type(typeSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type windowspace(windowspaceSEXP);
     Rcpp::traits::input_parameter< double >::type offset(offsetSEXP);
-    rcpp_result_gen = Rcpp::wrap(Viterbi_PP(Ax, Ay, Ex, Ey, qe, type, windowspace, offset));
+    rcpp_result_gen = Rcpp::wrap(ViterbiPP(Ax, Ay, Ex, Ey, qe, type, windowspace, offset));
     return rcpp_result_gen;
 END_RCPP
 }
-// forward_HMM
-List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
-RcppExport SEXP aphid_forward_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
+// forwardH
+List forwardH(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
+RcppExport SEXP aphid_forwardH(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -136,49 +136,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
     Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
     Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_HMM(y, A, E, DNA, AA));
+    rcpp_result_gen = Rcpp::wrap(forwardH(y, A, E, DNA, AA));
     return rcpp_result_gen;
 END_RCPP
 }
-// forward_PHMM
-List forward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, bool DI, bool ID, bool DNA, bool AA);
-RcppExport SEXP aphid_forward_PHMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type qe(qeSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type qey(qeySEXP);
-    Rcpp::traits::input_parameter< int >::type type(typeSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type windowspace(windowspaceSEXP);
-    Rcpp::traits::input_parameter< bool >::type DI(DISEXP);
-    Rcpp::traits::input_parameter< bool >::type ID(IDSEXP);
-    Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
-    Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_PHMM(y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA));
-    return rcpp_result_gen;
-END_RCPP
-}
-// backward_HMM
-List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
-RcppExport SEXP aphid_backward_HMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
-    Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
-    Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
-    rcpp_result_gen = Rcpp::wrap(backward_HMM(y, A, E, DNA, AA));
-    return rcpp_result_gen;
-END_RCPP
-}
-// backward_PHMM
-List backward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, bool DI, bool ID, bool DNA, bool AA);
-RcppExport SEXP aphid_backward_PHMM(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
+// forwardP
+List forwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, bool DI, bool ID, bool DNA, bool AA);
+RcppExport SEXP aphid_forwardP(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -193,25 +157,61 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type ID(IDSEXP);
     Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
     Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
-    rcpp_result_gen = Rcpp::wrap(backward_PHMM(y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA));
+    rcpp_result_gen = Rcpp::wrap(forwardP(y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA));
     return rcpp_result_gen;
 END_RCPP
 }
-// kcount_DNA
-NumericMatrix kcount_DNA(List x, int k);
-RcppExport SEXP aphid_kcount_DNA(SEXP xSEXP, SEXP kSEXP) {
+// backwardH
+List backwardH(IntegerVector y, NumericMatrix A, NumericMatrix E, bool DNA, bool AA);
+RcppExport SEXP aphid_backwardH(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP DNASEXP, SEXP AASEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
+    Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
+    Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
+    rcpp_result_gen = Rcpp::wrap(backwardH(y, A, E, DNA, AA));
+    return rcpp_result_gen;
+END_RCPP
+}
+// backwardP
+List backwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, bool DI, bool ID, bool DNA, bool AA);
+RcppExport SEXP aphid_backwardP(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type qe(qeSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type qey(qeySEXP);
+    Rcpp::traits::input_parameter< int >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type windowspace(windowspaceSEXP);
+    Rcpp::traits::input_parameter< bool >::type DI(DISEXP);
+    Rcpp::traits::input_parameter< bool >::type ID(IDSEXP);
+    Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
+    Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
+    rcpp_result_gen = Rcpp::wrap(backwardP(y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA));
+    return rcpp_result_gen;
+END_RCPP
+}
+// kcountDNA
+NumericMatrix kcountDNA(List x, int k);
+RcppExport SEXP aphid_kcountDNA(SEXP xSEXP, SEXP kSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type x(xSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    rcpp_result_gen = Rcpp::wrap(kcount_DNA(x, k));
+    rcpp_result_gen = Rcpp::wrap(kcountDNA(x, k));
     return rcpp_result_gen;
 END_RCPP
 }
-// mapC
-LogicalVector mapC(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts, NumericVector seqweights, NumericVector qe, double lambda);
-RcppExport SEXP aphid_mapC(SEXP ecsSEXP, SEXP notgapsSEXP, SEXP pseudocountsSEXP, SEXP seqweightsSEXP, SEXP qeSEXP, SEXP lambdaSEXP) {
+// map
+LogicalVector map(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts, NumericVector seqweights, NumericVector qe, double lambda);
+RcppExport SEXP aphid_map(SEXP ecsSEXP, SEXP notgapsSEXP, SEXP pseudocountsSEXP, SEXP seqweightsSEXP, SEXP qeSEXP, SEXP lambdaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -221,60 +221,25 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type seqweights(seqweightsSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type qe(qeSEXP);
     Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
-    rcpp_result_gen = Rcpp::wrap(mapC(ecs, notgaps, pseudocounts, seqweights, qe, lambda));
+    rcpp_result_gen = Rcpp::wrap(map(ecs, notgaps, pseudocounts, seqweights, qe, lambda));
     return rcpp_result_gen;
 END_RCPP
 }
-// returnmod
-List returnmod(List x);
-RcppExport SEXP aphid_returnmod(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(returnmod(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// progression
-IntegerMatrix progression(IntegerVector path, IntegerVector start);
-RcppExport SEXP aphid_progression(SEXP pathSEXP, SEXP startSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
-    rcpp_result_gen = Rcpp::wrap(progression(path, start));
-    return rcpp_result_gen;
-END_RCPP
-}
-// progression2
-IntegerMatrix progression2(IntegerVector path, IntegerVector start);
-RcppExport SEXP aphid_progression2(SEXP pathSEXP, SEXP startSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
-    rcpp_result_gen = Rcpp::wrap(progression2(path, start));
-    return rcpp_result_gen;
-END_RCPP
-}
-// transitioncount
-IntegerVector transitioncount(IntegerVector x, int arity);
-RcppExport SEXP aphid_transitioncount(SEXP xSEXP, SEXP aritySEXP) {
+// acount
+IntegerVector acount(IntegerVector x, int arity);
+RcppExport SEXP aphid_acount(SEXP xSEXP, SEXP aritySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
     Rcpp::traits::input_parameter< int >::type arity(aritySEXP);
-    rcpp_result_gen = Rcpp::wrap(transitioncount(x, arity));
+    rcpp_result_gen = Rcpp::wrap(acount(x, arity));
     return rcpp_result_gen;
 END_RCPP
 }
-// emissioncount
-IntegerVector emissioncount(IntegerVector states, int statearity, IntegerVector residues, int resarity);
-RcppExport SEXP aphid_emissioncount(SEXP statesSEXP, SEXP statearitySEXP, SEXP residuesSEXP, SEXP resaritySEXP) {
+// ecount
+IntegerVector ecount(IntegerVector states, int statearity, IntegerVector residues, int resarity);
+RcppExport SEXP aphid_ecount(SEXP statesSEXP, SEXP statearitySEXP, SEXP residuesSEXP, SEXP resaritySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -282,19 +247,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type statearity(statearitySEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type residues(residuesSEXP);
     Rcpp::traits::input_parameter< int >::type resarity(resaritySEXP);
-    rcpp_result_gen = Rcpp::wrap(emissioncount(states, statearity, residues, resarity));
+    rcpp_result_gen = Rcpp::wrap(ecount(states, statearity, residues, resarity));
     return rcpp_result_gen;
 END_RCPP
 }
-// tab9C
-NumericMatrix tab9C(IntegerMatrix x, NumericVector seqweights);
-RcppExport SEXP aphid_tab9C(SEXP xSEXP, SEXP seqweightsSEXP) {
+// atab
+NumericMatrix atab(IntegerMatrix x, NumericVector seqweights);
+RcppExport SEXP aphid_atab(SEXP xSEXP, SEXP seqweightsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerMatrix >::type x(xSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type seqweights(seqweightsSEXP);
-    rcpp_result_gen = Rcpp::wrap(tab9C(x, seqweights));
+    rcpp_result_gen = Rcpp::wrap(atab(x, seqweights));
     return rcpp_result_gen;
 END_RCPP
 }

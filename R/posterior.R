@@ -12,7 +12,7 @@
 #' overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
 #' @return a vector or matrix of posterior probabilities.
 #' @name posterior
-#' @export
+#'
 #'
 posterior <- function(x, y, logspace = "autodetect", cpp = TRUE){
   UseMethod("posterior")
@@ -20,7 +20,7 @@ posterior <- function(x, y, logspace = "autodetect", cpp = TRUE){
 
 
 #' @rdname posterior
-#' @export
+#'
 #'
 posterior.HMM <- function(x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
@@ -35,7 +35,7 @@ posterior.HMM <- function(x, y, logspace = "autodetect", cpp = TRUE){
 
 
 #' @rdname posterior
-#' @export
+#'
 #'
 posterior.PHMM <- function(x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)

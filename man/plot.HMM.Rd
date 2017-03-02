@@ -10,8 +10,8 @@
 \arguments{
 \item{x}{an object of class \code{"HMM"}}
 
-\item{just}{a character string giving the justfication of the plot relative to the device.
-Accepted values are "left", "center" and "right".}
+\item{just}{a character string giving the justfication of the plot relative
+to the device. Accepted values are "left", "center" and "right".}
 
 \item{arrexp}{the expansion factor to be applied to the arrows in the plot.}
 
@@ -35,6 +35,8 @@ dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
 x <- structure(list(A = A, E = E), class = "HMM")
 plot(x)
 plot(x, begin)
+
+
 
 }
 \references{

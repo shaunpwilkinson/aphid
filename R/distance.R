@@ -3,13 +3,14 @@
 #' Computes the matrix of k-tuple distances between all pairwise comparisons
 #' of the input sequence set.
 #'
-#' @param x a list of sequences, possibly an object of class \code{"DNAbin"} or \code{"AAbin"}.
+#' @param x a list of sequences, possibly an object of class
+#'   \code{"DNAbin"} or \code{"AAbin"}.
 #' @param k an integer specifying the size of the k-tuples.
 #' @param alpha the residue alphabet.
 #' @param ... further arguments to be passed to \code{"dist"}.
 #' @return a distance matrix of class \code{"dist"}
 #' @name kdistance
-#' @export
+#'
 #'
 kdistance <- function(x, k = 5, alpha = "Dayhoff6", ...){
   UseMethod("kdistance")
@@ -17,7 +18,6 @@ kdistance <- function(x, k = 5, alpha = "Dayhoff6", ...){
 
 
 #' @rdname kdistance
-#' @export
 #'
 kdistance.AAbin <- function(x, k = 5, alpha = "Dayhoff6", ...){
   #x <- lapply(x, compress.AA, alpha = compress)
@@ -39,12 +39,11 @@ kdistance.AAbin <- function(x, k = 5, alpha = "Dayhoff6", ...){
 
 
 #' @rdname kdistance
-#' @export
 #'
 kdistance.DNAbin <- function(x, k = 5, alpha = NULL, ...){
   if(min(sapply(x, length)) < k) stop("minimum sequence length is shorter than k")
   x <- lapply(x, function(y) y[y != as.raw(2)])
-  counts <- kcount_DNA(x, k = k)
+  counts <- kcount.DNA(x, k = k)
   denoms <- sapply(x, length) - k + 1
   freqs <- counts/denoms
   return(dist(freqs, ... = ...))
@@ -52,7 +51,6 @@ kdistance.DNAbin <- function(x, k = 5, alpha = NULL, ...){
 
 
 #' @rdname kdistance
-#' @export
 #'
 kdistance.default <- function(x, k = 5, alpha = "autodetect", ...){
   if(is.DNA(x)){
@@ -85,4 +83,29 @@ kdistance.default <- function(x, k = 5, alpha = "autodetect", ...){
 }
 
 
-
+#' K-mer counting for DNA.
+#'
+#' \code{kcountDNA} takes a list of DNA sequences and returns a matrix
+#' of k-mer counts with one row for each sequence and 4^k columns.
+#'
+#' @param x a list of DNA sequences in the "DNAbin" format.
+#' @param k integer representing the length of the k-mers to be counted.
+#'
+#' @details
+#' This function deals with ambiguities by assigning counts proportionally.
+#' For example the motif ACRTG would assign the 5-mers ACATG and ACGTG counts of
+#' 0.5 each
+#'
+#' This algorithm is of the order n * 4^k in memory and time so can be very
+#' slow and memory hungry for large values of k (> 8).
+#'
+#' @author Shaun P. Wilkinson
+#'
+#'
+kcount.DNA <- function(x, k = 5){
+  if(!is.DNA(x)) stop("sequence list must be a 'DNAbin' object")
+  if(!(is.integer(k) | is.numeric(k))) stop("k must be an integer")
+  k <- as.integer(k)
+  x <- lapply(x, function(y) y[y != as.raw(2)])
+  return(.kcountDNA(x, k = k))
+}

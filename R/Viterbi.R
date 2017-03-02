@@ -41,7 +41,7 @@
 #' y <- c("P", "A", "W", "H", "E", "A", "E")
 #' Viterbi(x, y,  d = 8, e = 2)
 #' @name Viterbi
-#' @export
+#'
 #'
 Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
                     odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, windowspace = "all",
@@ -51,7 +51,7 @@ Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
 
 
 #' @rdname Viterbi
-#' @export
+#'
 #'
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "global", odds = TRUE, offset = 0,
@@ -159,7 +159,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       # yseq <- generate.PHMM(y, size = 10 * ncol(y$A), random = FALSE)
       # yseq <- setNames(seq_along(rownames(x$E)) - 1,  rownames(x$E))[yseq]
       # #x$A to ensure order is same
-      # windowspace <- WilburLipman(xseq, yseq, arity = nrow(x$E), k = 2)
+      # windowspace <- window(xseq, yseq, arity = nrow(x$E), k = 2)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, y$size)
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
@@ -170,7 +170,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     if(cpp){
       #res <- NULL
       #stop("cpp option not supported yet")
-      res <- Viterbi_PP(Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
+      res <- .ViterbiPP(Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
       V[, , 1] <- res$MImatrix
       V[, , 2] <- res$DGmatrix
       V[, , 3] <- res$MMmatrix
@@ -315,14 +315,14 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
         #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
         yqt <- encode.DNA(y.DNAbin, arity = 4, na.rm = TRUE)
-        windowspace <- WilburLipman(xqt, yqt, arity = 4, k = 5)
+        windowspace <- window(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
         y.comp <- encode.AA(y.AAbin, arity = 6, na.rm = TRUE)
         xseq.comp <- encode.AA(xseq, arity = 6, na.rm = TRUE)
-        windowspace <- WilburLipman(xseq.comp, y.comp, arity = 6, k = 5)
+        windowspace <- window(xseq.comp, y.comp, arity = 6, k = 5)
       }else{
         xseq <- match(xseq, rownames(x$E)) - 1
-        windowspace <- WilburLipman(xseq, y, arity = nrow(x$E), k = 3)
+        windowspace <- window(xseq, y, arity = nrow(x$E), k = 3)
       }
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, length(y))
@@ -330,9 +330,9 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     qey <- if(odds){
       rep(0, m - 1)
     }else if(pd){
-      sapply(y, DNAprobC2, qe)
+      sapply(y, .probDNA, qe)
     }else if(pa){
-      sapply(y, AAprobC2, qe)
+      sapply(y, .probAA, qe)
     }else qe[y + 1]
     A <- if(logspace) x$A else log(x$A)
     E <- if(logspace) x$E else log(x$E)
@@ -366,7 +366,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     if(odds) E <- E - qe
     if(cpp){
-      res <- Viterbi_PHMM(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA = pd, AA = pa)
+      res <- .ViterbiP(y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA = pd, AA = pa)
       V[, , 1] <- res$Dmatrix
       V[, , 2] <- res$Mmatrix
       V[, , 3] <- res$Imatrix
@@ -392,9 +392,9 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         for(j in 2:m){
           if(j - i >= windowspace[1] & j - i <= windowspace[2]){
             if(pd){
-              sij <- DNAprobC2(y[j - 1], E[, i - 1]) + offset
+              sij <- .probDNA(y[j - 1], E[, i - 1]) + offset
             }else if(pa){
-              sij <- AAprobC2(y[j - 1], E[, i - 1]) + offset
+              sij <- .probAA(y[j - 1], E[, i - 1]) + offset
             }else{
               sij <- E[y[j - 1] + 1, i - 1] + offset
             }
@@ -503,7 +503,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 
 
 #' @rdname Viterbi
-#' @export
+#'
 #'
 Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
@@ -554,7 +554,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   states <- rownames(E)
   n <- length(y)
   if(cpp){
-    res <- Viterbi_HMM(y, A, E, DNA, AA)
+    res <- .ViterbiH(y, A, E, DNA, AA)
   }else{
     H <- length(states) # not including Begin state
     path <- integer(n)
@@ -562,7 +562,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
     P <- V + NA # pointer array
     tmp <- matrix(nrow = H, ncol = H)
     if(DNA){
-      for(k in 1:H) V[k, 1] <- DNAprobC2(y[1], E[k, ]) + A[1, k + 1]
+      for(k in 1:H) V[k, 1] <- .probDNA(y[1], E[k, ]) + A[1, k + 1]
       for (i in 2:n){
         for(k in 1:H){
           for(l in 1:H){
@@ -571,11 +571,11 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
         }
         for(k in 1:H){
           P[k, i] <- whichmax(tmp[, k])
-          V[k, i] <- tmp[P[k, i], k] + DNAprobC2(y[i], E[k, ])
+          V[k, i] <- tmp[P[k, i], k] + .probDNA(y[i], E[k, ])
         }
       }
     }else if(AA){
-      for(k in 1:H) V[k, 1] <- AAprobC2(y[1], E[k, ]) + A[1, k + 1]
+      for(k in 1:H) V[k, 1] <- .probAA(y[1], E[k, ]) + A[1, k + 1]
       for (i in 2:n){
         for(k in 1:H){
           for(l in 1:H){
@@ -584,7 +584,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
         }
         for(k in 1:H) {
           P[k, i] <- whichmax(tmp[, k])
-          V[k, i] <- tmp[P[k, i], k] + AAprobC2(y[i], E[k, ])
+          V[k, i] <- tmp[P[k, i], k] + .probAA(y[i], E[k, ])
         }
       }
     }else{
@@ -622,7 +622,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
 
 
 #' @rdname Viterbi
-#' @export
+#'
 #'
 Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
                             residues = NULL, S = NULL,
@@ -656,8 +656,8 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       }
     }
     if(identical(windowspace, "WilburLipman")){
-      #windowspace <- WilburLipman(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
-      windowspace <- WilburLipman(encode.DNA(x, arity = 4, na.rm = TRUE),
+      #windowspace <- window(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
+      windowspace <- window(encode.DNA(x, arity = 4, na.rm = TRUE),
                                   encode.DNA(y, arity = 4, na.rm = TRUE), arity = 4)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
@@ -692,7 +692,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       }
     }
     if(identical(windowspace, "WilburLipman")){
-      windowspace <- WilburLipman(encode.AA(x, arity = 6, na.rm = TRUE),
+      windowspace <- window(encode.AA(x, arity = 6, na.rm = TRUE),
                                   encode.AA(y, arity = 6, na.rm = TRUE), arity = 6)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
@@ -722,7 +722,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     x <- setNames(seq_along(residues) - 1, residues)[x]
     y <- setNames(seq_along(residues) - 1, residues)[y]
     if(identical(windowspace, "WilburLipman")) {
-      windowspace <- WilburLipman(x, y, arity = length(residues))
+      windowspace <- window(x, y, arity = length(residues))
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
@@ -734,7 +734,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
   M <- array(-Inf, dim = c(n, m, 3))
   P <- M + NA
   if(cpp){
-    res <- Viterbi_default(x, y, type, d, e, S, windowspace, offset)
+    res <- .ViterbiD(x, y, type, d, e, S, windowspace, offset)
     M[, , 1] <- res$IXmatrix
     M[, , 2] <- res$MMmatrix
     M[, , 3] <- res$IYmatrix

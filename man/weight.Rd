@@ -39,6 +39,9 @@ Takes a dendogram object and returns a vector of sequence weights following
 the method of
 Gerstein et al. (1994).
 }
+\details{
+see Durbin et al. (1998) chapter 5.8
+}
 \examples{
 data(woodmouse)
 wood_dist <- kdistance(unalign(woodmouse))

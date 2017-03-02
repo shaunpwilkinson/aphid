@@ -4,10 +4,15 @@
 \name{substitution_matrices}
 \alias{substitution_matrices}
 \title{Substutution matrices.}
-\format{A list of...:
+\format{A list of 71 matrices, most of which have 24 rows and 24 columns
+corresponding to the amino acid alphabet plus the ambiguity codes B, Z,
+X and *:
 \describe{
-  \item{PAM}{the PAM martices from... }
-  \item{BLOSUM}{the BLOSUM matrices from...}
+  \item{PAM}{the PAM matrices from PAM10 to PAM500.}
+  \item{BLOSUM}{the BLOSUM matrices from BLOSUM30 to BLOSUM100.}
+  \item{others}{also included are the DAYHOFF, GONNET, IDENTITY
+  and MATCH substitution matrices for proteins
+  and the NUC.4.2 and NUC.4.4 substitution matrices for DNA.}
 }}
 \source{
 \url{ftp://ftp.ncbi.nih.gov/blast/matrices/}

@@ -7,15 +7,38 @@
 unalign(x, gapchar = "-")
 }
 \arguments{
-\item{x}{a matrix consisting of aligned sequences}
+\item{x}{a matrix consisting of aligned sequences. Can be a "DNAbin" or "AAbin"
+matrix object or a standard character matrix.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix. Ignored for
-"DNAbin" and "AAbin" objects.}
+\item{gapchar}{the character used to represent gaps in the alignment matrix.
+Ingored for \code{"DNAbin"} or \code{"AAbin"} objects, defaults to "-" otherwise.}
 }
 \value{
-a list of sequences in the same coding scheme as the input alignment (ie DNAbin,
-AAbin, or plain ASCII characters).
+a list of sequences of the same mode or class as the input alignment (ie
+"DNAbin", "AAbin", or plain ASCII characters).
 }
 \description{
 \code{unalign} deconstructs an alignment to its component sequences.
+}
+\details{
+\code{unalign} works in the opposite way to align, reducing a matrix of
+aligned sequences to a list of sequences without gaps. "DNAbin" and "AAbin" objects
+are supported (and recommended for biological sequence data)
+}
+\examples{
+## Convert the woodmouse dataset in the \\code{\\link{[ape] ape}} package to
+## a list of unaligned sequences
+library(ape)
+data(woodmouse)
+sequences <- unalign(woodmouse)
+sequences
+
+
+
+}
+\seealso{
+\code{\link{align}}.
+}
+\author{
+Shaun Wilkinson.
 }

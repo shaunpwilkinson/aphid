@@ -45,9 +45,30 @@ a logical vector indicating the columns of the input matrix that were allocated 
 insert states
 }
 \description{
-Assigns columns to insert states using the maximum \emph{a posteriori} method
+Assigns columns to match and insert states using the
+maximum \emph{a posteriori} method
 outlined in Durbin et al. (1998).
 }
+\details{
+see Durbin et al. (1998) chapter 5.7 for a thorough explanation of
+  the maximum \emph{a posteriori} algorithm for match state assignment.
+}
+\examples{
+## Maximum a posteriori assignment of match states to the small
+## alignment example in Figure 5.3, Durbin et al. (1998)
+data(globins)
+map(globins)
+
+
+}
 \references{
-Durbin...
+Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+  sequence analysis: probabilistic models of proteins and nucleic acids.
+  Cambridge University Press, Cambridge, United Kingdom.
+}
+\seealso{
+\code{\link{derivePHMM}}
+}
+\author{
+Shaun P. Wilkinson
 }

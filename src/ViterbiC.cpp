@@ -1,17 +1,93 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' DNA ambiguity probabilities.
+//' Sum of logged probabilities.
 //'
-//' Find DNA ambiguity probabilities.
+//' \code{"logsum"} takes a vector of logged probabilities (neagtive values)
+//'   and returns its sum.
 //'
-//' @param x a pentadecimal integer (arity = 15).
-//' @param probs a length-4 vector of logged probabilities.
+//' @param x a numeric vector of logged probabilities.
+//' @return returns a single numeric value representing the logged sum of the
+//'   values in the input vector.
+//' @details This is a simple compiled function that exponentiates the values
+//' in the input vector, finds their sum, and returns the log of that value.
+//' @author Shaun P. Wilkinson
+//'
 // [[Rcpp::export]]
-double DNAprobC2(int x, NumericVector probs){
-  // a is an integer vector with length 1 and arity = 15, representing DNA with ambiguities
-  // order A, T, G, C, S, W, R, Y, K, M, B, V, H, D, N (same as NUC4.4)
-  // as outout by function "DNA2pentadecimal"
+double logsum(NumericVector x){
+  int n = x.size();
+  double res = x[0];
+  if(n == 1) return(res);
+  for(int i = 1; i < n; i++){
+    if(res == -INFINITY) res = x[i];
+    else if(x[i] == -INFINITY) res += 0;
+    else if(res > x[i]) res = res + log1p(exp(x[i] - res));
+    else res = x[i] + log1p(exp(res - x[i]));
+  }
+  return(res);
+}
+
+
+//' Find the position of the maximum value.
+//'
+//' Returns the position (index) of the maximum value in a numeric or integer vector,
+//'   with ties broken at random.
+//'
+//' @param x a numeric or integer vector.
+//' @param start integer indicating the index of the first value
+//'   of the vector. Defaults to 1 (consistent the indexing system used by R,
+//'   as opposed to that used by C and C++ in which the first value is given
+//'   an index of 0).
+//' @return returns an integer representing the position (index) of the maximum
+//'   value in the input vector.
+//' @details This is a simple compiled function similar to which.max{base} but
+//'   with random breaking of ties. Unlike which.max{base}, logical vectors are
+//'   not accepted.
+//' @author Shaun P. Wilkinson
+//'
+// [[Rcpp::export]]
+int whichmax(NumericVector x, int start = 1){
+  int maxind = 0;
+  bool ties = false;
+  IntegerVector backups(x.size());
+  int counter = 0;
+  for(int i = 1; i < x.size(); i++){
+    if(x[i] > x[maxind]){
+      maxind = i;
+      if(ties){
+        for(int j = 0; j < counter; j++) backups[j] = 0;
+        counter = 0;
+        ties = false;
+      }
+    }else if(x[i] == x[maxind]){
+      backups[counter] = i;
+      counter++;
+      ties = true;
+    }
+    //checkUserInterrupt();
+  }
+  if(ties){
+    backups[counter] = maxind;
+    double rando = R::runif(0, 1);
+    double counternum = counter;
+    double increment = 1/(counternum + 1);
+    double ceiling = increment;
+    for(int i = 0; i <= counter; i++){
+      if(rando < ceiling){
+        return(backups[i] + start);
+      }else{
+        ceiling += increment;
+      }
+    }
+  }
+  return(maxind + start);
+}
+
+// [[Rcpp::export(name = ".probDNA")]]
+double probDNA(int x, NumericVector probs){
+  // x is an integer vector with length 1 and arity = 15, representing DNA with ambiguities
+  // order A, T, G, C, S, W, R, Y, K, M, B, V, H, D, N (same as NUC.4.4)
+  // as output by function "DNA2pentadecimal"
   // format of Paradis (2007). Eg output of a = DNA2pentadecimal(x.DNAbin)[1]
   // probs is a 4-element numeric vector of probabilities for the set {A,T,G,C} (in that order)
   if(probs.size() != 4){
@@ -53,20 +129,15 @@ double DNAprobC2(int x, NumericVector probs){
   return(0);
 }
 
-
-//' AA ambiguity probabilities.
-//'
-//' Find AA ambiguity probabilities.
-//'
-//' @param x a heptovigdecimal integer (arity = 27).
-//' @param probs a length-20 vector of logged probab.
-// [[Rcpp::export]]
-double AAprobC2(int x, NumericVector probs){
-  // a is an integer vector with length 1 and arity = 27, representing AA with ambiguities
+// [[Rcpp::export(name = ".probAA")]]
+double probAA(int x, NumericVector probs){
+  // a is an integer vector with length 1 and arity = 27,
+  // representing AA with ambiguities
   // order  ACDEFGHIKLMNPQRSTVWY X BJZ OU *
   // as output by AA2heptovigesimal
   // format of Paradis (2007).
-  // probs is a 20-element numeric vector of probabilities for the set {ACDEFGHIKLMNPQRSTVWY} (in that order)
+  // probs is a 20-element numeric vector of probabilities for the set
+  // {ACDEFGHIKLMNPQRSTVWY} (in that order)
   if(probs.size() != 20){
     throw Rcpp::exception("probs argument must be a numeric vector of length 20");
   }
@@ -92,85 +163,8 @@ double AAprobC2(int x, NumericVector probs){
   return(0);
 }
 
-
-//' Sum of logged probabilities.
-//'
-//' \code{"logsum"} takes a vector of logged probabilities and returns its sum.
-//'
-//' @param x a vector of logged probabilities.
-// [[Rcpp::export]]
-double logsum(NumericVector x) {
-  int n = x.size();
-  double res = x[0];
-  if(n == 1) return(res);
-  for(int i = 1; i < n; i++){
-    if(res == -INFINITY) res = x[i];
-    else if(x[i] == -INFINITY) res += 0;
-    else if(res > x[i]) res = res + log1p(exp(x[i] - res));
-    else res = x[i] + log1p(exp(res - x[i]));
-  }
-  return(res);
-}
-
-
-//' Find the index of the maximum with ties broken at random.
-//'
-//' Returns the location of the maximum value in a numeric or integer vector.
-//'
-//' @param x a numeric or integer vector.
-//'
-// [[Rcpp::export]]
-int whichmax(NumericVector x, int start = 1){
-  int maxind = 0;
-  bool ties = false;
-  IntegerVector backups(x.size());
-  int counter = 0;
-  for(int i = 1; i < x.size(); i++){
-    if(x[i] > x[maxind]){
-      maxind = i;
-      if(ties){
-        for(int j = 0; j < counter; j++) backups[j] = 0;
-        counter = 0;
-        ties = false;
-      }
-    }else if(x[i] == x[maxind]){
-      backups[counter] = i;
-      counter++;
-      ties = true;
-    }
-    //checkUserInterrupt();
-  }
-  if(ties){
-    backups[counter] = maxind;
-    double rando = R::runif(0, 1);
-    double counternum = counter;
-    double increment = 1/(counternum + 1);
-    double ceiling = increment;
-    for(int i = 0; i <= counter; i++){
-      if(rando < ceiling){
-        return(backups[i] + start);
-      }else{
-        ceiling += increment;
-      }
-    }
-  }
-  return(maxind + start);
-}
-
-
-//' Optimal path of sequence through model.
-//'
-//' \code{ViterbiC} finds the optimal path of a sequence through a HMM
-//' or PHMM and returns its log-odds score.
-//'
-//' @param x an object of class \code{HMM} or \code{PHMM}, or a character vector.
-//' @param y a character vector consisting of residues emitted by the
-//' HMM or PHMM.
-//' @param logspace logical argument indicating whether the emission
-//' and transmission probabilities for the model(s) are logged.
-//' @name ViterbiC
-// [[Rcpp::export]]
-List Viterbi_default(IntegerVector x, IntegerVector y,
+// [[Rcpp::export(name = ".ViterbiD")]]
+List ViterbiD(IntegerVector x, IntegerVector y,
                     int type, double d, double e, NumericMatrix S,
                     IntegerVector windowspace, double offset = 0){
   int n = x.size() + 1;
@@ -381,8 +375,8 @@ List Viterbi_default(IntegerVector x, IntegerVector y,
   return(res);
 }
 
-// [[Rcpp::export]]
-List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
+// [[Rcpp::export(name = ".ViterbiH")]]
+List ViterbiH(IntegerVector y, NumericMatrix A, NumericMatrix E,
                  bool DNA = false, bool AA = false){
   List names = E.attr("dimnames");
   CharacterVector states = VECTOR_ELT(names, 0);
@@ -407,7 +401,7 @@ List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
   NumericVector colmaxs(nstates);
   IntegerVector maxstates(nstates);
   if(DNA){
-    for(int l = 0; l < nstates; l++) V(l, 0) = DNAprobC2(y[0], E(l,_)) + A(0, l + 1);
+    for(int l = 0; l < nstates; l++) V(l, 0) = probDNA(y[0], E(l,_)) + A(0, l + 1);
     for(int i = 1; i < nrolls; i++){
       for(int j = 0; j < nstates; j++){
         for(int k = 0; k < nstates; k++){
@@ -416,12 +410,12 @@ List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
       }
       for(int l = 0; l < nstates; l++){
         P(l, i) = whichmax(tmp(_, l), 0); // 0-based indexing for cpp
-        V(l, i) = DNAprobC2(y[i], E(l,_)) + tmp(P(l, i), l);
+        V(l, i) = probDNA(y[i], E(l,_)) + tmp(P(l, i), l);
       }
       checkUserInterrupt();
     }
   }else if(AA){
-    for(int l = 0; l < nstates; l++) V(l, 0) = AAprobC2(y[0], E(l,_)) + A(0, l + 1);
+    for(int l = 0; l < nstates; l++) V(l, 0) = probAA(y[0], E(l,_)) + A(0, l + 1);
     for(int i = 1; i < nrolls; i++){
       for(int j = 0; j < nstates; j++){
         for(int k = 0; k < nstates; k++){
@@ -430,7 +424,7 @@ List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
       }
       for(int l = 0; l < nstates; l++){
         P(l, i) = whichmax(tmp(_, l), 0); // 0-based indexing for cpp
-        V(l, i) = AAprobC2(y[i], E(l,_)) + tmp(P(l, i), l);
+        V(l, i) = probAA(y[i], E(l,_)) + tmp(P(l, i), l);
       }
       checkUserInterrupt();
     }
@@ -475,9 +469,8 @@ List Viterbi_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
   return out;
 }
 
-
-// [[Rcpp::export]]
-List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
+// [[Rcpp::export(name = ".ViterbiP")]]
+List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
                   NumericVector qey, int type, IntegerVector windowspace, double offset = 0,
                   bool DI = false, bool ID = false, bool DNA = false, bool AA = false){
   int n = E.ncol() + 1;
@@ -526,9 +519,9 @@ List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
     for(int j = 1; j < m; j++){
       if(j - i >= windowspace[0] & j - i <= windowspace[1]){
         if(DNA){
-          sij = DNAprobC2(y[j - 1], E(_, i - 1)) + offset;
+          sij = probDNA(y[j - 1], E(_, i - 1)) + offset;
         }else if(AA){
-          sij = AAprobC2(y[j - 1], E(_, i - 1)) + offset;
+          sij = probAA(y[j - 1], E(_, i - 1)) + offset;
         }else{
           sij = E(y[j - 1], i - 1) + offset;
         }
@@ -717,8 +710,8 @@ List Viterbi_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
   return(res);
 }
 
-// [[Rcpp::export]]
-List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay,
+// [[Rcpp::export(name = ".ViterbiPP")]]
+List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
                 NumericMatrix Ex, NumericMatrix Ey,
                 NumericVector qe, int type, IntegerVector windowspace, double offset = 0){
   int n = Ex.ncol() + 1;
@@ -999,15 +992,8 @@ List Viterbi_PP(NumericMatrix Ax, NumericMatrix Ay,
   return(res);
 }
 
-
-//' Full probability of a sequence given a model.
-//'
-//' Implementation of the forward algorithm to caluclate the full (log) probability
-//' of a sequence through a given a HMM or profile HMM.
-//' @param y an integer vector with same arity as number of columns of E
-//'
-// [[Rcpp::export]]
-List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
+// [[Rcpp::export(name = ".forwardH")]]
+List forwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
                  bool DNA = false, bool AA = false){
   int nrolls = y.size();
   IntegerVector Edim = E.attr("dim");
@@ -1025,7 +1011,7 @@ List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
   NumericMatrix tmp(nstates, nstates);
   NumericVector coltotals(nstates);
   if(DNA){
-    for(int l = 0; l < nstates; l++) R(l, 0) = DNAprobC2(y[0], E(l,_)) + A(0, l + 1);
+    for(int l = 0; l < nstates; l++) R(l, 0) = probDNA(y[0], E(l,_)) + A(0, l + 1);
     for(int i = 1; i < nrolls; i++){
       for(int j = 0; j < nstates; j++){
         for(int k = 0; k < nstates; k++){
@@ -1033,11 +1019,11 @@ List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
         }
       }
       for(int l = 0; l < nstates; l++){
-        R(l, i) = DNAprobC2(y[i], E(l,_)) + logsum(tmp(_, l));
+        R(l, i) = probDNA(y[i], E(l,_)) + logsum(tmp(_, l));
       }
     }
   }else if(AA){
-    for(int l = 0; l < nstates; l++) R(l, 0) = AAprobC2(y[0], E(l,_)) + A(0, l + 1);
+    for(int l = 0; l < nstates; l++) R(l, 0) = probAA(y[0], E(l,_)) + A(0, l + 1);
     for(int i = 1; i < nrolls; i++){
       for(int j = 0; j < nstates; j++){
         for(int k = 0; k < nstates; k++){
@@ -1045,7 +1031,7 @@ List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
         }
       }
       for(int l = 0; l < nstates; l++){
-        R(l, i) = AAprobC2(y[i], E(l,_)) + logsum(tmp(_, l));
+        R(l, i) = probAA(y[i], E(l,_)) + logsum(tmp(_, l));
       }
     }
   }else{
@@ -1069,8 +1055,8 @@ List forward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
   return out;
 }
 
-// [[Rcpp::export]]
-List forward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
+// [[Rcpp::export(name = ".forwardP")]]
+List forwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
                   NumericVector qey, int type, IntegerVector windowspace,
                   bool DI = false, bool ID = false, bool DNA = false, bool AA = false){
   int n = E.ncol() + 1;
@@ -1104,9 +1090,9 @@ List forward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
     for(int j = 1; j < m; j++){
       if(j - i >= windowspace[0] & j - i <= windowspace[1]){
         if(DNA){
-          sij = DNAprobC2(y[j - 1], E(_, i - 1));
+          sij = probDNA(y[j - 1], E(_, i - 1));
         }else if(AA){
-          sij = AAprobC2(y[j - 1], E(_, i - 1));
+          sij = probAA(y[j - 1], E(_, i - 1));
         }else{
           sij = E(y[j - 1], i - 1);
         }
@@ -1145,9 +1131,8 @@ List forward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVect
   return(res);
 }
 
-
-// [[Rcpp::export]]
-List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
+// [[Rcpp::export(name = ".backwardH")]]
+List backwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
                   bool DNA = false, bool AA = false) {
   int nrolls = y.size();
   IntegerVector Edim = E.attr("dim");
@@ -1170,25 +1155,25 @@ List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
     for(int i = nrolls - 1; i > 0; i--){
       for(int k = 0; k < nstates; k++){
         for(int l = 0; l < nstates; l++){
-          tmp(k, l) =  A(k + 1, l + 1) + DNAprobC2(y[i], E(l,_)) + R(l, i);
+          tmp(k, l) =  A(k + 1, l + 1) + probDNA(y[i], E(l,_)) + R(l, i);
         }
       }
       for(int k = 0; k < nstates; k++) R(k, i - 1) = logsum(tmp(k, _));
     }
     for(int l = 0; l < nstates; l++) {
-      logprobs[l] = A(0, l + 1) + DNAprobC2(y[0], E(l,_)) + R(l, 0);
+      logprobs[l] = A(0, l + 1) + probDNA(y[0], E(l,_)) + R(l, 0);
     }
   }else if(AA){
     for(int i = nrolls - 1; i > 0; i--){
       for(int k = 0; k < nstates; k++){
         for(int l = 0; l < nstates; l++){
-          tmp(k, l) =  A(k + 1, l + 1) + AAprobC2(y[i], E(l,_)) + R(l, i);
+          tmp(k, l) =  A(k + 1, l + 1) + probAA(y[i], E(l,_)) + R(l, i);
         }
       }
       for(int k = 0; k < nstates; k++) R(k, i - 1) = logsum(tmp(k, _));
     }
     for(int l = 0; l < nstates; l++) {
-      logprobs[l] = A(0, l + 1) + AAprobC2(y[0], E(l,_)) + R(l, 0);
+      logprobs[l] = A(0, l + 1) + probAA(y[0], E(l,_)) + R(l, 0);
     }
   }else{
     for(int i = nrolls - 1; i > 0; i--){
@@ -1210,9 +1195,8 @@ List backward_HMM(IntegerVector y, NumericMatrix A, NumericMatrix E,
   return out;
 }
 
-
-// [[Rcpp::export]]
-List backward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
+// [[Rcpp::export(name = ".backwardP")]]
+List backwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
                   NumericVector qey, int type, IntegerVector windowspace,
                   bool DI = false, bool ID = false, bool DNA = false, bool AA = false){
   int n = E.ncol() + 1;
@@ -1254,9 +1238,9 @@ List backward_PHMM(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVec
     for(int j = m - 2; j >= 0; j--){
       if(j - i >= windowspace[0] & j - i <= windowspace[1]){
         if(DNA){
-          sij = DNAprobC2(y[j], E(_, i));
+          sij = probDNA(y[j], E(_, i));
         }else if(AA){
-          sij = AAprobC2(y[j], E(_, i));
+          sij = probAA(y[j], E(_, i));
         }else{
           sij = E(y[j], i);
         }

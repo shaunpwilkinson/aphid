@@ -1,6 +1,6 @@
 #' Export profile hidden Markov models as text.
 #'
-#' \code{write.PHMM} takes an object of class
+#' \code{writePHMM} takes an object of class
 #' \code{"PHMM"} and writes it to a text file in HMMER3 format.
 #'
 #' @param file the name of the file to write the model to.
@@ -15,9 +15,9 @@
 #' Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence similarity searching.
 #' \emph{Nucleic Acids Research}. 39:W29–W37. \url{http://hmmer.org/}.
 #' @seealso \code{\link{read.PHMM}} to parse a PHMM object from a HMMER3 text file.
-#' @export
 #'
-write.PHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f"){
+#'
+writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f"){
   options(digits = 7, scipen = 10)
   stopifnot(form == "HMMER3" & vers == "f")
   if(!(inherits(x, "PHMM"))) stop("Input object must be of class 'PHMM'")

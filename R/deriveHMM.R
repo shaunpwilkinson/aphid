@@ -1,6 +1,6 @@
-#' Derive a HMM from training sequences.
+#' Derive a hidden Markov model from a set of training sequences.
 #'
-#' \code{derive.HMM} calculates the maximum likelihood hidden Markov model from
+#' \code{deriveHMM} calculates the maximum likelihood hidden Markov model from
 #' a list of training sequences, each a vector of residues named according
 #' the state from which they were emitted.
 #'
@@ -31,9 +31,9 @@
 #' @param modelend logical indicating whether transitions to the 'end' state should be
 #' modeled. Defaults to FALSE.
 #' @return an object of class \code{"HMM"}
-#' @export
 #'
-derive.HMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, modelend = FALSE,
+#'
+deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, modelend = FALSE,
                       pseudocounts = "background", logspace = FALSE, k = 1){
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
@@ -62,10 +62,10 @@ derive.HMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mod
   #indices <- 0:(nstates - 1)
   #names(indices) <- states
   pathscoded <- lapply(x, function(e) indices[c("Begin", names(e), "Begin")])
-  Acounts <- transitioncount(pathscoded[[1]], arity = nstates) * seqweights[1]
+  Acounts <- .acount(pathscoded[[1]], arity = nstates) * seqweights[1]
   if(n > 1){
     for(i in 2:n){
-      Acounts <- Acounts + transitioncount(pathscoded[[i]], arity = nstates) * seqweights[i]
+      Acounts <- Acounts + .acount(pathscoded[[i]], arity = nstates) * seqweights[i]
     }
   }
   indices <- setNames(0:(nstates - 2), states[-1])
@@ -80,9 +80,9 @@ derive.HMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, mod
     indices <- setNames(0:(nres - 1), residues)
     rescoded <- lapply(x, function(e) indices[e])
   }
-  Ecounts <- emissioncount(statescoded[[1]], nstates - 1, rescoded[[1]], nres) * seqweights[1]
+  Ecounts <- .ecount(statescoded[[1]], nstates - 1, rescoded[[1]], nres) * seqweights[1]
   if(n > 1) for(i in 2:n){
-    Ecountsi <- emissioncount(statescoded[[i]], nstates - 1, rescoded[[i]], nres) * seqweights[i]
+    Ecountsi <- .ecount(statescoded[[i]], nstates - 1, rescoded[[i]], nres) * seqweights[i]
     Ecounts <- Ecounts + Ecountsi
   }
   # add pseudocounts
