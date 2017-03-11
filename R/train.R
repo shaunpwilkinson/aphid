@@ -10,8 +10,9 @@
 #' @param y a list of training sequences (character vectors) whose hidden states are unknown.
 #' @param method a character string specifying the iterative model training method to use.
 #' Must be set to either \code{method = "Viterbi"} (default) or \code{method = "BaumWelch"}.
-#' @param maxiter the maximum number of EM iterations before the cycling process is terminated
-#' with a warning.
+#' @param maxiter the maximum number of EM iterations or Viterbi training
+#'   iterations to carry out before the cycling process is terminated and
+#'   the partially trained model is returned. Defaults to 100.
 #' @param deltaLL a numeric value giving the change in log likelihood to specify as the convergence
 #' threshold. Only applicable if \code{method = "BaumWelch"}
 #' @param logspace logical argument indicating whether the emission and transition

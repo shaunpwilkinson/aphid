@@ -513,15 +513,13 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, r
 #' Not required for \code{"DNAbin"} or \code{"AAbin"} objects.
 #' @param pseudocounts the method used to account for the possible absence of certain
 #' character states in the alignment. Currently only \code{"Laplace"},
-#'\code{"background"} and \code{"none"} are supported. If \code{pseudocounts = "background"} and
+#' \code{"background"} and \code{"none"} are supported. If \code{pseudocounts = "background"} and
 #' some transition/emission types are absent from the alignment, Laplacean
 #' pseudocounts are automatically added.
 #' @param lambda penalty parameter used to favour models with fewer match states. Equivalent
 #' to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).
 #' @return a logical vector of length = ncol(x) indicating the columns to be assigned
 #' as match states (\code{TRUE}) and those assigned as inserts (\code{FALSE}).
-#' @return a logical vector indicating the columns of the input matrix that were allocated as
-#' insert states
 #' @details see Durbin et al. (1998) chapter 5.7 for a thorough explanation of
 #'   the maximum \emph{a posteriori} algorithm for match state assignment.
 #'

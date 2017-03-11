@@ -1,40 +1,53 @@
-#' Derive a hidden Markov model from a set of training sequences.
+#' Derive a hidden Markov model from a set of sequences.
 #'
 #' \code{deriveHMM} calculates the maximum likelihood hidden Markov model from
 #' a list of training sequences, each a vector of residues named according
 #' the state from which they were emitted.
 #'
 #' @param x a list of named character vectors representing residue emissions
-#' from the model. The 'names' attribute should represent the hidden state
-#' that each residue was emitted from.
+#'   from the model. The 'names' attribute should represent the hidden state
+#'   that each residue was emitted from.
 #' @param residues either NULL (default; emitted residues are automatically
-#' detected from the input sequences), or a case sensitive character vector specifying the
-#' residue alphabet (e.g. A, C, G, T for DNA).
-#' Note that the former option can be slow for large sequence lists;
-#' therefore specifying the residue alphabet can increase speed in these cases.
-#' Also note that the default setting \code{residues = NULL} will not
-#' detect rare residues that are not present in the input sequences, and thus will
-#' not assign them emission probabilities.
-#' @param states either NULL (default; states are automatically detected from the 'names'
-#' attributes of the input sequences), or a case sensitive character
-#' vector matching the hidden states (these should match or be a superset of
-#' the unique states provided in the 'names' attributes in the input sequences).
-#' @param pseudocounts used to account for the possible absence of certain transition
-#' and/or emission types in the input sequences.
-#' either \code{'Laplace'} (adds one of each possible transition and emission type to the
-#' training dataset; default), \code{'none'}, or a two-element list containing a matrix of
-#' transition pseudocounts as its first element and a matrix of emission pseudocounts
-#' as its second. If a list is supplied both matrices must have row and column names
-#' according to the residues (column names of emission matrix) and states
-#' (row and column names of the transition matrix and row names of the emission matrix).
-#' The first row and column of the transition matrix must be 'Begin'.
-#' @param modelend logical indicating whether transitions to the 'end' state should be
-#' modeled. Defaults to FALSE.
+#'   detected from the list of sequences), a case sensitive character vector
+#'   specifying the residue alphabet, or one of the character strings
+#'   "RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
+#'   large lists of character vectors. Furthermore, the default setting
+#'   \code{residues = NULL} will not detect rare residues that are not present
+#'   in the sequence list, and thus will not assign them emission probabilities.
+#'   Hence specifying the residue alphabet is reccommended unless the sequence
+#'   list is a "DNAbin" or "AAbin" object.
+#'
+#' @param states either NULL (default; the unique Markov states are
+#'   automatically detected from the 'names' attributes of the input
+#'   sequences), or a case sensitive character vector specifying the unique
+#'   Markov states (or a superset of the unique states) to appear in the
+#'   model. The latter option is recommended since it saves computation time
+#'   and ensures that all valid Markov states appear in the model,
+#'   regardless of their possible absence from the training dataset.
+#' (deriveHMM)
+#'
+#' @param pseudocounts used to account for the possible absence of certain
+#'   transition and/or emission types in the input sequences.
+#'   either \code{'Laplace'} (adds one of each possible transition
+#'   and emission type to the training dataset; default), \code{'none'},
+#'   or a two-element list containing a matrix of transition pseudocounts
+#'   as its first element and a matrix of emission pseudocounts as its
+#'   second. If a list is supplied both matrices must have row and column
+#'   names according to the residues (column names of emission matrix)
+#'   and states (row and column names of the transition matrix and
+#'   row names of the emission matrix). For downstream applications
+#'   the first row and column of the transition matrix should be named
+#'   'Begin'.
+#'
+#' @param modelend logical indicating whether transitions to the 'end'
+#'   state should be modeled. Defaults to FALSE.
 #' @return an object of class \code{"HMM"}
 #'
 #'
-deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL, modelend = FALSE,
-                      pseudocounts = "background", logspace = FALSE, k = 1){
+deriveHMM <- function(x, seqweights = NULL, residues = NULL,
+                      states = NULL, modelend = FALSE,
+                      pseudocounts = "background",
+                      logspace = TRUE, k = 1){
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
   # includes start and or end states?

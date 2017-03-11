@@ -40,8 +40,9 @@ Note that choosing the latter option increases the computational
 overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time for
 large models with many parameters.}
 
-\item{maxiter}{the maximum number of EM iterations before the cycling process is terminated
-with a warning.}
+\item{maxiter}{the maximum number of EM iterations or Viterbi training
+iterations to carry out before the cycling process is terminated and
+the partially trained model is returned. Defaults to 100.}
 
 \item{deltaLL}{a numeric value giving the change in log likelihood to specify as the convergence
 threshold. Only applicable if \code{method = "BaumWelch"}}
