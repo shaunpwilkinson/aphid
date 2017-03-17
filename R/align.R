@@ -202,7 +202,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     if(nseq > 100){
       # nseeds <- min(nseq, 100 + 2 * ceiling(log(nseq, 2)))
       nseeds <- ceiling(log(nseq, 2)^2) # LLR algorithm see Blacksheilds et al 2010
-      seeds <- sample(1:length(sequences), size = nseeds)
+      seeds <- sample(1:nseq, size = nseeds)
     }else seeds <- seq_along(sequences)
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")

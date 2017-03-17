@@ -23,7 +23,7 @@
 #'
 #'
 #'
-window <- function(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5){
+streak <- function(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5){
   # x and y coded as integers starting from 0
   if(arity == "autodetect") arity <- max(c(x, y)) + 1
   N1 <- length(x)

@@ -18,15 +18,13 @@
 #' wood_weights <- weight(wood_den, method = "Gerstein")
 #' @name weight
 #'
-#'
+################################################################################
 weight <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
   UseMethod("weight")
 }
 
-
 #' @rdname weight
-#'
-#'
+################################################################################
 weight.DNAbin <- function(x, method = "Gerstein", k = 5){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
@@ -36,10 +34,8 @@ weight.DNAbin <- function(x, method = "Gerstein", k = 5){
   }
 }
 
-
 #' @rdname weight
-#'
-#'
+################################################################################
 weight.AAbin <- function(x, method = "Gerstein", k = 5){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
@@ -49,10 +45,8 @@ weight.AAbin <- function(x, method = "Gerstein", k = 5){
   }
 }
 
-
 #' @rdname weight
-#'
-#'
+################################################################################
 weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
   nsq <- length(x)
   DNA <- is.DNA(x)
@@ -65,8 +59,9 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar 
   tmpnames <- names(x)
   names(x) <- paste0("S", 1:nsq)
   if(nsq > 2){
-    qds <- kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-    guidetree <- as.dendrogram(hclust(qds, method = "average"))
+    guidetree <- topdown(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+    # qds <- kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+    # guidetree <- as.dendrogram(hclust(qds, method = "average"))
     res <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)]
   }else if(nsq == 2){
     res <- c(1, 1)
@@ -79,10 +74,8 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar 
   return(res)
 }
 
-
 #' @rdname weight
-#'
-#'
+################################################################################
 weight.dendrogram <- function(x, method = "Gerstein"){
   if(!identical(method, "Gerstein")) stop("Only Gerstein et al. 1994 method supported")
   acal <- function(d) !any(sapply(d, is.list)) # all children are leaves?
@@ -132,9 +125,9 @@ weight.dendrogram <- function(x, method = "Gerstein"){
 
 
 #' @rdname weight
-#'
-#'
-weight.default <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
+################################################################################
+weight.default <- function(x, method = "Gerstein", k = 5, residues = NULL,
+                           gapchar = "-"){
   x <- unalign(x, gapchar = gapchar)
   weight.list(x, method = method, k = k, residues = residues, gapchar = gapchar)
 }

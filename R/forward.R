@@ -176,14 +176,14 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
         #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
         yqt <- encode.DNA(y.DNAbin, arity = 4, na.rm = TRUE)
-        windowspace <- window(xqt, yqt, arity = 4, k = 5)
+        windowspace <- streak(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
         y.comp <- encode.AA(y.AAbin, arity = 6, na.rm = TRUE)
         xseq.comp <- encode.AA(xseq, arity = 6, na.rm = TRUE)
-        windowspace <- window(xseq.comp, y.comp, arity = 6, k = 5)
+        windowspace <- streak(xseq.comp, y.comp, arity = 6, k = 5)
       }else{
         xseq <- match(xseq, rownames(x$E)) - 1
-        windowspace <- window(xseq, y, arity = nrow(x$E), k = 3)
+        windowspace <- streak(xseq, y, arity = nrow(x$E), k = 3)
       }
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, length(y))

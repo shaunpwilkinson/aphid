@@ -3,7 +3,7 @@ using namespace Rcpp;
 
 
 // [[Rcpp::export(name = ".kcountDNA")]]
-NumericMatrix kcountDNA(List x, int k = 5) {
+NumericMatrix kcountDNA(List x, int k = 5){
   CharacterVector nms = x.attr("names");
   int nseq = x.size();
   double fourtopowerk = pow(4, k);
@@ -192,7 +192,54 @@ NumericMatrix kcountDNA(List x, int k = 5) {
       }
     }
   }
+  // tuplemat.attr("seqlengths") = seqlens;
   return(tuplemat);
 }
 
+
+// [[Rcpp::export(name = ".kdist")]]
+NumericMatrix kdist(NumericMatrix x, IntegerVector from, IntegerVector to,
+                    IntegerVector seqlengths, int k){
+  // to and from must be consistent with cpp indexing style (start at 0)
+  List nms = x.attr("dimnames");
+  CharacterVector seqnms = nms[0];
+  // start by generating k-count matrix
+  List xdm = x.attr("dim");
+  int nk = xdm[1];
+  // from vector
+  int nfrom = from.size();
+  CharacterVector fromnms = seqnms[from];
+  IntegerVector fromlens = seqlengths[from];
+  // to vector
+  int nto = to.size();
+  CharacterVector tonms = seqnms[to];
+  IntegerVector tolens = seqlengths[to];
+  // initialize result matrix
+  NumericMatrix res(nfrom, nto);
+  res.attr("dimnames") = List::create(fromnms, tonms);
+  // initialize dynamic integers and doubles
+  double Fij = 0; // fractional common k-mer count
+  int minL = 0; // minimum pairwise sequence ength
+  double mintau = 0;
+  double denom = 0;
+  double a = log(1.1); // each Y has this amount removed
+  double b = log(0.1) - a; // each Y is then divided by b
+  for(int i = 0; i < nfrom; i++){
+    for(int j = 0; j < nto; j++){
+      if(from[i] == to[j]){
+        res(i, j) = 0;
+      }else{
+        minL = std::min(fromlens[i], tolens[j]);
+        denom = minL - k + 0.0; // the .0 changes it to a 'double'
+        for(int l = 0; l < nk; l++){
+          mintau = std::min(x(from[i], l), x(to[j], l));
+          Fij += mintau/denom;
+        }
+        res(i, j) = (log(0.1 + Fij) - a)/b; // Edgar 2004 eq 4
+        Fij = 0;
+      }
+    }
+  }
+  return(res);
+}
 

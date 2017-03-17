@@ -13,7 +13,7 @@ kdistance(x, k = 5, alpha = "Dayhoff6", ...)
 
 \method{kdistance}{DNAbin}(x, k = 5, alpha = NULL, ...)
 
-\method{kdistance}{default}(x, k = 5, alpha = "autodetect", ...)
+\method{kdistance}{default}(x, k = 5, ...)
 }
 \arguments{
 \item{x}{a list of sequences, possibly an object of class

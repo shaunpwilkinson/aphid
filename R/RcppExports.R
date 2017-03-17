@@ -82,6 +82,10 @@ whichmax <- function(x, start = 1L) {
     .Call('aphid_kcountDNA', PACKAGE = 'aphid', x, k)
 }
 
+.kdist <- function(x, from, to, seqlengths, k) {
+    .Call('aphid_kdist', PACKAGE = 'aphid', x, from, to, seqlengths, k)
+}
+
 .map <- function(ecs, notgaps, pseudocounts, seqweights, qe, lambda = 0) {
     .Call('aphid_map', PACKAGE = 'aphid', ecs, notgaps, pseudocounts, seqweights, qe, lambda)
 }

@@ -41,8 +41,7 @@
 #' y <- c("P", "A", "W", "H", "E", "A", "E")
 #' Viterbi(x, y,  d = 8, e = 2)
 #' @name Viterbi
-#'
-#'
+################################################################################
 Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
                     odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, windowspace = "all",
                     DI = FALSE, ID = FALSE, cpp = TRUE){
@@ -51,8 +50,7 @@ Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
 
 
 #' @rdname Viterbi
-#'
-#'
+################################################################################
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "global", odds = TRUE, offset = 0,
                          windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE){
@@ -159,7 +157,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       # yseq <- generate.PHMM(y, size = 10 * ncol(y$A), random = FALSE)
       # yseq <- setNames(seq_along(rownames(x$E)) - 1,  rownames(x$E))[yseq]
       # #x$A to ensure order is same
-      # windowspace <- window(xseq, yseq, arity = nrow(x$E), k = 2)
+      # windowspace <- streak(xseq, yseq, arity = nrow(x$E), k = 2)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, y$size)
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
@@ -315,14 +313,14 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
         #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
         yqt <- encode.DNA(y.DNAbin, arity = 4, na.rm = TRUE)
-        windowspace <- window(xqt, yqt, arity = 4, k = 5)
+        windowspace <- streak(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
         y.comp <- encode.AA(y.AAbin, arity = 6, na.rm = TRUE)
         xseq.comp <- encode.AA(xseq, arity = 6, na.rm = TRUE)
-        windowspace <- window(xseq.comp, y.comp, arity = 6, k = 5)
+        windowspace <- streak(xseq.comp, y.comp, arity = 6, k = 5)
       }else{
         xseq <- match(xseq, rownames(x$E)) - 1
-        windowspace <- window(xseq, y, arity = nrow(x$E), k = 3)
+        windowspace <- streak(xseq, y, arity = nrow(x$E), k = 3)
       }
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, length(y))
@@ -503,8 +501,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 
 
 #' @rdname Viterbi
-#'
-#'
+################################################################################
 Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   DNA <- is.DNA(y)
@@ -622,8 +619,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
 
 
 #' @rdname Viterbi
-#'
-#'
+################################################################################
 Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
                             residues = NULL, S = NULL,
                             windowspace = "all", offset = 0, cpp = TRUE){
@@ -656,8 +652,8 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       }
     }
     if(identical(windowspace, "WilburLipman")){
-      #windowspace <- window(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
-      windowspace <- window(encode.DNA(x, arity = 4, na.rm = TRUE),
+      #windowspace <- streak(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
+      windowspace <- streak(encode.DNA(x, arity = 4, na.rm = TRUE),
                                   encode.DNA(y, arity = 4, na.rm = TRUE), arity = 4)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
@@ -692,7 +688,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       }
     }
     if(identical(windowspace, "WilburLipman")){
-      windowspace <- window(encode.AA(x, arity = 6, na.rm = TRUE),
+      windowspace <- streak(encode.AA(x, arity = 6, na.rm = TRUE),
                                   encode.AA(y, arity = 6, na.rm = TRUE), arity = 6)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
@@ -722,7 +718,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     x <- setNames(seq_along(residues) - 1, residues)[x]
     y <- setNames(seq_along(residues) - 1, residues)[y]
     if(identical(windowspace, "WilburLipman")) {
-      windowspace <- window(x, y, arity = length(residues))
+      windowspace <- streak(x, y, arity = length(residues))
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")

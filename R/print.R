@@ -36,3 +36,10 @@ print.Viterbi <- function(x, digits = 7){
       "and score",
       x$score)
 }
+
+print.mbed <- function(x, digits = 7){
+  cat("Matrix of", nrow(x),
+      "embedded sequences, represented as vectors of distances to",
+      ncol(x),
+      "seed sequences")
+}
