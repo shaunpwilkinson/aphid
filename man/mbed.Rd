@@ -2,7 +2,7 @@
 % Please edit documentation in R/distance.R
 \name{mbed}
 \alias{mbed}
-\title{Embed sequences as vectors of distances to \emph{n} seed sequences.}
+\title{Convert sequences to vectors of distances to \emph{n} seed sequences.}
 \usage{
 mbed(x, seeds = NULL, k = 5, alpha = "Dayhoff6")
 }
@@ -22,8 +22,23 @@ and "none". Note that if \code{alpha = "none"} or the input sequences have
 the value of k should be kept low (k < 4)
 otherwise the number of k-mers to count will become excessively high.}
 }
+\value{
+returns a N x  matrix of class "embed". The returned object also has
+  attributes including a matrix of k-mer counts with one row for each
+  sequence and 4^k columns.
+}
 \description{
 \code{embed.DNA} takes a list of sequences and returns a matrix of
   distances to a subset of seed sequences using the method outlined
   in Blacksheilds et al. (2010).
+}
+\details{
+This function deals with ambiguities by assigning counts proportionally.
+  For example the motif ACRTG would assign the 5-mers ACATG and ACGTG counts of
+  0.5 each.
+  This algorithm is order n * 4^k in memory and time complexity so can be very
+  slow and memory hungry for large values of k (> 8).
+}
+\author{
+Shaun P. Wilkinson
 }

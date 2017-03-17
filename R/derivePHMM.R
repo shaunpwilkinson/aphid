@@ -189,9 +189,10 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
     }else if(identical(seeds, "all")){
       seeds <- seq_along(x)
     }
-    qds <- kdistance(x[seeds], k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
     if(!quiet) cat("Building guide tree\n")
-    guidetree <- as.dendrogram(hclust(qds, method = "average"))
+    guidetree <- topdown(x[seeds], k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+    # qds <- kdistance(x[seeds], k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+    # guidetree <- as.dendrogram(hclust(qds, method = "average"))
     seedweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)[seeds]]
     attachseqs <- function(tree, sequences){
       if(!is.list(tree)) attr(tree, "sequences") <- sequences[attr(tree, "label")]
@@ -251,8 +252,9 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
       if(identical(sort(seeds), seq_along(x))){
         seqweights <- seedweights * wfactor
       }else{
-        qds <- kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-        guidetree <- as.dendrogram(hclust(qds, method = "average"))
+        guidetree <- topdown(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+        # qds <- kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+        # guidetree <- as.dendrogram(hclust(qds, method = "average"))
         seqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)] * wfactor
       }
     }else if(is.null(seqweights)){
@@ -303,8 +305,9 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5, r
     seqweights <- rep(wfactor, n)
   }else if(identical(seqweights, "Gerstein")){
     if(n > 2){
-      qds <- kdistance(xlist, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-      guidetree <- as.dendrogram(hclust(qds, method = "average"))
+      guidetree <- topdown(xlist, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+      #qds <- kdistance(xlist, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+      #guidetree <- as.dendrogram(hclust(qds, method = "average"))
       seqweights <- weight(guidetree, method = "Gerstein")[names(xlist)] * wfactor
     }else{
       seqweights <- rep(wfactor, n)

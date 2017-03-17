@@ -206,9 +206,10 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     }else seeds <- seq_along(sequences)
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")
-      qds <- kdistance(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-      guidetree <- as.dendrogram(hclust(qds, method = "average"))
-      myseqweights <- weight(guidetree, method = "Gerstein")[names(sequences)]
+      guidetree <- topdown(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+      #qds <- kdistance(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+      #guidetree <- as.dendrogram(hclust(qds, method = "average"))
+      myseqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(sequences)]
     }else if(is.null(seqweights)){
       myseqweights <- rep(1, nseq)
     }
