@@ -1,8 +1,8 @@
-#' Backward algorithm.
+#' The backward algorithm.
 #'
-#' Calculate the full (log) probability or odds
-#' of a sequence given a hidden Markov model or profile HMM with the
-#' backward dynamic programming algorithm.
+#' This function calculates the full (log) probability or odds
+#'   of a sequence given a hidden Markov model or profile HMM using the
+#'   backward dynamic programming algorithm.
 #'
 #' @param x an object of class \code{PHMM} or \code{HMM}.
 #' @param y a vector of mode "character" or "raw" (a "DNAbin" or "AAbin"
@@ -13,7 +13,8 @@
 #'   ('global'; default). Note that unlike \code{link{Viterbi}}, semiglobal
 #'   and local models are not currently supported.
 #' @inheritParams Viterbi
-#' @return a list containing the score and dynamic programming arrays.
+#' @return an object of class \code{"fullprob"}, which is simply a list
+#'   containing the score and dynamic programming arrays.
 #' @details
 #'   This function is a wrapper for a compiled C++ function that recursively
 #'   fills a dynamic programming matrix with logged probabilities, and
@@ -21,18 +22,18 @@
 #'   PHMM.
 #'   For a thorough explanation of the backward, forward and Viterbi
 #'   algorithms, see Durbin et al. (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
-#'
-#' @author Shaun P. Wilkinson
-#'
+#' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
 #'
-#' @seealso \code{\link{forward}}, \code{\link{Viterbi}}.
+#'   Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and
+#'   protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{10}, 197-206.
 #'
+#' @seealso \code{\link{forward}}, \code{\link{Viterbi}}.
 #' @examples
-#' ## Use of the backward algorithm for HMMs
+#' ## Backward algorithm for standard HMMs
 #' ## The dishonest casino example from Durbin et al. (1998) chapter 3.2
 #' A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
 #'             nrow = 3) # transition probability matrix
@@ -43,14 +44,16 @@
 #'             nrow = 2, byrow = TRUE) # emission probability matrix
 #' dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
 #' x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
+#' plot(x)
 #' data(casino)
 #' backward(x, casino)
-#'
-#' ## Use of the backward algorithm for profile HMMs
+#' ##
+#' ## Backward algorithm for profile HMMs
 #' ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
 #' data(globins)
 #' ## derive a profile hidden Markov model from the alignment
 #' globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+#' plot(globins.PHMM, main = "Profile hidden Markov model for globins")
 #' ## simulate a random sequence from the model
 #' set.seed(999)
 #' simulation <- generate(globins.PHMM, size = 20)
@@ -60,11 +63,8 @@
 #' x # -23.0586
 #' ## show dynammic programming array
 #' x$array
-#'
 #' @name backward
-#'
 ################################################################################
-
 backward <- function(x, y, qe = NULL, logspace = "autodetect",  odds = TRUE,
                      windowspace = "all", type = "global", DI = FALSE,
                      ID = FALSE, cpp = TRUE){
@@ -73,7 +73,7 @@ backward <- function(x, y, qe = NULL, logspace = "autodetect",  odds = TRUE,
 
 
 #' @rdname backward
-#'
+################################################################################
 backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                           type = "global", odds = TRUE, windowspace = "all",
                           DI = FALSE, ID = FALSE, cpp = TRUE){
@@ -265,7 +265,7 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 
 
 #' @rdname backward
-#'
+################################################################################
 backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
   DNA <- is.DNA(y)

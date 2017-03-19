@@ -1,22 +1,25 @@
 #' Derive a hidden Markov model from a set of sequences.
 #'
 #' \code{deriveHMM} calculates the maximum likelihood hidden Markov model from
-#' a list of training sequences, each a vector of residues named according
-#' the state from which they were emitted.
+#'   a list of training sequences, each a vector of residues named according
+#'   the state from which they were emitted.
 #'
-#' @param x a list of named character vectors representing residue emissions
+#' @param x a list of named character vectors representing emissions
 #'   from the model. The 'names' attribute should represent the hidden state
-#'   that each residue was emitted from.
+#'   from which each residue was emitted. "DNAbin" and "AAbin" list
+#'   objects are also supported for moeling DNA or amino acid sequences.
+#' @param seqweights either NULL (default; all sequences are given
+#'   weights of 1) or a numeric vector the same length as \code{x} representing
+#'   the sequence weights used to derive the model.
 #' @param residues either NULL (default; emitted residues are automatically
-#'   detected from the list of sequences), a case sensitive character vector
+#'   detected from the sequences), a case sensitive character vector
 #'   specifying the residue alphabet, or one of the character strings
 #'   "RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
 #'   large lists of character vectors. Furthermore, the default setting
 #'   \code{residues = NULL} will not detect rare residues that are not present
-#'   in the sequence list, and thus will not assign them emission probabilities.
-#'   Hence specifying the residue alphabet is reccommended unless the sequence
-#'   list is a "DNAbin" or "AAbin" object.
-#'
+#'   in the sequences, and thus will not assign them emission probabilities
+#'   in the model. Specifying the residue alphabet is therefore
+#'   recommended unless the sequence list is a "DNAbin" or "AAbin" object.
 #' @param states either NULL (default; the unique Markov states are
 #'   automatically detected from the 'names' attributes of the input
 #'   sequences), or a case sensitive character vector specifying the unique
@@ -24,30 +27,45 @@
 #'   model. The latter option is recommended since it saves computation time
 #'   and ensures that all valid Markov states appear in the model,
 #'   regardless of their possible absence from the training dataset.
-#' (deriveHMM)
-#'
-#' @param pseudocounts used to account for the possible absence of certain
+#' @param modelend logical indicating whether transition probabilites
+#'   to the end state should be modeled. Defaults to FALSE.
+#' @param pseudocounts character string, either "background", Laplace"
+#'   or "none". Used to account for the possible absence of certain
 #'   transition and/or emission types in the input sequences.
-#'   either \code{'Laplace'} (adds one of each possible transition
-#'   and emission type to the training dataset; default), \code{'none'},
-#'   or a two-element list containing a matrix of transition pseudocounts
+#'   If \code{pseudocounts = "background"} (default), pseudocounts
+#'   are calculated from the background transition and emission
+#'   frequencies in the training dataset.
+#'   If \code{pseudocounts = "Laplace"} one of each possible transition
+#'   and emission type is added to the training dataset (default).
+#'   If \code{pseudocounts = "none"} no pseudocounts are added (not
+#'   usually recommended, since low frequency transition/emission types
+#'   may be excluded from the model).
+#'   Alternatively this argument can be a two-element list containing
+#'   a matrix of transition pseudocounts
 #'   as its first element and a matrix of emission pseudocounts as its
-#'   second. If a list is supplied both matrices must have row and column
-#'   names according to the residues (column names of emission matrix)
+#'   second. If this option is selected, both matrices must have row and column
+#'   names corresponding with the residues (column names of emission matrix)
 #'   and states (row and column names of the transition matrix and
 #'   row names of the emission matrix). For downstream applications
 #'   the first row and column of the transition matrix should be named
-#'   'Begin'.
-#'
-#' @param modelend logical indicating whether transitions to the 'end'
-#'   state should be modeled. Defaults to FALSE.
-#' @return an object of class \code{"HMM"}
-#'
-#'
-deriveHMM <- function(x, seqweights = NULL, residues = NULL,
-                      states = NULL, modelend = FALSE,
-                      pseudocounts = "background",
-                      logspace = TRUE, k = 1){
+#'   "Begin".
+#' @param logspace logical indicating whether the emission and transition
+#'   probabilities in the returned model should be logged. Defaults to TRUE.
+#' @return an object of class \code{"HMM"}.
+#' @details TBA
+#' @author Shaun Wilkinson
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
+#' @seealso \code{\link{derivePHMM}}
+#' @examples
+#'  data(casino)
+#'  deriveHMM(list(casino))
+################################################################################
+deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL,
+                      modelend = FALSE, pseudocounts = "background",
+                      logspace = TRUE){
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
   # includes start and or end states?
@@ -101,12 +119,13 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL,
   # add pseudocounts
   if(identical(pseudocounts, "background")){
     Apseudocounts <- Acounts + 1
-    Apseudocounts <- Apseudocounts/sum(Apseudocounts) * (nstates^2 - if(modelend) 0 else nstates)
+    Apseudocounts <- Apseudocounts/sum(Apseudocounts) *
+      (nstates^2 - if(modelend) 0 else nstates)
     Acounts <- Acounts + Apseudocounts
     Epseudocounts <- Ecounts + 1
     Epseudocounts <- Epseudocounts/sum(Epseudocounts) * (nstates - 1) * nres
     Ecounts <- Ecounts + Epseudocounts
-  } else if(identical(pseudocounts, "Laplace")){
+  }else if(identical(pseudocounts, "Laplace")){
     Acounts <- Acounts + 1
     Ecounts <- Ecounts + 1
   }else if(is.list(pseudocounts)){

@@ -1,59 +1,154 @@
-#' Find the optimal sequence path recursively
+#' The Viterbi algorithm.
 #'
-#' \code{Viterbi} finds the optimal path of a sequence through a HMM
-#' or PHMM and returns its log-odds score.
+#' The \code{Viterbi} function finds the optimal path of a sequence through a HMM
+#'   or PHMM and returns its full (log) probability or log-odds score.
 #'
-#' @param x an object of class \code{HMM} or \code{PHMM}, or a character vector.
-#' @param y a character vector consisting of residues emitted by the
-#'   HMM or PHMM.
-#' @param qe an optional named vector of background residue frequencies. If NULL
-#'   background residue frequencies from the PHMMs are used. If these are not available
+#' @param x an object of class \code{HMM} or \code{PHMM}. Optionally, both x and
+#'   y can be sequences (character vectors or DNAbin/AAbin objects), in which
+#'   case the operation becomes either the Needleman-Wunch (global algnment) or
+#'   Smith-Waterman (local alignment) algorithm.
+#' @param y a vector of mode "character" or "raw" (a "DNAbin" or "AAbin"
+#'   object) representing a single sequence hypothetically emitted by
+#'   the model in \code{x}. Optionally, both x and
+#'   y can be profile hidden Markov models (object class "PHMM"), in which
+#'   case the sum of log-odds algorithm of Söding (2005) is used.
+#' @param qe an optional named vector of background residue frequencies (only
+#'   applicable if x is a PHMM). If \code{qe = NULL} the function looks for
+#'   a qe vector as an attribute of the PHMM. If these are not available
 #'   equal background residue frequencies are assumed.
-#' @param logspace logical argument indicating whether the emission and transition
-#'   probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
-#'   \code{logspace = "autodetect"} (default), the function will automatically detect
-#'   if the probabilities are in log space, returning an error if inconsistencies are found.
-#'   Note that choosing the latter option increases the computational
-#'   overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.
+#' @param logspace logical indicating whether the emission and transition
+#'   probabilities of x are logged. If \code{logspace = "autodetect"}
+#'   (default setting), the function will automatically detect
+#'   if the probabilities are logged, returning an error if
+#'   inconsistencies are found. Note that choosing the latter option
+#'   increases the computational overhead; therefore specifying
+#'   \code{TRUE} or \code{FALSE} can reduce the running time.
 #' @param type character string indicating whether insert and delete states
 #'   at the beginning and end of the path should count towards the final score
 #'   ('global'; default), or not ('semiglobal'), or whether the highest scoring
 #'   sub-path should be returned ('local').
-#' @param odds logical indicating whether the scores in the dynamic programming matrix
+#' @param odds logical, indicates whether the returned scores
 #'   should be odds ratios (TRUE) or full logged probabilities (FALSE).
 #' @param S an optional scoring matrix with rows and columns named according
-#'   to the residue alphabet. Note that for local alignments scores for
-#'   mismatches should generally take negative values or else spurious
-#'   alignments could occur. If NULL matches are scored as 1 and
-#'   mismatches scored as -1.
+#'   to the residue alphabet. Only applicable when both x and y are sequences
+#'   (Needleman-Wunch or Smith-Waterman alignments).
+#'   Note that for Smith-Waterman local alignments, scores for
+#'   mismatches should generally take negative values to avoid spurious
+#'   alignments. If NULL default settings are used. Default scoring matrices are
+#'   'NUC.4.4' for For DNAbin objects, and 'MATCH' (matches are scored 1 and
+#'   mismatches are scored -1) for AAbin objects and character sequences.
 #' @param offset column score offset to specify level of greediness. Defaults to
-#'   -0.1 bits as recommended by Soding (2005).
-#' @param itertab an optional two column matrix of row and column indices used
-#'   to iterate through a subset of the viterbi array.
-#' @param d gap opening penalty for sequence vs. sequence alignment
-#' @param e gap extension penalty for sequence vs. sequence alignment
-#' @param DI logical. should delete-insert transitions be allowed? Only applicable for
-#'   objects of class \code{"PHMM"}.
-#' @param ID logical. should insert-delete transitions be allowed? Only applicable for
-#'   objects of class \code{"PHMM"}.
+#'   -0.1 bits for PHMM x PHMM alignments (as recommended by Söding (2005)), and 0
+#'   otherwise.
+#' @param d gap opening penalty (in bits) for sequence vs. sequence alignment.
+#'   Defaults to 8.
+#' @param e gap extension penalty (in bits) for sequence vs. sequence alignment.
+#'   Defaults to 2.
+#' @param DI logical indicating whether delete-insert transitions should be
+#'   allowed in the profile hidden Markov model (if applicable). Defaults
+#'   to FALSE.
+#' @param ID logical indicating whether insert-delete transitions should be
+#'   allowed in the profile hidden Markov model (if applicable). Defaults to
+#'   FALSE.
+#' @param windowspace a two-element integer vector providing the search space for
+#'   dynamic programming (see Wilbur & Lipman 1983 for details). The first element
+#'   should be negative, and represent the lowermost diagonal of the
+#'   dynammic programming array, and the second element should be positive,
+#'   representing the leftmost diagonal. Alternatively, if the the character
+#'   string "all" is passed (the default setting) the entire dynamic programming
+#'   array will be computed.
+#' @param cpp logical, indicates whether the dynamic programming matrix
+#'   should be filled using compiled C++ functions (default; many times faster).
+#'   The FALSE option is primarily retained for bug fixing and experimentation.
+#' @return an object of class \code{"Viterbi"}, which is a list containing the
+#'   score, the dynammic programming arrays, and the optimal path (an integer
+#'   vector). If x is a PHMM and y is a sequence, the path is represented as
+#'   an integer vector containing zeros, ones and twos, where a zero represents
+#'   a downward transition, a one represents a diagonal transition downwards and
+#'   left, and a two represents a left transition in the dynamic programming
+#'   matrix (see Durbin et al. (1998) chapter 2.3). This translates to
+#'   0 = delete state, 1 = match state and 2 = insert state.
+#'   If x and y are both sequences (i.e. the Needleman-Wunch or
+#'   Smith Waterman algorithm) a zero refers to x aligning to a gap in y,
+#'   a one refers to a match, and a two refers to y aligning to a gap in x.
+#'   If x is a standard hidden Markov model (HMM) and y is a sequence,
+#'   each integer (starting at zero) represents a state in the model.
+#' @details TBA
+#' @author Shaun Wilkinson
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
+#'
+#'   Söding J (2005) Protein homology detection by HMM-HMM comparison.
+#'   \emph{Bioinformatics}, \strong{21}, 951-960.
+#'
+#'   Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and
+#'   protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{10}, 197-206.
+#'
+#' @seealso \code{\link{backward}}, \code{\link{forward}}, \code{\link{align}}
 #' @examples
-#' x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
-#' y <- c("P", "A", "W", "H", "E", "A", "E")
-#' Viterbi(x, y,  d = 8, e = 2)
+#'   ## Viterbi algorithm for standard HMMs
+#'   ## The dishonest casino example from Durbin et al. (1998) chapter 3.2
+#'   A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
+#'               nrow = 3) # transition probability matrix
+#'   dimnames(A) <- list(from = c("Begin", "Fair", "Loaded"),
+#'                       to = c("Begin", "Fair", "Loaded"))
+#'   E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
+#'                 (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
+#'               nrow = 2, byrow = TRUE) # emission probability matrix
+#'   dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
+#'   x <- structure(list(A = A, E = E), class = "HMM") # creates the HMM
+#'   plot(x, main = "Dishonest casino hidden Markov model")
+#'   data(casino)
+#'   casino.Viterbi <- Viterbi(x, casino)
+#'   casino.Viterbi$score # full (log) prob of sequence given model = -538.8109
+#'   ## show optinal path path as integers
+#'   casino.Viterbi$path
+#'   ## show optimal path as character strings
+#'   rownames(x$E)[casino.Viterbi$path + 1]
+#'   ##
+#'   ## Needleman-Wunch pairwise sequence alignment
+#'   ## Pairwise protein alignment example from Durbin et al. (1998) chapter 2.3
+#'   x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
+#'   y <- c("P", "A", "W", "H", "E", "A", "E")
+#'   Viterbi(x, y,  d = 8, e = 2, type = "global")
+#'   ##
+#'   ## Viterbi algorithm for profile HMMs
+#'   ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
+#'   data(globins)
+#'   ## derive a profile hidden Markov model from the alignment
+#'   globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+#'   plot(globins.PHMM, main = "Profile hidden Markov model for globins")
+#'   ## simulate a random sequence from the model
+#'   set.seed(999)
+#'   simulation <- generate(globins.PHMM, size = 20)
+#'   simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
+#'   ## calculate the odds of the optimal path of the sequence given the model
+#'   x <- Viterbi(globins.PHMM, simulation, odds = FALSE)
+#'   x # -23.07173
+#'   ## show dynammic programming array
+#'   x$array
+#'   ## show the optimal path as an integer vector
+#'   x$path
+#'   ## show the optimal path as either delete states, matches or insert states
+#'   c("D", "M", "I")[x$path + 1]
+#'   ## Correctly predicted the actual path:
+#'   names(simulation)
 #' @name Viterbi
 ################################################################################
 Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
-                    odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, windowspace = "all",
-                    DI = FALSE, ID = FALSE, cpp = TRUE){
+                    odds = TRUE, offset = 0, d = 8, e = 2, S = NULL,
+                    windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE){
   UseMethod("Viterbi")
 }
-
 
 #' @rdname Viterbi
 ################################################################################
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "global", odds = TRUE, offset = 0,
-                         windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE){
+                         windowspace = "all", DI = FALSE, ID = FALSE,
+                         cpp = TRUE){
   if(type != "global" & !odds) stop("Non-odds option only available for global alignment")
   if(identical(logspace, "autodetect")) logspace <- logdetect(x)
   if(!(type %in% c("global", "semiglobal", "local"))) stop("invalid type")
@@ -499,7 +594,6 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   return(res)
 }
 
-
 #' @rdname Viterbi
 ################################################################################
 Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
@@ -616,7 +710,6 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   }
   return(res)
 }
-
 
 #' @rdname Viterbi
 ################################################################################

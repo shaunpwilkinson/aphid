@@ -49,7 +49,7 @@
 #'
 #'
 train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
-                  maxiter = if(method == "Viterbi") 10 else 100,
+                  maxiter = 100,
                   deltaLL = 1E-07, modelend = FALSE, pseudocounts = "Laplace",
                   gapchar = "-", fixqa = FALSE, fixqe = FALSE, maxsize = NULL, inserts = "map",
                   threshold = 0.5, lambda = 0, quiet = FALSE, ...){
@@ -61,7 +61,7 @@ train <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autod
 #'
 #'
 train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "autodetect",
-                       maxiter = if(method == "Viterbi") 10 else 100,
+                       maxiter = 100,
                        deltaLL = 1E-07, pseudocounts = "background",
                        gapchar = "-", fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
                        inserts = "map", threshold = 0.5, lambda = 0, quiet = FALSE, ...){
@@ -186,7 +186,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
           out$qa <- exp(out$qa)
           out$qe <- exp(out$qe)
         }
-        if(!quiet) cat("Converged after", i, "iterations\n")
+        if(!quiet) cat("Sequential alignments were identical after", i, "iterations\n")
         return(out)
       }
     }
@@ -362,7 +362,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL, logspace = "
 #'
 #'
 train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
-                      maxiter = if(method == "Viterbi") 10 else 100,
+                      maxiter = 100,
                       deltaLL = 1E-07,
                       logspace = "autodetect", quiet = FALSE, modelend = FALSE,
                       pseudocounts = "Laplace", ...){
@@ -399,7 +399,8 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           out$A <- exp(out$A)
           out$E <- exp(out$E)
         }
-        if(!quiet) cat("Iteration", i, "\nconverged after", i, "iterations\n")
+        if(!quiet) cat("Iteration", i, "\nPaths were identical after",
+                       i, "iterations\n")
         return(out)
       }else{
         if(!quiet) cat("Iteration", i, "\n")

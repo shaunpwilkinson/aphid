@@ -1,6 +1,6 @@
 #' Substutution matrices.
 #'
-#' A dataset containing several of the more popular substitution scoring matrices
+#' A dataset containing several popular substitution scoring matrices
 #' for DNA and amino acids.
 #'
 #' @format A list of 71 matrices, most of which have 24 rows and 24 columns
@@ -26,7 +26,7 @@
 #'   that switches from "Fair" to "Loaded" with a probability
 #'   of 0.05 and back to "Fair" with a probability of 0.1. In the Fair
 #'   state each outcome from 1 to 6 has an equal probability of occurring,
-#'   while in the Loaded state the probability of rolling a "6" increases
+#'   while in the Loaded state the probability of rolling a 6 increases
 #'   to 0.5 (with the remaining five probabilities reduced to 0.1).
 #'   The elements of the vector are the outcomes of the 300 rolls
 #'   ("1", "2", "3", "4", "5", or "6") and the "names" attribute

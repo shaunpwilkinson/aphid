@@ -95,7 +95,7 @@
 #' \item \code{\link{align}} performs a PHMM-based progressive multiple sequence
 #' alignment
 #' \item \code{\link{WilburLipman}} defines dynammic programming search space
-#' for speedier alignment
+#' for faster alignment
 #' \item \code{\link{weight}} assigns weights to sequences based on a tree
 #' }
 #'
@@ -115,34 +115,61 @@
 #' \itemize{
 #' \item \code{\link{generate}} simulates random sequences from a HMM
 #' or PHMM
-#' \item \code{\link{kdistance}} uses k-mer counting to calculate pairwise
-#' distances between sequences
+#' \item \code{\link{kdistance}} calculates pairwise
+#' distances between sequences by k-mer counting
+#' \item \code{\link{mbed}} embeds sequences as vectors of distances to a set of
+#' 'seed' sequences (see Blackshields et al. (2010))
+#' \item \code{\link{topdown}} builds a phylogenetic tree by successively
+#' splitting a set of sequences (recursive partitioning)
 #' }
 #'
 #' @section Datasets:
 #' \itemize{
 #' \item \code{\link{substitution_matrices}} DNA and protein substitution
-#' matrices including PAM, BLOSUM, GONNET, DAYHOFF and NUC
+#' matrices including PAM, BLOSUM, GONNET, DAYHOFF, NUC.4.2 and NUC.4.4
+#' \item \code{\link{casino}} the dishonest casino example from Durbin et al.
+#' (1998) chapter 3.2
+#' \item \code{\link{globins}} Small globin alignment data from
+#' Durbin et al. (1998) Figure 5.3
 #' }
 #'
-#' @author Shaun P. Wilkinson
+#' @author Shaun Wilkinson
 #'
 #' @references
+#'   Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
+#'   for fast construction of guide trees for multiple sequence alignment.
+#'   \emph{Algorithms for Molecular Biology}, \strong{5}, 21.
+#'
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
 #'
+#'   Edgar RC (2004) Local homology recognition and distance measures in
+#'   linear time using compressed amino acid alphabets.
+#'   \emph{Nucleic Acids Research}, \strong{32}, 380-385.
+#'
 #'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
 #'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 #'
-#'   HMMER: biosequence analysis using profile hidden Markov models. \url{http://www.hmmer.org}.
+#'   HMMER: biosequence analysis using profile hidden Markov models.
+#'   \url{http://www.hmmer.org}.
 #'
-#'   NCBI index of substitution matrices. \url{ftp://ftp.ncbi.nih.gov/blast/matrices/}
+#'   NCBI index of substitution matrices.
+#'   \url{ftp://ftp.ncbi.nih.gov/blast/matrices/}.
+#'
+#'   Sievers F, Wilm A, Dineen D, Gibson TJ, Karplus K, Li W, Lopez R, McWilliam H,
+#'   Remmert M, Söding J, Thompson JD, Higgins DG (2011) Fast, scalable generation
+#'   of high-quality protein multiple sequence alignments using Clustal Omega.
+#'   \emph{Molecular Systems Biology}, \strong{7}, 539.
+#'
+#'   Söding J (2005) Protein homology detection by HMM-HMM comparison.
+#'   \emph{Bioinformatics}, \strong{21}, 951-960.
 #'
 #'   Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and
 #'   protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{10}, 197-206.
 #'
 #' @docType package
 #' @name aphid
+################################################################################
 NULL
 

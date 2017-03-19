@@ -15,8 +15,9 @@ Depends:
     R(>= 3.0.0)
 Imports:
     ape (>= 3.0.0),
-    openssl (>= 0.9.0),
     graphics,
+    openssl (>= 0.9.0),
+    phylogram,
     Rcpp (>= 0.12.5),
     stats,
     utils
@@ -24,6 +25,8 @@ Suggests:
     knitr,
     rmarkdown,
     testthat
+Remotes:
+    shaunpwilkinson/phylogram
 LinkingTo: Rcpp
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1

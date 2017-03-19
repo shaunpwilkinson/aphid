@@ -1,4 +1,4 @@
-#' K-mer distance matrix calculation.
+#' K-mer distance matrix computation.
 #'
 #' Computes the matrix of k-tuple distances between all pairwise comparisons
 #' of the input sequence set.
@@ -106,7 +106,7 @@ kdistance.default <- function(x, k = 5, ...){
 #'   0.5 each.
 #'   This algorithm is order n * 4^k in memory and time complexity so can be very
 #'   slow and memory hungry for large values of k (> 8).
-#' @author Shaun P. Wilkinson
+#' @author Shaun Wilkinson
 #'
 ################################################################################
 mbed <- function(x, seeds = NULL, k = 5, alpha = "Dayhoff6"){
