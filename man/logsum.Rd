@@ -22,5 +22,5 @@ This is a simple compiled function that exponentiates the values
 in the input vector, finds their sum, and returns the log of that value.
 }
 \author{
-Shaun P. Wilkinson
+Shaun Wilkinson
 }

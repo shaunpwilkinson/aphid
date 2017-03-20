@@ -2,9 +2,10 @@
 % Please edit documentation in R/topdown.R
 \name{topdown}
 \alias{topdown}
-\title{Build trees by recursive splitting}
+\title{Top down phylogenetic trees.}
 \usage{
-topdown(x, seeds = NULL, k = 5, weighted = TRUE)
+topdown(x, seeds = NULL, k = 5, residues = NULL, gapchar = "-",
+  weighted = TRUE)
 }
 \arguments{
 \item{x}{a list of sequences, possibly an object of class
@@ -16,12 +17,64 @@ If NULL the seeds are randomly selected from the input sequence list.}
 
 \item{k}{integer representing the the k-mer size to be used for calculating
 the distance matrix.}
+
+\item{residues}{either NULL (default; emitted residues are automatically
+detected from the sequences), a case sensitive character vector
+specifying the residue alphabet, or one of the character strings
+"RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
+large lists of character vectors. Specifying the residue alphabet is therefore
+recommended unless the sequence list is a "DNAbin" or "AAbin" object.}
+
+\item{gapchar}{the character used to represent gaps in the alignment matrix
+(if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
+Defaults to "-" otherwise.}
+
+\item{weighted}{logical indicating whether the edge lengths in the
+tree should correspond to the degree of relatedness
+between the sequences. Defaults to TRUE (slower).}
+}
+\value{
+an object of class \code{"dendrogram"}.
 }
 \description{
-\code{topdown} is used to cluster trees by recursive
-partitioning, as opposed to agglomerative methods such as neighbour joining
-and UPGMA. This is useful for large sequence sets (> 20, 000) since the
-usual N x N distance matrix is not required. Instead, an N x log(N, 2)^2
-distance matrix ('mbed') is derived from the input sequences, requiring substantially
-less memory and time.
+Create phylogenetic trees by successively splitting the sequence dataset
+  into smaller and smaller subsets.
+}
+\details{
+This function creates phylogenetic trees by successively splitting
+  the sequence dataset into smaller and smaller subsets (a.k.a. recursive
+  partitioning). This is a "top down" approach to tree-building, as
+  opposed to agglomerative "bottom up" methods such as neighbour joining
+  and UPGMA. It is useful for large sequence sets (> 20, 000) since the
+  usual N x N distance matrix is not required (where N is the number of
+  sequences). Instead, an N x log(N, 2)^2
+  distance matrix is first derived from the input sequences using the
+  \code{\link{mbed}} function of Blacksheilds et al. 2010 and the k-mer
+  istance measure of (Edgar 2004).
+  This requires substantially less memory and time. The 'embedded' sequences
+  are then split recursively using the k-means (clusters = 2) technique.
+}
+\examples{
+\dontrun{
+## Cluster the woodmouse dataset from the ape package
+library(ape)
+data(woodmouse)
+woodmice <- unalign(woodmouse[, 47:962]) ## trim gappy ends
+set.seed(999)
+woodmice.tree <- topdown(woodmice)
+par(mar = c(5, 2, 4, 8) + 0.1)
+plot(woodmice.tree, main = "Woodmouse tree", horiz = TRUE)
+}
+}
+\references{
+Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
+  for fast construction of guide trees for multiple sequence alignment.
+  \emph{Algorithms for Molecular Biology}, \strong{5}, 21.
+
+  Edgar RC (2004) Local homology recognition and distance measures in
+  linear time using compressed amino acid alphabets.
+  \emph{Nucleic Acids Research}, \strong{32}, 380-385.
+}
+\author{
+Shaun Wilkinson
 }

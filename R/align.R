@@ -79,7 +79,7 @@
 #'   \code{residues = NULL} will not detect rare residues that are not present
 #'   in the sequences, and thus will not assign them emission probabilities
 #'   in the model. Specifying the residue alphabet is therefore
-#'   recommended unless the sequence list is a "DNAbin" or "AAbin" object.
+#'   recommended unless x is a "DNAbin" or "AAbin" object.
 #' @param gapchar the character used to represent gaps in the alignment matrix.
 #'   Ignored for \code{"DNAbin"} or \code{"AAbin"} objects. Defaults to "-"
 #'   otherwise.
@@ -88,11 +88,11 @@
 #'   transition and/or emission types in the input sequences.
 #'   If \code{pseudocounts = "background"} (default), pseudocounts
 #'   are calculated from the background transition and emission
-#'   frequencies in the training dataset.
+#'   frequencies in the sequences.
 #'   If \code{pseudocounts = "Laplace"} one of each possible transition
-#'   and emission type is added to the training dataset (default).
+#'   and emission type is added to the transition and emission counts.
 #'   If \code{pseudocounts = "none"} no pseudocounts are added (not
-#'   usually recommended, since low frequency transition/emission types
+#'   generally recommended, since low frequency transition/emission types
 #'   may be excluded from the model).
 #'   Alternatively this argument can be a two-element list containing
 #'   a matrix of transition pseudocounts
@@ -116,8 +116,8 @@
 #' @return a matrix of aligned sequences, with the same mode and class as the
 #'   input sequence list.
 #' @details This function uses a progressive alignment procedure similar to
-#'   the Clustal Omega algorithm (Sievers et al. 2011). This involves an initial
-#'   progressive multiple sequence alignment via a guide tree,
+#'   the Clustal Omega algorithm (Sievers et al. 2011). The procedure
+#'   involves an initial progressive multiple sequence alignment via a guide tree,
 #'   followed by the derivation of a profile hidden Markov model
 #'   from the alignment, an
 #'   iterative model refinement step, and finally the alignment of the
@@ -131,7 +131,7 @@
 #'   Cambridge University Press, Cambridge, United Kingdom.
 #'
 #'   Sievers F, Wilm A, Dineen D, Gibson TJ, Karplus K, Li W, Lopez R, McWilliam H,
-#'   Remmert M, Söding J, Thompson JD, Higgins DG (2011) Fast, scalable generation
+#'   Remmert M, Soding J, Thompson JD, Higgins DG (2011) Fast, scalable generation
 #'   of high-quality protein multiple sequence alignments using Clustal Omega.
 #'   \emph{Molecular Systems Biology}, \strong{7}, 539.
 #'
@@ -206,10 +206,10 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
                        gapchar = "-", pseudocounts = "background",
                        qa = NULL, qe = NULL, quiet = FALSE, ...){
   nseq <- length(sequences)
-  DNA <- is.DNA(sequences)
-  AA <- is.AA(sequences)
+  DNA <- .isDNA(sequences)
+  AA <- .isAA(sequences)
   if(DNA) class(sequences) <- "DNAbin" else if(AA) class(sequences) <- "AAbin"
-  residues <- alphadetect(sequences, residues = residues, gapchar = gapchar)
+  residues <- .alphadetect(sequences, residues = residues, gapchar = gapchar)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
   if(is.null(model)){
@@ -232,7 +232,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     }else seeds <- seq_along(sequences)
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")
-      guidetree <- topdown(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+      guidetree <- topdown(sequences, k = k, residues = residues, gapchar = gapchar)
       #qds <- kdistance(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
       #guidetree <- as.dendrogram(hclust(qds, method = "average"))
       myseqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(sequences)]
@@ -253,8 +253,8 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
   }else{
     #note changes here also need apply to 'train'
     stopifnot(class(model) == "PHMM")
-    # DNA <- is.DNA(sequences)
-    # AA <- is.AA(sequences)
+    # DNA <- .isDNA(sequences)
+    # AA <- .isAA(sequences)
     # gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
     if(!is.list(sequences)){
       if(is.null(dim(sequences))){
@@ -290,7 +290,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
       }
       inserts <- alignment$path == 2
       if(any(inserts)){
-        itp <- apply(rbind(c(F, inserts), c(inserts, F)), 2, decimal, 2)
+        itp <- apply(rbind(c(F, inserts), c(inserts, F)), 2, .decimal, 2)
         ist <- which(itp == 1)
         ien <- which(itp == 2) - 1
         runs <- mapply(":", ist, ien, SIMPLIFY = FALSE)
@@ -301,7 +301,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
         insflag <- insflag[itp < 3] #now same length as newrow
         insflag2 <- c(FALSE, insflag, FALSE, FALSE)
         tuples <- rbind(insflag2[-(length(insflag2))], insflag2[-1])
-        decs <- apply(tuples, 2, decimal, 2)
+        decs <- apply(tuples, 2, .decimal, 2)
         tuples <- tuples[, decs != 2, drop = FALSE] #remove true->falses
         tuples <- tuples[,-ncol(tuples), drop = FALSE]
         tuples[1, -1] <- TRUE
@@ -363,15 +363,16 @@ align.default <- function(sequences, model, pseudocounts = "background",
                           residues = NULL, gapchar = "-", maxsize = NULL,
                           quiet = FALSE, ...){
   if(is.null(model)) return(sequences)
-  DNA <- is.DNA(sequences)
-  AA <- is.AA(sequences)
+  DNA <- .isDNA(sequences)
+  AA <- .isAA(sequences)
   if(DNA){
-    if(!is.DNA(model)) stop("class(sequences) and class(model) must match")
+    if(!.isDNA(model)) stop("class(sequences) and class(model) must match")
     gapchar <- as.raw(4)
     # changes here need also apply in Viterbi.default and Viterbi.PHMM
     if(is.list(sequences)){
       if(length(sequences) == 1){
-        if(!is.matrix(sequences)) sequences <- matrix(sequences[[1]], nrow = 1, dimnames = list(names(sequences), NULL))
+        if(!is.matrix(sequences)) sequences <- matrix(sequences[[1]], nrow = 1,
+                                                      dimnames = list(names(sequences), NULL))
         class(sequences) <- "DNAbin"
       }else stop("Invalid input: multi-sequence list")
     }else{
@@ -392,7 +393,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
       class(model) <- "DNAbin"
     }
   }else if(AA){
-    if(!is.AA(model)) stop("class(sequences) and class(model) must match")
+    if(!.isAA(model)) stop("class(sequences) and class(model) must match")
     gapchar <- as.raw(45)
     # changes here need also apply in Viterbi.default and Viterbi.PHMM
     if(is.list(sequences)){
@@ -455,7 +456,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     evens <- seq(from = 2, to = length(newrow), by = 2) # match columns
     newrow[evens] <- lapply(which(!z$inserts), function(e) e)
     if(any(z$inserts)){
-      itp <- apply(rbind(c(FALSE, z$inserts), c(z$inserts, FALSE)), 2, decimal, from = 2)
+      itp <- apply(rbind(c(FALSE, z$inserts), c(z$inserts, FALSE)), 2, .decimal, from = 2)
       ist <- which(itp == 1)
       ien <- which(itp == 2) - 1
       newrow[odds][which(itp[itp < 2] == 1)] <- mapply(":", ist, ien, SIMPLIFY = FALSE)
@@ -470,7 +471,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     rownames(newxrows) <- rownames(sequences)
     newyrow <- matrix(gapchar, nrow = 1, ncol = ncol(sequences) + ncol(model))
     rownames(newyrow) = rownames(model)
-    is.insert <- vector(mode = "logical", length = ncol(sequences) + ncol(model))
+    isinsert <- vector(mode = "logical", length = ncol(sequences) + ncol(model))
     if(DNA){
       class(newxrows) <- "DNAbin"
       class(newyrow) <- "DNAbin"
@@ -484,38 +485,38 @@ align.default <- function(sequences, model, pseudocounts = "background",
     if(xcounter == 2 & ycounter == 1){ # global and semiglobal alignments
       rightshift <- ncol(newx[[1]])
       if(rightshift > 0){
-        newxrows <- insert(newx[[1]], into = newxrows, at = 1)
+        newxrows <- .insert(newx[[1]], into = newxrows, at = 1)
         position <- position + rightshift
-        is.insert[1:rightshift] <- TRUE
+        isinsert[1:rightshift] <- TRUE
       }
     }
     for(i in seq_along(path)){
       if(path[i] == 1){ #Match state
         rightshift <- 1 + ncol(newx[[xcounter + 1]])
         # match + insert
-        newxrows <- insert(newx[[xcounter]], into = newxrows, at = position)
-        newyrow <- insert(newy[[ycounter]], into = newyrow, at = position)
+        newxrows <- .insert(newx[[xcounter]], into = newxrows, at = position)
+        newyrow <- .insert(newy[[ycounter]], into = newyrow, at = position)
         position <- position + 1
         if(rightshift > 1){
-          newxrows <- insert(newx[[xcounter + 1]], into = newxrows, at = position)
-          is.insert[position:(position + rightshift - 1)] <- TRUE
+          newxrows <- .insert(newx[[xcounter + 1]], into = newxrows, at = position)
+          isinsert[position:(position + rightshift - 1)] <- TRUE
           position <- position + rightshift - 1
         }
         xcounter <- xcounter + 2
         ycounter <- ycounter + 1
       }else if(path[i] == 0){ #Delete state
         rightshift <- 1 + ncol(newx[[xcounter + 1]])
-        newxrows <- insert(newx[[xcounter]], into = newxrows, at = position)
+        newxrows <- .insert(newx[[xcounter]], into = newxrows, at = position)
         position <- position + 1
         if(rightshift > 0){
-          newxrows <- insert(newx[[xcounter + 1]], into = newxrows, at = position)
-          is.insert[position:(position + rightshift - 1)] <- TRUE
+          newxrows <- .insert(newx[[xcounter + 1]], into = newxrows, at = position)
+          isinsert[position:(position + rightshift - 1)] <- TRUE
           position <- position + rightshift - 1
         }
         xcounter <- xcounter + 2
       }else if(path[i] == 2){
         rightshift <- 1
-        newyrow <- insert(newy[[ycounter]], into = newyrow, at = position)
+        newyrow <- .insert(newy[[ycounter]], into = newyrow, at = position)
         position <- position + 1
         ycounter <- ycounter + 1
       }
@@ -523,7 +524,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     position <- position - 1
     newxrows <- newxrows[, 1:position]
     newyrow <- newyrow[, 1:position]
-    is.insert <- is.insert[1:position]
+    isinsert <- isinsert[1:position]
     res <- rbind(newxrows, newyrow)
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     # res.list <- unalign(res)
@@ -548,7 +549,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     evens <- seq(from = 2, to = length(newrow), by = 2) # match columns
     newrow[evens] <- lapply(which(!zx$inserts), function(e) e)
     if(any(zx$inserts)){
-      itp <- apply(rbind(c(FALSE, zx$inserts), c(zx$inserts, FALSE)), 2, decimal, from = 2)
+      itp <- apply(rbind(c(FALSE, zx$inserts), c(zx$inserts, FALSE)), 2, .decimal, from = 2)
       ist <- which(itp == 1)
       ien <- which(itp == 2) - 1
       newrow[odds][which(itp[itp < 2] == 1)] <- mapply(":", ist, ien, SIMPLIFY = FALSE)
@@ -561,7 +562,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     evens <- seq(from = 2, to = length(newrow), by = 2) # match columns
     newrow[evens] <- lapply(which(!zy$inserts), function(e) e)
     if(any(zy$inserts)){
-      itp <- apply(rbind(c(FALSE, zy$inserts), c(zy$inserts, FALSE)), 2, decimal, from = 2)
+      itp <- apply(rbind(c(FALSE, zy$inserts), c(zy$inserts, FALSE)), 2, .decimal, from = 2)
       ist <- which(itp == 1)
       ien <- which(itp == 2) - 1
       newrow[odds][which(itp[itp < 2] == 1)] <- mapply(":", ist, ien, SIMPLIFY = FALSE)
@@ -573,7 +574,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     rownames(newxrows) <- rownames(sequences)
     newyrows <- matrix(gapchar, nrow = ny, ncol = ncol(sequences) + ncol(model))
     rownames(newyrows) <- rownames(model)
-    is.insert <- vector(mode = "logical", length = ncol(sequences) + ncol(model))
+    isinsert <- vector(mode = "logical", length = ncol(sequences) + ncol(model))
     if(DNA){
       class(newxrows) <- "DNAbin"
       class(newyrows) <- "DNAbin"
@@ -587,44 +588,44 @@ align.default <- function(sequences, model, pseudocounts = "background",
     if(xcounter == 2 & ycounter == 2){
       rightshift <- max(c(ncol(newx[[1]]), newy[[1]]))
       if(rightshift > 0){
-        newxrows <- insert(newx[[1]], into = newxrows, at = 1)
-        newyrows <- insert(newy[[1]], into = newyrows, at = 1)
+        newxrows <- .insert(newx[[1]], into = newxrows, at = 1)
+        newyrows <- .insert(newy[[1]], into = newyrows, at = 1)
         position <- position + rightshift
-        is.insert[1:rightshift] <- TRUE
+        isinsert[1:rightshift] <- TRUE
       }
     }
     for(i in seq_along(path)){
       if(path[i] == 2){ #MM
         rightshift <- 1 + max(c(ncol(newx[[xcounter + 1]]), ncol(newy[[ycounter + 1]])))
         # match + insert
-        newxrows <- insert(newx[[xcounter]], into = newxrows, at = position)
-        newyrows <- insert(newy[[ycounter]], into = newyrows, at = position)
+        newxrows <- .insert(newx[[xcounter]], into = newxrows, at = position)
+        newyrows <- .insert(newy[[ycounter]], into = newyrows, at = position)
         position <- position + 1
         if(rightshift > 1){
-          newxrows <- insert(newx[[xcounter + 1]], into = newxrows, at = position)
-          newyrows <- insert(newy[[ycounter + 1]], into = newyrows, at = position)
-          is.insert[position:(position + rightshift - 1)] <- TRUE
+          newxrows <- .insert(newx[[xcounter + 1]], into = newxrows, at = position)
+          newyrows <- .insert(newy[[ycounter + 1]], into = newyrows, at = position)
+          isinsert[position:(position + rightshift - 1)] <- TRUE
           position <- position + rightshift - 1
         }
         xcounter <- xcounter + 2
         ycounter <- ycounter + 2
       }else if(path[i] < 2){
         rightshift <- 1 + ncol(newx[[xcounter + 1]])
-        newxrows <- insert(newx[[xcounter]], into = newxrows, at = position)
+        newxrows <- .insert(newx[[xcounter]], into = newxrows, at = position)
         position <- position + 1
         if(rightshift > 0){
-          newxrows <- insert(newx[[xcounter + 1]], into = newxrows, at = position)
-          is.insert[position:(position + rightshift - 1)] <- TRUE
+          newxrows <- .insert(newx[[xcounter + 1]], into = newxrows, at = position)
+          isinsert[position:(position + rightshift - 1)] <- TRUE
           position <- position + rightshift - 1
         }
         xcounter <- xcounter + 2
       }else if(path[i] > 2){
         rightshift <- 1 + ncol(newy[[ycounter + 1]])
-        newyrows <- insert(newy[[ycounter]], into = newyrows, at = position)
+        newyrows <- .insert(newy[[ycounter]], into = newyrows, at = position)
         position <- position + 1
         if(rightshift > 0){
-          newyrows <- insert(newy[[ycounter + 1]], into = newyrows, at = position)
-          is.insert[position:(position + rightshift - 1)] <- TRUE
+          newyrows <- .insert(newy[[ycounter + 1]], into = newyrows, at = position)
+          isinsert[position:(position + rightshift - 1)] <- TRUE
           position <- position + rightshift - 1
         }
         ycounter <- ycounter + 2
@@ -633,7 +634,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     position <- position - 1
     newxrows <- newxrows[, 1:position]
     newyrows <- newyrows[, 1:position]
-    is.insert <- is.insert[1:position]
+    isinsert <- isinsert[1:position]
     res <- rbind(newxrows, newyrows)
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     res.list <- unalign(res)
@@ -660,8 +661,8 @@ align.default <- function(sequences, model, pseudocounts = "background",
 #'
 #' \code{unalign} deconstructs an alignment to a list of sequences.
 #'
-#' @param x a matrix of aligned sequences. Can be a "DNAbin" or "AAbin"
-#'   matrix object or a standard character matrix.
+#' @param x a matrix of aligned sequences. Accepted modes are "character"
+#'   and "raw" (for "DNAbin" and "AAbin" objects).
 #' @inheritParams align
 #' @return a list of sequences of the same mode and class as the input alignment
 #'   (ie "DNAbin", "AAbin", or plain ASCII characters).
@@ -680,8 +681,8 @@ align.default <- function(sequences, model, pseudocounts = "background",
 ################################################################################
 unalign <- function(x, gapchar = "-"){
   #x is a matrix representing an alignment
-  DNA <- is.DNA(x)
-  AA <- is.AA(x)
+  DNA <- .isDNA(x)
+  AA <- .isAA(x)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   if(is.list(x)){
     if(length(x) == 1){

@@ -2,56 +2,90 @@
 % Please edit documentation in R/deriveHMM.R
 \name{deriveHMM}
 \alias{deriveHMM}
-\title{Derive a hidden Markov model from a set of sequences.}
+\title{Derive a standard hidden Markov model from a set of sequences.}
 \usage{
 deriveHMM(x, seqweights = NULL, residues = NULL, states = NULL,
-  modelend = FALSE, pseudocounts = "background", logspace = TRUE, k = 1)
+  modelend = FALSE, pseudocounts = "background", logspace = TRUE)
 }
 \arguments{
-\item{x}{a list of named character vectors representing residue emissions
+\item{x}{a list of named character vectors representing emissions
 from the model. The 'names' attribute should represent the hidden state
-that each residue was emitted from.}
+from which each residue was emitted. "DNAbin" and "AAbin" list
+objects are also supported for moeling DNA or amino acid sequences.}
+
+\item{seqweights}{either NULL (default; all sequences are given
+weights of 1) or a numeric vector the same length as \code{x} representing
+the sequence weights used to derive the model.}
 
 \item{residues}{either NULL (default; emitted residues are automatically
-detected from the list of sequences), a case sensitive character vector
+detected from the sequences), a case sensitive character vector
 specifying the residue alphabet, or one of the character strings
 "RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
 large lists of character vectors. Furthermore, the default setting
 \code{residues = NULL} will not detect rare residues that are not present
-in the sequence list, and thus will not assign them emission probabilities.
-Hence specifying the residue alphabet is reccommended unless the sequence
-list is a "DNAbin" or "AAbin" object.}
+in the sequences, and thus will not assign them emission probabilities
+in the model. Specifying the residue alphabet is therefore
+recommended unless x is a "DNAbin" or "AAbin" object.}
 
 \item{states}{either NULL (default; the unique Markov states are
-  automatically detected from the 'names' attributes of the input
-  sequences), or a case sensitive character vector specifying the unique
-  Markov states (or a superset of the unique states) to appear in the
-  model. The latter option is recommended since it saves computation time
-  and ensures that all valid Markov states appear in the model,
-  regardless of their possible absence from the training dataset.
-(deriveHMM)}
+automatically detected from the 'names' attributes of the input
+sequences), or a case sensitive character vector specifying the unique
+Markov states (or a superset of the unique states) to appear in the
+model. The latter option is recommended since it saves computation time
+and ensures that all valid Markov states appear in the model,
+regardless of their possible absence from the training dataset.}
 
-\item{modelend}{logical indicating whether transitions to the 'end'
-state should be modeled. Defaults to FALSE.}
+\item{modelend}{logical indicating whether transition probabilites
+to the end state of the standard hidden Markov model should be
+modeled (if applicable). Defaults to FALSE.}
 
-\item{pseudocounts}{used to account for the possible absence of certain
+\item{pseudocounts}{character string, either "background", Laplace"
+or "none". Used to account for the possible absence of certain
 transition and/or emission types in the input sequences.
-either \code{'Laplace'} (adds one of each possible transition
-and emission type to the training dataset; default), \code{'none'},
-or a two-element list containing a matrix of transition pseudocounts
+If \code{pseudocounts = "background"} (default), pseudocounts
+are calculated from the background transition and emission
+frequencies in the training dataset.
+If \code{pseudocounts = "Laplace"} one of each possible transition
+and emission type is added to the training dataset (default).
+If \code{pseudocounts = "none"} no pseudocounts are added (not
+usually recommended, since low frequency transition/emission types
+may be excluded from the model).
+Alternatively this argument can be a two-element list containing
+a matrix of transition pseudocounts
 as its first element and a matrix of emission pseudocounts as its
-second. If a list is supplied both matrices must have row and column
-names according to the residues (column names of emission matrix)
+second. If this option is selected, both matrices must have row and column
+names corresponding with the residues (column names of emission matrix)
 and states (row and column names of the transition matrix and
 row names of the emission matrix). For downstream applications
 the first row and column of the transition matrix should be named
-'Begin'.}
+"Begin".}
+
+\item{logspace}{logical indicating whether the emission and transition
+probabilities in the returned model should be logged. Defaults to TRUE.}
 }
 \value{
-an object of class \code{"HMM"}
+an object of class \code{"HMM"}.
 }
 \description{
 \code{deriveHMM} calculates the maximum likelihood hidden Markov model from
-a list of training sequences, each a vector of residues named according
-the state from which they were emitted.
+  a list of training sequences, each a vector of residues named according
+  the state from which they were emitted.
+}
+\details{
+TBA
+}
+\examples{
+ data(casino)
+ deriveHMM(list(casino))
+}
+\references{
+Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+  sequence analysis: probabilistic models of proteins and nucleic acids.
+  Cambridge University Press, Cambridge, United Kingdom.
+}
+\seealso{
+\code{\link{derivePHMM}}
+}
+\author{
+Shaun Wilkinson
 }

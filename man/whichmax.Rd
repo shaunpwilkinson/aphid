@@ -28,5 +28,5 @@ This is a simple compiled function similar to which.max{base} but
   not accepted.
 }
 \author{
-Shaun P. Wilkinson
+Shaun Wilkinson
 }

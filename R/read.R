@@ -1,17 +1,21 @@
 #' Import profile hidden Markov models into R.
 #'
-#' \code{readPHMM} parses a HMMER3 text file into Rand creates an object of class
-#' \code{"PHMM"}.
+#' The \code{readPHMM} function parses a HMMER3 text file into R and creates
+#'   an object of class \code{"PHMM"}.
 #'
 #' @param file the name of the file from which to read the model.
-#' @param ... further arguments to be passed to \code{"scan"} .
+#' @param ... further arguments to be passed to \code{"scan"}.
 #' @return an object of class \code{"PHMM"}.
+#' @details TBA
+#' @author Shaun Wilkinson
 #' @references
-#' Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence similarity searching.
-#' \emph{Nucleic Acids Research}. \strong{39}:W29–W37. \url{http://hmmer.org/}.
-#' @seealso \code{\link{write.PHMM}} for writing PHMM objects in HMMER3 text format.
-#'
-#'
+#'   Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
+#'   similarity searching. \emph{Nucleic Acids Research}. \strong{39}:W29-W37.
+#'   \url{http://hmmer.org/}.
+#' @seealso \code{\link{writePHMM}} for writing PHMM objects in HMMER3 text format.
+#' @examples
+#'   ## TBA
+################################################################################
 readPHMM <- function(file = "", ...){
   x <- scan(file = file, what = "", sep = "\n", quiet = TRUE, ... = ...)
   # make this part a new fun and lapply in list case
@@ -126,6 +130,4 @@ readPHMM <- function(file = "", ...){
   class(out) <- "PHMM"
   return(out)
 }
-
-
-
+################################################################################

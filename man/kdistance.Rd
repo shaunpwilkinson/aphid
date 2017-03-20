@@ -5,23 +5,36 @@
 \alias{kdistance.AAbin}
 \alias{kdistance.DNAbin}
 \alias{kdistance.default}
-\title{K-mer distance matrix calculation.}
+\title{K-mer distance matrix computation.}
 \usage{
-kdistance(x, k = 5, alpha = "Dayhoff6", ...)
+kdistance(x, k = 5, residues = NULL, gapchar = "-", ...)
 
-\method{kdistance}{AAbin}(x, k = 5, alpha = "Dayhoff6", ...)
+\method{kdistance}{AAbin}(x, k = 5, ...)
 
-\method{kdistance}{DNAbin}(x, k = 5, alpha = NULL, ...)
+\method{kdistance}{DNAbin}(x, k = 5, ...)
 
-\method{kdistance}{default}(x, k = 5, ...)
+\method{kdistance}{default}(x, k = 5, residues = NULL, gapchar = "-", ...)
 }
 \arguments{
-\item{x}{a list of sequences, possibly an object of class
-\code{"DNAbin"} or \code{"AAbin"}.}
+\item{x}{a matrix of aligned sequences or a list of unaligned sequences.
+Accepted modes are "character" and "raw" (for "DNAbin" and "AAbin" objects).}
 
-\item{k}{an integer specifying the size of the k-tuples.}
+\item{k}{integer representing the k-mer size to be used for calculating
+the distance matrix. Defaults to 5. Note that high values of k
+may be slow to compute and use a lot of memory due to the large numbers
+of calculations required, particularly when the residue alphabet is
+also large.}
 
-\item{alpha}{the residue alphabet.}
+\item{residues}{either NULL (default; emitted residues are automatically
+detected from the sequences), a case sensitive character vector
+specifying the residue alphabet, or one of the character strings
+"RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
+large lists of character vectors. Specifying the residue alphabet is therefore
+recommended unless x is a "DNAbin" or "AAbin" object.}
+
+\item{gapchar}{the character used to represent gaps in the alignment matrix
+(if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
+Defaults to "-" otherwise.}
 
 \item{...}{further arguments to be passed to \code{"dist"}.}
 }
@@ -30,5 +43,32 @@ a distance matrix of class \code{"dist"}
 }
 \description{
 Computes the matrix of k-tuple distances between all pairwise comparisons
-of the input sequence set.
+  of a set of sequences.
+}
+\details{
+this function uses the k-mer distance measure outlined in
+  Edgar (2004) to compute a N x N distance matrix (where N is the
+  number of sequences).
+}
+\examples{
+  ## compute the k-mer distance for the woodmouse dataset in the ape package
+  ## with a k-mer size of 4
+  library(ape)
+  data(woodmouse)
+  woodmouse <- woodmouse[, 47:962] ## trim gappy ends for true global alignment
+  woodmouse.dist <- kdistance(woodmouse, k = 4)
+  ## compute and plot the UPGMA tree
+  woodmouse.tree <- as.dendrogram(hclust(woodmouse.dist, "average"))
+  plot(woodmouse.tree)
+}
+\references{
+Edgar RC (2004) Local homology recognition and distance measures in
+  linear time using compressed amino acid alphabets.
+  \emph{Nucleic Acids Research}, \strong{32}, 380-385.
+}
+\seealso{
+\code{\link{mbed}} for leaner distance matrices
+}
+\author{
+Shaun Wilkinson
 }

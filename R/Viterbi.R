@@ -11,7 +11,7 @@
 #'   object) representing a single sequence hypothetically emitted by
 #'   the model in \code{x}. Optionally, both x and
 #'   y can be profile hidden Markov models (object class "PHMM"), in which
-#'   case the sum of log-odds algorithm of Söding (2005) is used.
+#'   case the sum of log-odds algorithm of Soding (2005) is used.
 #' @param qe an optional named vector of background residue frequencies (only
 #'   applicable if x is a PHMM). If \code{qe = NULL} the function looks for
 #'   a qe vector as an attribute of the PHMM. If these are not available
@@ -29,6 +29,13 @@
 #'   sub-path should be returned ('local').
 #' @param odds logical, indicates whether the returned scores
 #'   should be odds ratios (TRUE) or full logged probabilities (FALSE).
+#' @param offset column score offset to specify level of greediness. Defaults to
+#'   -0.1 bits for PHMM x PHMM alignments (as recommended by Soding (2005)), and 0
+#'   otherwise.
+#' @param d gap opening penalty (in bits) for sequence vs. sequence alignment.
+#'   Defaults to 8.
+#' @param e gap extension penalty (in bits) for sequence vs. sequence alignment.
+#'   Defaults to 2.
 #' @param S an optional scoring matrix with rows and columns named according
 #'   to the residue alphabet. Only applicable when both x and y are sequences
 #'   (Needleman-Wunch or Smith-Waterman alignments).
@@ -37,13 +44,11 @@
 #'   alignments. If NULL default settings are used. Default scoring matrices are
 #'   'NUC.4.4' for For DNAbin objects, and 'MATCH' (matches are scored 1 and
 #'   mismatches are scored -1) for AAbin objects and character sequences.
-#' @param offset column score offset to specify level of greediness. Defaults to
-#'   -0.1 bits for PHMM x PHMM alignments (as recommended by Söding (2005)), and 0
-#'   otherwise.
-#' @param d gap opening penalty (in bits) for sequence vs. sequence alignment.
-#'   Defaults to 8.
-#' @param e gap extension penalty (in bits) for sequence vs. sequence alignment.
-#'   Defaults to 2.
+#' @param residues either NULL (default; emitted residues are automatically
+#'   detected from the sequences), a case sensitive character vector
+#'   specifying the residue alphabet, or one of the character strings
+#'   "RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
+#'   large lists of character vectors.
 #' @param DI logical indicating whether delete-insert transitions should be
 #'   allowed in the profile hidden Markov model (if applicable). Defaults
 #'   to FALSE.
@@ -80,7 +85,7 @@
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
 #'
-#'   Söding J (2005) Protein homology detection by HMM-HMM comparison.
+#'   Soding J (2005) Protein homology detection by HMM-HMM comparison.
 #'   \emph{Bioinformatics}, \strong{21}, 951-960.
 #'
 #'   Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and
@@ -139,7 +144,8 @@
 ################################################################################
 Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
                     odds = TRUE, offset = 0, d = 8, e = 2, S = NULL,
-                    windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE){
+                    residues = NULL, windowspace = "all", DI = FALSE, ID = FALSE,
+                    cpp = TRUE){
   UseMethod("Viterbi")
 }
 
@@ -150,12 +156,12 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          windowspace = "all", DI = FALSE, ID = FALSE,
                          cpp = TRUE){
   if(type != "global" & !odds) stop("Non-odds option only available for global alignment")
-  if(identical(logspace, "autodetect")) logspace <- logdetect(x)
+  if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   if(!(type %in% c("global", "semiglobal", "local"))) stop("invalid type")
   #if(!odds) stop("Full probability scores are not available for Viterbi yet")
   pp <- inherits(y, "PHMM")
-  pd <- is.DNA(y)
-  pa <- is.AA(y)
+  pd <- .isDNA(y)
+  pa <- .isAA(y)
   pc <- !pp & !pd & !pa
   if(pd){
     rownames(x$E) <- toupper(rownames(x$E))
@@ -174,7 +180,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     y.DNAbin <- y
     #y <- DNA2pentadecimal(y, na.rm = TRUE)
-    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
+    y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(pa){
     rownames(x$E) <- toupper(rownames(x$E))
     PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -191,7 +197,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     y.AAbin <- y
     #y <- AA2heptovigesimal(y, na.rm = TRUE)
-    y <- encode.AA(y, arity = 27, na.rm = TRUE)
+    y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else if(pc){
     if(is.list(y)){
       if(length(y) == 1){
@@ -243,7 +249,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   # fill scoring and pointer arrays. Key: D = 1, M = 2, I = 3
   if(pp){
     if(!odds) stop("Full probability scores for PHMM-PHMM alignment are not supported")
-    if(logdetect(y) != logspace) stop("Both models must be in the same logspace format")
+    if(.logdetect(y) != logspace) stop("Both models must be in the same logspace format")
     if(identical(windowspace, "WilburLipman")){
       #warning("No WilburLipman method available for PHMM=PHMM comparison yet")
       windowspace <- c(-x$size, y$size)
@@ -252,7 +258,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       # yseq <- generate.PHMM(y, size = 10 * ncol(y$A), random = FALSE)
       # yseq <- setNames(seq_along(rownames(x$E)) - 1,  rownames(x$E))[yseq]
       # #x$A to ensure order is same
-      # windowspace <- streak(xseq, yseq, arity = nrow(x$E), k = 2)
+      # windowspace <- .streak(xseq, yseq, arity = nrow(x$E), k = 2)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, y$size)
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
@@ -407,15 +413,15 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       if(pd){
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
         #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
-        yqt <- encode.DNA(y.DNAbin, arity = 4, na.rm = TRUE)
-        windowspace <- streak(xqt, yqt, arity = 4, k = 5)
+        yqt <- .encodeDNA(y.DNAbin, arity = 4, na.rm = TRUE)
+        windowspace <- .streak(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
-        y.comp <- encode.AA(y.AAbin, arity = 6, na.rm = TRUE)
-        xseq.comp <- encode.AA(xseq, arity = 6, na.rm = TRUE)
-        windowspace <- streak(xseq.comp, y.comp, arity = 6, k = 5)
+        y.comp <- .encodeAA(y.AAbin, arity = 6, na.rm = TRUE)
+        xseq.comp <- .encodeAA(xseq, arity = 6, na.rm = TRUE)
+        windowspace <- .streak(xseq.comp, y.comp, arity = 6, k = 5)
       }else{
         xseq <- match(xseq, rownames(x$E)) - 1
-        windowspace <- streak(xseq, y, arity = nrow(x$E), k = 3)
+        windowspace <- .streak(xseq, y, arity = nrow(x$E), k = 3)
       }
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, length(y))
@@ -597,9 +603,9 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 #' @rdname Viterbi
 ################################################################################
 Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
-  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
-  DNA <- is.DNA(y)
-  AA <- is.AA(y)
+  if(identical(logspace, 'autodetect')) logspace <- .logdetect(x)
+  DNA <- .isDNA(y)
+  AA <- .isAA(y)
   if(DNA){
     colnames(x$E) <- toupper(colnames(x$E))
     NUCorder <- sapply(colnames(x$E), match, c("A", "T", "G", "C"))
@@ -615,7 +621,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
       }else stop("Invalid input object y: multi-sequence list")
     }
     #y <- DNA2pentadecimal(y, na.rm = TRUE)
-    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
+    y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(AA){
     colnames(x$E) <- toupper(colnames(x$E))
     PFAMorder <- sapply(colnames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -631,7 +637,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
       }else stop("Invalid input object y: multi-sequence list")
     }
     #y <- AA2heptovigesimal(y, na.rm = TRUE)
-    y <- encode.AA(y, arity = 27, na.rm = TRUE)
+    y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else{
     if(is.list(y)){
       if(length(y) == 1){
@@ -717,10 +723,10 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
                             residues = NULL, S = NULL,
                             windowspace = "all", offset = 0, cpp = TRUE){
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
-  DNA <- is.DNA(x)
-  AA <- is.AA(x)
+  DNA <- .isDNA(x)
+  AA <- .isAA(x)
   if(DNA){
-    if(!is.DNA(y)) stop("x is a DNAbin object but y is not")
+    if(!.isDNA(y)) stop("x is a DNAbin object but y is not")
     # changes here need also apply in Viterbi.PHMM, alignpair
     if(is.list(x)){
       if(length(x) == 1){
@@ -745,18 +751,18 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       }
     }
     if(identical(windowspace, "WilburLipman")){
-      #windowspace <- streak(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
-      windowspace <- streak(encode.DNA(x, arity = 4, na.rm = TRUE),
-                                  encode.DNA(y, arity = 4, na.rm = TRUE), arity = 4)
+      #windowspace <- .streak(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
+      windowspace <- .streak(.encodeDNA(x, arity = 4, na.rm = TRUE),
+                            .encodeDNA(y, arity = 4, na.rm = TRUE), arity = 4)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
     #x <- DNA2pentadecimal(x, na.rm = TRUE)
     #y <- DNA2pentadecimal(y, na.rm = TRUE)
-    x <- encode.DNA(x, arity = 15, na.rm = TRUE)
-    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
+    x <- .encodeDNA(x, arity = 15, na.rm = TRUE)
+    y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(AA){
-    if(!is.AA(y)) stop("x is an AAbin object but y is not")
+    if(!.isAA(y)) stop("x is an AAbin object but y is not")
     if(is.list(x)){
       if(length(x) == 1){
         x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
@@ -781,26 +787,26 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       }
     }
     if(identical(windowspace, "WilburLipman")){
-      windowspace <- streak(encode.AA(x, arity = 6, na.rm = TRUE),
-                                  encode.AA(y, arity = 6, na.rm = TRUE), arity = 6)
+      windowspace <- .streak(.encodeAA(x, arity = 6, na.rm = TRUE),
+                            .encodeAA(y, arity = 6, na.rm = TRUE), arity = 6)
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
     if(identical(S, aphid::substitution_matrices$GONNET)){
       #x <- AA2duovigesimal(x, na.rm = TRUE)
       #y <- AA2duovigesimal(y, na.rm = TRUE)
-      x <- encode.AA(x, arity = 22, na.rm = TRUE)
-      y <- encode.AA(y, arity = 22, na.rm = TRUE)
+      x <- .encodeAA(x, arity = 22, na.rm = TRUE)
+      y <- .encodeAA(y, arity = 22, na.rm = TRUE)
     }else{
       #x <- AA2quadrovigesimal(x, na.rm = TRUE)
       #y <- AA2quadrovigesimal(y, na.rm = TRUE)
-      x <- encode.AA(x, arity = 24, na.rm = TRUE)
-      y <- encode.AA(y, arity = 24, na.rm = TRUE)
+      x <- .encodeAA(x, arity = 24, na.rm = TRUE)
+      y <- .encodeAA(y, arity = 24, na.rm = TRUE)
     }
     ### need some conditions here
   }else{
     if(is.null(S)){
-      residues <- alphadetect(list(x, y), residues = residues)
+      residues <- .alphadetect(list(x, y), residues = residues)
       S <- diag(2, nrow = length(residues)) - 1
       dimnames(S) <- list(residues, residues)
     }else{
@@ -811,7 +817,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     x <- setNames(seq_along(residues) - 1, residues)[x]
     y <- setNames(seq_along(residues) - 1, residues)[y]
     if(identical(windowspace, "WilburLipman")) {
-      windowspace <- streak(x, y, arity = length(residues))
+      windowspace <- .streak(x, y, arity = length(residues))
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
@@ -942,3 +948,4 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
   }
   return(res)
 }
+################################################################################

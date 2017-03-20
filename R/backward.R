@@ -33,36 +33,36 @@
 #'
 #' @seealso \code{\link{forward}}, \code{\link{Viterbi}}.
 #' @examples
-#' ## Backward algorithm for standard HMMs
-#' ## The dishonest casino example from Durbin et al. (1998) chapter 3.2
-#' A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
-#'             nrow = 3) # transition probability matrix
-#' dimnames(A) <- list(from = c("Begin", "Fair", "Loaded"),
-#'                     to = c("Begin", "Fair", "Loaded"))
-#' E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
-#'               (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
-#'             nrow = 2, byrow = TRUE) # emission probability matrix
-#' dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
-#' x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
-#' plot(x)
-#' data(casino)
-#' backward(x, casino)
-#' ##
-#' ## Backward algorithm for profile HMMs
-#' ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
-#' data(globins)
-#' ## derive a profile hidden Markov model from the alignment
-#' globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
-#' plot(globins.PHMM, main = "Profile hidden Markov model for globins")
-#' ## simulate a random sequence from the model
-#' set.seed(999)
-#' simulation <- generate(globins.PHMM, size = 20)
-#' simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
-#' ## calculate the full (log) probability of the sequence given the model
-#' x <- backward(globins.PHMM, simulation, odds = FALSE)
-#' x # -23.0586
-#' ## show dynammic programming array
-#' x$array
+#'   ## Backward algorithm for standard HMMs
+#'   ## The dishonest casino example from Durbin et al. (1998) chapter 3.2
+#'   A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
+#'               nrow = 3) # transition probability matrix
+#'   dimnames(A) <- list(from = c("Begin", "Fair", "Loaded"),
+#'                       to = c("Begin", "Fair", "Loaded"))
+#'   E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
+#'                 (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
+#'               nrow = 2, byrow = TRUE) # emission probability matrix
+#'   dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
+#'   x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
+#'   plot(x, main = "Dishonest casino HMM")
+#'   data(casino)
+#'   backward(x, casino)
+#'   ##
+#'   ## Backward algorithm for profile HMMs
+#'   ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
+#'   data(globins)
+#'   ## derive a profile hidden Markov model from the alignment
+#'   globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+#'   plot(globins.PHMM, main = "Profile hidden Markov model for globins")
+#'   ## simulate a random sequence from the model
+#'   set.seed(999)
+#'   simulation <- generate(globins.PHMM, size = 20)
+#'   simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
+#'   ## calculate the full (log) probability of the sequence given the model
+#'   x <- backward(globins.PHMM, simulation, odds = FALSE)
+#'   x # -23.0586
+#'   ## show dynammic programming array
+#'   x$array
 #' @name backward
 ################################################################################
 backward <- function(x, y, qe = NULL, logspace = "autodetect",  odds = TRUE,
@@ -77,11 +77,11 @@ backward <- function(x, y, qe = NULL, logspace = "autodetect",  odds = TRUE,
 backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                           type = "global", odds = TRUE, windowspace = "all",
                           DI = FALSE, ID = FALSE, cpp = TRUE){
-  if(identical(logspace, "autodetect")) logspace <- logdetect(x)
+  if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   pp <- inherits(y, "PHMM")
   if(pp) stop("PHMM vs PHMM back comparison is not supported")
-  pd <- is.DNA(y)
-  pa <- is.AA(y)
+  pd <- .isDNA(y)
+  pa <- .isAA(y)
   pc <- !pp & !pd & !pa
   if(pd){
     rownames(x$E) <- toupper(rownames(x$E))
@@ -100,7 +100,7 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     y.DNAbin <- y
     #y <- DNA2pentadecimal(y, na.rm = TRUE)
-    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
+    y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
     }else if(pa){
       rownames(x$E) <- toupper(rownames(x$E))
       PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -117,7 +117,7 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }
       y.AAbin <- y
       #y <- AA2heptovigesimal(y, na.rm = TRUE)
-      y <- encode.AA(y, arity = 27, na.rm = TRUE)
+      y <- .encodeAA(y, arity = 27, na.rm = TRUE)
       }else if(pc){
         if(is.list(y)){
           if(length(y) == 1){
@@ -175,15 +175,15 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       if(pd){
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
         #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
-        yqt <- encode.DNA(y.DNAbin, arity = 4, na.rm = TRUE)
-        windowspace <- streak(xqt, yqt, arity = 4, k = 5)
+        yqt <- .encodeDNA(y.DNAbin, arity = 4, na.rm = TRUE)
+        windowspace <- .streak(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
-        y.comp <- encode.AA(y.AAbin, arity = 6, na.rm = TRUE)
-        xseq.comp <- encode.AA(xseq, arity = 6, na.rm = TRUE)
-        windowspace <- streak(xseq.comp, y.comp, arity = 6, k = 5)
+        y.comp <- .encodeAA(y.AAbin, arity = 6, na.rm = TRUE)
+        xseq.comp <- .encodeAA(xseq, arity = 6, na.rm = TRUE)
+        windowspace <- .streak(xseq.comp, y.comp, arity = 6, k = 5)
       }else{
         xseq <- match(xseq, rownames(x$E)) - 1
-        windowspace <- streak(xseq, y, arity = nrow(x$E), k = 3)
+        windowspace <- .streak(xseq, y, arity = nrow(x$E), k = 3)
       }
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, length(y))
@@ -267,9 +267,9 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 #' @rdname backward
 ################################################################################
 backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
-  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
-  DNA <- is.DNA(y)
-  AA <- is.AA(y)
+  if(identical(logspace, 'autodetect')) logspace <- .logdetect(x)
+  DNA <- .isDNA(y)
+  AA <- .isAA(y)
   if(DNA){
     colnames(x$E) <- toupper(colnames(x$E))
     NUCorder <- sapply(colnames(x$E), match, c("A", "T", "G", "C"))
@@ -285,7 +285,7 @@ backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
       }else stop("Invalid input object y: multi-sequence list")
     }
     #y <- DNA2pentadecimal(y, na.rm = TRUE)
-    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
+    y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(AA){
     colnames(x$E) <- toupper(colnames(x$E))
     PFAMorder <- sapply(colnames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -301,7 +301,7 @@ backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
       }else stop("Invalid input object y: multi-sequence list")
     }
     #y <- AA2heptovigesimal(y, na.rm = TRUE)
-    y <- encode.AA(y, arity = 27, na.rm = TRUE)
+    y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else{
     if(is.list(y)){
       if(length(y) == 1){

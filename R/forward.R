@@ -44,7 +44,7 @@
 #'             nrow = 2, byrow = TRUE) # emission probability matrix
 #' dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
 #' x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
-#' plot(x)
+#' plot(x, main = "Dishonest casino HMM")
 #' data(casino)
 #' forward(x, casino)
 #' ##
@@ -66,21 +66,21 @@
 #' @name forward
 ################################################################################
 forward <- function(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
-                    windowspace = "all", type = "global", eta = 0.01,
+                    type = "global", windowspace = "all",
                     DI = FALSE, ID = FALSE, cpp = TRUE){
   UseMethod("forward")
 }
-
+################################################################################
 #' @rdname forward
 ################################################################################
 forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "global", odds = TRUE,
                          windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE){
-  if(identical(logspace, "autodetect")) logspace <- logdetect(x)
+  if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   pp <- inherits(y, "PHMM")
   if(pp) stop("PHMM vs PHMM forward comparison is not supported")
-  pd <- is.DNA(y)
-  pa <- is.AA(y)
+  pd <- .isDNA(y)
+  pa <- .isAA(y)
   pc <- !pp & !pd & !pa
   if(pd){
     rownames(x$E) <- toupper(rownames(x$E))
@@ -98,7 +98,7 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }else stop("Invalid input object y: multi-sequence list")
     }
     y.DNAbin <- y
-    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
+    y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(pa){
     rownames(x$E) <- toupper(rownames(x$E))
     PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -115,7 +115,7 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     y.AAbin <- y
     #y <- AA2heptovigesimal(y, na.rm = TRUE)
-    y <- encode.AA(y, arity = 27, na.rm = TRUE)
+    y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else if(pc){
     if(is.list(y)){
       if(length(y) == 1){
@@ -175,15 +175,15 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       if(pd){
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
         #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
-        yqt <- encode.DNA(y.DNAbin, arity = 4, na.rm = TRUE)
-        windowspace <- streak(xqt, yqt, arity = 4, k = 5)
+        yqt <- .encodeDNA(y.DNAbin, arity = 4, na.rm = TRUE)
+        windowspace <- .streak(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
-        y.comp <- encode.AA(y.AAbin, arity = 6, na.rm = TRUE)
-        xseq.comp <- encode.AA(xseq, arity = 6, na.rm = TRUE)
-        windowspace <- streak(xseq.comp, y.comp, arity = 6, k = 5)
+        y.comp <- .encodeAA(y.AAbin, arity = 6, na.rm = TRUE)
+        xseq.comp <- .encodeAA(xseq, arity = 6, na.rm = TRUE)
+        windowspace <- .streak(xseq.comp, y.comp, arity = 6, k = 5)
       }else{
         xseq <- match(xseq, rownames(x$E)) - 1
-        windowspace <- streak(xseq, y, arity = nrow(x$E), k = 3)
+        windowspace <- .streak(xseq, y, arity = nrow(x$E), k = 3)
       }
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, length(y))
@@ -273,13 +273,13 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   }
   return(res)
 }
-
+################################################################################
 #' @rdname forward
 ################################################################################
 forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
-  if(identical(logspace, 'autodetect')) logspace <- logdetect(x)
-  DNA <- is.DNA(y)
-  AA <- is.AA(y)
+  if(identical(logspace, 'autodetect')) logspace <- .logdetect(x)
+  DNA <- .isDNA(y)
+  AA <- .isAA(y)
   if(DNA){
     colnames(x$E) <- toupper(colnames(x$E))
     NUCorder <- sapply(colnames(x$E), match, c("A", "T", "G", "C"))
@@ -295,7 +295,7 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
       }else stop("Invalid input object y: multi-sequence list")
     }
     #y <- DNA2pentadecimal(y, na.rm = TRUE)
-    y <- encode.DNA(y, arity = 15, na.rm = TRUE)
+    y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(AA){
     colnames(x$E) <- toupper(colnames(x$E))
     PFAMorder <- sapply(colnames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
@@ -311,7 +311,7 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
       }else stop("Invalid input object y: multi-sequence list")
     }
     #y <- AA2heptovigesimal(y, na.rm = TRUE)
-    y <- encode.AA(y, arity = 27, na.rm = TRUE)
+    y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else{
     if(is.list(y)){
       if(length(y) == 1){
@@ -373,7 +373,7 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   }
   return(res)
 }
-
+################################################################################
 #
 # forward.default <- function(x, y, type = 'global', d = 8, e = 2,
 #                            S = NULL, windowspace = "all"){

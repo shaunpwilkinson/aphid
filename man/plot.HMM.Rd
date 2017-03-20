@@ -8,7 +8,7 @@
   begin = FALSE, ...)
 }
 \arguments{
-\item{x}{an object of class \code{"HMM"}}
+\item{x}{an object of class \code{"HMM"}.}
 
 \item{just}{a character string giving the justfication of the plot relative
 to the device. Accepted values are "left", "center" and "right".}
@@ -19,26 +19,46 @@ to the device. Accepted values are "left", "center" and "right".}
 
 \item{begin}{logical indicating whether the begin/end state should be plotted.
 Defaults to FALSE.}
+
+\item{...}{additional arguments to be passed to \code{\link{plot}}.}
+}
+\value{
+NULL (invisibly).
 }
 \description{
-\code{plot.HMM} provides a visual representation of a standard hidden Markov model.
+\code{plot.HMM} provides a visual representation of a standard hidden Markov
+  model.
+}
+\details{
+\code{"plot.HMM"} Plots a \code{"HMM"} object as a directed graph
+  States (rectangles) are interconnected by directed
+  lines with line-weights proportional to the transition probabilities between
+  the states.
 }
 \examples{
-## the dishonest casino example from Durbin et al. (1998).
-A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9), nrow = 3)
-states <- c("Begin", "Fair", "Loaded")
-dimnames(A) <- list(from = states, to = states)
-E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
-              (1/10),(1/10),(1/10),(1/10),(1/10),(1/2)),
-            nrow = 2, byrow = TRUE)
-dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
-x <- structure(list(A = A, E = E), class = "HMM")
-plot(x)
-plot(x, begin)
-
-
-
+  ## the dishonest casino example from Durbin et al. (1998).
+  A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9), nrow = 3)
+  states <- c("Begin", "Fair", "Loaded")
+  dimnames(A) <- list(from = states, to = states)
+  E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
+                (1/10),(1/10),(1/10),(1/10),(1/10),(1/2)),
+              nrow = 2, byrow = TRUE)
+  dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
+  x <- structure(list(A = A, E = E), class = "HMM")
+  plot(x, main = "Dishonest casino hidden Markov model")
 }
 \references{
-Durbin et al. (1998).
+Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+  sequence analysis: probabilistic models of proteins and nucleic acids.
+  Cambridge University Press, Cambridge, United Kingdom.
+
+Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+  sequence analysis: probabilistic models of proteins and nucleic acids.
+  Cambridge University Press, Cambridge, United Kingdom.
+}
+\seealso{
+\code{\link{plot.PHMM}}
+}
+\author{
+Shaun Wilkinson
 }

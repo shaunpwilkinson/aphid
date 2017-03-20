@@ -11,7 +11,7 @@ using namespace Rcpp;
 //'   values in the input vector.
 //' @details This is a simple compiled function that exponentiates the values
 //' in the input vector, finds their sum, and returns the log of that value.
-//' @author Shaun P. Wilkinson
+//' @author Shaun Wilkinson
 //'
 // [[Rcpp::export]]
 double logsum(NumericVector x){
@@ -43,7 +43,7 @@ double logsum(NumericVector x){
 //' @details This is a simple compiled function similar to which.max{base} but
 //'   with random breaking of ties. Unlike which.max{base}, logical vectors are
 //'   not accepted.
-//' @author Shaun P. Wilkinson
+//' @author Shaun Wilkinson
 //'
 // [[Rcpp::export]]
 int whichmax(NumericVector x, int start = 1){

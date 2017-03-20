@@ -21,7 +21,7 @@ X and *:
 substitution_matrices
 }
 \description{
-A dataset containing several of the more popular substitution scoring matrices
+A dataset containing several popular substitution scoring matrices
 for DNA and amino acids.
 }
 \keyword{datasets}

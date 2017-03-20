@@ -9,19 +9,29 @@ readPHMM(file = "", ...)
 \arguments{
 \item{file}{the name of the file from which to read the model.}
 
-\item{...}{further arguments to be passed to \code{"scan"} .}
+\item{...}{further arguments to be passed to \code{"scan"}.}
 }
 \value{
 an object of class \code{"PHMM"}.
 }
 \description{
-\code{readPHMM} parses a HMMER3 text file into Rand creates an object of class
-\code{"PHMM"}.
+The \code{readPHMM} function parses a HMMER3 text file into R and creates
+  an object of class \code{"PHMM"}.
+}
+\details{
+TBA
+}
+\examples{
+  ## TBA
 }
 \references{
-Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence similarity searching.
-\emph{Nucleic Acids Research}. \strong{39}:W29–W37. \url{http://hmmer.org/}.
+Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
+  similarity searching. \emph{Nucleic Acids Research}. \strong{39}:W29-W37.
+  \url{http://hmmer.org/}.
 }
 \seealso{
-\code{\link{write.PHMM}} for writing PHMM objects in HMMER3 text format.
+\code{\link{writePHMM}} for writing PHMM objects in HMMER3 text format.
+}
+\author{
+Shaun Wilkinson
 }

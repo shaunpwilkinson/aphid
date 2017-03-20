@@ -1,59 +1,67 @@
 #' Plot profile hidden Markov models.
 #'
-#' \code{plot.PHMM} provides a visual representation of a profile hidden Markov model.
+#' \code{plot.PHMM} provides a visual representation of a profile hidden
+#'   Markov model.
 #'
 #' @param x an object of class \code{"PHMM"}.
-#' @param from an integer giving the module number from where to begin the plot sequence.
-#'     Defaults to "start" which is converted to 0. Only applicable when
-#'     plotting \code{"PHMM"} objects.
-#' @param to an integer giving the module number at which to to finish the plot sequence.
-#'     Defaults to "start" which is converted to the total number of internal modules in the
-#'     model plus two (to account for the begin and end states).
-#'     Only applicable when plotting \code{"PHMM"} objects.
+#' @param from an integer giving the module number to start the plot
+#'   sequence from. Also accepts the chracter string "start" (module 0; default).
+#' @param to an integer giving the module number to terminate the plot sequence.
+#'   Also accepts the chracter string "end" (default).
 #' @param just a character string giving the justfication of the plot relative
 #'   to the device. Accepted values are "left", "center" and "right".
 #' @param arrexp the expansion factor to be applied to the arrows in the plot.
 #' @param textexp the expansion factor to be applied to the text in the plot.
+#' @param ... additional arguments to be passed to \code{\link{plot}}.
 #' @return NULL (invisibly).
-#'
 #' @details \code{"plot.PHMM"} Plots a \code{"PHMM"} object as a directed graph
 #'   with sequential modules consisting of squares, diamonds and circles
-#'   representing match, insert
-#'   and delete states, respectively. Modules are interconnected by directed
+#'   representing match, insert and delete states, respectively.
+#'   Modules are interconnected by directed
 #'   lines with line-weights proportional to the transition probabilities between
 #'   the states. Since the plotted models are generally much longer than they are
 #'   high, it is usually better to output the plot to a PDF file as demonstrated
 #'   in the example below.
-#'
+#' @author Shaun Wilkinson
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
+#' @seealso \code{\link{plot.HMM}}
 #' @examples
-#' \dontrun{
-#' library(ape)
-#' data(woodmouse)
-#' woodmouse.PHMM <- derivePHMM(woodmouse)
-#'
-#' ## plot partial model to viewer device
-#' plot(woodmouse.PHMM, from = 0, to = 5)
-#'
-#' ## plot the entire model to a PDF
-#' nr <- ceiling((woodmouse.PHMM$size + 2)/10)
-#' pdf(file = "woodmouse.pdf",
-#'    width = 8.27, height = nr * 2)
-#' par(mfrow = c(nr, 1), mar = c(0, 0, 0, 0) + 0.1)
-#' from <- 0
-#' to <- 10
-#' for(i in 1:nr){
-#'   plot(woodmouse.PHMM, from = from, to = to, just = "left")
-#'   from <- from + 10
-#'   to <- min(to + 10, woodmouse.PHMM$size + 1)
-#' }
-#' dev.off()
-#' }
-#'
-#'
-#'
+#'   ## Small globin alignment example from Durbin et al. (1998) Figure 5.3
+#'   data(globins)
+#'   ## derive a profile hidden Markov model from the alignment
+#'   globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+#'   ## plot the PHMM
+#'   plot(globins.PHMM, main = "Profile hidden Markov model for globins")
+#'   ##
+#'   ## derive a profile hidden Markov model from the woodmouse dataset in the
+#'   ## ape package
+#'   library(ape)
+#'   data(woodmouse)
+#'   woodmouse.PHMM <- derivePHMM(woodmouse)
+#'   ## plot partial model to viewer device
+#'   plot(woodmouse.PHMM, from = 0, to = 5)
+#'   ## plot the entire model to a PDF
+#'   \dontrun{
+#'   nr <- ceiling((woodmouse.PHMM$size + 2)/10)
+#'   pdf(file = "woodmouse.pdf",
+#'      width = 8.27, height = nr * 2)
+#'   par(mfrow = c(nr, 1), mar = c(0, 0, 0, 0) + 0.1)
+#'   from <- 0
+#'   to <- 10
+#'   for(i in 1:nr){
+#'     plot(woodmouse.PHMM, from = from, to = to, just = "left")
+#'     from <- from + 10
+#'     to <- min(to + 10, woodmouse.PHMM$size + 1)
+#'   }
+#'   dev.off()
+#'   }
+################################################################################
 plot.PHMM <- function(x, from = "start", to = "end", just = "center",
                       arrexp = 1, textexp = 1, ...){
-  logspace <- logdetect(x)
+  logspace <- .logdetect(x)
   if(logspace){
     x$A <- exp(x$A)
     x$E <- exp(x$E)
@@ -100,9 +108,7 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
   nr <- nrow(fromto)
   #fromstates <- rep(rep(c("D", "I", "M"), each = 3), times = pHMMlength + 1)
   #tostates <- rep(c("I", "D", "M"), times = 3 * (pHMMlength + 1))
-
   transitions <- rep(c("DI", "DD", "DM", "II", "ID", "IM", "MI", "MD", "MM"), pHMMlength + 1)
-
   modstates <- paste(rep(0:pHMMlength, each = 9))
   nullarrows <- rep(FALSE, nr)
   nullarrows[c(1:3, nr - c(1, 4, 7))] <- TRUE
@@ -141,7 +147,7 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
   symbcoords[,2] <- tmpseq[-c(1, length(tmpseq))]
   for(i in seq(from = 1, to = 3 * no.boxes, by = 3)){
     if(pos != pHMMlength + 1){
-      diamond(coords[i + 1, 1], coords[i + 1, 2],
+      .diamond(coords[i + 1, 1], coords[i + 1, 2],
               radx = sqrt((xunit^2)/2),
               rady = sqrt((yunit^2)/2),
               col = 'white')
@@ -150,7 +156,7 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
            labels = paste(round(x$A["II", pos + 1] * 100, 0)),
            cex = textexp)
       if(pos != 0){
-        ellipse(coords[i, 1], coords[i, 2],
+        .ellipse(coords[i, 1], coords[i, 2],
                 radx = xunit/2,
                 rady = yunit/2,
                 col = 'white')
@@ -186,34 +192,46 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
     pos <- pos + 1
   }
 }
-
-
+################################################################################
 #' Plot standard hidden Markov models.
 #'
-#' \code{plot.HMM} provides a visual representation of a standard hidden Markov model.
+#' \code{plot.HMM} provides a visual representation of a standard hidden Markov
+#'   model.
 #'
-#' @param x an object of class \code{"HMM"}
+#' @param x an object of class \code{"HMM"}.
 #' @param begin logical indicating whether the begin/end state should be plotted.
-#'     Defaults to FALSE.
+#'   Defaults to FALSE.
 #' @inheritParams plot.PHMM
-#' @references Durbin et al. (1998).
+#' @return NULL (invisibly).
+#' @details \code{"plot.HMM"} Plots a \code{"HMM"} object as a directed graph
+#'   States (rectangles) are interconnected by directed
+#'   lines with line-weights proportional to the transition probabilities between
+#'   the states.
+#' @author Shaun Wilkinson
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
+#' @seealso \code{\link{plot.PHMM}}
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
 #' @examples
-#' ## the dishonest casino example from Durbin et al. (1998).
-#' A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9), nrow = 3)
-#' states <- c("Begin", "Fair", "Loaded")
-#' dimnames(A) <- list(from = states, to = states)
-#' E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
-#'               (1/10),(1/10),(1/10),(1/10),(1/10),(1/2)),
-#'             nrow = 2, byrow = TRUE)
-#' dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
-#' x <- structure(list(A = A, E = E), class = "HMM")
-#' plot(x)
-#' plot(x, begin)
-#'
-#'
-#'
-plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1, begin = FALSE, ...){
-  logspace <- logdetect(x)
+#'   ## the dishonest casino example from Durbin et al. (1998).
+#'   A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9), nrow = 3)
+#'   states <- c("Begin", "Fair", "Loaded")
+#'   dimnames(A) <- list(from = states, to = states)
+#'   E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
+#'                 (1/10),(1/10),(1/10),(1/10),(1/10),(1/2)),
+#'               nrow = 2, byrow = TRUE)
+#'   dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
+#'   x <- structure(list(A = A, E = E), class = "HMM")
+#'   plot(x, main = "Dishonest casino hidden Markov model")
+################################################################################
+plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
+                     begin = FALSE, ...){
+  logspace <- .logdetect(x)
   if(logspace){
     x$A <- exp(x$A)
     x$E <- exp(x$E)
@@ -252,18 +270,18 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1, begin = FALSE,
     coords <- coords[-1,]
     #self arrow
     arrwgt0 <- x$A[1, 1] * 4 * arrexp
-    arc(x = coords1[1] - xunit/2, y = coords1[2],
+    .arc(x = coords1[1] - xunit/2, y = coords1[2],
         from = pi/2, to = 5 * pi/2,
         radx = xunit/4, rady = yunit/4,
         arrow = 0.5, lwd = arrwgt0)
     for(i in 1:statelen){
       arrwgt1 <- x$A[1, i + 1] * 4 * arrexp
       arrwgt2 <- x$A[i + 1, 1] * 4 * arrexp
-      arc(x = coords1[1] + i * xunit, y = coords1[2],
+      .arc(x = coords1[1] + i * xunit, y = coords1[2],
           from = -pi/2, to = pi/2,
           radx = i * xunit, rady = i * boxhgt/2,
           arrow = 0.5, lwd = arrwgt1)
-      arc(x = coords1[1] + i * xunit, y = coords1[2],
+      .arc(x = coords1[1] + i * xunit, y = coords1[2],
           from = pi/2, to = 3*pi/2,
           radx = i * xunit, rady = i * boxhgt/2,
           arrow = 0.5, lwd = arrwgt2)
@@ -280,13 +298,13 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1, begin = FALSE,
     for(j in 1:statelen){
       arrwgt <- x$A[i + 1, j + 1] * 4 * arrexp
       if(i == j){
-        arc(x = coords[i, 1] - xunit/2, y = coords[i, 2],
+        .arc(x = coords[i, 1] - xunit/2, y = coords[i, 2],
             from = pi/2, to = 5 * pi/2,
             radx = xunit/4, rady = yunit/4,
             arrow = 0.5, lwd = arrwgt)
       }else{
         dif <- abs(diff(c(i, j)))
-        arc(x = mean(coords[c(i, j),1]), y = coords[i, 2],
+        .arc(x = mean(coords[c(i, j),1]), y = coords[i, 2],
             from = if(j > i) -pi/2 else pi/2,
             to = if(j > i) pi/2 else 3 * pi/2,
             radx = dif * xunit, rady = dif * boxhgt/2,
@@ -322,11 +340,10 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1, begin = FALSE,
     symbcoords[, 1] <- symbcoords[, 1] + (2 * xunit)
   }
 }
-
-
-#' Geometric functions.
-#'
-arc <- function(x, y, radx, rady = radx, from = 0, to = 2 * pi,
+################################################################################
+#################### Internal geometric functions ##############################
+################################################################################
+.arc <- function(x, y, radx, rady = radx, from = 0, to = 2 * pi,
                 no.points = 100, fill = NULL,
                 arrow = NULL, arrowsize = 0.08, code = 2, ...){
   piseq <- seq(from, to, by = (to - from)/no.points)
@@ -350,8 +367,8 @@ arc <- function(x, y, radx, rady = radx, from = 0, to = 2 * pi,
     }
   }
 }
-
-chord <- function(x, y, rad, type = 'outer', no.points = 100,
+################################################################################
+.chord <- function(x, y, rad, type = 'outer', no.points = 100,
                   arrow = TRUE, arrowlength = 0.08, reversearrow = FALSE,
                   ...){#x and y are vectors of from, to
   distance <- sqrt(diff(x)^2 + diff(y)^2)
@@ -386,8 +403,8 @@ chord <- function(x, y, rad, type = 'outer', no.points = 100,
            ... = ...)
   }
 }
-
-ellipse <- function(x, y, radx, rady = radx,
+################################################################################
+.ellipse <- function(x, y, radx, rady = radx,
                     no.points = 100, col = NULL, lwd = 1){
   piseq <- seq(0, 2 * pi, by = (2 * pi)/no.points)
   coords <- matrix(nrow = no.points + 1, ncol = 2)
@@ -395,10 +412,10 @@ ellipse <- function(x, y, radx, rady = radx,
   coords[, 2] <- y - rady * cos(piseq)
   polygon(coords, col = col, lwd = lwd)
 }
-
-diamond <- function(x, y, radx, rady = radx, col = NULL, lwd = 1){
+################################################################################
+.diamond <- function(x, y, radx, rady = radx, col = NULL, lwd = 1){
   xcoords <- c(x + c(0, radx, 0, -radx))
   ycoords <- c(y + c(rady, 0, -rady, 0))
   polygon(xcoords, ycoords, col = col, lwd = lwd)
 }
-
+################################################################################

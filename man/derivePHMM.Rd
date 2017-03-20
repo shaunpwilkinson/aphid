@@ -6,43 +6,42 @@
 \alias{derivePHMM.AAbin}
 \alias{derivePHMM.list}
 \alias{derivePHMM.default}
-\title{Derive a profile HMM from a multiple sequence alignment.}
+\title{Derive a profile hidden Markov model.}
 \usage{
 derivePHMM(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   residues = NULL, gapchar = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  deltaLL = 1e-07, DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
-  name = NULL, description = NULL, compo = FALSE, consensus = FALSE,
-  seeds = "random", refine = "Viterbi", maxiter = if (refine == "Viterbi")
-  10 else 100, cpp = TRUE, quiet = FALSE, ...)
+  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
+  description = NULL, compo = FALSE, consensus = FALSE,
+  seeds = "random", refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
+  cpp = TRUE, quiet = FALSE, ...)
 
 \method{derivePHMM}{DNAbin}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gapchar = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  deltaLL = 1e-07, DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
-  name = NULL, description = NULL, compo = FALSE, consensus = FALSE,
-  seeds = "random", refine = "Viterbi", maxiter = if (refine == "Viterbi")
-  10 else 100, cpp = cpp, quiet = FALSE, ...)
+  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
+  description = NULL, compo = FALSE, consensus = FALSE,
+  seeds = "random", refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
+  cpp = TRUE, quiet = FALSE, ...)
 
 \method{derivePHMM}{AAbin}(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   residues = NULL, gapchar = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  deltaLL = 1e-07, DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
-  name = NULL, description = NULL, compo = FALSE, consensus = FALSE,
-  seeds = "random", refine = "Viterbi", maxiter = if (refine == "Viterbi")
-  10 else 100, cpp = TRUE, quiet = FALSE, ...)
+  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
+  description = NULL, compo = FALSE, consensus = FALSE,
+  seeds = "random", refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
+  cpp = TRUE, quiet = FALSE, ...)
 
 \method{derivePHMM}{list}(x, seeds = "random", refine = "Viterbi",
-  maxiter = if (refine == "Viterbi") 10 else 100, seqweights = "Gerstein",
-  wfactor = 1, k = 5, residues = NULL, gapchar = "-",
-  pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  maxsize = NULL, inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
-  threshold = 0.5, deltaLL = 1e-07, omit.endgaps = TRUE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE, cpp = TRUE,
-  quiet = FALSE, ...)
+  maxiter = 100, deltaLL = 1e-07, seqweights = "Gerstein", wfactor = 1,
+  k = 5, residues = NULL, gapchar = "-", pseudocounts = "background",
+  logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
+  inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
+  threshold = 0.5, omit.endgaps = TRUE, name = NULL, description = NULL,
+  compo = FALSE, consensus = FALSE, cpp = TRUE, quiet = FALSE, ...)
 
 \method{derivePHMM}{default}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gapchar = "-", endchar = "?",
@@ -53,89 +52,191 @@ derivePHMM(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   quiet = FALSE)
 }
 \arguments{
-\item{x}{a character matrix of aligned sequences.}
+\item{x}{a matrix of aligned sequences or a list of unaligned sequences.
+Accepted modes are "character" and "raw" (for "DNAbin" and "AAbin" objects).}
 
-\item{seqweights}{either NULL (default; all sequences are given an equal
-weight of 1), a numeric vector the same length as \code{x} representing
+\item{seqweights}{either NULL (default; all sequences are given
+weights of 1), a numeric vector the same length as \code{x} representing
 the sequence weights used to derive the model, or a character string giving
 the method to derive the weights from the sequences. Currently only the
-\code{"Gerstein"} method is supported (the default). For this method, a
-tree is first created by k-mer counting (see \code{\link{kdistance}}),
-and sequence weights are derived from the tree using the 'bottom up'
-algorithm of Gerstein et al. (1994). The sum of these weights are equal
-to the number of sequences in the alignment (so that mean(seqweights) = 1;
-Note this does not need to be the case if providing weights as a numeric vector).}
+\code{"Gerstein"} method is supported (default). For this method, a
+tree is first created by k-mer counting (see \code{\link{topdown}}),
+and sequence weights are then derived from the tree using the 'bottom up'
+algorithm of Gerstein et al. (1994).}
+
+\item{wfactor}{numeric. The factor to multiply the sequence weights by.
+Defaults to 1.}
+
+\item{k}{integer representing the k-mer size to be used for calculating
+the distance matrix used in tree-based sequence weighting. Defaults to
+5. Note that high values of k (> 8) may be slow to compute and use a lot
+of memory due to the large numbers of calculations required.}
 
 \item{residues}{either NULL (default; emitted residues are automatically
-detected from the alignment), or a case sensitive character vector specifying the
-residue alphabet (e.g. \code{c("A", "T", "G", "C")} for DNA).sequence weights are derived
-Note that the former option can be slow for large character matrices;
-therefore specifying the residue alphabet can increase speed in these cases.
-Also note that the default setting \code{residues = NULL} will not
-detect rare residues that are not present in the alignment, and thus will
-not assign them emission probabilities.}
+detected from the sequences), a case sensitive character vector
+specifying the residue alphabet, or one of the character strings
+"RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
+large lists of character vectors. Furthermore, the default setting
+\code{residues = NULL} will not detect rare residues that are not present
+in the sequences, and thus will not assign them emission probabilities
+in the model. Specifying the residue alphabet is therefore
+recommended unless x is a "DNAbin" or "AAbin" object.}
 
 \item{gapchar}{the character used to represent gaps in the alignment matrix.
-Not required for \code{"DNAbin"} or \code{"AAbin"} objects.}
+Ignored for \code{"DNAbin"} or \code{"AAbin"} objects. Defaults to "-"
+otherwise.}
 
-\item{pseudocounts}{the method used to account for the possible absence of certain
-character states in the alignment. Currently only \code{"Laplace"}
-and \code{"background"} or \code{"none"} are supported.
-If \code{pseudocounts = "background"} and
-some transition/emission types are absent from the alignment, Laplacean
-pseudocounts are automatically added.}
+\item{endchar}{the character used to represent unknown residues in
+the alignment matrix (if applicable). Ignored for \code{"DNAbin"} or
+\code{"AAbin"} objects. Defaults to "?" otherwise.}
+
+\item{pseudocounts}{character string, either "background", Laplace"
+or "none". Used to account for the possible absence of certain
+transition and/or emission types in the input sequences.
+If \code{pseudocounts = "background"} (default), pseudocounts
+are calculated from the background transition and emission
+frequencies in the sequences.
+If \code{pseudocounts = "Laplace"} one of each possible transition
+and emission type is added to the transition and emission counts.
+If \code{pseudocounts = "none"} no pseudocounts are added (not
+generally recommended, since low frequency transition/emission types
+may be excluded from the model).
+Alternatively this argument can be a two-element list containing
+a matrix of transition pseudocounts
+as its first element and a matrix of emission pseudocounts as its
+second.}
 
 \item{logspace}{logical indicating whether the emission and transition
-probability on the returned model should be logged.}
+probabilities in the returned model should be logged. Defaults to TRUE.}
 
-\item{qa}{an optional named 9-element vector of background transition probabilities with
-\code{dimnames(qa) = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")},
-where M, I and D represent match, insert and delete states, respectively. If
-\code{NULL}, background transition probabilities are generated from the alignment.}
+\item{qa}{an optional named 9-element vector of background transition
+probabilities with \code{dimnames(qa) = c("DD", "DM", "DI", "MD", "MM",
+"MI", "ID", "IM", "II")}, where M, I and D represent match, insert and
+delete states, respectively. If \code{NULL}, background transition
+probabilities are estimated from the sequences.}
 
-\item{qe}{an optional named vector of background emission probabilities the
-same length as the residue alphabet (i.e. 4 for nucleotides and 20 for
-amino acids) and with corresponding names
-(e.g. \code{c("A", "T", "G", "C")} for DNA).
-If \code{NULL}, background emission probabilities are generated from the alignment.}
+\item{qe}{an optional named vector of background emission probabilities
+the same length as the residue alphabet (i.e. 4 for nucleotides and 20
+for amino acids) and with corresponding names (i.e. \code{c("A", "T",
+"G", "C")} for DNA). If \code{qe = NULL}, background emission probabilities
+are automatically derived from the sequences.}
 
-\item{inserts}{model construction method. Either 'threshold' (default),'map', 'inherited',
-or if insert columns are to be specified manually, a logical vector of length ncol(x),
-specifying the columns of x that should be designated
-as inserts (\code{TRUE} for insert columns, \code{FALSE} for match states).
-If \code{inserts = "threshold"} columns are assigned as insert states if the proportion of
-gap characters in the column is higher than a specified threshold (defaults to 0.5).
-If set to 'map' insert columns are found using the maximum \emph{a posteriori}
-dynamic programming method outlined in Durbin et al. (1998). If set to 'inherited' the
-function looks for an 'inserts' attribute from the alignment.}
+\item{maxsize}{integer giving the upper bound on the number of modules
+in the PHMM. If NULL (default) no maximum size is enforced.}
+
+\item{inserts}{character string giving the model construction method
+by which alignment columns
+are marked as either match or insert states. Accepted methods include
+\code{"threshold"} (only columns with fewer than a specified
+proportion of gaps form match states in the model), \code{"map"} (default;
+match and insert columns are found using the maximum \emph{a posteriori}
+method outlined in Durbin et al. (1998) chapter 5.7), \code{"inherited"}
+(match and insert columns are inherited from the "inserts" attribute
+of the input alignment), and \code{"none"} (all columns are assigned
+match states in the model). Alternatively, insert columns can be
+specified manually by providing a logical vector the same length
+as the number of columns in the alignment, with \code{TRUE} for insert
+columns and \code{FALSE} for match states.}
 
 \item{threshold}{the maximum proportion of gaps for an alignment column
-to be considered a module in the PHMM (defaults to 0.5). Only applicable for
-\code{inserts = "threshold"}. Note that the maximum \emph{a posteriori} method works
-poorly for small alignments so the 'threshold' method is automatically used when
-the number of sequences is fewer than 5.}
+to be considered for a match state in the PHMM (defaults to 0.5).
+Only applicable when \code{inserts = "threshold"}.
+Note that the maximum \emph{a posteriori}
+method works poorly for alignments with few sequences,
+so the 'threshold' method is
+automatically used when the number of sequences is less than 5.}
 
-\item{lambda}{penalty parameter used to favour models with fewer match states. Equivalent
-to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).
-Only applicable for \code{inserts = "map"}.}
+\item{lambda}{penalty parameter used to favour models with fewer match
+states. Equivalent to the log of the prior probability of marking each
+column (Durbin et al. 1998, chapter 5.7). Only applicable when
+\code{inserts = "map"}.}
+
+\item{DI}{logical indicating whether delete-insert transitions should be
+allowed in the profile hidden Markov model (if applicable). Defaults
+to FALSE.}
+
+\item{ID}{logical indicating whether insert-delete transitions should be
+allowed in the profile hidden Markov model (if applicable). Defaults to
+FALSE.}
+
+\item{omit.endgaps}{logical. Should gap characters at each end of the
+sequences be ignored when deriving the transition probabilities
+of the model? Defaults to TRUE.
+Set to FALSE only if x is a true global alignment
+and all sequences are represented in their entirety.}
+
+\item{name}{an optional character string. The name of the
+new profile hidden Markov model.}
+
+\item{description}{an optional character string. The description of the
+new profile hidden Markov model.}
+
+\item{compo}{logical indicating whether the average emission
+probabilities of the model modules should be returned with the
+PHMM object.}
+
+\item{consensus}{placeholder. Consensus sequences will be available in
+a future version.}
+
+\item{seeds}{optional integer vector indicating which sequences should
+be used as seeds for building the guide tree for the progressive
+alignment (assuming x is a list of unaligned sequences, ignored otherwise).
+Defaults to "random", in which a set of log(n, 2)^2 non-identical
+sequences are randomly chosen from the list of sequences.}
+
+\item{refine}{the method used to iteratively refine the model parameters
+following the initial progressive alignment and model derivation step.
+Current supported options are \code{"Viterbi"} (Viterbi training;
+the default option), \code{"BaumWelch"} (a modified version of the
+Expectation-Maximization algorithm), and "none" (skips the model
+refinement step).}
+
+\item{maxiter}{the maximum number of EM iterations or Viterbi training
+iterations to carry out before the cycling process is terminated and
+the partially trained model is returned. Defaults to 100.}
+
+\item{deltaLL}{numeric, the maximum change in log likelihood between EM
+iterations before the cycling procedure is terminated (signifying model
+convergence). Defaults to 1E-07. Only applicable if
+\code{method = "BaumWelch"}.}
+
+\item{cpp}{logical, indicates whether the dynamic programming matrix
+should be filled using compiled C++ functions (default; many times faster).
+The FALSE option is primarily retained for bug fixing and experimentation.}
+
+\item{quiet}{logical indicating whether feedback should be printed
+to the console.}
+
+\item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
+\code{refine = "Viterbi"}) or \code{"forward"} (if
+\code{refine = "BaumWelch"}).}
 }
 \value{
 an object of class \code{"PHMM"}
 }
 \description{
-\code{derivePHMM} generates a profile HMM from a given multiple sequence alignment.
+\code{derivePHMM} generates a profile HMM from a given multiple sequence alignment
+  or a list of unaligned sequences.
 }
 \details{
-This function is the homologue of \code{hmmbuild} in HMMER3.1 (http://hmmer.org/) and
-\code{modelfromalign} and \code{buildmodel} in the SAM package
-(https://compbio.soe.ucsc.edu/sam.html).
-
-
-TBA
+This function performs a similar operation to the  \code{hmmbuild}
+  function in the \href{http://www.hmmer.org}{HMMER} package, and the
+  \code{modelfromalign} and \code{buildmodel} functions in the
+  \href{https://compbio.soe.ucsc.edu/sam.html}{SAM} package.
 }
 \examples{
-## TBA
-
+## Small globin alignment data from Durbin et al. (1998) Figure 5.3
+data(globins)
+## derive a profile hidden Markov model from the alignment
+globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+plot(globins.PHMM, main = "Profile hidden Markov model for globins")
+##
+## derive a profle HMM from the woodmouse dataset in the
+## ape package and plot the first 5 modules
+library(ape)
+data(woodmouse)
+woodmouse.PHMM <- derivePHMM(woodmouse)
+plot(woodmouse.PHMM, from = 0, to = 4, main = "Woodmouse profile HMM")
 }
 \references{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -149,5 +250,5 @@ Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 \code{\link{deriveHMM}}, \code{\link{map}}
 }
 \author{
-Shaun P. Wilkinson
+Shaun Wilkinson
 }

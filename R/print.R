@@ -1,4 +1,10 @@
-print.PHMM <- function(x, digits = 7){
+#' Print summary methods.
+#' @param x object of various classes.
+#' @param ... additional arguments.
+#' @return NULL (invisibly)
+#' @author Shaun Wilkinson
+#' @name print
+print.PHMM <- function(x, ...){
   cat("Profile hidden Markov model (object class: 'PHMM')\n",
       "with ",
       x$size,
@@ -10,8 +16,8 @@ print.PHMM <- function(x, digits = 7){
       ").\n",
       sep = "")
 }
-
-print.HMM <- function(x, digits = 7){
+#' @rdname print
+print.HMM <- function(x, ...){
   cat("Hidden Markov model (object class: 'HMM') with ",
       nrow(x$E),
       " hidden states (",
@@ -23,23 +29,26 @@ print.HMM <- function(x, digits = 7){
       ").\n",
       sep = "")
 }
-
-print.fullprob <- function(x, digits = 7){
+#' @rdname print
+print.fullprob <- function(x, ...){
   if(x$odds){
     cat("Log odds score: ", x$score)
   } else cat("Full (log) probability of sequence given model =", x$score)
 }
-
-print.Viterbi <- function(x, digits = 7){
+#' @rdname print
+print.Viterbi <- function(x, ...){
   cat("Optimal path with length",
       length(x$path),
       "and score",
       x$score)
 }
-
-print.mbed <- function(x, digits = 7){
+#' @rdname print
+print.mbed <- function(x, ...){
   cat("Matrix of", nrow(x),
       "embedded sequences, represented as vectors of distances to",
       ncol(x),
       "seed sequences")
 }
+
+
+# digits integer, for compatibility with other print methods.

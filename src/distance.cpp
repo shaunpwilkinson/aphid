@@ -57,7 +57,8 @@ NumericMatrix kcountDNA(List x, int k = 5){
         }
         tuplemat(i, decimalindex)++;
       }else if(all(isN).is_true()){
-        for(int m = 0; m < fourtopowerk; m++) tuplemat(i, m) += kNs;
+        //for(int m = 0; m < fourtopowerk; m++) tuplemat(i, m) += kNs;
+        // // omitted this as was inflating contribution from unkonwn seq seqments
       }else{
         ncombos = 1;
         decimalindex = 0;

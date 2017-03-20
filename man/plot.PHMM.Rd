@@ -10,14 +10,11 @@
 \arguments{
 \item{x}{an object of class \code{"PHMM"}.}
 
-\item{from}{an integer giving the module number from where to begin the plot sequence.
-Defaults to "start" which is converted to 0. Only applicable when
-plotting \code{"PHMM"} objects.}
+\item{from}{an integer giving the module number to start the plot
+sequence from. Also accepts the chracter string "start" (module 0; default).}
 
-\item{to}{an integer giving the module number at which to to finish the plot sequence.
-Defaults to "start" which is converted to the total number of internal modules in the
-model plus two (to account for the begin and end states).
-Only applicable when plotting \code{"PHMM"} objects.}
+\item{to}{an integer giving the module number to terminate the plot sequence.
+Also accepts the chracter string "end" (default).}
 
 \item{just}{a character string giving the justfication of the plot relative
 to the device. Accepted values are "left", "center" and "right".}
@@ -25,47 +22,65 @@ to the device. Accepted values are "left", "center" and "right".}
 \item{arrexp}{the expansion factor to be applied to the arrows in the plot.}
 
 \item{textexp}{the expansion factor to be applied to the text in the plot.}
+
+\item{...}{additional arguments to be passed to \code{\link{plot}}.}
 }
 \value{
 NULL (invisibly).
 }
 \description{
-\code{plot.PHMM} provides a visual representation of a profile hidden Markov model.
+\code{plot.PHMM} provides a visual representation of a profile hidden
+  Markov model.
 }
 \details{
 \code{"plot.PHMM"} Plots a \code{"PHMM"} object as a directed graph
   with sequential modules consisting of squares, diamonds and circles
-  representing match, insert
-  and delete states, respectively. Modules are interconnected by directed
+  representing match, insert and delete states, respectively.
+  Modules are interconnected by directed
   lines with line-weights proportional to the transition probabilities between
   the states. Since the plotted models are generally much longer than they are
   high, it is usually better to output the plot to a PDF file as demonstrated
   in the example below.
 }
 \examples{
-\dontrun{
-library(ape)
-data(woodmouse)
-woodmouse.PHMM <- derivePHMM(woodmouse)
-
-## plot partial model to viewer device
-plot(woodmouse.PHMM, from = 0, to = 5)
-
-## plot the entire model to a PDF
-nr <- ceiling((woodmouse.PHMM$size + 2)/10)
-pdf(file = "woodmouse.pdf",
-   width = 8.27, height = nr * 2)
-par(mfrow = c(nr, 1), mar = c(0, 0, 0, 0) + 0.1)
-from <- 0
-to <- 10
-for(i in 1:nr){
-  plot(woodmouse.PHMM, from = from, to = to, just = "left")
-  from <- from + 10
-  to <- min(to + 10, woodmouse.PHMM$size + 1)
+  ## Small globin alignment example from Durbin et al. (1998) Figure 5.3
+  data(globins)
+  ## derive a profile hidden Markov model from the alignment
+  globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+  ## plot the PHMM
+  plot(globins.PHMM, main = "Profile hidden Markov model for globins")
+  ##
+  ## derive a profile hidden Markov model from the woodmouse dataset in the
+  ## ape package
+  library(ape)
+  data(woodmouse)
+  woodmouse.PHMM <- derivePHMM(woodmouse)
+  ## plot partial model to viewer device
+  plot(woodmouse.PHMM, from = 0, to = 5)
+  ## plot the entire model to a PDF
+  \dontrun{
+  nr <- ceiling((woodmouse.PHMM$size + 2)/10)
+  pdf(file = "woodmouse.pdf",
+     width = 8.27, height = nr * 2)
+  par(mfrow = c(nr, 1), mar = c(0, 0, 0, 0) + 0.1)
+  from <- 0
+  to <- 10
+  for(i in 1:nr){
+    plot(woodmouse.PHMM, from = from, to = to, just = "left")
+    from <- from + 10
+    to <- min(to + 10, woodmouse.PHMM$size + 1)
+  }
+  dev.off()
+  }
 }
-dev.off()
+\references{
+Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+  sequence analysis: probabilistic models of proteins and nucleic acids.
+  Cambridge University Press, Cambridge, United Kingdom.
 }
-
-
-
+\seealso{
+\code{\link{plot.HMM}}
+}
+\author{
+Shaun Wilkinson
 }

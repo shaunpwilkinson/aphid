@@ -7,11 +7,13 @@
 writePHMM(x, file = "", append = FALSE, form = "HMMER3", vers = "f")
 }
 \arguments{
+\item{x}{an object of class \code{"PHMM"}.}
+
 \item{file}{the name of the file to write the model to.}
 
-\item{append}{logical indicating whether the model text should be appended below any
-existing text in the output file, or whether any existing text should be overwritten.
-Defaults to FALSE.}
+\item{append}{logical indicating whether the model text should be appended
+below any existing text in the output file, or whether any existing text
+should be overwritten. Defaults to FALSE.}
 
 \item{form}{character string indicating the format in which to write the model.
 Currently only HMMER3f is supported.}
@@ -19,14 +21,32 @@ Currently only HMMER3f is supported.}
 \item{vers}{character string indicating the version of version of the format
 in which to write the model. Currently only "f" is supported.}
 }
+\value{
+NULL (invisibly)
+}
 \description{
-\code{writePHMM} takes an object of class
-\code{"PHMM"} and writes it to a text file in HMMER3 format.
+\code{writePHMM} takes an object of class \code{"PHMM"} and writes it to a
+  text file in HMMER3 format.
+}
+\details{
+TBA
+}
+\examples{
+\dontrun{
+library(ape)
+data(woodmouse)
+woodmouse.PHMM <- derivePHMM(woodmouse)
+writePHMM(woodmouse.PHMM, file = "woodmouse.hmm")
+}
 }
 \references{
-Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence similarity searching.
-\emph{Nucleic Acids Research}. 39:W29–W37. \url{http://hmmer.org/}.
+Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
+  similarity searching. \emph{Nucleic Acids Research}. 39:W29-W37.
+  \url{http://hmmer.org/}.
 }
 \seealso{
-\code{\link{read.PHMM}} to parse a PHMM object from a HMMER3 text file.
+\code{\link{readPHMM}} to parse a PHMM object from a HMMER3 text file.
+}
+\author{
+Shaun Wilkinson
 }

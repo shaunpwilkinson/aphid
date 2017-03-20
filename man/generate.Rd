@@ -17,25 +17,79 @@ generate(x, size, logspace = "autodetect", gapchar = "-", random = TRUE,
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'}.}
 
-\item{size}{a non-negative integer representing the length of the output sequence
-(if x is a HMM with zero probability of transitioning to the BeginEnd state),
-or the maximum length of the output sequence (acts as a safeguard against overflow).}
+\item{size}{a non-negative integer representing the length of the output
+sequence if x is a \code{"HMM"} object with zero probability of
+transitioning to the begin/end state, or the maximum length of the
+output sequence otherwise (this acts as a safeguard against overflow).}
 
-\item{logspace}{logical argument indicating whether the emission and transition
-probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
-\code{logspace = "autodetect"} (default), the function will automatically detect
-if the probabilities are in log space, returning an error if inconsistencies are found.
-Note that choosing the latter option increases the computational
-overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
+\item{logspace}{logical indicating whether the emission and transition
+probabilities of x are logged. If \code{logspace = "autodetect"}
+(default setting), the function will automatically detect
+if the probabilities are logged, returning an error if
+inconsistencies are found. Note that choosing the latter option
+increases the computational overhead; therefore specifying
+\code{TRUE} or \code{FALSE} can reduce the running time.}
 
-\item{gapchar}{the character used to represent gaps in the output sequence
-(\code{generate.PHMM} only).}
+\item{gapchar}{the character used to represent gaps (delete states)
+in the output sequence (only applicable for \code{PHMM} objects).}
+
+\item{random}{logical indicating whether residues should be emitted randomly
+with probabilities defined by the emission probabilities in the model
+(TRUE; default), or whether the the emitted residue should be determined
+by the maximum emission probability in the current state.}
+
+\item{DNA}{logical indicating whether the returned sequence should be a
+\code{"DNAbin"} object. Only applicable if the matrix of emission
+probabilities in the model has four residues corresponding to the nucleotide
+alphabet (A, T, G, and C).}
+
+\item{AA}{logical indicating whether the returned sequence should be a
+\code{"AAbin"} object. Only applicable if the matrix of emission
+probabilities in the model has 20 residues corresponding to the amino acid
+alphabet.}
 }
 \value{
-a named character vector giving the sequence of residues emitted by the model,
-with "names" attribute representing the hidden states.
+a named vector giving the sequence of residues emitted by the model,
+ with the "names" attribute representing the hidden states.
 }
 \description{
-\code{generate} outputs an instance of a sequence of residues randomly emitted by a
-given hidden Markov model.
+The \code{generate} function outputs a random sequence from a HMM or PHMM.
+}
+\details{
+TBA
+}
+\examples{
+## Generate a random sequence from a standard HMM
+## The dishonest casino example from Durbin et al. (1998) chapter 3.2
+A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
+            nrow = 3) # transition probability matrix
+dimnames(A) <- list(from = c("Begin", "Fair", "Loaded"),
+                    to = c("Begin", "Fair", "Loaded"))
+E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
+              (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
+            nrow = 2, byrow = TRUE) # emission probability matrix
+dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
+x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
+plot(x, main = "Dishonest casino HMM")
+generate(x, size = 300)
+##
+## Generate a random sequence from a profile HMM
+## Small globin alignment data from Durbin et al. (1998) Figure 5.3
+data(globins)
+## derive a profile hidden Markov model from the alignment
+globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+plot(globins.PHMM, main = "Profile hidden Markov model for globins")
+## simulate a random sequence from the model
+set.seed(999)
+simulation <- generate(globins.PHMM, size = 20)
+simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
+## names indicate that all residues came from "match" states
+}
+\references{
+Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+  sequence analysis: probabilistic models of proteins and nucleic acids.
+  Cambridge University Press, Cambridge, United Kingdom.
+}
+\author{
+Shaun Wilkinson
 }

@@ -1,12 +1,12 @@
-#' Internal profile functions.
-#'
-alphadetect <- function(sequences, residues = NULL, gapchar = "-",
+# Internal functions.
+# detect residue alphabet
+.alphadetect <- function(sequences, residues = NULL, gapchar = "-",
                         endchar = "?"){
   if(identical(toupper(residues), "RNA")){
     residues <- c("A", "C", "G", "U")
-  }else if(is.DNA(sequences) | identical(toupper(residues), "DNA")){
+  }else if(.isDNA(sequences) | identical(toupper(residues), "DNA")){
     residues <- c("A", "C", "G", "T")
-  }else if(is.AA(sequences) | identical(residues, "AA") |
+  }else if(.isAA(sequences) | identical(residues, "AA") |
            identical (toupper(residues), "AMINO")){
     residues <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
   }
@@ -24,8 +24,8 @@ alphadetect <- function(sequences, residues = NULL, gapchar = "-",
   return(residues)
 }
 
-#' Detect if model parameters are in log space.
-logdetect <- function(x){
+# Detect if model parameters are in log space.
+.logdetect <- function(x){
   if(inherits(x, "HMM")){
     if(all(x$A <= 0) & all(x$E <= 0)){
       return(TRUE)
@@ -42,9 +42,10 @@ logdetect <- function(x){
   } else stop("x must be an object of class 'HMM' or 'PHMM'")
 }
 
-decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
+# Convert a vector in any arity to a decimal integer
+.decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
 
-trim <- function(x, gapchar = "-", endchar = "?", DNA = FALSE, AA = FALSE){
+.trim <- function(x, gapchar = "-", endchar = "?", DNA = FALSE, AA = FALSE){
   #X is a raw or character matrix
   # gapchar can have length > 1
   gapchar <- if(DNA) as.raw(c(4, 240)) else if(AA) as.raw(c(45, 88)) else gapchar
@@ -75,7 +76,7 @@ trim <- function(x, gapchar = "-", endchar = "?", DNA = FALSE, AA = FALSE){
   return(x)
 }
 
-is.DNA <- function(x){
+.isDNA <- function(x){
   if(inherits(x, "DNAbin")){
     return(TRUE)
   }else if(inherits(x, "AAbin")){
@@ -97,7 +98,7 @@ is.DNA <- function(x){
   }
 }
 
-is.AA <- function(x){
+.isAA <- function(x){
   if(inherits(x, "AAbin")){
     return(TRUE)
   }else if(inherits(x, "DNAbin")){
@@ -117,7 +118,7 @@ is.AA <- function(x){
   }
 }
 
-tabulate.char <- function(x, residues, seqweights = NULL){
+.tabulateCH <- function(x, residues, seqweights = NULL){
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
   #if(identical(seqweights, 1)) seqweights <- rep(1, length(v))
   #stopifnot(length(seqweights) == length(v) & sum(seqweights) == length(v))
@@ -126,7 +127,7 @@ tabulate.char <- function(x, residues, seqweights = NULL){
   return(res)
 }
 
-tabulate.DNA <- function(x, ambiguities = FALSE, seqweights = NULL){
+.tabulateDNA <- function(x, ambiguities = FALSE, seqweights = NULL){
   # x is a DNAbin vector
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
   #stopifnot(length(seqweights) == length(x) & sum(seqweights) == length(x))
@@ -160,7 +161,7 @@ tabulate.DNA <- function(x, ambiguities = FALSE, seqweights = NULL){
   return(res)
 }
 
-tabulate.AA <- function(x, ambiguities = FALSE, seqweights = NULL){
+.tabulateAA <- function(x, ambiguities = FALSE, seqweights = NULL){
   # x is an AAbin vector
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
   tmp <- structure(numeric(26), names = LETTERS)
@@ -195,7 +196,7 @@ tabulate.AA <- function(x, ambiguities = FALSE, seqweights = NULL){
   return(res)
 }
 
-disambiguate.DNA <- function(a, probs = rep(0.25, 4), random = TRUE){
+.disambiguateDNA <- function(a, probs = rep(0.25, 4), random = TRUE){
   # a is a raw byte in Paradis (2007) format
   # probs is a 4-element numeric vector of background probabilities for the set {a,c,g,t}
   # returns a sampled base
@@ -279,7 +280,7 @@ disambiguate.DNA <- function(a, probs = rep(0.25, 4), random = TRUE){
   }else stop("invalid byte for class 'DNAbin'")
 }
 
-disambiguate.AA <- function(a, probs = rep(0.05, 20), random = TRUE){
+.disambiguateAA <- function(a, probs = rep(0.05, 20), random = TRUE){
   # a is a raw byte in AAbin format
   guide <- as.raw(c(65:90, 42, 45)) #length = 28
   nonambigs <- guide[1:25][-c(2, 10, 15, 21, 24)]
@@ -317,7 +318,7 @@ disambiguate.AA <- function(a, probs = rep(0.05, 20), random = TRUE){
   }else stop("invalid byte for class 'AAbin'")
 }
 
-encode.DNA <- function(x, arity = 4, probs = NULL, random = TRUE, na.rm = FALSE){
+.encodeDNA <- function(x, arity = 4, probs = NULL, random = TRUE, na.rm = FALSE){
   # x is a raw vector in Paradis (2007) coding scheme, possibly containing ambiguities
   # arity is an integer either 4 or 15
   if(arity == 4){
@@ -326,7 +327,7 @@ encode.DNA <- function(x, arity = 4, probs = NULL, random = TRUE, na.rm = FALSE)
     fun <- function(v){
       v <- unclass(v)
       ambigs <- (v & as.raw(8)) != 8
-      if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.DNA, probs, random)
+      if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], .disambiguateDNA, probs, random)
       bits <- c(136, 24, 72, 40)
       ints <- 0:3
       res <- ints[match(as.numeric(v), bits)]
@@ -348,14 +349,14 @@ encode.DNA <- function(x, arity = 4, probs = NULL, random = TRUE, na.rm = FALSE)
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
 
-encode.AA <- function(x, arity = 20, probs = NULL, random = TRUE, na.rm = FALSE){
+.encodeAA <- function(x, arity = 20, probs = NULL, random = TRUE, na.rm = FALSE){
   # x is a vector in AAbin format, possibly containing ambiguties
   # arity is an integer, either 20, 22, 24, 26, 27, or 6 (Dayhoff6 compression)
   if(is.null(probs)) probs <- rep(0.05, 20)
   if(arity == 20){
     fun <- function(v){
       ambigs <- !(v %in% as.raw((65:89)[-c(2, 10, 15, 21, 24)]))
-      if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], disambiguate.AA, probs)
+      if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], .disambiguateAA, probs)
       bits <- (65:89)[-c(2, 10, 15, 21, 24)]
       ints <- 0:19
       res <- ints[match(as.numeric(v), bits)]
@@ -418,12 +419,12 @@ encode.AA <- function(x, arity = 20, probs = NULL, random = TRUE, na.rm = FALSE)
       return(res)
     }
   }else if(arity == 6){
-    fun <- function(y){
-      y <- unclass(y)
+    fun <- function(v){
+      v <- unclass(v)
       bits <- 65:90
       ints <- c(0, 2, 1, 2, 2, 3, 0, 4, 5, 5, 4, 5, 5, 2, 4, 0, 2, 4, 0, 0, 1, 5, 3, NA, 3, 2)
-      res <- ints[match(as.numeric(y), bits)]
-      attributes(res) <- attributes(y)
+      res <- ints[match(as.numeric(v), bits)]
+      attributes(res) <- attributes(v)
       if(na.rm) if(any(is.na(res))) res <- res[!is.na(res)]
       return(res)
     }
@@ -431,11 +432,23 @@ encode.AA <- function(x, arity = 20, probs = NULL, random = TRUE, na.rm = FALSE)
   if(is.list(x)) lapply(x, fun) else fun(x)
 }
 
+.encodeCH <- function(x, residues, na.rm = FALSE){
+  fun <- function(v, residues, na.rm = FALSE){
+    ints <- seq(0, length(residues) - 1)
+    res <- ints[match(v, residues)]
+    attributes(res) <- attributes(v)
+    if(na.rm) res <- res[!is.na(res)]
+    return(res)
+  }
+  if(is.list(x)) lapply(x, fun, residues, na.rm) else fun(x, residues, na.rm)
+}
+
+
 # given logical vector, how many falses are after each true?
 # note - also outputs a zero position
-insertlengths <- function(x){
+.insertlengths <- function(x){
   tuples <- rbind(c(T, x), c(x, T))
-  decs <- apply(tuples, 2, decimal, 2)
+  decs <- apply(tuples, 2, .decimal, 2)
   startsl <- decs == 2
   starts <- which(startsl) #insert start positions
   ends <- which(decs == 1)
@@ -448,46 +461,47 @@ insertlengths <- function(x){
   res
 }
 #x <- c(F,F,T,T,T,F,F,T,T,T,F,T,T,F,F,F,F,F,T,F,F,F)
-#insertlengths(x)
+#.insertlengths(x)
 
-insertgaps <- function(x, positions, lengths, gapchar = "-"){
-  if(length(lengths) != length(positions)){
-    stop("arguments 'lengths' and 'positions' should of be equal length")
-  }
-  if(length(lengths) == 0) return(x)
-  #positions: vector, which matrix columns should the gaps be inserted after?
-  # (can include zero)
-  #lengths: vector, how long is each gap?
-  xisvec <- is.vector(x)
-  if(xisvec) x <- matrix(x, nrow = 1)
-  n <- nrow(x)
-  m <- ncol(x)
-  tmp <- rep(TRUE, ncol(x) + sum(lengths))
-  tab <- rep(0, m + 1)
-  names(tab) <- 0:m
-  tab[positions + 1] <- lengths
-  fun <- function(e) if(e == 0) TRUE else c(TRUE, rep(FALSE, e))
-  notgap <- unlist(lapply(tab, fun))[-1]   #remember to delete true #1
-  indices <- as.numeric(notgap)
-  indices[notgap] <- 1:m
-  indices <- indices + 1
-  gapcol <- matrix(rep(gapchar, n), ncol = 1, dimnames = list(rownames(x), NULL))
-  res <- cbind(gapcol, x, deparse.level = 0)[, indices]
-  #res <- cbind(gapcol, x)[, indices]
-  if(xisvec) res <- as.vector(res)
-  return(res)
-}
-# x <- rbind(c("A","B","C","D","E","F","G","H"), c("A","B","C","D","E","F","G","H"))
-# insertgaps(x, positions = c(0, 8), lengths = c(3, 5))
-# x <- c("A","B","C","D","E","F","G","H")
-# insertgaps(x, positions = c(2, 6), lengths = c(3, 5))
-#x <- 1:10
-#insertgaps(x, positions = c(2, 6), lengths = c(3, 5), gapchar = NA)
-
-
-# this function is used in alignpair for matrix x matrix alignment
-insert <- function(x, into, at){
+# this function is used for matrix x matrix alignment
+.insert <- function(x, into, at){
   if(ncol(x) == 0) return(into)
   into[, at:(at + ncol(x) - 1)] <- x
   return(into)
+}
+
+# define search space for dynammic programming
+.streak <- function(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5){
+  # x and y coded as integers starting from 0
+  if(arity == "autodetect") arity <- max(c(x, y)) + 1
+  N1 <- length(x)
+  N2 <- length(y)
+  if(N1 < w | N2 < w) return(c(-N1, N2))
+  xkm <- matrix(nrow = k, ncol = N1 - k + 1) # kmers for x
+  ykm <- matrix(nrow = k, ncol = N2 - k + 1) # kmers for y
+  for(i in 1:k){
+    xkm[i, ] <- x[i:(N1 - (k - i))]
+    ykm[i, ] <- y[i:(N2 - (k - i))]
+  }
+  tmp <- apply(ykm, 2, .decimal, from = arity) + 1 ### poss bug here with auto-simplify
+  pointer <- lapply(1:arity^k, function(x) which(tmp == x))
+  S1 <- apply(xkm, 2, function(x) pointer[[.decimal(x, from = arity) + 1]])
+  diagbin <- unlist(mapply("-", S1, 1:ncol(xkm)))
+  diags <- tabulate(diagbin + (N1 + 1), nbins = N1 + N2 + 1)
+  #names(diags) <- -N1:N2
+  #diags <- table(unlist(mapply("-", S1, 1:ncol(xkm)))) # could prob speed this up a lot
+  if(length(diags) == 0) return(c(-length(x), length(y)))
+  #sigdiags <- as.numeric(names(diags[diags > mean(diags) + threshold * sd(diags)]))
+  sigdiags <- which(diags > mean(diags) + threshold * sd(diags)) - (N1 + 1)
+  if(length(sigdiags) > 0){
+    #windowspace <- c()
+    windowspace <- c(sigdiags[1] - w, sigdiags[length(sigdiags)] + w)
+    #for(i in sigdiags) windowspace <- c(windowspace, (i - w):(i + w))
+    #return(outer(1:(N1 + 1), 1:(N2 + 1), function(x, y) (y - x) %in% windowspace))
+    return(windowspace)
+  }else{
+    return(c(-length(x), length(y)))
+    #return(matrix(FALSE, nrow = N1 + 1, ncol = N2 + 1))
+    #return(NULL)
+  }
 }

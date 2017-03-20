@@ -1,33 +1,48 @@
 #' Export profile hidden Markov models as text.
 #'
-#' \code{writePHMM} takes an object of class
-#' \code{"PHMM"} and writes it to a text file in HMMER3 format.
+#' \code{writePHMM} takes an object of class \code{"PHMM"} and writes it to a
+#'   text file in HMMER3 format.
 #'
+#' @param x an object of class \code{"PHMM"}.
 #' @param file the name of the file to write the model to.
-#' @param append logical indicating whether the model text should be appended below any
-#' existing text in the output file, or whether any existing text should be overwritten.
-#' Defaults to FALSE.
+#' @param append logical indicating whether the model text should be appended
+#'   below any existing text in the output file, or whether any existing text
+#'   should be overwritten. Defaults to FALSE.
 #' @param form character string indicating the format in which to write the model.
-#' Currently only HMMER3f is supported.
+#'   Currently only HMMER3f is supported.
 #' @param vers character string indicating the version of version of the format
-#' in which to write the model. Currently only "f" is supported.
+#'   in which to write the model. Currently only "f" is supported.
+#' @return NULL (invisibly)
+#' @details TBA
+#' @author Shaun Wilkinson
 #' @references
-#' Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence similarity searching.
-#' \emph{Nucleic Acids Research}. 39:W29–W37. \url{http://hmmer.org/}.
-#' @seealso \code{\link{read.PHMM}} to parse a PHMM object from a HMMER3 text file.
-#'
-#'
+#'   Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
+#'   similarity searching. \emph{Nucleic Acids Research}. 39:W29-W37.
+#'   \url{http://hmmer.org/}.
+#' @seealso \code{\link{readPHMM}} to parse a PHMM object from a HMMER3 text file.
+#' @examples
+#' \dontrun{
+#' library(ape)
+#' data(woodmouse)
+#' woodmouse.PHMM <- derivePHMM(woodmouse)
+#' writePHMM(woodmouse.PHMM, file = "woodmouse.hmm")
+#' }
+################################################################################
 writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f"){
   options(digits = 7, scipen = 10)
   stopifnot(form == "HMMER3" & vers == "f")
   if(!(inherits(x, "PHMM"))) stop("Input object must be of class 'PHMM'")
-  cat(paste0(form, "/", vers), file = file, sep = "\n", append = append) ##[produced by R::profile?]
-  cat(paste0("NAME  ", x$name), file = file, sep = "\n", append = T)
-  if(!is.null(x$accession)) cat(paste0("ACC   ", x$accession), file = file, sep = "\n", append = T)
-  if(!is.null(x$description)) cat(paste0("DESC  ", x$description), file = file, sep = "\n", append = T)
-  cat(paste0("LENG  ", x$size), file = file, sep = "\n", append = T)
-  if(!is.null(x$maxlength)) cat(paste0("MAXL  ", x$maxlength), file = file, sep = "\n", append = T)
-  cat(paste0("ALPH  ", x$alphabet), file = file, sep = "\n", append = T)
+  cat(paste0(form, "/", vers), file = file, sep = "\n", append = append)
+  ##[produced by R::profile?]
+  cat(paste0("NAME  ", x$name), file = file, sep = "\n", append = TRUE)
+  if(!is.null(x$accession)) cat(paste0("ACC   ", x$accession), file = file,
+                                sep = "\n", append = TRUE)
+  if(!is.null(x$description)) cat(paste0("DESC  ", x$description), file = file,
+                                  sep = "\n", append = TRUE)
+  cat(paste0("LENG  ", x$size), file = file, sep = "\n", append = TRUE)
+  if(!is.null(x$maxlength)) cat(paste0("MAXL  ", x$maxlength), file = file,
+                                sep = "\n", append = TRUE)
+  cat(paste0("ALPH  ", x$alphabet), file = file, sep = "\n", append = TRUE)
 
   rfl <- if(is.null(x$reference)) "RF    no" else "RF    yes"
   mml <- if(is.null(x$mask))      "MM    no" else "MM    yes"
@@ -36,19 +51,25 @@ writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f")
   mpl <- if(is.null(x$alignment)) "MAP   no" else "MAP   yes"
   cat(rfl, mml, cl, csl, mpl, file = file, sep = "\n", append = TRUE)
 
-  if(!is.null(x$date)) cat(paste0("DATE  ", x$date), file = file, append = T, sep = "\n")
-  if(!is.null(x$nseq)) cat(paste0("NSEQ  ", x$nseq), file = file, append = T, sep = "\n")
-  if(!is.null(x$effn)) cat(paste0("EFFN  ", round(x$effn, 6)), file = file, append = T, sep = "\n")
-  if(!is.null(x$checksum)) cat(paste0("CKSUM ", x$checksum), file = file, append = T, sep = "\n")
+  if(!is.null(x$date)) cat(paste0("DATE  ", x$date), file = file,
+                           append = TRUE, sep = "\n")
+  if(!is.null(x$nseq)) cat(paste0("NSEQ  ", x$nseq), file = file,
+                           append = TRUE, sep = "\n")
+  if(!is.null(x$effn)) cat(paste0("EFFN  ", round(x$effn, 6)), file = file,
+                           append = TRUE, sep = "\n")
+  if(!is.null(x$checksum)) cat(paste0("CKSUM ", x$checksum), file = file,
+                               append = TRUE, sep = "\n")
   ### placeholder for stats, cutoffs, etc
   residues <- rownames(x$E)
-  cat(c("HMM          ", paste0(residues, "        "), "\n"), file = file, append = T, sep = "")
+  cat(c("HMM          ", paste0(residues, "        "), "\n"), file = file,
+      append = TRUE, sep = "")
   cat("            m->m     m->i     m->d     i->m     i->i     d->m     d->d",
-      file = file, append = T, sep = "\n")
+      file = file, append = TRUE, sep = "\n")
   if(!is.null(x$compo)){
     compoline <- formatC(-x$compo, digits = 5, format = "f")
     compoline[trimws(compoline) == "Inf"] <- "      *"
-    compoline <- gsub("(.......).+", "\\1", compoline) # in case any logprobs are > 10
+    compoline <- gsub("(.......).+", "\\1", compoline)
+    # in case any logprobs are > 10
     compoline = paste0("  COMPO   ", paste(compoline, collapse = "  "))
     cat(compoline, file = file, sep = "\n", append = TRUE)
   }
@@ -97,3 +118,4 @@ writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f")
   }
   cat("//", file = file, sep = "", append = TRUE)
 }
+################################################################################

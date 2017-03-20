@@ -1,28 +1,56 @@
 #' Tree-based sequence weighting.
 #'
-#' Takes a dendogram object and returns a vector of sequence weights following
-#' the method of
-#' Gerstein et al. (1994).
+#' This function uses the agglomerative method of Gerstein et al. (1994) to
+#'   weight sequences based on their relatedness, as derived from a
+#'   phylogenetic tree.
 #'
-#' @param x an object of class \code{"dendrogram"}.
+#' @param x an object of class \code{"dendrogram"}, or a list or matrix of
+#'   sequences (possibly a "DNAbin" or "AAbin" object) from which to derive a
+#'   dendrogram via the \code{\link{topdown}} function.
 #' @param method a character string indicating the weighting method to be used.
-#'     Currently only that of Gerstein et al. (1994) is supported
-#'     (\code{method = "Gerstein"}).
+#'   Currently only that of Gerstein et al. (1994) is supported
+#'   (\code{method = "Gerstein"}).
+#' @param k integer representing the k-mer size to be used for calculating
+#'   the distance matrix used in tree-based sequence weighting. Defaults to
+#'   5. Note that high values of k (> 8) may be slow to compute and use a lot
+#'   of memory due to the large numbers of calculations required.
+#' @param residues either NULL (default; emitted residues are automatically
+#'   detected from the sequences), a case sensitive character vector
+#'   specifying the residue alphabet, or one of the character strings
+#'   "RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
+#'   large lists of character vectors. Furthermore, the default setting
+#'   \code{residues = NULL} will not detect rare residues that are not present
+#'   in the sequences, and thus will not assign them emission probabilities
+#'   in the model. Specifying the residue alphabet is therefore
+#'   recommended unless x is a "DNAbin" or "AAbin" object.
+#' @param gapchar the character used to represent gaps in the alignment matrix
+#'   (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
+#'   Defaults to "-" otherwise.
 #' @return a named vector of weights, the sum of which is equal to
-#'    the total number of sequences.
-#' @details see Durbin et al. (1998) chapter 5.8
-#' @examples
-#' data(woodmouse)
-#' wood_dist <- kdistance(unalign(woodmouse))
-#' wood_den <- as.dendrogram(hclust(wood_dist, method = "average"))
-#' wood_weights <- weight(wood_den, method = "Gerstein")
-#' @name weight
+#'    the total number of sequences (average weight = 1).
+#' @details For further details see Durbin et al. (1998) chapter 5.8.
+#' @author Shaun Wilkinson
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
 #'
+#'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
+#'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
+#' @seealso \code{\link{topdown}}
+#' @examples
+#'   ## weight the sequences in the woodmouse dataset from the ape package
+#'   library(ape)
+#'   data(woodmouse)
+#'   woodmouse.weights <- weight(woodmouse)
+#'   woodmouse.weights
+#' @name weight
 ################################################################################
-weight <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
+weight <- function(x, method = "Gerstein", k = 5, residues = NULL,
+                   gapchar = "-"){
   UseMethod("weight")
 }
-
+################################################################################
 #' @rdname weight
 ################################################################################
 weight.DNAbin <- function(x, method = "Gerstein", k = 5){
@@ -33,7 +61,7 @@ weight.DNAbin <- function(x, method = "Gerstein", k = 5){
     weight.list(x, method = method, k = k)
   }
 }
-
+################################################################################
 #' @rdname weight
 ################################################################################
 weight.AAbin <- function(x, method = "Gerstein", k = 5){
@@ -44,22 +72,23 @@ weight.AAbin <- function(x, method = "Gerstein", k = 5){
     weight.list(x, method = method, k = k)
   }
 }
-
+################################################################################
 #' @rdname weight
 ################################################################################
-weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-"){
+weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
+                        gapchar = "-"){
   nsq <- length(x)
-  DNA <- is.DNA(x)
-  AA <- is.AA(x)
+  DNA <- .isDNA(x)
+  AA <- .isAA(x)
   if(DNA) class(x) <- "DNAbin" else if(AA) class(x) <- "AAbin"
-  residues <- alphadetect(x, residues = residues, gapchar = gapchar)
+  residues <- .alphadetect(x, residues = residues, gapchar = gapchar)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   for(i in 1:nsq) x[[i]] <- x[[i]][x[[i]] != gapchar]
   # cache names for later
   tmpnames <- names(x)
   names(x) <- paste0("S", 1:nsq)
   if(nsq > 2){
-    guidetree <- topdown(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+    guidetree <- topdown(x, k = k, residues = residues, gapchar = gapchar)
     # qds <- kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
     # guidetree <- as.dendrogram(hclust(qds, method = "average"))
     res <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)]
@@ -73,11 +102,11 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL, gapchar 
   names(res) <- tmpnames
   return(res)
 }
-
+################################################################################
 #' @rdname weight
 ################################################################################
 weight.dendrogram <- function(x, method = "Gerstein"){
-  if(!identical(method, "Gerstein")) stop("Only Gerstein et al. 1994 method supported")
+  if(!identical(method, "Gerstein")) stop("Only Gerstein method supported")
   acal <- function(d) !any(sapply(d, is.list)) # all children are leaves?
   md <- function(d) all(sapply(d, acal)) & !acal(d) # mergable dendro?
   ch <- function(d) sapply(d, attr, "height") # child heights
@@ -122,8 +151,7 @@ weight.dendrogram <- function(x, method = "Gerstein"){
   names(res) <- sapply(x, function(d) attr(d, "label"))
   res
 }
-
-
+################################################################################
 #' @rdname weight
 ################################################################################
 weight.default <- function(x, method = "Gerstein", k = 5, residues = NULL,
@@ -131,4 +159,4 @@ weight.default <- function(x, method = "Gerstein", k = 5, residues = NULL,
   x <- unalign(x, gapchar = gapchar)
   weight.list(x, method = method, k = k, residues = residues, gapchar = gapchar)
 }
-
+################################################################################

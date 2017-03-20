@@ -9,45 +9,78 @@ map(x, seqweights = NULL, residues = NULL, gapchar = "-", endchar = "?",
   cpp = TRUE)
 }
 \arguments{
-\item{x}{a matrix of aligned sequences.}
+\item{x}{a matrix of aligned sequences. Accepted modes are "character"
+and "raw" (for "DNAbin" and "AAbin" objects).}
 
-\item{seqweights}{either NULL (default; all sequences are given a weight of 1)
-or a numeric vector of sequence weights used to
-derive the model. The sum of these weights should be equal to the number of
-sequences in the alignment, so that mean(seqweights) = 1.}
+\item{seqweights}{either NULL (default; all sequences are given
+weights of 1) or a numeric vector the same length as \code{x} representing
+the sequence weights used to derive the model.}
 
 \item{residues}{either NULL (default; emitted residues are automatically
-detected from the alignment), or a case sensitive character vector specifying the
-residue alphabet (e.g. A, C, G, T for DNA).
-Note that the former option can be slow for large character matrices;
-therefore specifying the residue alphabet can increase speed in these cases.
-Also note that the default setting \code{residues = NULL} will not
-detect rare residues that are not present in the alignment, and thus will
-not assign them emission probabilities.}
+detected from the sequences), a case sensitive character vector
+specifying the residue alphabet, or one of the character strings
+"RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
+large lists of character vectors. Furthermore, the default setting
+\code{residues = NULL} will not detect rare residues that are not present
+in the sequences, and thus will not assign them emission probabilities
+in the model. Specifying the residue alphabet is therefore
+recommended unless x is a "DNAbin" or "AAbin" object.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix.
-Not required for \code{"DNAbin"} or \code{"AAbin"} objects.}
+\item{gapchar}{the character used to represent gaps in the alignment matrix
+(if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
+Defaults to "-" otherwise.}
 
-\item{pseudocounts}{the method used to account for the possible absence of certain
-character states in the alignment. Currently only \code{"Laplace"},
-\code{"background"} and \code{"none"} are supported. If \code{pseudocounts = "background"} and
-some transition/emission types are absent from the alignment, Laplacean
-pseudocounts are automatically added.}
+\item{endchar}{the character used to represent unknown residues in
+the alignment matrix (if applicable). Ignored for \code{"DNAbin"} or
+\code{"AAbin"} objects. Defaults to "?" otherwise.}
 
-\item{lambda}{penalty parameter used to favour models with fewer match states. Equivalent
-to the log of the prior probability of marking each column (Durbin et al. 1998, pg 124).}
+\item{pseudocounts}{character string, either "background", Laplace"
+or "none". Used to account for the possible absence of certain
+transition and/or emission types in the input sequences.
+If \code{pseudocounts = "background"} (default), pseudocounts
+are calculated from the background transition and emission
+frequencies in the sequences.
+If \code{pseudocounts = "Laplace"} one of each possible transition
+and emission type is added to the transition and emission counts.
+If \code{pseudocounts = "none"} no pseudocounts are added (not
+generally recommended, since low frequency transition/emission types
+may be excluded from the model).
+Alternatively this argument can be a two-element list containing
+a matrix of transition pseudocounts
+as its first element and a matrix of emission pseudocounts as its
+second.}
+
+\item{lambda}{penalty parameter used to favour models with fewer match
+states. Equivalent to the log of the prior probability of marking each
+column (Durbin et al. 1998, chapter 5.7).}
+
+\item{qa}{an optional named 9-element vector of background transition
+probabilities with \code{dimnames(qa) = c("DD", "DM", "DI", "MD", "MM",
+"MI", "ID", "IM", "II")}, where M, I and D represent match, insert and
+delete states, respectively. If \code{NULL}, background transition
+probabilities are estimated from the sequences.}
+
+\item{qe}{an optional named vector of background emission probabilities
+the same length as the residue alphabet (i.e. 4 for nucleotides and 20
+for amino acids) and with corresponding names (i.e. \code{c("A", "T",
+"G", "C")} for DNA). If \code{qe = NULL}, background emission probabilities
+are automatically derived from the sequences.}
+
+\item{cpp}{logical, indicates whether the dynamic programming matrix
+should be filled using compiled C++ functions (default; many times faster).
+The FALSE option is primarily retained for bug fixing and experimentation.}
 }
 \value{
-a logical vector of length = ncol(x) indicating the columns to be assigned
-as match states (\code{TRUE}) and those assigned as inserts (\code{FALSE}).
+a logical vector with length = ncol(x) indicating the columns to be
+  assigned as match states (\code{TRUE}) and those assigned as inserts
+  (\code{FALSE}).
 }
 \description{
-Assigns columns to match and insert states using the
-maximum \emph{a posteriori} method
-outlined in Durbin et al. (1998).
+Assigns match and insert states to alignment columns using the maximum
+  \emph{a posteriori} algorithm outlined in Durbin et al. (1998) chapter 5.7.
 }
 \details{
-see Durbin et al. (1998) chapter 5.7 for a thorough explanation of
+see Durbin et al. (1998) chapter 5.7 for details of
   the maximum \emph{a posteriori} algorithm for match state assignment.
 }
 \examples{
@@ -55,8 +88,6 @@ see Durbin et al. (1998) chapter 5.7 for a thorough explanation of
 ## alignment example in Figure 5.3, Durbin et al. (1998)
 data(globins)
 map(globins)
-
-
 }
 \references{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -67,5 +98,5 @@ Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 \code{\link{derivePHMM}}
 }
 \author{
-Shaun P. Wilkinson
+Shaun Wilkinson
 }

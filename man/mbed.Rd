@@ -4,41 +4,68 @@
 \alias{mbed}
 \title{Convert sequences to vectors of distances to \emph{n} seed sequences.}
 \usage{
-mbed(x, seeds = NULL, k = 5, alpha = "Dayhoff6")
+mbed(x, seeds = NULL, k = 5, residues = NULL, gapchar = "-")
 }
 \arguments{
-\item{x}{a list of sequences, either character vectors or raw vectors in
-"DNAbin" or "AAbin" format.}
+\item{x}{a matrix of aligned sequences or a list of unaligned sequences.
+Accepted modes are "character" and "raw" (for "DNAbin" and "AAbin" objects).}
 
-\item{seeds}{integer vector indicating which sequences should be used as
-the seed sequences.}
+\item{seeds}{optional integer vector indicating which sequences should
+be used as the seed sequences. If \code{seeds = NULL} a set of
+log(N, 2)^2 non-identical sequences is randomly selected from the
+sequence set (where N is the number of sequences; see Blacksheilds et al.
+2010).}
 
-\item{k}{integer representing the length of the k-mers to be counted.}
+\item{k}{integer representing the k-mer size to be used for calculating
+the distance matrix. Defaults to 5. Note that high values of k
+may be slow to compute and use a lot of memory due to the large numbers
+of calculations required, particularly when the residue alphabet is
+also large.}
 
-\item{alpha}{the compression alphabet to use if the input sequence list
-is an "AAbin" object. Currently the only supported options are "Dayhoff6"
-and "none". Note that if \code{alpha = "none"} or the input sequences have
-20 or more unique residues (e.g. protein sequences),
-the value of k should be kept low (k < 4)
-otherwise the number of k-mers to count will become excessively high.}
+\item{residues}{either NULL (default; emitted residues are automatically
+detected from the sequences), a case sensitive character vector
+specifying the residue alphabet, or one of the character strings
+"RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
+large lists of character vectors. Specifying the residue alphabet is therefore
+recommended unless x is a "DNAbin" or "AAbin" object.}
+
+\item{gapchar}{the character used to represent gaps in the alignment matrix
+(if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
+Defaults to "-" otherwise.}
 }
 \value{
-returns a N x  matrix of class "embed". The returned object also has
-  attributes including a matrix of k-mer counts with one row for each
-  sequence and 4^k columns.
+returns a N x log(N, 2)^2 matrix of class "mbed" (where N is the
+  number of sequences). The returned
+  object has additional attributes including a the 'seeds' vector and
+  a matrix of k-mer counts with one row for each sequence and 4^k columns.
 }
 \description{
-\code{embed.DNA} takes a list of sequences and returns a matrix of
+The \code{mbed} function takes a list of sequences and returns a matrix of
   distances to a subset of seed sequences using the method outlined
   in Blacksheilds et al. (2010).
 }
 \details{
 This function deals with ambiguities by assigning counts proportionally.
   For example the motif ACRTG would assign the 5-mers ACATG and ACGTG counts of
-  0.5 each.
-  This algorithm is order n * 4^k in memory and time complexity so can be very
-  slow and memory hungry for large values of k (> 8).
+  0.5 each. This algorithm is O N * 4^k in memory and time complexity so can be very
+  slow and memory hungry for larger values of k. Further details of the embedding
+  process can be found in Blacksheilds et al. (2010).
+}
+\examples{
+  ## embed the woodmouse dataset from the ape package
+  library(ape)
+  data(woodmouse)
+  woodmouse.mbed <- mbed(woodmouse)
+  woodmouse.mbed
+}
+\references{
+Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
+  for fast construction of guide trees for multiple sequence alignment.
+  \emph{Algorithms for Molecular Biology}, \strong{5}, 21.
+}
+\seealso{
+\code{\link{kdistance}} for full N x N distance matrix computation
 }
 \author{
-Shaun P. Wilkinson
+Shaun Wilkinson
 }

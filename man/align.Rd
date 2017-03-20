@@ -36,7 +36,7 @@ align(sequences, model = NULL, seqweights = "Gerstein",
   residues = NULL, gapchar = "-", maxsize = NULL, quiet = FALSE, ...)
 }
 \arguments{
-\item{sequences}{a list of DNA, amino acid, or other character vectors
+\item{sequences}{a list of DNA, amino acid, or other character sequences
 consisting of symbols emitted from the chosen residue alphabet.
 The vectors can either be of mode "raw" (consistent with the "DNAbin"
 or "AAbin" coding scheme set out in the \code{\link[ape]{ape}} package),
@@ -46,19 +46,17 @@ the \code{residues} argument.}
 \item{model}{an optional profile hidden Markov model (a \code{"PHMM"}
 object) to align the sequences to. If \code{NULL} a PHMM will
 be derived from the list of sequences, and each sequence
-will then be aligned back to the model to produce the multiple sequence
+will be aligned back to the model to produce the multiple sequence
 alignment.}
 
-\item{seqweights}{either NULL (default; all sequences are given an equal
-weight of 1), a numeric vector the same length as \code{x} representing
+\item{seqweights}{either NULL (default; all sequences are given weights
+of 1), a numeric vector the same length as \code{x} representing
 the sequence weights used to derive the model, or a character string giving
 the method to derive the weights from the sequences. Currently only the
-\code{"Gerstein"} method is supported (the default). For this method, a
-tree is first created by k-mer counting (see \code{\link{kdistance}}),
-and sequence weights are derived from the tree using the 'bottom up'
-algorithm of Gerstein et al. (1994). The sum of these weights are equal
-to the number of sequences in the alignment (so that mean(seqweights) = 1;
-Note this does not need to be the case if providing weights as a numeric vector).}
+\code{"Gerstein"} method is supported (default). For this method, a
+tree is first created by k-mer counting (see \code{\link{topdown}}),
+and sequence weights are then derived from the tree using the 'bottom up'
+algorithm of Gerstein et al. (1994).}
 
 \item{refine}{the method used to iteratively refine the model parameters
 following the initial progressive alignment and model derivation step.
@@ -69,7 +67,7 @@ refinement step).}
 
 \item{k}{integer representing the k-mer size to be used for calculating
 the distance matrix used in tree-based sequence weighting. Defaults to
-5. Note that high values (> 8) may be slow to compute and use a lot
+5. Note that high values oof k (> 8) may be slow to compute and use a lot
 of memory due to the large numbers of calculations required.}
 
 \item{maxiter}{the maximum number of EM iterations or Viterbi training
@@ -79,18 +77,19 @@ the partially trained model is returned. Defaults to 100.}
 \item{maxsize}{integer giving the upper bound on the number of modules
 in the PHMM. If NULL no maximum size is enforced.}
 
-\item{inserts}{the model construction method, in which alignment columns
+\item{inserts}{character string giving the model construction method
+in which alignment columns
 are marked as either match or insert states. Accepted methods include
-\code{"threshold"} (default; only columns with fewer than a specified
-number of gaps form match states in the model), \code{"map"} (match
-and insert columns are found using the maximum \emph{a posteriori}
+\code{"threshold"} (only columns with fewer than a specified
+proportion of gaps form match states in the model), \code{"map"} (default;
+match and insert columns are found using the maximum \emph{a posteriori}
 method outlined in Durbin et al. (1998) chapter 5.7), \code{"inherited"}
 (match and insert columns are inherited from the "inserts" attribute
 of the input alignment), and \code{"none"} (all columns are assigned
 match states in the model). Alternatively, insert columns can be
-specified manually by providing a logical vector of the same length
-as the number of columns in the alignment (\code{TRUE} for insert
-columns and \code{FALSE} for match states).}
+specified manually by providing a logical vector the same length
+as the number of columns in the alignment, with \code{TRUE} for insert
+columns and \code{FALSE} for match states.}
 
 \item{lambda}{penalty parameter used to favour models with fewer match
 states. Equivalent to the log of the prior probability of marking each
@@ -98,10 +97,12 @@ column (Durbin et al. 1998, pg 124). Only applicable when
 \code{inserts = "map"}.}
 
 \item{threshold}{the maximum proportion of gaps for an alignment column
-to be considered a module in the PHMM (defaults to 0.5). Only applicable
-if \code{inserts = "threshold"}. Note that the maximum \emph{a posteriori}
-method works poorly for small alignments so the 'threshold' method is
-automatically used when the number of sequences is fewer than 5.}
+to be considered for a match state in the PHMM (defaults to 0.5).
+Only applicable when \code{inserts = "threshold"}.
+Note that the maximum \emph{a posteriori}
+method works poorly for alignments with few sequences,
+so the 'threshold' method is
+automatically used when the number of sequences is less than 5.}
 
 \item{deltaLL}{numeric, the maximum change in log likelihood between EM
 iterations before the cycling procedure is terminated (signifying model
@@ -117,58 +118,94 @@ allowed in the profile hidden Markov model (if applicable). Defaults
 to FALSE.}
 
 \item{residues}{either NULL (default; emitted residues are automatically
-detected from the list of sequences), a case sensitive character vector
+detected from the sequences), a case sensitive character vector
 specifying the residue alphabet, or one of the character strings
 "RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
 large lists of character vectors. Furthermore, the default setting
 \code{residues = NULL} will not detect rare residues that are not present
-in the sequence list, and thus will not assign them emission probabilities
+in the sequences, and thus will not assign them emission probabilities
 in the model. Specifying the residue alphabet is therefore
-recommended unless the sequence list is a "DNAbin" or "AAbin" object.}
+recommended unless x is a "DNAbin" or "AAbin" object.}
 
 \item{gapchar}{the character used to represent gaps in the alignment matrix.
 Ignored for \code{"DNAbin"} or \code{"AAbin"} objects. Defaults to "-"
 otherwise.}
 
+\item{pseudocounts}{character string, either "background", Laplace"
+or "none". Used to account for the possible absence of certain
+transition and/or emission types in the input sequences.
+If \code{pseudocounts = "background"} (default), pseudocounts
+are calculated from the background transition and emission
+frequencies in the sequences.
+If \code{pseudocounts = "Laplace"} one of each possible transition
+and emission type is added to the transition and emission counts.
+If \code{pseudocounts = "none"} no pseudocounts are added (not
+generally recommended, since low frequency transition/emission types
+may be excluded from the model).
+Alternatively this argument can be a two-element list containing
+a matrix of transition pseudocounts
+as its first element and a matrix of emission pseudocounts as its
+second.}
+
+\item{qa}{an optional named 9-element vector of background transition
+probabilities with \code{dimnames(qa) = c("DD", "DM", "DI", "MD", "MM",
+"MI", "ID", "IM", "II")}, where M, I and D represent match, insert and
+delete states, respectively. If \code{NULL}, background transition
+probabilities are estimated from the sequences.}
+
+\item{qe}{an optional named vector of background emission probabilities
+the same length as the residue alphabet (i.e. 4 for nucleotides and 20
+for amino acids) and with corresponding names (i.e. \code{c("A", "T",
+"G", "C")} for DNA). If \code{qe = NULL}, background emission probabilities
+are automatically derived from the sequences.}
+
 \item{quiet}{logical indicating whether feedback should be printed
 to the console.}
 
 \item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
-\code{refine = "Viterbi"}) or \code{"forward"} (if \code{refine = "BaumWelch"}).}
+\code{refine = "Viterbi"}) or \code{"forward"} (if
+\code{refine = "BaumWelch"}).}
 }
 \value{
-a matrix of aligned sequences, with the same mode or class as the
-input sequence list.
+a matrix of aligned sequences, with the same mode and class as the
+  input sequence list.
 }
 \description{
-\code{align} performs a multiple or pairwise alignment on a list of
-sequences using profile hidden Markov models.
+\code{align} performs a multiple alignment on a list of
+  sequences using profile hidden Markov models.
 }
 \details{
-The alignment procedure involves an initial
-progressive multiple sequence alignment, followed by the generation of a profile
-hidden Markov model (derived from the alignment), an iterative model refinement step,
-and finally the alignment of the sequences
-back to the model. If only two sequences are provided, the procedure reduces
-to a standard pairwise alignment.
+This function uses a progressive alignment procedure similar to
+  the Clustal Omega algorithm (Sievers et al. 2011). The procedure
+  involves an initial progressive multiple sequence alignment via a guide tree,
+  followed by the derivation of a profile hidden Markov model
+  from the alignment, an
+  iterative model refinement step, and finally the alignment of the
+  sequences back to the model. If only two sequences are provided,
+  a standard pairwise alignment is carried out using the Needleman-Wunch
+  or Smith-Waterman algorithm.
 }
 \examples{
-## Protein alignment example from Durbin et al. (1998) chapter 2.
-x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
-y <- c("P", "A", "W", "H", "E", "A", "E")
-sequences <- list(x = x, y = y)
-z <- align(sequences)
-z
-
+  ## Protein pairwise alignment example from Durbin et al. (1998) chapter 2.
+  x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
+  y <- c("P", "A", "W", "H", "E", "A", "E")
+  sequences <- list(x = x, y = y)
+  z <- align(sequences)
+  z
 }
 \references{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   sequence analysis: probabilistic models of proteins and nucleic acids.
   Cambridge University Press, Cambridge, United Kingdom.
+
+  Sievers F, Wilm A, Dineen D, Gibson TJ, Karplus K, Li W, Lopez R, McWilliam H,
+  Remmert M, Soding J, Thompson JD, Higgins DG (2011) Fast, scalable generation
+  of high-quality protein multiple sequence alignments using Clustal Omega.
+  \emph{Molecular Systems Biology}, \strong{7}, 539.
 }
 \seealso{
-\code{\link{unalign}}.
+\code{\link{unalign}}
 }
 \author{
-Shaun P. Wilkinson
+Shaun Wilkinson
 }

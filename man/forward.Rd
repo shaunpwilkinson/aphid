@@ -4,11 +4,11 @@
 \alias{forward}
 \alias{forward.PHMM}
 \alias{forward.HMM}
-\title{Forward algorithm.}
+\title{The forward algorithm.}
 \usage{
 forward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
-  windowspace = "all", type = "global", eta = 0.01, DI = FALSE,
-  ID = FALSE, cpp = TRUE)
+  type = "global", windowspace = "all", DI = FALSE, ID = FALSE,
+  cpp = TRUE)
 
 \method{forward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
   type = "global", odds = TRUE, windowspace = "all", DI = FALSE,
@@ -23,18 +23,20 @@ forward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
 object) representing a single sequence hypothetically emitted by
 the model in \code{x}.}
 
-\item{qe}{an optional named vector of background residue frequencies. If NULL
-background residue frequencies from the PHMMs are used. If these are not available
+\item{qe}{an optional named vector of background residue frequencies (only
+applicable if x is a PHMM). If \code{qe = NULL} the function looks for
+a qe vector as an attribute of the PHMM. If these are not available
 equal background residue frequencies are assumed.}
 
-\item{logspace}{logical argument indicating whether the emission and transition
-probabilities of x are logged (base e; TRUE) or raw (FALSE). Alternatively, if
-\code{logspace = "autodetect"} (default), the function will automatically detect
-if the probabilities are in log space, returning an error if inconsistencies are found.
-Note that choosing the latter option increases the computational
-overhead; therefore specifying \code{TRUE} or \code{FALSE} can reduce the running time.}
+\item{logspace}{logical indicating whether the emission and transition
+probabilities of x are logged. If \code{logspace = "autodetect"}
+(default setting), the function will automatically detect
+if the probabilities are logged, returning an error if
+inconsistencies are found. Note that choosing the latter option
+increases the computational overhead; therefore specifying
+\code{TRUE} or \code{FALSE} can reduce the running time.}
 
-\item{odds}{logical indicating whether the scores in the dynamic programming matrix
+\item{odds}{logical, indicates whether the returned scores
 should be odds ratios (TRUE) or full logged probabilities (FALSE).}
 
 \item{type}{character string indicating whether insert and delete states
@@ -42,19 +44,34 @@ at the beginning and end of the path should count towards the final score
 ('global'; default). Note that unlike \code{link{Viterbi}}, semiglobal
 and local models are not currently supported.}
 
-\item{DI}{logical. should delete-insert transitions be allowed? Only applicable for
-objects of class \code{"PHMM"}.}
+\item{windowspace}{a two-element integer vector providing the search space for
+dynamic programming (see Wilbur & Lipman 1983 for details). The first element
+should be negative, and represent the lowermost diagonal of the
+dynammic programming array, and the second element should be positive,
+representing the leftmost diagonal. Alternatively, if the the character
+string "all" is passed (the default setting) the entire dynamic programming
+array will be computed.}
 
-\item{ID}{logical. should insert-delete transitions be allowed? Only applicable for
-objects of class \code{"PHMM"}.}
+\item{DI}{logical indicating whether delete-insert transitions should be
+allowed in the profile hidden Markov model (if applicable). Defaults
+to FALSE.}
+
+\item{ID}{logical indicating whether insert-delete transitions should be
+allowed in the profile hidden Markov model (if applicable). Defaults to
+FALSE.}
+
+\item{cpp}{logical, indicates whether the dynamic programming matrix
+should be filled using compiled C++ functions (default; many times faster).
+The FALSE option is primarily retained for bug fixing and experimentation.}
 }
 \value{
-a list containing the score and dynamic programming arrays.
+an object of class \code{"fullprob"}, which is simply a list
+  containing the score and dynamic programming arrays.
 }
 \description{
-Calculate the full (log) probability or odds
-of a sequence given a hidden Markov model or profile HMM with the
-forward dynamic programming algorithm.
+This function calculates the full (log) probability or odds
+  of a sequence given a hidden Markov model or profile HMM using the
+  forward dynamic programming algorithm.
 }
 \details{
 This function is a wrapper for a compiled C++ function that recursively
@@ -65,7 +82,7 @@ This function is a wrapper for a compiled C++ function that recursively
   algorithms, see Durbin et al. (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
 }
 \examples{
-## Use of the forward algorithm for HMMs
+## Forward algorithm for standard HMMs
 ## The dishonest casino example from Durbin et al. (1998) chapter 3.2
 A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
             nrow = 3) # transition probability matrix
@@ -76,14 +93,16 @@ E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
             nrow = 2, byrow = TRUE) # emission probability matrix
 dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
 x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
+plot(x, main = "Dishonest casino HMM")
 data(casino)
 forward(x, casino)
-
-## Use of the forward algorithm for profile HMMs
+##
+## Forward algorithm for profile HMMs
 ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
 data(globins)
 ## derive a profile hidden Markov model from the alignment
 globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+plot(globins.PHMM, main = "Profile hidden Markov model for globins")
 ## simulate a random sequence from the model
 set.seed(999)
 simulation <- generate(globins.PHMM, size = 20)
@@ -91,18 +110,20 @@ simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
 ## calculate the full (log) probability of the sequence given the model
 x <- forward(globins.PHMM, simulation, odds = FALSE)
 x # -23.0586
-## show dynammic programming array
+## show the dynammic programming array
 x$array
-
 }
 \references{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   sequence analysis: probabilistic models of proteins and nucleic acids.
   Cambridge University Press, Cambridge, United Kingdom.
+
+  Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and
+  protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{10}, 197-206.
 }
 \seealso{
 \code{\link{backward}}, \code{\link{Viterbi}}.
 }
 \author{
-Shaun P. Wilkinson
+Shaun Wilkinson
 }

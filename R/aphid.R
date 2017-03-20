@@ -84,6 +84,8 @@
 #' sequences
 #' \item \code{\link{derivePHMM}} Builds a \code{"PHMM"} object from a multiple sequence
 #' alignment or a list of unaligned sequences
+#' \item \code{\link{map}} optimizes profile hidden Markov model construction
+#' using the maximum \emph{a posteriori} algorithm
 #' \item \code{\link{train.HMM}} Optimizes the parameters of a \code{"HMM"} object
 #' using a list of training sequences
 #' \item \code{\link{train.PHMM}} Optimizes the parameters of a \code{"PHMM"} object
@@ -94,8 +96,6 @@
 #' \itemize{
 #' \item \code{\link{align}} performs a PHMM-based progressive multiple sequence
 #' alignment
-#' \item \code{\link{WilburLipman}} defines dynammic programming search space
-#' for faster alignment
 #' \item \code{\link{weight}} assigns weights to sequences based on a tree
 #' }
 #'
@@ -148,6 +148,10 @@
 #'   linear time using compressed amino acid alphabets.
 #'   \emph{Nucleic Acids Research}, \strong{32}, 380-385.
 #'
+#'   Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
+#'   similarity searching.
+#'   \emph{Nucleic Acids Research}. \strong{39}:W29-W37. \url{http://hmmer.org/}.
+#'
 #'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
 #'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 #'
@@ -158,11 +162,11 @@
 #'   \url{ftp://ftp.ncbi.nih.gov/blast/matrices/}.
 #'
 #'   Sievers F, Wilm A, Dineen D, Gibson TJ, Karplus K, Li W, Lopez R, McWilliam H,
-#'   Remmert M, Söding J, Thompson JD, Higgins DG (2011) Fast, scalable generation
+#'   Remmert M, Soding J, Thompson JD, Higgins DG (2011) Fast, scalable generation
 #'   of high-quality protein multiple sequence alignments using Clustal Omega.
 #'   \emph{Molecular Systems Biology}, \strong{7}, 539.
 #'
-#'   Söding J (2005) Protein homology detection by HMM-HMM comparison.
+#'   Soding J (2005) Protein homology detection by HMM-HMM comparison.
 #'   \emph{Bioinformatics}, \strong{21}, 951-960.
 #'
 #'   Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and

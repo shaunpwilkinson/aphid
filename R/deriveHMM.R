@@ -1,4 +1,4 @@
-#' Derive a hidden Markov model from a set of sequences.
+#' Derive a standard hidden Markov model from a set of sequences.
 #'
 #' \code{deriveHMM} calculates the maximum likelihood hidden Markov model from
 #'   a list of training sequences, each a vector of residues named according
@@ -19,7 +19,7 @@
 #'   \code{residues = NULL} will not detect rare residues that are not present
 #'   in the sequences, and thus will not assign them emission probabilities
 #'   in the model. Specifying the residue alphabet is therefore
-#'   recommended unless the sequence list is a "DNAbin" or "AAbin" object.
+#'   recommended unless x is a "DNAbin" or "AAbin" object.
 #' @param states either NULL (default; the unique Markov states are
 #'   automatically detected from the 'names' attributes of the input
 #'   sequences), or a case sensitive character vector specifying the unique
@@ -28,7 +28,8 @@
 #'   and ensures that all valid Markov states appear in the model,
 #'   regardless of their possible absence from the training dataset.
 #' @param modelend logical indicating whether transition probabilites
-#'   to the end state should be modeled. Defaults to FALSE.
+#'   to the end state of the standard hidden Markov model should be
+#'   modeled (if applicable). Defaults to FALSE.
 #' @param pseudocounts character string, either "background", Laplace"
 #'   or "none". Used to account for the possible absence of certain
 #'   transition and/or emission types in the input sequences.
@@ -69,11 +70,11 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL,
   if(!(is.list(x))) stop("x must be a list of named vectors")
   # x is a list of named character vectors
   # includes start and or end states?
-  DNA <- is.DNA(x)
-  AA <- is.AA(x)
+  DNA <- .isDNA(x)
+  AA <- .isAA(x)
   namesok <- all(sapply(x, function(y) !is.null(names(y)) | length(y) == 0))
   if(!(namesok)) stop("x must be a list of named vectors")
-  residues <- alphadetect(x, residues = residues)
+  residues <- .alphadetect(x, residues = residues)
   if(is.null(states)) states <- unique(unlist(lapply(x, names)))
   if(states[1] != "Begin") states <- c("Begin", states)
   nres <- length(residues)
@@ -103,10 +104,10 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL,
   statescoded <- lapply(x, function(e) indices[names(e)])
   if(DNA){
     #rescoded <- lapply(x, DNA2quaternary)
-    rescoded <- lapply(x, encode.DNA, arity = 4)
+    rescoded <- lapply(x, .encodeDNA, arity = 4)
   }else if(AA){
     #rescoded <- lapply(x, AA2vigesimal)
-    rescoded <- lapply(x, encode.AA, arity = 20)
+    rescoded <- lapply(x, .encodeAA, arity = 20)
   }else{
     indices <- setNames(0:(nres - 1), residues)
     rescoded <- lapply(x, function(e) indices[e])
