@@ -2,15 +2,17 @@
 
 [![Build Status](https://travis-ci.org/shaunpwilkinson/aphid.svg?branch=master)](https://travis-ci.org/shaunpwilkinson/aphid)
 
-Analysis with profile hidden Markov models
+Analysis with profile hidden Markov models in R
 
-`aphid` is an R package for package containing functions for building and using profile hidden
-Markov models for biological sequence analysis. Functions are included for
+`aphid` is an R package for package containing functions for building and using 
+profile hidden Markov models for biological sequence analysis. Functions are included for
 multiple and pairwise sequence alignment, model construction and parameter optimization,
 calculation of conditional probabilities (with the forward and Viterbi algorithms),
 tree-based sequence weighting, k-mer distance calculation, sequence simulation,
-and file import/export compatible with the 
-[HMMER](http://www.hmmer.org/) software package.
+and file import/export compatible with the  [HMMER](http://www.hmmer.org/) 
+software package. The package also includes functions for standard hidden Markov
+models, and other handy tools for computing distance matrices and building
+phylogenetic trees.
 
 This package was written based on the algorithms described in the book 
 [Biological Sequence Analysis](
@@ -55,7 +57,7 @@ To build the vignette users will need to have LaTeX installed. RStudio recommend
 [TexLive 2013 Full](http://tug.org/) for Mac OS X and Linux.
 
 If you experience a problem using this package please
-either raise it as an issue on [GitHub](http://github.com/shaunpwilkinson/aphid/issues).
+raise it as an issue on [GitHub](http://github.com/shaunpwilkinson/aphid/issues).
 
 ### Acknowledgements
 The production of this package was made possible with funding from a Rutherford Foundation
