@@ -2,18 +2,10 @@
 % Please edit documentation in R/distance.R
 \name{kdistance}
 \alias{kdistance}
-\alias{kdistance.AAbin}
-\alias{kdistance.DNAbin}
-\alias{kdistance.default}
 \title{K-mer distance matrix computation.}
 \usage{
-kdistance(x, k = 5, residues = NULL, gapchar = "-", ...)
-
-\method{kdistance}{AAbin}(x, k = 5, ...)
-
-\method{kdistance}{DNAbin}(x, k = 5, ...)
-
-\method{kdistance}{default}(x, k = 5, residues = NULL, gapchar = "-", ...)
+kdistance(x, k = 5, measure = "EDGAR04", residues = NULL, gapchar = "-",
+  ...)
 }
 \arguments{
 \item{x}{a matrix of aligned sequences or a list of unaligned sequences.
@@ -24,6 +16,11 @@ the distance matrix. Defaults to 5. Note that high values of k
 may be slow to compute and use a lot of memory due to the large numbers
 of calculations required, particularly when the residue alphabet is
 also large.}
+
+\item{measure}{a character string giving the k-mer distance measure
+to be used. Currently the available options are \code{"EDGAR04"} (default;
+see Edgar (2004) for details) and \code{"YANG08"} (the euclidean
+distance measure described in Yang and Zhang (2008)).}
 
 \item{residues}{either NULL (default; emitted residues are automatically
 detected from the sequences), a case sensitive character vector
@@ -36,19 +33,18 @@ recommended unless x is a "DNAbin" or "AAbin" object.}
 (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 Defaults to "-" otherwise.}
 
-\item{...}{further arguments to be passed to \code{"dist"}.}
+\item{...}{further arguments to be passed to \code{"as.dist"}.}
 }
 \value{
 a distance matrix of class \code{"dist"}
 }
 \description{
-Computes the matrix of k-tuple distances between all pairwise comparisons
+Computes the matrix of k-mer distances between all pairwise comparisons
   of a set of sequences.
 }
 \details{
-this function uses the k-mer distance measure outlined in
-  Edgar (2004) to compute a N x N distance matrix (where N is the
-  number of sequences).
+this function computes the N x N k-mer distance matrix,
+  where N is the number of sequences in the dataset.
 }
 \examples{
   ## compute the k-mer distance for the woodmouse dataset in the ape package
@@ -65,6 +61,10 @@ this function uses the k-mer distance measure outlined in
 Edgar RC (2004) Local homology recognition and distance measures in
   linear time using compressed amino acid alphabets.
   \emph{Nucleic Acids Research}, \strong{32}, 380-385.
+
+  Yang K, Zhang L (2008) Performance comparison between k-tuple distance
+  and four model-based distances in phylogenetic tree reconstruction.
+  \emph{Nucleic Acids Research}, \strong{36}, e33.
 }
 \seealso{
 \code{\link{mbed}} for leaner distance matrices

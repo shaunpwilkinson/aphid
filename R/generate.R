@@ -28,6 +28,7 @@
 #'   \code{"AAbin"} object. Only applicable if the matrix of emission
 #'   probabilities in the model has 20 residues corresponding to the amino acid
 #'   alphabet.
+#' @param ... additional arguments to be passed between methods.
 #' @return a named vector giving the sequence of residues emitted by the model,
 #'  with the "names" attribute representing the hidden states.
 #' @details TBA
@@ -64,14 +65,17 @@
 #' ## names indicate that all residues came from "match" states
 #' @name generate
 ################################################################################
-generate <- function(x, size, logspace = "autodetect", gapchar = "-",
-                     random = TRUE, DNA = FALSE, AA = FALSE){
+# generate <- function(x, size, logspace = "autodetect", gapchar = "-",
+#                      random = TRUE, DNA = FALSE, AA = FALSE){
+#   UseMethod("generate")
+# }
+generate <- function(x, size, ...){
   UseMethod("generate")
 }
 ################################################################################
 #' @rdname generate
 ################################################################################
-generate.HMM <- function (x, size, logspace = "autodetect", random = TRUE){
+generate.HMM <- function (x, size, logspace = "autodetect", random = TRUE, ...){
   if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   A <- if(logspace) exp(x$A) else x$A
   E <- if(logspace) exp(x$E) else x$E
@@ -106,7 +110,7 @@ generate.HMM <- function (x, size, logspace = "autodetect", random = TRUE){
 #' @rdname generate
 ################################################################################
 generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-",
-                           random = TRUE, DNA = FALSE, AA = FALSE){
+                           random = TRUE, DNA = FALSE, AA = FALSE, ...){
   if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   A <- if(logspace) exp(x$A) else x$A
   E <- if(logspace) exp(x$E) else x$E

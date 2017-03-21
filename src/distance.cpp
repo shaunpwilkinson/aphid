@@ -237,6 +237,7 @@ NumericMatrix kdist(NumericMatrix x, IntegerVector from, IntegerVector to,
           Fij += mintau/denom;
         }
         res(i, j) = (log(0.1 + Fij) - a)/b; // Edgar 2004 eq 4
+        if(res(i, j) < 0) res(i, j) = 0;
         Fij = 0;
       }
     }

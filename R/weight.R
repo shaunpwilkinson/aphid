@@ -1,8 +1,11 @@
 #' Tree-based sequence weighting.
 #'
-#' This function uses the agglomerative method of Gerstein et al. (1994) to
-#'   weight sequences based on their relatedness, as derived from a
-#'   phylogenetic tree.
+#' This is a generic function that uses the agglomerative method of
+#'   Gerstein et al. (1994) to weight sequences based on their relatedness
+#'   as derived from a phylogenetic tree. Methods are available for
+#'   \code{"dendrogram"} objects, \code{"DNAbin"} and \code{"AAbin"}
+#'   sequence objects (as lists or matrices) and sequences in standard
+#'   ASCII character format provided either as lists or matrices.
 #'
 #' @param x an object of class \code{"dendrogram"}, or a list or matrix of
 #'   sequences (possibly a "DNAbin" or "AAbin" object) from which to derive a
@@ -26,6 +29,7 @@
 #' @param gapchar the character used to represent gaps in the alignment matrix
 #'   (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 #'   Defaults to "-" otherwise.
+#' @param ... additional arguments to be passed between methods.
 #' @return a named vector of weights, the sum of which is equal to
 #'    the total number of sequences (average weight = 1).
 #' @details For further details see Durbin et al. (1998) chapter 5.8.
@@ -46,14 +50,18 @@
 #'   woodmouse.weights
 #' @name weight
 ################################################################################
-weight <- function(x, method = "Gerstein", k = 5, residues = NULL,
-                   gapchar = "-"){
+# weight <- function(x, method = "Gerstein", k = 5, residues = NULL,
+#                    gapchar = "-"){
+#   UseMethod("weight")
+# }
+weight <- function(x, ...){
   UseMethod("weight")
 }
 ################################################################################
 #' @rdname weight
 ################################################################################
-weight.DNAbin <- function(x, method = "Gerstein", k = 5){
+weight.DNAbin <- function(x, method = "Gerstein", k = 5, residues = NULL,
+                          gapchar = "-", ...){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
   }else{
@@ -64,7 +72,7 @@ weight.DNAbin <- function(x, method = "Gerstein", k = 5){
 ################################################################################
 #' @rdname weight
 ################################################################################
-weight.AAbin <- function(x, method = "Gerstein", k = 5){
+weight.AAbin <- function(x, method = "Gerstein", k = 5, ...){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
   }else{
@@ -76,7 +84,7 @@ weight.AAbin <- function(x, method = "Gerstein", k = 5){
 #' @rdname weight
 ################################################################################
 weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
-                        gapchar = "-"){
+                        gapchar = "-", ...){
   nsq <- length(x)
   DNA <- .isDNA(x)
   AA <- .isAA(x)
@@ -105,7 +113,7 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
 ################################################################################
 #' @rdname weight
 ################################################################################
-weight.dendrogram <- function(x, method = "Gerstein"){
+weight.dendrogram <- function(x, method = "Gerstein", ...){
   if(!identical(method, "Gerstein")) stop("Only Gerstein method supported")
   acal <- function(d) !any(sapply(d, is.list)) # all children are leaves?
   md <- function(d) all(sapply(d, acal)) & !acal(d) # mergable dendro?
@@ -155,7 +163,7 @@ weight.dendrogram <- function(x, method = "Gerstein"){
 #' @rdname weight
 ################################################################################
 weight.default <- function(x, method = "Gerstein", k = 5, residues = NULL,
-                           gapchar = "-"){
+                           gapchar = "-", ...){
   x <- unalign(x, gapchar = gapchar)
   weight.list(x, method = method, k = k, residues = residues, gapchar = gapchar)
 }

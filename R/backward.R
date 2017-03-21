@@ -65,18 +65,20 @@
 #'   x$array
 #' @name backward
 ################################################################################
-backward <- function(x, y, qe = NULL, logspace = "autodetect",  odds = TRUE,
-                     windowspace = "all", type = "global", DI = FALSE,
-                     ID = FALSE, cpp = TRUE){
+# backward <- function(x, y, qe = NULL, logspace = "autodetect",  odds = TRUE,
+#                      windowspace = "all", type = "global", DI = FALSE,
+#                      ID = FALSE, cpp = TRUE){
+#   UseMethod("backward")
+# }
+backward <- function(x, y, ...){
   UseMethod("backward")
 }
-
 
 #' @rdname backward
 ################################################################################
 backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                           type = "global", odds = TRUE, windowspace = "all",
-                          DI = FALSE, ID = FALSE, cpp = TRUE){
+                          DI = FALSE, ID = FALSE, cpp = TRUE, ...){
   if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   pp <- inherits(y, "PHMM")
   if(pp) stop("PHMM vs PHMM back comparison is not supported")
@@ -266,7 +268,7 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
 
 #' @rdname backward
 ################################################################################
-backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
+backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
   if(identical(logspace, 'autodetect')) logspace <- .logdetect(x)
   DNA <- .isDNA(y)
   AA <- .isAA(y)

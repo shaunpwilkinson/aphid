@@ -7,19 +7,17 @@
 \alias{Viterbi.default}
 \title{The Viterbi algorithm.}
 \usage{
-Viterbi(x, y, qe = NULL, logspace = "autodetect", type = "global",
-  odds = TRUE, offset = 0, d = 8, e = 2, S = NULL, residues = NULL,
-  windowspace = "all", DI = FALSE, ID = FALSE, cpp = TRUE)
+Viterbi(x, y, ...)
 
 \method{Viterbi}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
   type = "global", odds = TRUE, offset = 0, windowspace = "all",
-  DI = FALSE, ID = FALSE, cpp = TRUE)
+  DI = FALSE, ID = FALSE, cpp = TRUE, ...)
 
-\method{Viterbi}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
+\method{Viterbi}{HMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 
 \method{Viterbi}{default}(x, y, type = "global", d = 8, e = 2,
   residues = NULL, S = NULL, windowspace = "all", offset = 0,
-  cpp = TRUE)
+  cpp = TRUE, ...)
 }
 \arguments{
 \item{x}{an object of class \code{HMM} or \code{PHMM}. Optionally, both x and
@@ -32,6 +30,8 @@ object) representing a single sequence hypothetically emitted by
 the model in \code{x}. Optionally, both x and
 y can be profile hidden Markov models (object class "PHMM"), in which
 case the sum of log-odds algorithm of Soding (2005) is used.}
+
+\item{...}{additional arguments to be passed between methods.}
 
 \item{qe}{an optional named vector of background residue frequencies (only
 applicable if x is a PHMM). If \code{qe = NULL} the function looks for
@@ -58,27 +58,6 @@ should be odds ratios (TRUE) or full logged probabilities (FALSE).}
 -0.1 bits for PHMM x PHMM alignments (as recommended by Soding (2005)), and 0
 otherwise.}
 
-\item{d}{gap opening penalty (in bits) for sequence vs. sequence alignment.
-Defaults to 8.}
-
-\item{e}{gap extension penalty (in bits) for sequence vs. sequence alignment.
-Defaults to 2.}
-
-\item{S}{an optional scoring matrix with rows and columns named according
-to the residue alphabet. Only applicable when both x and y are sequences
-(Needleman-Wunch or Smith-Waterman alignments).
-Note that for Smith-Waterman local alignments, scores for
-mismatches should generally take negative values to avoid spurious
-alignments. If NULL default settings are used. Default scoring matrices are
-'NUC.4.4' for For DNAbin objects, and 'MATCH' (matches are scored 1 and
-mismatches are scored -1) for AAbin objects and character sequences.}
-
-\item{residues}{either NULL (default; emitted residues are automatically
-detected from the sequences), a case sensitive character vector
-specifying the residue alphabet, or one of the character strings
-"RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
-large lists of character vectors.}
-
 \item{windowspace}{a two-element integer vector providing the search space for
 dynamic programming (see Wilbur & Lipman 1983 for details). The first element
 should be negative, and represent the lowermost diagonal of the
@@ -98,6 +77,27 @@ FALSE.}
 \item{cpp}{logical, indicates whether the dynamic programming matrix
 should be filled using compiled C++ functions (default; many times faster).
 The FALSE option is primarily retained for bug fixing and experimentation.}
+
+\item{d}{gap opening penalty (in bits) for sequence vs. sequence alignment.
+Defaults to 8.}
+
+\item{e}{gap extension penalty (in bits) for sequence vs. sequence alignment.
+Defaults to 2.}
+
+\item{residues}{either NULL (default; emitted residues are automatically
+detected from the sequences), a case sensitive character vector
+specifying the residue alphabet, or one of the character strings
+"RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
+large lists of character vectors.}
+
+\item{S}{an optional scoring matrix with rows and columns named according
+to the residue alphabet. Only applicable when both x and y are sequences
+(Needleman-Wunch or Smith-Waterman alignments).
+Note that for Smith-Waterman local alignments, scores for
+mismatches should generally take negative values to avoid spurious
+alignments. If NULL default settings are used. Default scoring matrices are
+'NUC.4.4' for For DNAbin objects, and 'MATCH' (matches are scored 1 and
+mismatches are scored -1) for AAbin objects and character sequences.}
 }
 \value{
 an object of class \code{"Viterbi"}, which is a list containing the

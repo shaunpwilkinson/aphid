@@ -6,15 +6,13 @@
 \alias{backward.HMM}
 \title{The backward algorithm.}
 \usage{
-backward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
-  windowspace = "all", type = "global", DI = FALSE, ID = FALSE,
-  cpp = TRUE)
+backward(x, y, ...)
 
 \method{backward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
   type = "global", odds = TRUE, windowspace = "all", DI = FALSE,
-  ID = FALSE, cpp = TRUE)
+  ID = FALSE, cpp = TRUE, ...)
 
-\method{backward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
+\method{backward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 }
 \arguments{
 \item{x}{an object of class \code{PHMM} or \code{HMM}.}
@@ -22,6 +20,8 @@ backward(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
 \item{y}{a vector of mode "character" or "raw" (a "DNAbin" or "AAbin"
 object) representing a single sequence hypothetically emitted by
 the model in \code{x}.}
+
+\item{...}{additional arguments to be passed between methods.}
 
 \item{qe}{an optional named vector of background residue frequencies (only
 applicable if x is a PHMM). If \code{qe = NULL} the function looks for
@@ -36,6 +36,11 @@ inconsistencies are found. Note that choosing the latter option
 increases the computational overhead; therefore specifying
 \code{TRUE} or \code{FALSE} can reduce the running time.}
 
+\item{type}{character string indicating whether insert and delete states
+at the beginning and end of the path should count towards the final score
+('global'; default). Note that unlike \code{link{Viterbi}}, semiglobal
+and local models are not currently supported.}
+
 \item{odds}{logical, indicates whether the returned scores
 should be odds ratios (TRUE) or full logged probabilities (FALSE).}
 
@@ -46,11 +51,6 @@ dynammic programming array, and the second element should be positive,
 representing the leftmost diagonal. Alternatively, if the the character
 string "all" is passed (the default setting) the entire dynamic programming
 array will be computed.}
-
-\item{type}{character string indicating whether insert and delete states
-at the beginning and end of the path should count towards the final score
-('global'; default). Note that unlike \code{link{Viterbi}}, semiglobal
-and local models are not currently supported.}
 
 \item{DI}{logical indicating whether delete-insert transitions should be
 allowed in the profile hidden Markov model (if applicable). Defaults

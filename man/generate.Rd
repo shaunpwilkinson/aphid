@@ -6,13 +6,12 @@
 \alias{generate.PHMM}
 \title{Generate random sequences from a model.}
 \usage{
-generate(x, size, logspace = "autodetect", gapchar = "-", random = TRUE,
-  DNA = FALSE, AA = FALSE)
+generate(x, size, ...)
 
-\method{generate}{HMM}(x, size, logspace = "autodetect", random = TRUE)
+\method{generate}{HMM}(x, size, logspace = "autodetect", random = TRUE, ...)
 
 \method{generate}{PHMM}(x, size, logspace = "autodetect", gapchar = "-",
-  random = TRUE, DNA = FALSE, AA = FALSE)
+  random = TRUE, DNA = FALSE, AA = FALSE, ...)
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'}.}
@@ -22,6 +21,8 @@ sequence if x is a \code{"HMM"} object with zero probability of
 transitioning to the begin/end state, or the maximum length of the
 output sequence otherwise (this acts as a safeguard against overflow).}
 
+\item{...}{additional arguments to be passed between methods.}
+
 \item{logspace}{logical indicating whether the emission and transition
 probabilities of x are logged. If \code{logspace = "autodetect"}
 (default setting), the function will automatically detect
@@ -30,13 +31,13 @@ inconsistencies are found. Note that choosing the latter option
 increases the computational overhead; therefore specifying
 \code{TRUE} or \code{FALSE} can reduce the running time.}
 
-\item{gapchar}{the character used to represent gaps (delete states)
-in the output sequence (only applicable for \code{PHMM} objects).}
-
 \item{random}{logical indicating whether residues should be emitted randomly
 with probabilities defined by the emission probabilities in the model
 (TRUE; default), or whether the the emitted residue should be determined
 by the maximum emission probability in the current state.}
+
+\item{gapchar}{the character used to represent gaps (delete states)
+in the output sequence (only applicable for \code{PHMM} objects).}
 
 \item{DNA}{logical indicating whether the returned sequence should be a
 \code{"DNAbin"} object. Only applicable if the matrix of emission

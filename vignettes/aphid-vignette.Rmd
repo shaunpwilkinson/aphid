@@ -1,9 +1,10 @@
-# aphid
+---
+title: "A quick guide to the 'aphid' R package"
+author: "Shaun Wilkinson"
+output: pdf_document
+---
 
-[![Build Status](https://travis-ci.org/shaunpwilkinson/aphid.svg?branch=master)](https://travis-ci.org/shaunpwilkinson/aphid)
-
-Analysis with profile hidden Markov models
-
+### Analysis with profile hidden Markov models in R
 `aphid` is an R package for package containing functions for building and using profile hidden
 Markov models for biological sequence analysis. Functions are included for
 multiple and pairwise sequence alignment, model construction and parameter optimization,
@@ -20,6 +21,7 @@ This book offers an in depth explanation of hidden Markov models and
 profile hidden Markov models for users of all levels of familiarity. 
 Many of the examples and datasets in the package are directly derived from the 
 text, which serves as a useful primer for this package.
+
 
 ### Installation
 `aphid` is currently only available as a development version, with a stable
@@ -48,11 +50,6 @@ An overview of the package and it's functions can be found by running
 ```
 and more detail on the individual functions can be found using the 
 `?<function-name>` command.
-
-
-To build the vignette users will need to have LaTeX installed. RStudio recommends 
-[MiKTeX Complete](http://miktex.org/2.9/setup) for Windows and
-[TexLive 2013 Full](http://tug.org/) for Mac OS X and Linux.
 
 If you experience a problem using this package please
 either raise it as an issue on [GitHub](http://github.com/shaunpwilkinson/aphid/issues).

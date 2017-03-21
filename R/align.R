@@ -141,16 +141,23 @@
 #'   x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
 #'   y <- c("P", "A", "W", "H", "E", "A", "E")
 #'   sequences <- list(x = x, y = y)
-#'   z <- align(sequences)
-#'   z
+#'   glo <- align(sequences, type = "global")
+#'   sem <- align(sequences, type = "semiglobal")
+#'   loc <- align(sequences, type = "local")
+#'   glo
+#'   sem
+#'   loc
 #' @name align
 ################################################################################
-align <- function(sequences, model = NULL, seqweights = "Gerstein",
-                  refine = "Viterbi", k = 5, maxiter = 100, maxsize = NULL,
-                  inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
-                  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
-                  pseudocounts = "background", qa = NULL, qe = NULL,
-                  quiet = FALSE, ...){
+# align <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
+#                   refine = "Viterbi", maxiter = 100, maxsize = NULL,
+#                   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
+#                   DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
+#                   pseudocounts = "background", qa = NULL, qe = NULL,
+#                   quiet = FALSE, ...){
+#   UseMethod("align")
+# }
+align <- function(sequences, ...){
   UseMethod("align")
 }
 
@@ -411,26 +418,36 @@ align.default <- function(sequences, model, pseudocounts = "background",
         class(model) <- "AAbin"
       }else stop("Invalid input: multi-sequence list")
     }else{
-      if(!is.matrix(model)) model <- matrix(model, nrow = 1, dimnames = list(deparse(substitute(model)), NULL))
+      if(!is.matrix(model)) model <- matrix(model, nrow = 1, dimnames = list(
+        deparse(substitute(model)), NULL))
       class(model) <- "AAbin"
     }
   }else{
     if(!is.matrix(sequences)){
-      sequences <- matrix(sequences, nrow = 1, dimnames = list(deparse(substitute(sequences)), NULL))
+      sequences <- matrix(sequences, nrow = 1, dimnames = list(
+        deparse(substitute(sequences)), NULL))
       #rownames(sequences) <-
     }
     if(!is.matrix(model)){
-      model <- matrix(model, nrow = 1, dimnames = list(deparse(substitute(model)), NULL))
+      model <- matrix(model, nrow = 1, dimnames = list(
+        deparse(substitute(model)), NULL))
     }
   }
   if(nrow(sequences) == 1 & nrow(model) == 1){
     alig <- Viterbi(sequences, model, ... = ...)
     #, offset = offset) ###not necessary for vec vs vec
+    ## TODO local alignment
+    if(!any(alig$path == 1)){
+      warning("No local alignment found, returning NULL")
+      return(NULL)
+    }
     xind <- yind <- alig$path
-    xind[alig$path != 2] <- 1:length(sequences)
+    #xind[alig$path != 2] <- 1:length(sequences)
+    xind[alig$path != 2] <- seq(alig$start[1], length.out = sum(alig$path != 2))
     xind[alig$path == 2] <- 0
     newx <- c(gapchar, as.vector(sequences))[xind + 1]
-    yind[alig$path != 0] <- 1:length(model)
+    # yind[alig$path != 0] <- 1:length(model)
+    yind[alig$path != 0] <- seq(alig$start[2], length.out = sum(alig$path != 0))
     yind[alig$path == 0] <- 0
     newy <- c(gapchar, as.vector(model))[yind + 1]
     res <- rbind(newx, newy)

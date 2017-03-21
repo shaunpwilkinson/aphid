@@ -22,7 +22,7 @@
 \arguments{
 \item{x}{object of various classes.}
 
-\item{...}{additional arguments.}
+\item{...}{additional arguments to be passed between methods.}
 }
 \value{
 NULL (invisibly)

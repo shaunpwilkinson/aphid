@@ -8,14 +8,7 @@
 \alias{derivePHMM.default}
 \title{Derive a profile hidden Markov model.}
 \usage{
-derivePHMM(x, seqweights = "Gerstein", wfactor = 1, k = 5,
-  residues = NULL, gapchar = "-", endchar = "?",
-  pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE,
-  seeds = "random", refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
-  cpp = TRUE, quiet = FALSE, ...)
+derivePHMM(x, ...)
 
 \method{derivePHMM}{DNAbin}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gapchar = "-", endchar = "?",
@@ -49,11 +42,15 @@ derivePHMM(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
   DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
   description = NULL, compo = FALSE, consensus = FALSE, cpp = TRUE,
-  quiet = FALSE)
+  quiet = FALSE, ...)
 }
 \arguments{
 \item{x}{a matrix of aligned sequences or a list of unaligned sequences.
 Accepted modes are "character" and "raw" (for "DNAbin" and "AAbin" objects).}
+
+\item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
+\code{refine = "Viterbi"}) or \code{"forward"} (if
+\code{refine = "BaumWelch"}).}
 
 \item{seqweights}{either NULL (default; all sequences are given
 weights of 1), a numeric vector the same length as \code{x} representing
@@ -206,10 +203,6 @@ The FALSE option is primarily retained for bug fixing and experimentation.}
 
 \item{quiet}{logical indicating whether feedback should be printed
 to the console.}
-
-\item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
-\code{refine = "Viterbi"}) or \code{"forward"} (if
-\code{refine = "BaumWelch"}).}
 }
 \value{
 an object of class \code{"PHMM"}

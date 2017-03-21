@@ -133,13 +133,16 @@
 #'   plot(x, main = "Dishonest casino HMM after training")
 #' @name train
 ################################################################################
-train <- function(x, y, method = "Viterbi", seqweights = NULL,
-                  logspace = "autodetect", maxiter = 100,
-                  deltaLL = 1E-07, modelend = FALSE,
-                  pseudocounts = "background", gapchar = "-",
-                  fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
-                  inserts = "map", threshold = 0.5, lambda = 0,
-                  quiet = FALSE, ...){
+# train <- function(x, y, method = "Viterbi", seqweights = NULL,
+#                   logspace = "autodetect", maxiter = 100,
+#                   deltaLL = 1E-07, modelend = FALSE,
+#                   pseudocounts = "background", gapchar = "-",
+#                   fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
+#                   inserts = "map", threshold = 0.5, lambda = 0,
+#                   quiet = FALSE, ...){
+#   UseMethod("train")
+# }
+train <- function(x, y, ...){
   UseMethod("train")
 }
 ################################################################################

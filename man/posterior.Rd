@@ -6,11 +6,11 @@
 \alias{posterior.PHMM}
 \title{Posterior decoding.}
 \usage{
-posterior(x, y, logspace = "autodetect", cpp = TRUE)
+posterior(x, y, ...)
 
-\method{posterior}{HMM}(x, y, logspace = "autodetect", cpp = TRUE)
+\method{posterior}{HMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 
-\method{posterior}{PHMM}(x, y, logspace = "autodetect", cpp = TRUE)
+\method{posterior}{PHMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'}.}
@@ -18,6 +18,8 @@ posterior(x, y, logspace = "autodetect", cpp = TRUE)
 \item{y}{a vector of mode "character" or "raw" (a "DNAbin" or "AAbin"
 object) representing a single sequence hypothetically emitted by
 the model in \code{x}.}
+
+\item{...}{additional arguments to be passed between methods.}
 
 \item{logspace}{logical indicating whether the emission and transition
 probabilities of x are logged. If \code{logspace = "autodetect"}

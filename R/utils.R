@@ -18,7 +18,7 @@
     if(!is.null(gapchar)) residues <- residues[residues != gapchar]
     if(!is.null(endchar)) residues <- residues[residues != endchar]
   }
-  if(!(length(residues) > 0 & mode(residues) == "character")){
+  if(!(length(residues) > 0)){# & mode(residues) == "character")){
     stop("invalid residues argument")
   }
   return(residues)

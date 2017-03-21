@@ -199,8 +199,22 @@ List ViterbiD(IntegerVector x, IntegerVector y,
     for(int i = 1; i < n; i++) MIX(i, 0) = 0;
     for(int j = 1; j < m; j++) MIY(0, j) = 0;
   }
-  for(int i = 1; i < n; i++) PIX(i, 0) = 0; // 0 represente IX
-  for(int j = 1; j < m; j++) PIY(0, j) = 2; // 2 represents IY
+  if(type == 2){
+    for(int i = 0; i < n; i++){
+      PIX(i, 0) = 3;
+      PMM(i, 0) = 3;// bit over the top but ok
+      PIY(i, 0) = 3;
+    }
+    for(int j = 0; j < m; j++){
+      PIX(0, j) = 3;
+      PMM(0, j) = 3;
+      PIY(0, j) = 3;
+    }
+  }else{
+    for(int i = 1; i < n; i++) PIX(i, 0) = 0; // 0 represente IX
+    for(int j = 1; j < m; j++) PIY(0, j) = 2; // 2 represents IY
+  }
+
 
   // recursion
   for(int i = 1; i < n; i++){
@@ -324,7 +338,6 @@ List ViterbiD(IntegerVector x, IntegerVector y,
       }
     }
   }else{
-    PMM(0, 0) = 3;
     int maxind = whichmax(MMM, 0);
     score = MMM[maxind];
     tbr = maxind % (n); // remainder

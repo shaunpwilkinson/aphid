@@ -65,6 +65,7 @@
 #' @param cpp logical, indicates whether the dynamic programming matrix
 #'   should be filled using compiled C++ functions (default; many times faster).
 #'   The FALSE option is primarily retained for bug fixing and experimentation.
+#' @param ... additional arguments to be passed between methods.
 #' @return an object of class \code{"Viterbi"}, which is a list containing the
 #'   score, the dynammic programming arrays, and the optimal path (an integer
 #'   vector). If x is a PHMM and y is a sequence, the path is represented as
@@ -78,7 +79,7 @@
 #'   a one refers to a match, and a two refers to y aligning to a gap in x.
 #'   If x is a standard hidden Markov model (HMM) and y is a sequence,
 #'   each integer (starting at zero) represents a state in the model.
-#' @details TBA
+#' @details TBA.
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -142,19 +143,22 @@
 #'   names(simulation)
 #' @name Viterbi
 ################################################################################
-Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
-                    odds = TRUE, offset = 0, d = 8, e = 2, S = NULL,
-                    residues = NULL, windowspace = "all", DI = FALSE, ID = FALSE,
-                    cpp = TRUE){
+# Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
+#                     odds = TRUE, offset = 0, d = 8, e = 2, S = NULL,
+#                     residues = NULL, windowspace = "all", DI = FALSE, ID = FALSE,
+#                     cpp = TRUE){
+#   UseMethod("Viterbi")
+# }
+Viterbi <- function(x, y, ...){
   UseMethod("Viterbi")
 }
-
+################################################################################
 #' @rdname Viterbi
 ################################################################################
 Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "global", odds = TRUE, offset = 0,
                          windowspace = "all", DI = FALSE, ID = FALSE,
-                         cpp = TRUE){
+                         cpp = TRUE, ...){
   if(type != "global" & !odds) stop("Non-odds option only available for global alignment")
   if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   if(!(type %in% c("global", "semiglobal", "local"))) stop("invalid type")
@@ -599,10 +603,10 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   }
   return(res)
 }
-
+################################################################################
 #' @rdname Viterbi
 ################################################################################
-Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
+Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
   if(identical(logspace, 'autodetect')) logspace <- .logdetect(x)
   DNA <- .isDNA(y)
   AA <- .isAA(y)
@@ -716,12 +720,12 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE){
   }
   return(res)
 }
-
+################################################################################
 #' @rdname Viterbi
 ################################################################################
 Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
-                            residues = NULL, S = NULL,
-                            windowspace = "all", offset = 0, cpp = TRUE){
+                            residues = NULL, S = NULL, windowspace = "all",
+                            offset = 0, cpp = TRUE, ...){
   if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
   DNA <- .isDNA(x)
   AA <- .isAA(x)
@@ -814,8 +818,10 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       if(is.null(residues)) stop("scoring matrix S must have 'dimnames' attributes")
     }
     # code x and y vectors as integers in with arity = length(residues) - 1
-    x <- setNames(seq_along(residues) - 1, residues)[x]
-    y <- setNames(seq_along(residues) - 1, residues)[y]
+    # x <- setNames(seq_along(residues) - 1, residues)[x]
+    # y <- setNames(seq_along(residues) - 1, residues)[y]
+    x  <- .encodeCH(x, residues = residues, na.rm = TRUE)
+    y  <- .encodeCH(y, residues = residues, na.rm = TRUE)
     if(identical(windowspace, "WilburLipman")) {
       windowspace <- .streak(x, y, arity = length(residues))
     }else if(identical(windowspace, "all")){
@@ -838,24 +844,31 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     P[, , 3] <- res$IYpointer
     res$array <- M
     res$pointer = P
-  } else{
+  }else{
     x <- x + 1
     y <- y + 1 # convert to R's indexing style
     M[1, 1, 2] <- 0
     if(type == 0){
       M[, 1, 1] <- c(0, seq(from = -d, to = (- d + (n - 2) * -e), by = -e))
       M[1, , 3] <- c(0, seq(from = -d, to = (- d + (m - 2) * -e), by = -e))
-    }else{
+      P[2, 1, 1] <- P[1, 2, 1] <- 2
+      P[3:n, 1, 1] <- 1
+      P[1, 3:m, 3] <- 3
+    }else if (type == 1){
       M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0 ### check this - should fill dim2 instead?
+      P[2, 1, 1] <- P[1, 2, 1] <- 2
+      P[3:n, 1, 1] <- 1
+      P[1, 3:m, 3] <- 3
+    }else{
+      M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0
+      P[1, , ] <- P[, 1, ]  <- 4
     }
-    P[2, 1, 1] <- P[1, 2, 1] <- 2
-    P[3:n, 1, 1] <- 1
-    P[1, 3:m, 3] <- 3
+
+    #if(type == 0) P[1, 1, 2] <- 4
     for(i in 2:n){
       for(j in 2:m){
-        #if(itertab[i, j]){
         if(j - i >= windowspace[1] & j - i <= windowspace[2]){
-          sij <- S[x[i - 1] + 1, y[j - 1]] + offset
+          sij <- S[x[i - 1], y[j - 1]] + offset
           Ixcdt <- c(M[i - 1, j, 1] - e, M[i - 1, j, 2] - (d + e))#x alig to gap in y
           Mcdt <- c(M[i - 1, j - 1, 1] + sij,
                     M[i - 1, j - 1, 2] + sij,
@@ -921,9 +934,12 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       # find highest score in scoring array M
       ind <- which(M[, , 2] == max(M[, , 2]), arr.ind = TRUE)
       z <- c(ind, 2)
+      #cat(z)
       score <- M[z[1], z[2], z[3]]
       P[1, 1, 2] <- 4
+      # cat(P[z[1], z[2], z[3]])
       while(P[z[1], z[2], z[3]] != 4){
+        #cat(z[3])
         path <- c(z[3], path)
         progression <- cbind(z[1:2], progression)
         z[3] <- P[z[1], z[2], z[3]]

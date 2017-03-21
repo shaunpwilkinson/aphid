@@ -8,11 +8,7 @@
 \alias{align.default}
 \title{Multiple sequence alignment in R.}
 \usage{
-align(sequences, model = NULL, seqweights = "Gerstein",
-  refine = "Viterbi", k = 5, maxiter = 100, maxsize = NULL,
-  inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
+align(sequences, ...)
 
 \method{align}{DNAbin}(sequences, model = NULL, seqweights = "Gerstein",
   refine = "Viterbi", k = 5, maxiter = 100, maxsize = NULL,
@@ -42,6 +38,10 @@ The vectors can either be of mode "raw" (consistent with the "DNAbin"
 or "AAbin" coding scheme set out in the \code{\link[ape]{ape}} package),
 or "character", in which case the alphabet should be specified in
 the \code{residues} argument.}
+
+\item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
+\code{refine = "Viterbi"}) or \code{"forward"} (if
+\code{refine = "BaumWelch"}).}
 
 \item{model}{an optional profile hidden Markov model (a \code{"PHMM"}
 object) to align the sequences to. If \code{NULL} a PHMM will
@@ -161,10 +161,6 @@ are automatically derived from the sequences.}
 
 \item{quiet}{logical indicating whether feedback should be printed
 to the console.}
-
-\item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
-\code{refine = "Viterbi"}) or \code{"forward"} (if
-\code{refine = "BaumWelch"}).}
 }
 \value{
 a matrix of aligned sequences, with the same mode and class as the
@@ -190,8 +186,12 @@ This function uses a progressive alignment procedure similar to
   x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
   y <- c("P", "A", "W", "H", "E", "A", "E")
   sequences <- list(x = x, y = y)
-  z <- align(sequences)
-  z
+  glo <- align(sequences, type = "global")
+  sem <- align(sequences, type = "semiglobal")
+  loc <- align(sequences, type = "local")
+  glo
+  sem
+  loc
 }
 \references{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological

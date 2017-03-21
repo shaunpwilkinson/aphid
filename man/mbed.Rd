@@ -49,7 +49,8 @@ This function deals with ambiguities by assigning counts proportionally.
   For example the motif ACRTG would assign the 5-mers ACATG and ACGTG counts of
   0.5 each. This algorithm is O N * 4^k in memory and time complexity so can be very
   slow and memory hungry for larger values of k. Further details of the embedding
-  process can be found in Blacksheilds et al. (2010).
+  process can be found in Blacksheilds et al. (2010). The k-mer distance measure
+  used is that of Edgar (2004).
 }
 \examples{
   ## embed the woodmouse dataset from the ape package
@@ -62,6 +63,9 @@ This function deals with ambiguities by assigning counts proportionally.
 Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
   for fast construction of guide trees for multiple sequence alignment.
   \emph{Algorithms for Molecular Biology}, \strong{5}, 21.
+  Edgar RC (2004) Local homology recognition and distance measures in
+  linear time using compressed amino acid alphabets.
+  \emph{Nucleic Acids Research}, \strong{32}, 380-385.
 }
 \seealso{
 \code{\link{kdistance}} for full N x N distance matrix computation

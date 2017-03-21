@@ -163,16 +163,19 @@
 #' plot(woodmouse.PHMM, from = 0, to = 4, main = "Woodmouse profile HMM")
 #' @name derivePHMM
 ################################################################################
-derivePHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
-                       residues = NULL, gapchar = "-", endchar = "?",
-                       pseudocounts = "background", logspace = TRUE,
-                       qa = NULL, qe = NULL, maxsize = NULL, inserts = "map",
-                       threshold = 0.5, lambda = 0,
-                       DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
-                       name = NULL, description = NULL, compo = FALSE,
-                       consensus = FALSE, seeds = "random", refine = "Viterbi",
-                       maxiter = 100, deltaLL = 1E-07, cpp = TRUE,
-                       quiet = FALSE, ...){
+# derivePHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
+#                        residues = NULL, gapchar = "-", endchar = "?",
+#                        pseudocounts = "background", logspace = TRUE,
+#                        qa = NULL, qe = NULL, maxsize = NULL, inserts = "map",
+#                        threshold = 0.5, lambda = 0,
+#                        DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
+#                        name = NULL, description = NULL, compo = FALSE,
+#                        consensus = FALSE, seeds = "random", refine = "Viterbi",
+#                        maxiter = 100, deltaLL = 1E-07, cpp = TRUE,
+#                        quiet = FALSE, ...){
+#   UseMethod("derivePHMM")
+# }
+derivePHMM <- function(x, ...){
   UseMethod("derivePHMM")
 }
 ################################################################################
@@ -377,7 +380,8 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                                inserts = "map", lambda = 0, threshold = 0.5,
                                DI = FALSE, ID = FALSE, omit.endgaps = TRUE,
                                name = NULL, description = NULL, compo = FALSE,
-                               consensus = FALSE, cpp = TRUE, quiet = FALSE){
+                               consensus = FALSE, cpp = TRUE, quiet = FALSE,
+                               ...){
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
   DNA <- .isDNA(x) # raw DNA bytes
   AA <- .isAA(x) # raw AA bytes

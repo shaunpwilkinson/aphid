@@ -6,11 +6,7 @@
 \alias{train.HMM}
 \title{Iterative model refinement.}
 \usage{
-train(x, y, method = "Viterbi", seqweights = NULL,
-  logspace = "autodetect", maxiter = 100, deltaLL = 1e-07,
-  modelend = FALSE, pseudocounts = "background", gapchar = "-",
-  fixqa = FALSE, fixqe = FALSE, maxsize = NULL, inserts = "map",
-  threshold = 0.5, lambda = 0, quiet = FALSE, ...)
+train(x, y, ...)
 
 \method{train}{PHMM}(x, y, method = "Viterbi", seqweights = NULL,
   logspace = "autodetect", maxiter = 100, deltaLL = 1e-07,
@@ -29,6 +25,10 @@ initial parameter values.}
 \item{y}{a list of training sequences whose hidden states are unknown.
 Accepted modes are "character" and "raw" (for "DNAbin" and "AAbin"
 objects).}
+
+\item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
+\code{method = "Viterbi"}) or \code{"forward"} (if
+\code{method = "BaumWelch"}).}
 
 \item{method}{a character string specifying the iterative model training
 method to use. Accepted methods are \code{"Viterbi"} (the default)
@@ -54,10 +54,6 @@ the partially trained model is returned. Defaults to 100.}
 iterations before the cycling procedure is terminated (signifying model
 convergence). Defaults to 1E-07. Only applicable if
 \code{method = "BaumWelch"}.}
-
-\item{modelend}{logical indicating whether transition probabilites
-to the end state of the standard hidden Markov model should be
-modeled (if applicable). Defaults to FALSE.}
 
 \item{pseudocounts}{character string, either "background", Laplace"
 or "none". Used to account for the possible absence of certain
@@ -125,9 +121,9 @@ column (Durbin et al. 1998, chapter 5.7). Only applicable when
 \item{quiet}{logical indicating whether feedback should be printed
 to the console.}
 
-\item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
-\code{method = "Viterbi"}) or \code{"forward"} (if
-\code{method = "BaumWelch"}).}
+\item{modelend}{logical indicating whether transition probabilites
+to the end state of the standard hidden Markov model should be
+modeled (if applicable). Defaults to FALSE.}
 }
 \value{
 an object of class \code{"HMM"} or \code{"PHMM"}, depending

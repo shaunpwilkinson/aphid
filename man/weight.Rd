@@ -9,24 +9,27 @@
 \alias{weight.default}
 \title{Tree-based sequence weighting.}
 \usage{
-weight(x, method = "Gerstein", k = 5, residues = NULL, gapchar = "-")
+weight(x, ...)
 
-\method{weight}{DNAbin}(x, method = "Gerstein", k = 5)
+\method{weight}{DNAbin}(x, method = "Gerstein", k = 5, residues = NULL,
+  gapchar = "-", ...)
 
-\method{weight}{AAbin}(x, method = "Gerstein", k = 5)
+\method{weight}{AAbin}(x, method = "Gerstein", k = 5, ...)
 
 \method{weight}{list}(x, method = "Gerstein", k = 5, residues = NULL,
-  gapchar = "-")
+  gapchar = "-", ...)
 
-\method{weight}{dendrogram}(x, method = "Gerstein")
+\method{weight}{dendrogram}(x, method = "Gerstein", ...)
 
 \method{weight}{default}(x, method = "Gerstein", k = 5, residues = NULL,
-  gapchar = "-")
+  gapchar = "-", ...)
 }
 \arguments{
 \item{x}{an object of class \code{"dendrogram"}, or a list or matrix of
 sequences (possibly a "DNAbin" or "AAbin" object) from which to derive a
 dendrogram via the \code{\link{topdown}} function.}
+
+\item{...}{additional arguments to be passed between methods.}
 
 \item{method}{a character string indicating the weighting method to be used.
 Currently only that of Gerstein et al. (1994) is supported
@@ -56,9 +59,12 @@ a named vector of weights, the sum of which is equal to
    the total number of sequences (average weight = 1).
 }
 \description{
-This function uses the agglomerative method of Gerstein et al. (1994) to
-  weight sequences based on their relatedness, as derived from a
-  phylogenetic tree.
+This is a generic function that uses the agglomerative method of
+  Gerstein et al. (1994) to weight sequences based on their relatedness
+  as derived from a phylogenetic tree. Methods are available for
+  \code{"dendrogram"} objects, \code{"DNAbin"} and \code{"AAbin"}
+  sequence objects (as lists or matrices) and sequences in standard
+  ASCII character format provided either as lists or matrices.
 }
 \details{
 For further details see Durbin et al. (1998) chapter 5.8.

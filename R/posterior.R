@@ -16,6 +16,7 @@
 #' @param cpp logical, indicates whether the dynamic programming matrix
 #'   should be filled using compiled C++ functions (default; many times faster).
 #'   The FALSE option is primarily retained for bug fixing and experimentation.
+#' @param ... additional arguments to be passed between methods.
 #' @return a vector or matrix of posterior probabilities.
 #' @details TBA
 #' @author Shaun Wilkinson
@@ -44,13 +45,16 @@
 #' @seealso \code{\link{forward}}, \code{\link{backward}}, \code{\link{Viterbi}}
 #' @name posterior
 ################################################################################
-posterior <- function(x, y, logspace = "autodetect", cpp = TRUE){
+# posterior <- function(x, y, logspace = "autodetect", cpp = TRUE){
+#   UseMethod("posterior")
+# }
+posterior <- function(x, y, ...){
   UseMethod("posterior")
 }
 ################################################################################
 #' @rdname posterior
 ################################################################################
-posterior.HMM <- function(x, y, logspace = "autodetect", cpp = TRUE){
+posterior.HMM <- function(x, y, logspace = "autodetect", cpp = TRUE, ...){
   if(identical(logspace, 'autodetect')) logspace <- .logdetect(x)
   back <- backward(x, y, logspace = logspace, cpp = cpp)
   B <- back$array
@@ -63,7 +67,7 @@ posterior.HMM <- function(x, y, logspace = "autodetect", cpp = TRUE){
 ################################################################################
 #' @rdname posterior
 ################################################################################
-posterior.PHMM <- function(x, y, logspace = "autodetect", cpp = TRUE){
+posterior.PHMM <- function(x, y, logspace = "autodetect", cpp = TRUE, ...){
   if(identical(logspace, 'autodetect')) logspace <- .logdetect(x)
   back <- backward(x, y, logspace = logspace, cpp = cpp)
   B <- back$array

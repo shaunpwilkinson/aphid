@@ -1,6 +1,6 @@
 #' Print summary methods.
 #' @param x object of various classes.
-#' @param ... additional arguments.
+#' @param ... additional arguments to be passed between methods.
 #' @return NULL (invisibly)
 #' @author Shaun Wilkinson
 #' @name print
