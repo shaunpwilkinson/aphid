@@ -37,7 +37,7 @@ devtools, run
 ```R
 install.packages("devtools")
 ``` 
-Then install and load the `phylogram` package by running 
+Then install and load the `aphid` package by running 
 ```R
 devtools::install_github("shaunpwilkinson/aphid") 
 library("aphid")
@@ -48,15 +48,12 @@ An overview of the package and it's functions can be found by running
 ```R
 ?aphid
 ```
-and more detail on the individual functions can be found using the 
-`?<function-name>` command.
-
 
 To build the vignette users will need to have LaTeX installed. RStudio recommends 
 [MiKTeX Complete](http://miktex.org/2.9/setup) for Windows and
 [TexLive 2013 Full](http://tug.org/) for Mac OS X and Linux.
 
-If you experience a problem using this package please
+If you experience a problem using this package please feel free to
 raise it as an issue on [GitHub](http://github.com/shaunpwilkinson/aphid/issues).
 
 ### Acknowledgements
