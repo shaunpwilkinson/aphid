@@ -79,7 +79,7 @@ NumericMatrix atab(IntegerMatrix x, NumericVector seqweights){
 
 // used for fragmenting a sequence into matches and inserts, given a path
 // [[Rcpp::export(name = ".fragR")]]
-List fragR(RawVector x, IntegerVector path, int l, RawVector gapchar){
+List fragR(RawVector x, IntegerVector path, int l, RawVector gap){
   // x is a sequence vector of mode "character"
   // path is a trinary integer vector, must end with 1
   // l is PHMM model size (saves on computation time)
@@ -107,7 +107,7 @@ List fragR(RawVector x, IntegerVector path, int l, RawVector gapchar){
       if(!frominsert) out[outcounter] = nothing;
       outcounter ++; // advances to match state in 'out'
       if(outcounter == outlen) break;
-      out[outcounter] = gapchar;
+      out[outcounter] = gap;
       outcounter ++; // advances to the next insert state
       pathcounter++;
       // seqcounter++; // no advance for seqcounter
@@ -132,7 +132,7 @@ List fragR(RawVector x, IntegerVector path, int l, RawVector gapchar){
 
 
 // [[Rcpp::export(name = ".fragC")]]
-List fragC(CharacterVector x, IntegerVector path, int l, char gapchar){
+List fragC(CharacterVector x, IntegerVector path, int l, CharacterVector gap){
   // x is a sequence vector of mode "character"
   // path is a trinary integer vector, must end with 1
   // l is PHMM model size (saves on computation time)
@@ -144,7 +144,7 @@ List fragC(CharacterVector x, IntegerVector path, int l, char gapchar){
   int pathcounter = 0; // keeps track of current position in the path
   int insstart = 0; // keeps track of position of beginning of current insert
   int outcounter = 0; // keeps track of current position in the returned list
-  CharacterVector gap = CharacterVector::create(gapchar);
+  // CharacterVector gap = CharacterVector::create(gap);
   CharacterVector nothing(0);
   bool frominsert = false;
   while(outcounter < outlen){

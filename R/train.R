@@ -51,7 +51,7 @@
 #'   row names of the emission matrix). For standard HMMs
 #'   the first row and column of the transition matrix should be named
 #'   "Begin".
-#' @param gapchar the character used to represent gaps in the alignment matrix
+#' @param gap the character used to represent gaps in the alignment matrix
 #'   (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 #'   Defaults to "-" otherwise.
 #' @param fixqa logical. Should the background transition probabilities
@@ -136,7 +136,7 @@
 # train <- function(x, y, method = "Viterbi", seqweights = NULL,
 #                   logspace = "autodetect", maxiter = 100,
 #                   deltaLL = 1E-07, modelend = FALSE,
-#                   pseudocounts = "background", gapchar = "-",
+#                   pseudocounts = "background", gap = "-",
 #                   fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
 #                   inserts = "map", threshold = 0.5, lambda = 0,
 #                   quiet = FALSE, ...){
@@ -150,7 +150,7 @@ train <- function(x, y, ...){
 ################################################################################
 train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                        logspace = "autodetect", maxiter = 100, deltaLL = 1E-07,
-                       pseudocounts = "background", gapchar = "-",
+                       pseudocounts = "background", gap = "-",
                        fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
                        inserts = "map", threshold = 0.5, lambda = 0,
                        quiet = FALSE, ...){
@@ -162,7 +162,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
   ID <- !all(x$A["ID", ] == if(logspace) -Inf else 0)
   maxiter <- maxiter
   #method <- toupper(method)
-  gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
+  gap <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gap
   if(!is.list(y)){
     if(DNA | AA){
       if(is.matrix(y)){
@@ -171,7 +171,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         tmp <- structure(vector(mode = "list", length = nseq), class = if(DNA) "DNAbin" else "AAbin")
         for(i in 1: nseq){
           seqi <- as.vector(y[i, ])
-          tmp[[i]] <- seqi[seqi != gapchar]
+          tmp[[i]] <- seqi[seqi != gap]
         }
         names(tmp) <- seqnames
       }else{
@@ -186,7 +186,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       tmp <- structure(vector(mode = "list", length = nseq), class = "DNAbin")
       for(i in 1: nseq){
         seqi <- as.vector(y[i, ])
-        tmp[[i]] <- seqi[seqi != gapchar]
+        tmp[[i]] <- seqi[seqi != gap]
       }
       names(tmp) <- seqnames
       y <- tmp
@@ -224,7 +224,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     if(!logspace) x$qa <- log(x$qa)
   }else{
     alignment <- align(y, x, ... = ...)
-    gaps <- alignment == gapchar
+    gaps <- alignment == gap
     inserts <- apply(gaps, 2, sum) > 0.5 * n
     xtr <- matrix(nrow = n, ncol = ncol(alignment))
     insertsn <- matrix(rep(inserts, n), nrow = n, byrow = T)
@@ -248,7 +248,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     # alig_cache[[1]] <- as.vector(alignment)
     for(i in 1:maxiter){
       out <- derivePHMM.default(alignment, seqweights = seqweights, residues = residues,
-                         gapchar = gapchar, DI = DI, ID = ID, maxsize = maxsize,
+                                gap = gap, DI = DI, ID = ID, maxsize = maxsize,
                         inserts = inserts, lambda = lambda, threshold = threshold,
                         pseudocounts = pseudocounts, logspace = TRUE,
                         qa = if(fixqa) x$qa else NULL,

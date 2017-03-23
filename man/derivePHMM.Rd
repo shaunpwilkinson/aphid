@@ -6,12 +6,12 @@
 \alias{derivePHMM.AAbin}
 \alias{derivePHMM.list}
 \alias{derivePHMM.default}
-\title{Derive a profile hidden Markov model.}
+\title{Derive a profile hidden Markov model from sequences.}
 \usage{
 derivePHMM(x, ...)
 
 \method{derivePHMM}{DNAbin}(x, seqweights = "Gerstein", wfactor = 1,
-  k = 5, residues = NULL, gapchar = "-", endchar = "?",
+  k = 5, residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
   DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
@@ -20,7 +20,7 @@ derivePHMM(x, ...)
   cpp = TRUE, quiet = FALSE, ...)
 
 \method{derivePHMM}{AAbin}(x, seqweights = "Gerstein", wfactor = 1, k = 5,
-  residues = NULL, gapchar = "-", endchar = "?",
+  residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
   DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
@@ -30,14 +30,14 @@ derivePHMM(x, ...)
 
 \method{derivePHMM}{list}(x, seeds = "random", refine = "Viterbi",
   maxiter = 100, deltaLL = 1e-07, seqweights = "Gerstein", wfactor = 1,
-  k = 5, residues = NULL, gapchar = "-", pseudocounts = "background",
+  k = 5, residues = NULL, gap = "-", pseudocounts = "background",
   logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
   inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
   threshold = 0.5, omit.endgaps = TRUE, name = NULL, description = NULL,
   compo = FALSE, consensus = FALSE, cpp = TRUE, quiet = FALSE, ...)
 
 \method{derivePHMM}{default}(x, seqweights = "Gerstein", wfactor = 1,
-  k = 5, residues = NULL, gapchar = "-", endchar = "?",
+  k = 5, residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
   DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
@@ -79,7 +79,7 @@ in the sequences, and thus will not assign them emission probabilities
 in the model. Specifying the residue alphabet is therefore
 recommended unless x is a "DNAbin" or "AAbin" object.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix.
+\item{gap}{the character used to represent gaps in the alignment matrix.
 Ignored for \code{"DNAbin"} or \code{"AAbin"} objects. Defaults to "-"
 otherwise.}
 
@@ -222,14 +222,14 @@ This function performs a similar operation to the  \code{hmmbuild}
 data(globins)
 ## derive a profile hidden Markov model from the alignment
 globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
-plot(globins.PHMM, main = "Profile hidden Markov model for globins")
+plot(globins.PHMM, main = "Profile HMM for small globin alignment")
 ##
 ## derive a profle HMM from the woodmouse dataset in the
 ## ape package and plot the first 5 modules
 library(ape)
 data(woodmouse)
 woodmouse.PHMM <- derivePHMM(woodmouse)
-plot(woodmouse.PHMM, from = 0, to = 4, main = "Woodmouse profile HMM")
+plot(woodmouse.PHMM, from = 0, to = 5, main = "profile HMM for woodmouse alignment")
 }
 \references{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological

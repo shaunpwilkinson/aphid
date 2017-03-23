@@ -20,7 +20,7 @@
 #'   "RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
 #'   large lists of character vectors. Specifying the residue alphabet is therefore
 #'   recommended unless x is a "DNAbin" or "AAbin" object.
-#' @param gapchar the character used to represent gaps in the alignment matrix
+#' @param gap the character used to represent gaps in the alignment matrix
 #'   (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 #'   Defaults to "-" otherwise.
 #' @param ... further arguments to be passed to \code{"as.dist"}.
@@ -50,13 +50,13 @@
 #'   plot(woodmouse.tree)
 ################################################################################
 kdistance <- function(x, k = 5, measure = "EDGAR04", residues = NULL,
-                      gapchar = "-", ...){
+                      gap = "-", ...){
   DNA <- .isDNA(x)
   AA <- .isAA(x)
   if(DNA) class(x) <- "DNAbin" else if(AA) class(x) <- "AAbin"
-  residues <- .alphadetect(x, residues = residues, gapchar = gapchar)
-  gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
-  if(is.matrix(x)) x <- unalign(x, gapchar = gapchar)
+  residues <- .alphadetect(x, residues = residues, gap = gap)
+  gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
+  if(is.matrix(x)) x <- unalign(x, gap = gap)
   nseq <- length(x)
   seqalongx <- seq_along(x)
   if(DNA){
@@ -76,7 +76,7 @@ kdistance <- function(x, k = 5, measure = "EDGAR04", residues = NULL,
       arity <- if(k > 2) 6 else 20 # compress AA alphabet for high k values
       x <- .encodeAA(x, arity = arity, na.rm = TRUE)
     }else{
-      residues <- .alphadetect(x, residues = residues, gapchar = gapchar)
+      residues <- .alphadetect(x, residues = residues, gap = gap)
       arity <- length(residues)
       if(k > 2 & arity >= 20) stop("Unable to calculate distance matrix for
                                large k and large alphabet size. If residues
@@ -126,7 +126,7 @@ kdistance <- function(x, k = 5, measure = "EDGAR04", residues = NULL,
 #'   "RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
 #'   large lists of character vectors. Specifying the residue alphabet is therefore
 #'   recommended unless x is a "DNAbin" or "AAbin" object.
-#' @param gapchar the character used to represent gaps in the alignment matrix
+#' @param gap the character used to represent gaps in the alignment matrix
 #'   (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 #'   Defaults to "-" otherwise.
 #' @return returns a N x log(N, 2)^2 matrix of class "mbed" (where N is the
@@ -155,8 +155,8 @@ kdistance <- function(x, k = 5, measure = "EDGAR04", residues = NULL,
 #'   woodmouse.mbed <- mbed(woodmouse)
 #'   woodmouse.mbed
 ################################################################################
-mbed <- function(x, seeds = NULL, k = 5, residues = NULL, gapchar = "-"){
-  if(is.matrix(x)) x <- unalign(x, gapchar = gapchar)
+mbed <- function(x, seeds = NULL, k = 5, residues = NULL, gap = "-"){
+  if(is.matrix(x)) x <- unalign(x, gap = gap)
   DNA <- .isDNA(x)
   AA <- .isAA(x)
   nseq <- length(x)
@@ -178,7 +178,7 @@ mbed <- function(x, seeds = NULL, k = 5, residues = NULL, gapchar = "-"){
       arity <- if(k > 2) 6 else 20 # compress AA alphabet for high k values
       x <- .encodeAA(x, arity = arity, na.rm = TRUE)
     }else{
-      residues <- .alphadetect(x, residues = residues, gapchar = gapchar)
+      residues <- .alphadetect(x, residues = residues, gap = gap)
       arity <- length(residues)
       if(k > 2 & arity >= 20) stop("Unable to calculate distance matrix for
                                large k and large alphabet size. If residues

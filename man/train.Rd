@@ -10,9 +10,9 @@ train(x, y, ...)
 
 \method{train}{PHMM}(x, y, method = "Viterbi", seqweights = NULL,
   logspace = "autodetect", maxiter = 100, deltaLL = 1e-07,
-  pseudocounts = "background", gapchar = "-", fixqa = FALSE,
-  fixqe = FALSE, maxsize = NULL, inserts = "map", threshold = 0.5,
-  lambda = 0, quiet = FALSE, ...)
+  pseudocounts = "background", gap = "-", fixqa = FALSE, fixqe = FALSE,
+  maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
+  quiet = FALSE, ...)
 
 \method{train}{HMM}(x, y, method = "Viterbi", seqweights = NULL,
   maxiter = 100, deltaLL = 1e-07, logspace = "autodetect",
@@ -76,7 +76,7 @@ row names of the emission matrix). For standard HMMs
 the first row and column of the transition matrix should be named
 "Begin".}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix
+\item{gap}{the character used to represent gaps in the alignment matrix
 (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 Defaults to "-" otherwise.}
 

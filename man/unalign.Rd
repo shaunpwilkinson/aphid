@@ -4,13 +4,13 @@
 \alias{unalign}
 \title{Deconstruct an alignment.}
 \usage{
-unalign(x, gapchar = "-")
+unalign(x, gap = "-")
 }
 \arguments{
 \item{x}{a matrix of aligned sequences. Accepted modes are "character"
 and "raw" (for "DNAbin" and "AAbin" objects).}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix.
+\item{gap}{the character used to represent gaps in the alignment matrix.
 Ignored for \code{"DNAbin"} or \code{"AAbin"} objects. Defaults to "-"
 otherwise.}
 }

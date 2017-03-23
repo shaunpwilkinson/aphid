@@ -10,7 +10,7 @@ generate(x, size, ...)
 
 \method{generate}{HMM}(x, size, logspace = "autodetect", random = TRUE, ...)
 
-\method{generate}{PHMM}(x, size, logspace = "autodetect", gapchar = "-",
+\method{generate}{PHMM}(x, size, logspace = "autodetect", gap = "-",
   random = TRUE, DNA = FALSE, AA = FALSE, ...)
 }
 \arguments{
@@ -36,7 +36,7 @@ with probabilities defined by the emission probabilities in the model
 (TRUE; default), or whether the the emitted residue should be determined
 by the maximum emission probability in the current state.}
 
-\item{gapchar}{the character used to represent gaps (delete states)
+\item{gap}{the character used to represent gaps (delete states)
 in the output sequence (only applicable for \code{PHMM} objects).}
 
 \item{DNA}{logical indicating whether the returned sequence should be a

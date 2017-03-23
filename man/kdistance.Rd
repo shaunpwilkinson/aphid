@@ -4,7 +4,7 @@
 \alias{kdistance}
 \title{K-mer distance matrix computation.}
 \usage{
-kdistance(x, k = 5, measure = "EDGAR04", residues = NULL, gapchar = "-",
+kdistance(x, k = 5, measure = "EDGAR04", residues = NULL, gap = "-",
   ...)
 }
 \arguments{
@@ -29,7 +29,7 @@ specifying the residue alphabet, or one of the character strings
 large lists of character vectors. Specifying the residue alphabet is therefore
 recommended unless x is a "DNAbin" or "AAbin" object.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix
+\item{gap}{the character used to represent gaps in the alignment matrix
 (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 Defaults to "-" otherwise.}
 

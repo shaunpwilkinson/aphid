@@ -26,7 +26,7 @@
 #'   in the sequences, and thus will not assign them emission probabilities
 #'   in the model. Specifying the residue alphabet is therefore
 #'   recommended unless x is a "DNAbin" or "AAbin" object.
-#' @param gapchar the character used to represent gaps in the alignment matrix
+#' @param gap the character used to represent gaps in the alignment matrix
 #'   (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 #'   Defaults to "-" otherwise.
 #' @param ... additional arguments to be passed between methods.
@@ -51,7 +51,7 @@
 #' @name weight
 ################################################################################
 # weight <- function(x, method = "Gerstein", k = 5, residues = NULL,
-#                    gapchar = "-"){
+#                    gap = "-"){
 #   UseMethod("weight")
 # }
 weight <- function(x, ...){
@@ -61,11 +61,11 @@ weight <- function(x, ...){
 #' @rdname weight
 ################################################################################
 weight.DNAbin <- function(x, method = "Gerstein", k = 5, residues = NULL,
-                          gapchar = "-", ...){
+                          gap = "-", ...){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
   }else{
-    x <- unalign(x, gapchar = as.raw(4))
+    x <- unalign(x, gap = as.raw(4))
     weight.list(x, method = method, k = k)
   }
 }
@@ -76,7 +76,7 @@ weight.AAbin <- function(x, method = "Gerstein", k = 5, ...){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
   }else{
-    x <- unalign(x, gapchar = as.raw(45))
+    x <- unalign(x, gap = as.raw(45))
     weight.list(x, method = method, k = k)
   }
 }
@@ -84,19 +84,19 @@ weight.AAbin <- function(x, method = "Gerstein", k = 5, ...){
 #' @rdname weight
 ################################################################################
 weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
-                        gapchar = "-", ...){
+                        gap = "-", ...){
   nsq <- length(x)
   DNA <- .isDNA(x)
   AA <- .isAA(x)
   if(DNA) class(x) <- "DNAbin" else if(AA) class(x) <- "AAbin"
-  residues <- .alphadetect(x, residues = residues, gapchar = gapchar)
-  gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
-  for(i in 1:nsq) x[[i]] <- x[[i]][x[[i]] != gapchar]
+  residues <- .alphadetect(x, residues = residues, gap = gap)
+  gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
+  for(i in 1:nsq) x[[i]] <- x[[i]][x[[i]] != gap]
   # cache names for later
   tmpnames <- names(x)
   names(x) <- paste0("S", 1:nsq)
   if(nsq > 2){
-    guidetree <- topdown(x, k = k, residues = residues, gapchar = gapchar)
+    guidetree <- topdown(x, k = k, residues = residues, gap = gap)
     # qds <- kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
     # guidetree <- as.dendrogram(hclust(qds, method = "average"))
     res <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)]
@@ -163,8 +163,8 @@ weight.dendrogram <- function(x, method = "Gerstein", ...){
 #' @rdname weight
 ################################################################################
 weight.default <- function(x, method = "Gerstein", k = 5, residues = NULL,
-                           gapchar = "-", ...){
-  x <- unalign(x, gapchar = gapchar)
-  weight.list(x, method = method, k = k, residues = residues, gapchar = gapchar)
+                           gap = "-", ...){
+  x <- unalign(x, gap = gap)
+  weight.list(x, method = method, k = k, residues = residues, gap = gap)
 }
 ################################################################################

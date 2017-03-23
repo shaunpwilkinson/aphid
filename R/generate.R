@@ -14,7 +14,7 @@
 #'   inconsistencies are found. Note that choosing the latter option
 #'   increases the computational overhead; therefore specifying
 #'   \code{TRUE} or \code{FALSE} can reduce the running time.
-#' @param gapchar the character used to represent gaps (delete states)
+#' @param gap the character used to represent gaps (delete states)
 #'   in the output sequence (only applicable for \code{PHMM} objects).
 #' @param random logical indicating whether residues should be emitted randomly
 #'   with probabilities defined by the emission probabilities in the model
@@ -65,7 +65,7 @@
 #' ## names indicate that all residues came from "match" states
 #' @name generate
 ################################################################################
-# generate <- function(x, size, logspace = "autodetect", gapchar = "-",
+# generate <- function(x, size, logspace = "autodetect", gap = "-",
 #                      random = TRUE, DNA = FALSE, AA = FALSE){
 #   UseMethod("generate")
 # }
@@ -109,7 +109,7 @@ generate.HMM <- function (x, size, logspace = "autodetect", random = TRUE, ...){
 ################################################################################
 #' @rdname generate
 ################################################################################
-generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-",
+generate.PHMM <- function (x, size, logspace = "autodetect", gap = "-",
                            random = TRUE, DNA = FALSE, AA = FALSE, ...){
   if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   A <- if(logspace) exp(x$A) else x$A
@@ -117,7 +117,7 @@ generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-",
   qe <- if(is.null(x$qe)) rep(1/nrow(E), nrow(E)) else if(logspace) exp(x$qe) else x$qe
   #### condition if names qe and rownames E mismatch?
   stopifnot(!(DNA & AA))
-  if(DNA) gapchar <- as.raw(4) else if(AA) gapchar <- as.raw(45)
+  if(DNA) gap <- as.raw(4) else if(AA) gap <- as.raw(45)
   emitted <- if(DNA | AA) raw(size) else character(size)
   hidden <- integer(size)
   states <- c("D", "M", "I")
@@ -152,7 +152,7 @@ generate.PHMM <- function (x, size, logspace = "autodetect", gapchar = "-",
       }
     }else{
       position <- position + 1
-      emitted[counter] <- gapchar
+      emitted[counter] <- gap
     }
     hidden[counter] <- state
     counter <- counter + 1

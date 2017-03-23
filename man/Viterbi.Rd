@@ -119,7 +119,7 @@ The \code{Viterbi} function finds the optimal path of a sequence through a HMM
   or PHMM and returns its full (log) probability or log-odds score.
 }
 \details{
-TBA
+TBA.
 }
 \examples{
   ## Viterbi algorithm for standard HMMs

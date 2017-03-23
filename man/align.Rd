@@ -13,30 +13,30 @@ align(sequences, ...)
 \method{align}{DNAbin}(sequences, model = NULL, seqweights = "Gerstein",
   refine = "Viterbi", k = 5, maxiter = 100, maxsize = NULL,
   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
+  DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
   pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
 
 \method{align}{AAbin}(sequences, model = NULL, seqweights = "Gerstein",
   refine = "Viterbi", k = 5, maxiter = 100, maxsize = NULL,
   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
+  DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
   pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
 
 \method{align}{list}(sequences, model = NULL, seqweights = "Gerstein",
   k = 5, refine = "Viterbi", maxiter = 100, maxsize = NULL,
   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
+  DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
   pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
 
 \method{align}{default}(sequences, model, pseudocounts = "background",
-  residues = NULL, gapchar = "-", maxsize = NULL, quiet = FALSE, ...)
+  residues = NULL, gap = "-", maxsize = NULL, quiet = FALSE, ...)
 }
 \arguments{
 \item{sequences}{a list of DNA, amino acid, or other character sequences
 consisting of symbols emitted from the chosen residue alphabet.
 The vectors can either be of mode "raw" (consistent with the "DNAbin"
 or "AAbin" coding scheme set out in the \code{\link[ape]{ape}} package),
-or "character", in which case the alphabet should be specified in
+or "character", in which case the alphabet should be ideally be specified in
 the \code{residues} argument.}
 
 \item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
@@ -127,7 +127,7 @@ in the sequences, and thus will not assign them emission probabilities
 in the model. Specifying the residue alphabet is therefore
 recommended unless x is a "DNAbin" or "AAbin" object.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix.
+\item{gap}{the character used to represent gaps in the alignment matrix.
 Ignored for \code{"DNAbin"} or \code{"AAbin"} objects. Defaults to "-"
 otherwise.}
 

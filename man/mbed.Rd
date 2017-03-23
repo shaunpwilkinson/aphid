@@ -4,7 +4,7 @@
 \alias{mbed}
 \title{Convert sequences to vectors of distances to \emph{n} seed sequences.}
 \usage{
-mbed(x, seeds = NULL, k = 5, residues = NULL, gapchar = "-")
+mbed(x, seeds = NULL, k = 5, residues = NULL, gap = "-")
 }
 \arguments{
 \item{x}{a matrix of aligned sequences or a list of unaligned sequences.
@@ -29,7 +29,7 @@ specifying the residue alphabet, or one of the character strings
 large lists of character vectors. Specifying the residue alphabet is therefore
 recommended unless x is a "DNAbin" or "AAbin" object.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix
+\item{gap}{the character used to represent gaps in the alignment matrix
 (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 Defaults to "-" otherwise.}
 }

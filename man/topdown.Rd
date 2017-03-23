@@ -4,7 +4,7 @@
 \alias{topdown}
 \title{Top down phylogenetic trees.}
 \usage{
-topdown(x, seeds = NULL, k = 5, residues = NULL, gapchar = "-",
+topdown(x, seeds = NULL, k = 5, residues = NULL, gap = "-",
   weighted = TRUE)
 }
 \arguments{
@@ -25,7 +25,7 @@ specifying the residue alphabet, or one of the character strings
 large lists of character vectors. Specifying the residue alphabet is therefore
 recommended unless the sequence list is a "DNAbin" or "AAbin" object.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix
+\item{gap}{the character used to represent gaps in the alignment matrix
 (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 Defaults to "-" otherwise.}
 

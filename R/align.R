@@ -7,7 +7,7 @@
 #'   consisting of symbols emitted from the chosen residue alphabet.
 #'   The vectors can either be of mode "raw" (consistent with the "DNAbin"
 #'   or "AAbin" coding scheme set out in the \code{\link[ape]{ape}} package),
-#'   or "character", in which case the alphabet should be specified in
+#'   or "character", in which case the alphabet should be ideally be specified in
 #'   the \code{residues} argument.
 #' @param model an optional profile hidden Markov model (a \code{"PHMM"}
 #'   object) to align the sequences to. If \code{NULL} a PHMM will
@@ -80,7 +80,7 @@
 #'   in the sequences, and thus will not assign them emission probabilities
 #'   in the model. Specifying the residue alphabet is therefore
 #'   recommended unless x is a "DNAbin" or "AAbin" object.
-#' @param gapchar the character used to represent gaps in the alignment matrix.
+#' @param gap the character used to represent gaps in the alignment matrix.
 #'   Ignored for \code{"DNAbin"} or \code{"AAbin"} objects. Defaults to "-"
 #'   otherwise.
 #' @param pseudocounts character string, either "background", Laplace"
@@ -152,7 +152,7 @@
 # align <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
 #                   refine = "Viterbi", maxiter = 100, maxsize = NULL,
 #                   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
-#                   DI = FALSE, ID = FALSE, residues = NULL, gapchar = "-",
+#                   DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
 #                   pseudocounts = "background", qa = NULL, qe = NULL,
 #                   quiet = FALSE, ...){
 #   UseMethod("align")
@@ -167,17 +167,17 @@ align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein",
                          refine = "Viterbi", k = 5, maxiter = 100,
                          maxsize = NULL, inserts = "map", lambda = 0,
                          threshold = 0.5, deltaLL = 1E-07, DI = FALSE,
-                         ID = FALSE, residues = NULL, gapchar = "-",
+                         ID = FALSE, residues = NULL, gap = "-",
                          pseudocounts = "background", qa = NULL, qe = NULL,
                          quiet = FALSE, ...){
   if(is.list(sequences)){
     align.list(sequences, model = model, seqweights = seqweights, refine = refine, k = k,
                maxiter = maxiter, maxsize = maxsize, inserts = inserts, lambda = lambda,
                threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
-               residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
+               residues = residues, gap = gap, pseudocounts = pseudocounts,
                qa = qa, qe = qe, quiet = quiet, ... = ...)
   }else{
-    align.default(sequences, model = model, residues = residues, gapchar = gapchar,
+    align.default(sequences, model = model, residues = residues, gap = gap,
                   pseudocounts = pseudocounts, maxsize = maxsize, quiet = quiet, ... = ...)
   }
 }
@@ -188,17 +188,17 @@ align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein",
                         refine = "Viterbi", k = 5, maxiter = 100,
                         maxsize = NULL, inserts = "map", lambda = 0,
                         threshold = 0.5, deltaLL = 1E-07, DI = FALSE,
-                        ID = FALSE, residues = NULL, gapchar = "-",
+                        ID = FALSE, residues = NULL, gap = "-",
                         pseudocounts = "background", qa = NULL, qe = NULL,
                         quiet = FALSE, ...){
   if(is.list(sequences)){
     align.list(sequences, model = model, seqweights = seqweights, refine = refine, k = k,
                maxiter = maxiter, maxsize = maxsize, inserts = inserts, lambda = lambda,
                threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
-               residues = residues, gapchar = gapchar, pseudocounts = pseudocounts,
+               residues = residues, gap = gap, pseudocounts = pseudocounts,
                qa = qa, qe = qe, quiet = quiet, ... = ...)
   }else{
-    align.default(sequences, model = model, residues = residues, gapchar = gapchar,
+    align.default(sequences, model = model, residues = residues, gap = gap,
                   pseudocounts = pseudocounts, maxsize = maxsize, quiet = quiet, ... = ...)
   }
 }
@@ -210,19 +210,19 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
                        maxsize = NULL, inserts = "map", lambda = 0,
                        threshold = 0.5, deltaLL = 1E-07,
                        DI = FALSE, ID = FALSE, residues = NULL,
-                       gapchar = "-", pseudocounts = "background",
+                       gap = "-", pseudocounts = "background",
                        qa = NULL, qe = NULL, quiet = FALSE, ...){
   nseq <- length(sequences)
   DNA <- .isDNA(sequences)
   AA <- .isAA(sequences)
   if(DNA) class(sequences) <- "DNAbin" else if(AA) class(sequences) <- "AAbin"
-  residues <-.alphadetect(sequences, residues = residues, gapchar = gapchar)
-  gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
-  for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
+  residues <-.alphadetect(sequences, residues = residues, gap = gap)
+  gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
+  for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gap]
   if(is.null(model)){
     if(nseq == 2){
       alignment <- align.default(sequences[[1]], sequences[[2]], residues = residues,
-                                 gapchar = gapchar, pseudocounts = pseudocounts,
+                                 gap = gap, pseudocounts = pseudocounts,
                                  quiet = quiet, ... = ...)
       rownames(alignment) <- names(sequences)
       return(alignment)
@@ -238,13 +238,13 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     }else seeds <- seq_along(sequences)
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")
-      guidetree <- topdown(sequences, k = k, residues = residues, gapchar = gapchar)
+      guidetree <- topdown(sequences, k = k, residues = residues, gap = gap)
       myseqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(sequences)]
     }else if(is.null(seqweights)){
       myseqweights <- rep(1, nseq)
     }
     phmm <- derivePHMM.list(sequences, seeds = seeds, refine = refine, maxiter = maxiter,
-                            seqweights = myseqweights, k = k, residues = residues, gapchar = gapchar,
+                            seqweights = myseqweights, k = k, residues = residues, gap = gap,
                             maxsize = maxsize, inserts = inserts, lambda = lambda,
                             threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
                             pseudocounts = pseudocounts, logspace = TRUE, qa = qa, qe = qe,
@@ -266,7 +266,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     }
     paths <- lapply(sequences, pathfinder, model, ...)
     fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, sequences, paths, l = l,
-                       gapchar = gapchar, SIMPLIFY = FALSE)
+                       gap = gap, SIMPLIFY = FALSE)
     odds <- seq(1, 2 * l + 1, by = 2)
     evens <- seq(2, 2 * l, by = 2)
     length(fragseqs)
@@ -277,7 +277,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     for(i in 1:nseq){
       needsapp <- insappends[i, ] > 0
       if(any(needsapp)){
-        apps <- lapply(insappends[i, needsapp], function(e) rep(gapchar, e))
+        apps <- lapply(insappends[i, needsapp], function(e) rep(gap, e))
         fragseqs[[i]][odds][needsapp] <- mapply(c, fragseqs[[i]][odds][needsapp],
                                                 apps, SIMPLIFY = FALSE)
       }
@@ -303,14 +303,14 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
 #' @rdname align
 ################################################################################
 align.default <- function(sequences, model, pseudocounts = "background",
-                          residues = NULL, gapchar = "-", maxsize = NULL,
+                          residues = NULL, gap = "-", maxsize = NULL,
                           quiet = FALSE, ...){
   if(is.null(model)) return(sequences)
   DNA <- .isDNA(sequences)
   AA <- .isAA(sequences)
   if(DNA){
     if(!.isDNA(model)) stop("class(sequences) and class(model) must match")
-    gapchar <- as.raw(4)
+    gap <- as.raw(4)
     # changes here need also apply in Viterbi.default and Viterbi.PHMM
     if(is.list(sequences)){
       if(length(sequences) == 1){
@@ -337,7 +337,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     }
   }else if(AA){
     if(!.isAA(model)) stop("class(sequences) and class(model) must match")
-    gapchar <- as.raw(45)
+    gap <- as.raw(45)
     # changes here need also apply in Viterbi.default and Viterbi.PHMM
     if(is.list(sequences)){
       if(length(sequences) == 1){
@@ -381,11 +381,11 @@ align.default <- function(sequences, model, pseudocounts = "background",
     #xind[alig$path != 2] <- 1:length(sequences)
     xind[alig$path != 2] <- seq(alig$start[1], length.out = sum(alig$path != 2))
     xind[alig$path == 2] <- 0
-    newx <- c(gapchar, as.vector(sequences))[xind + 1]
+    newx <- c(gap, as.vector(sequences))[xind + 1]
     # yind[alig$path != 0] <- 1:length(model)
     yind[alig$path != 0] <- seq(alig$start[2], length.out = sum(alig$path != 0))
     yind[alig$path == 0] <- 0
-    newy <- c(gapchar, as.vector(model))[yind + 1]
+    newy <- c(gap, as.vector(model))[yind + 1]
     res <- rbind(newx, newy)
     rownames(res) <- c(rownames(sequences), rownames(model))
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
@@ -420,9 +420,9 @@ align.default <- function(sequences, model, pseudocounts = "background",
     newrow <- lapply(1:ncol(model), function(e) e)
     newy <- lapply(newrow, function(e) model[, e, drop = FALSE])
     #
-    newxrows <- matrix(gapchar, nrow = n, ncol = ncol(sequences) + ncol(model))
+    newxrows <- matrix(gap, nrow = n, ncol = ncol(sequences) + ncol(model))
     rownames(newxrows) <- rownames(sequences)
-    newyrow <- matrix(gapchar, nrow = 1, ncol = ncol(sequences) + ncol(model))
+    newyrow <- matrix(gap, nrow = 1, ncol = ncol(sequences) + ncol(model))
     rownames(newyrow) = rownames(model)
     isinsert <- vector(mode = "logical", length = ncol(sequences) + ncol(model))
     if(DNA){
@@ -523,9 +523,9 @@ align.default <- function(sequences, model, pseudocounts = "background",
     newrow <- lapply(newrow, function(e) if(is.null(e)) 0 else e)
     newy <- lapply(newrow, function(e) model[, e, drop = FALSE])
     #create output alignment
-    newxrows <- matrix(gapchar, nrow = nx, ncol = ncol(sequences) + ncol(model))
+    newxrows <- matrix(gap, nrow = nx, ncol = ncol(sequences) + ncol(model))
     rownames(newxrows) <- rownames(sequences)
-    newyrows <- matrix(gapchar, nrow = ny, ncol = ncol(sequences) + ncol(model))
+    newyrows <- matrix(gap, nrow = ny, ncol = ncol(sequences) + ncol(model))
     rownames(newyrows) <- rownames(model)
     isinsert <- vector(mode = "logical", length = ncol(sequences) + ncol(model))
     if(DNA){
@@ -593,11 +593,11 @@ align.default <- function(sequences, model, pseudocounts = "background",
     res.list <- unalign(res)
     res.weights <- weight(res.list, method = "Gerstein", k = 5)
     # cat("\n", maxsize, "\n")
-    # cat(sum(apply(res, 2, function(v) !any(v == gapchar))), "\n\n")
+    # cat(sum(apply(res, 2, function(v) !any(v == gap))), "\n\n")
     newmaxsize <- if(is.null(maxsize)){
       NULL
     }else{
-      max(c(sum(apply(res, 2, function(v) !any(v == gapchar))), maxsize))
+      max(c(sum(apply(res, 2, function(v) !any(v == gap))), maxsize))
     }
     res.phmm <- derivePHMM.default(res, seqweights = res.weights, maxsize = newmaxsize)
     res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 3,
@@ -631,11 +631,11 @@ align.default <- function(sequences, model, pseudocounts = "background",
 #' data(woodmouse)
 #' sequences <- unalign(woodmouse)
 ################################################################################
-unalign <- function(x, gapchar = "-"){
+unalign <- function(x, gap = "-"){
   #x is a matrix representing an alignment
   DNA <- .isDNA(x)
   AA <- .isAA(x)
-  gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
+  gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
   if(is.list(x)){
     if(length(x) == 1){
       tmpname <- names(x)
@@ -647,7 +647,7 @@ unalign <- function(x, gapchar = "-"){
     }
   }
   res <- vector(mode = "list", length = nrow(x))
-  for(i in 1:nrow(x)) res[[i]] <- x[i, x[i, ] != gapchar, drop = TRUE]
+  for(i in 1:nrow(x)) res[[i]] <- x[i, x[i, ] != gap, drop = TRUE]
   if(AA){
     res <- lapply(res, unclass)
     class(res) <- "AAbin"

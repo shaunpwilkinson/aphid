@@ -1,6 +1,6 @@
 # Internal functions.
 # detect residue alphabet
-.alphadetect <- function(sequences, residues = NULL, gapchar = "-",
+.alphadetect <- function(sequences, residues = NULL, gap = "-",
                         endchar = "?"){
   if(identical(toupper(residues), "RNA")){
     residues <- c("A", "C", "G", "U")
@@ -12,10 +12,10 @@
   }
   else if(is.null(residues)){
     residues <- sort(unique(as.vector(unlist(sequences))))
-    if(!is.null(gapchar)) residues <- residues[residues != gapchar]
+    if(!is.null(gap)) residues <- residues[residues != gap]
     if(!is.null(endchar)) residues <- residues[residues != endchar]
   }else{
-    if(!is.null(gapchar)) residues <- residues[residues != gapchar]
+    if(!is.null(gap)) residues <- residues[residues != gap]
     if(!is.null(endchar)) residues <- residues[residues != endchar]
   }
   if(!(length(residues) > 0)){# & mode(residues) == "character")){
@@ -45,31 +45,31 @@
 # Convert a vector in any arity to a decimal integer
 .decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
 
-.trim <- function(x, gapchar = "-", endchar = "?", DNA = FALSE, AA = FALSE){
+.trim <- function(x, gap = "-", endchar = "?", DNA = FALSE, AA = FALSE){
   #X is a raw or character matrix
-  # gapchar can have length > 1
-  gapchar <- if(DNA) as.raw(c(4, 240)) else if(AA) as.raw(c(45, 88)) else gapchar
+  # gap can have length > 1
+  gap <- if(DNA) as.raw(c(4, 240)) else if(AA) as.raw(c(45, 88)) else gap
   endchar <- if(DNA) as.raw(2) else if (AA) as.raw(63) else endchar
   L <- ncol(x)
   n <- nrow(x)
-  if(!any(x[, 1] %in% gapchar) & !any(x[, L] %in% gapchar)) return(x)
+  if(!any(x[, 1] %in% gap) & !any(x[, L] %in% gap)) return(x)
   for(i in 1:n){
-    if(x[i, 1] %in% gapchar){
+    if(x[i, 1] %in% gap){
       counter <- 1
       advance = TRUE
       while(advance & counter <= L){
         x[i, counter] <- endchar
         counter <- counter + 1
-        advance <- if(counter <= L) x[i, counter] %in% gapchar else FALSE
+        advance <- if(counter <= L) x[i, counter] %in% gap else FALSE
       }
     }
-    if(x[i, L] %in% gapchar){
+    if(x[i, L] %in% gap){
       counter <- L
       advance = TRUE
       while(advance & counter >= 1){
         x[i, counter] <- endchar
         counter <- counter - 1
-        advance <- if(counter >= 1) x[i, counter] %in% gapchar else FALSE
+        advance <- if(counter >= 1) x[i, counter] %in% gap else FALSE
       }
     }
   }

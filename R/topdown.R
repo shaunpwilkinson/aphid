@@ -16,7 +16,7 @@
 #'   "RNA", "DNA", "AA", "AMINO". Note that the default option can be slow for
 #'   large lists of character vectors. Specifying the residue alphabet is therefore
 #'   recommended unless the sequence list is a "DNAbin" or "AAbin" object.
-#' @param gapchar the character used to represent gaps in the alignment matrix
+#' @param gap the character used to represent gaps in the alignment matrix
 #'   (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 #'   Defaults to "-" otherwise.
 #' @param weighted logical indicating whether the edge lengths in the
@@ -56,14 +56,14 @@
 #' plot(woodmice.tree, main = "Woodmouse tree", horiz = TRUE)
 #' }
 ################################################################################
-topdown <- function(x, seeds = NULL, k = 5, residues = NULL, gapchar = "-",
+topdown <- function(x, seeds = NULL, k = 5, residues = NULL, gap = "-",
                     weighted = TRUE){
-  if(is.matrix(x)) x <- unalign(x, gapchar = gapchar)
+  if(is.matrix(x)) x <- unalign(x, gap = gap)
   # first embed the seqs in a N x log(N, 2)^2 distmat as in Blackshields 2010
   nseq <- length(x)
   seqlengths <- sapply(x, length)
   #generate long thin distance matrix with counts attributes etc
-  M <- mbed(x, seeds = seeds, k = k,  residues = residues, gapchar = gapchar)
+  M <- mbed(x, seeds = seeds, k = k, residues = residues, gap = gap)
   # throw some minor random variation into duplicate rows so kmeans doesn't crash
   Mduplicates <- duplicated.matrix(M, MARGIN = 1)
   M[Mduplicates, ] <- M[Mduplicates, ] + runif(length(M[Mduplicates, ]),

@@ -12,17 +12,17 @@
 weight(x, ...)
 
 \method{weight}{DNAbin}(x, method = "Gerstein", k = 5, residues = NULL,
-  gapchar = "-", ...)
+  gap = "-", ...)
 
 \method{weight}{AAbin}(x, method = "Gerstein", k = 5, ...)
 
 \method{weight}{list}(x, method = "Gerstein", k = 5, residues = NULL,
-  gapchar = "-", ...)
+  gap = "-", ...)
 
 \method{weight}{dendrogram}(x, method = "Gerstein", ...)
 
 \method{weight}{default}(x, method = "Gerstein", k = 5, residues = NULL,
-  gapchar = "-", ...)
+  gap = "-", ...)
 }
 \arguments{
 \item{x}{an object of class \code{"dendrogram"}, or a list or matrix of
@@ -50,7 +50,7 @@ in the sequences, and thus will not assign them emission probabilities
 in the model. Specifying the residue alphabet is therefore
 recommended unless x is a "DNAbin" or "AAbin" object.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix
+\item{gap}{the character used to represent gaps in the alignment matrix
 (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 Defaults to "-" otherwise.}
 }

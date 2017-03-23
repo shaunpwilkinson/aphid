@@ -4,7 +4,7 @@
 \alias{map}
 \title{Optimized profile HMM construction.}
 \usage{
-map(x, seqweights = NULL, residues = NULL, gapchar = "-", endchar = "?",
+map(x, seqweights = NULL, residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", lambda = 0, qa = NULL, qe = NULL,
   cpp = TRUE)
 }
@@ -26,7 +26,7 @@ in the sequences, and thus will not assign them emission probabilities
 in the model. Specifying the residue alphabet is therefore
 recommended unless x is a "DNAbin" or "AAbin" object.}
 
-\item{gapchar}{the character used to represent gaps in the alignment matrix
+\item{gap}{the character used to represent gaps in the alignment matrix
 (if applicable). Ignored for \code{"DNAbin"} or \code{"AAbin"} objects.
 Defaults to "-" otherwise.}
 
