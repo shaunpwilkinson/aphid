@@ -216,7 +216,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
   DNA <- .isDNA(sequences)
   AA <- .isAA(sequences)
   if(DNA) class(sequences) <- "DNAbin" else if(AA) class(sequences) <- "AAbin"
-  residues <- .alphadetect(sequences, residues = residues, gapchar = gapchar)
+  residues <-.alphadetect(sequences, residues = residues, gapchar = gapchar)
   gapchar <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gapchar
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gapchar]
   if(is.null(model)){
@@ -233,137 +233,73 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     }
     if(!quiet) cat("Calculating pairwise distances\n")
     if(nseq > 100){
-      # nseeds <- min(nseq, 100 + 2 * ceiling(log(nseq, 2)))
       nseeds <- ceiling(log(nseq, 2)^2) # LLR algorithm see Blacksheilds et al 2010
       seeds <- sample(1:nseq, size = nseeds)
     }else seeds <- seq_along(sequences)
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")
       guidetree <- topdown(sequences, k = k, residues = residues, gapchar = gapchar)
-      #qds <- kdistance(sequences, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-      #guidetree <- as.dendrogram(hclust(qds, method = "average"))
       myseqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(sequences)]
     }else if(is.null(seqweights)){
       myseqweights <- rep(1, nseq)
     }
     phmm <- derivePHMM.list(sequences, seeds = seeds, refine = refine, maxiter = maxiter,
-                        seqweights = myseqweights, k = k, residues = residues, gapchar = gapchar,
-                        maxsize = maxsize, inserts = inserts, lambda = lambda,
-                        threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
-                        pseudocounts = pseudocounts, logspace = TRUE, qa = qa, qe = qe,
-                        quiet = quiet, ... = ...)
+                            seqweights = myseqweights, k = k, residues = residues, gapchar = gapchar,
+                            maxsize = maxsize, inserts = inserts, lambda = lambda,
+                            threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
+                            pseudocounts = pseudocounts, logspace = TRUE, qa = qa, qe = qe,
+                            quiet = quiet, ... = ...)
     if(!quiet) cat("Aligning sequences to model\n")
-    # if(!is.null(tmp)) names(sequences) <- tmp
     res <- align.list(sequences, model = phmm, ... = ...)
     if(!quiet) cat("Produced alignment with", ncol(res), "columns (including inserts)\n")
     return(res)
   }else{
     #note changes here also need apply to 'train'
-    stopifnot(class(model) == "PHMM")
-    # DNA <- .isDNA(sequences)
-    # AA <- .isAA(sequences)
-    # gapchar <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gapchar
-    if(!is.list(sequences)){
-      if(is.null(dim(sequences))){
-        seqname <- deparse(substitute(sequences))
-        sequences <- list(sequences)
-        names(sequences) <- seqname
-      }else{
-        sequences <- unalign(sequences)
-      }
-    }
+    stopifnot(inherits(model, "PHMM"))
     l <- model$size
-    # if(!quiet) cat("Model size:", l, "internal modules\n")
-    #nseq <- length(sequences)
-    out <- matrix(nrow = nseq, ncol = 2 * l + 1)
-    rownames(out) <- attr(sequences, "names")
-    colnames(out) <- rep("I", 2 * l + 1)
-    if(l > 0) colnames(out)[seq(2, 2 * l, by = 2)] <- 1:l
-    score <- 0
+    pathfinder <- function(s, model, ...){
+      vit <- Viterbi(model, s, ... = ...)
+      res <- c(vit$path, 1) #append the final transition to end state
+      # this is just so the c++ function knows where to stop
+      attr(res, "score") <- vit$score
+      return(res)
+    }
+    paths <- lapply(sequences, pathfinder, model, ...)
+    fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, sequences, paths, l = l,
+                       gapchar = gapchar, SIMPLIFY = FALSE)
+    odds <- seq(1, 2 * l + 1, by = 2)
+    evens <- seq(2, 2 * l, by = 2)
+    length(fragseqs)
+    inslens <- lapply(fragseqs, function(e) sapply(e[odds], length))
+    inslens <- matrix(unlist(inslens), nrow = nseq, byrow = TRUE)
+    insmaxs <- apply(inslens, 2, max)
+    insappends <- t(insmaxs - t(inslens))
     for(i in 1:nseq){
-      alignment <- Viterbi(model, sequences[i], ... = ...)
-      score <- score + alignment$score
-      newrow <- rep(gapchar, length(alignment$path))
-      if(DNA | AA){
-        newrow <- rep("-", length(alignment$path))
-        newrow[alignment$path > 0] <- if(DNA){
-          ape::as.character.DNAbin(sequences[[i]])
-        }else{
-          ape::as.character.AAbin(sequences[[i]])
-        }
-      }else{
-        newrow <- rep(gapchar, length(alignment$path))
-        newrow[alignment$path > 0] <- sequences[[i]]
+      needsapp <- insappends[i, ] > 0
+      if(any(needsapp)){
+        apps <- lapply(insappends[i, needsapp], function(e) rep(gapchar, e))
+        fragseqs[[i]][odds][needsapp] <- mapply(c, fragseqs[[i]][odds][needsapp],
+                                                apps, SIMPLIFY = FALSE)
       }
-      inserts <- alignment$path == 2
-      if(any(inserts)){
-        itp <- apply(rbind(c(F, inserts), c(inserts, F)), 2, .decimal, 2)
-        ist <- which(itp == 1)
-        ien <- which(itp == 2) - 1
-        runs <- mapply(":", ist, ien, SIMPLIFY = FALSE)
-        newrow[ist] <- sapply(runs, function(e) paste0(newrow[e], collapse = ""))
-        itp <- itp[seq_along(newrow)] # removes final transition which can't be a 1(MI) or a 3(II)
-        insflag <- itp == 1
-        newrow <- newrow[itp < 3] # now newrow is x$size + number of MI transitions
-        insflag <- insflag[itp < 3] #now same length as newrow
-        insflag2 <- c(FALSE, insflag, FALSE, FALSE)
-        tuples <- rbind(insflag2[-(length(insflag2))], insflag2[-1])
-        decs <- apply(tuples, 2, .decimal, 2)
-        tuples <- tuples[, decs != 2, drop = FALSE] #remove true->falses
-        tuples <- tuples[,-ncol(tuples), drop = FALSE]
-        tuples[1, -1] <- TRUE
-      }else{
-        tuples <- rbind(c(FALSE, rep(TRUE, l)), rep(FALSE, l + 1))
-      }
-      indices <- as.vector(tuples)[-1]
-      newrow2 <- rep(if(DNA | AA) "-" else gapchar, 2 * l + 1)
-      names(newrow2) <- c(rep(c("I", "M"), l), "I") #seq(0.5, x$size + 0.5, by = 0.5)
-      newrow2[indices] <- newrow
-      out[i,] <- newrow2
     }
-    discardcols <- apply(out, 2, function(v) all(v == if(DNA | AA) "-" else gapchar))
-    matchcols <- c(FALSE, rep(c(TRUE, FALSE), l))
-    out <- out[, matchcols | !discardcols, drop = FALSE]
-    out <- as.list(as.data.frame(out, stringsAsFactors = F))
-    fun <- function(e){
-      ee <- strsplit(e, split = "")
-      elengths <- sapply(ee, length)
-      if(all(elengths == 1)) return(unlist(ee))
-      maxlen <- max(elengths)
-      no.gapstoappend <- maxlen - elengths
-      appges <- lapply(no.gapstoappend, function(v) rep(if(DNA | AA) "-" else gapchar, v))
-      return(t(mapply(c, ee, appges)))
-    }
-    out[names(out) == "I"] <- lapply(out[names(out) == "I"], fun)
-    ncols <- sapply(out, function(e) if(is.null(dim(e))) 1 else ncol(e))
-    totcols <- sum(ncols)
-    res <- matrix(nrow = nseq, ncol = totcols)
-    rownames(res) <- names(sequences)
-    rescolnames <- vector(mode = "character", length = totcols)
-    counter <- 1
-    for(i in seq_along(ncols)){
-      if(ncols[i] == 1){
-        res[, counter] <- out[[i]]
-        rescolnames[counter] <- names(out)[i]
-      }else{
-        endrange <- counter + ncols[i] - 1
-        res[, counter:endrange] <- out[[i]]
-        rescolnames[counter:endrange] <- rep("I", ncols[i])
-      }
-      counter <- counter + ncols[i]
-    }
-    colnames(res) <- rescolnames
-    inserts <- sapply(colnames(res), function(v) grepl("I", v))
-    #colnames(res)[inserts] <- "I"
-    #rownames(res) <- names(sequences)
-    if(DNA) res <- ape::as.DNAbin(res) else if(AA) res <- ape::as.AAbin(res)
+    unfragseqs <- lapply(fragseqs, unlist)
+    res <- matrix(unlist(unfragseqs), nrow = nseq, byrow = TRUE)
+    score <- sum(sapply(paths, function(p) attr(p, "score")))
+    inserts <- vector(length = 2 * l + 1, mode = "list")
+    inserts[evens] <- FALSE
+    inserts[odds] <- lapply(insmaxs, function(e) rep(TRUE, e))
+    inserts <- unlist(inserts)
+    resnames <- vector(length = 2 * l + 1, mode = "list")
+    resnames[evens] <- paste(1:l)
+    resnames[odds] <- lapply(insmaxs, function(e) rep("I", e))
+    resnames <- unlist(resnames)
+    colnames(res) <- resnames
     attr(res, "score") <- score
-    attr(res, "inserts") <- unname(inserts)
+    attr(res, "inserts") <- inserts
     return(res)
   }
 }
-
-
+################################################################################
 #' @rdname align
 ################################################################################
 align.default <- function(sequences, model, pseudocounts = "background",
@@ -672,8 +608,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     stop("invalid arguments provided for sequences and or y")
   }
 }
-
-
+################################################################################
 #' Deconstruct an alignment.
 #'
 #' \code{unalign} deconstructs an alignment to a list of sequences.
@@ -723,4 +658,4 @@ unalign <- function(x, gapchar = "-"){
   names(res) <- rownames(x)
   return(res)
 }
-
+################################################################################

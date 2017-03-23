@@ -77,7 +77,110 @@ NumericMatrix atab(IntegerMatrix x, NumericVector seqweights){
   return out;
 }
 
+// used for fragmenting a sequence into matches and inserts, given a path
+// [[Rcpp::export(name = ".fragR")]]
+List fragR(RawVector x, IntegerVector path, int l, RawVector gapchar){
+  // x is a sequence vector of mode "character"
+  // path is a trinary integer vector, must end with 1
+  // l is PHMM model size (saves on computation time)
+  // returns fragmented sequence list of length 2l + 1
+  int outlen = 2 * l + 1; // length of returned list, includes
+  //one element for each emitting match state and one for each insert state
+  List out = List(outlen);
+  int seqcounter = 0; // keeps track of current position in the sequence
+  int pathcounter = 0; // keeps track of current position in the path
+  int insstart = 0; // keeps track of position of beginning of current insert
+  int outcounter = 0; // keeps track of current position in the returned list
+  RawVector nothing(0);
+  bool frominsert = false;
+  while(outcounter < outlen){
+    if(path[pathcounter] == 1){// match state
+      if(!frominsert) out[outcounter] = nothing;
+      outcounter ++; // advances to match state in 'out'
+      if(outcounter == outlen) break;
+      out[outcounter] = RawVector::create(x[seqcounter]);
+      outcounter ++; // advances to the next insert state
+      pathcounter++;
+      seqcounter++;
+      frominsert = false;
+    }else if(path[pathcounter] == 0){ //delete state
+      if(!frominsert) out[outcounter] = nothing;
+      outcounter ++; // advances to match state in 'out'
+      if(outcounter == outlen) break;
+      out[outcounter] = gapchar;
+      outcounter ++; // advances to the next insert state
+      pathcounter++;
+      // seqcounter++; // no advance for seqcounter
+      frominsert = false;
+    }else if(path[pathcounter] == 2){// insert state
+      insstart = seqcounter;
+      pathcounter++;
+      seqcounter++;
+      while(path[pathcounter] == 2){
+        pathcounter++;
+        seqcounter++;
+        // no advance in outcounter
+      }
+      out[outcounter] = x[seq(insstart, seqcounter - 1)];
+      frominsert = true;
+    }else throw Rcpp::exception("Invalid integer in path");
+    //checkUserInterrupt();
+  }
+  return(out);
+}
 
 
+
+// [[Rcpp::export(name = ".fragC")]]
+List fragC(CharacterVector x, IntegerVector path, int l, char gapchar){
+  // x is a sequence vector of mode "character"
+  // path is a trinary integer vector, must end with 1
+  // l is PHMM model size (saves on computation time)
+  // returns fragmented sequence list of length 2l + 1
+  int outlen = 2 * l + 1; // length of returned list, includes
+  //one element for each emitting match state and one for each insert state
+  List out = List(outlen);
+  int seqcounter = 0; // keeps track of current position in the sequence
+  int pathcounter = 0; // keeps track of current position in the path
+  int insstart = 0; // keeps track of position of beginning of current insert
+  int outcounter = 0; // keeps track of current position in the returned list
+  CharacterVector gap = CharacterVector::create(gapchar);
+  CharacterVector nothing(0);
+  bool frominsert = false;
+  while(outcounter < outlen){
+    if(path[pathcounter] == 1){// match state
+      if(!frominsert) out[outcounter] = nothing;
+      outcounter ++; // advances to match state in 'out'
+      if(outcounter == outlen) break;
+      out[outcounter] = CharacterVector::create(x[seqcounter]);
+      outcounter ++; // advances to the next insert state
+      pathcounter++;
+      seqcounter++;
+      frominsert = false;
+    }else if(path[pathcounter] == 0){ //delete state
+      if(!frominsert) out[outcounter] = nothing;
+      outcounter ++; // advances to match state in 'out'
+      if(outcounter == outlen) break;
+      out[outcounter] = gap;
+      outcounter ++; // advances to the next insert state
+      pathcounter++;
+      // seqcounter++; // no advance for seqcounter
+      frominsert = false;
+    }else if(path[pathcounter] == 2){// insert state
+      insstart = seqcounter;
+      pathcounter++;
+      seqcounter++;
+      while(path[pathcounter] == 2){
+        pathcounter++;
+        seqcounter++;
+        // no advance in outcounter
+      }
+      out[outcounter] = x[seq(insstart, seqcounter - 1)];
+      frominsert = true;
+    }else throw Rcpp::exception("Invalid integer in path");
+    // checkUserInterrupt();
+  }
+  return(out);
+}
 
 

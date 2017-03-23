@@ -14,7 +14,6 @@ SystemRequirements: GNU make
 Depends:
     R(>= 3.0.0)
 Imports:
-    ape (>= 3.0.0),
     graphics,
     openssl (>= 0.9.0),
     phylogram,
@@ -22,6 +21,7 @@ Imports:
     stats,
     utils
 Suggests:
+    ape (>= 3.0.0),
     knitr,
     rmarkdown,
     testthat

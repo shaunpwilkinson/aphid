@@ -1,4 +1,4 @@
-#' Derive a profile hidden Markov model.
+#' Derive a profile hidden Markov model from sequences.
 #'
 #' \code{derivePHMM} generates a profile HMM from a given multiple sequence alignment
 #'   or a list of unaligned sequences.
@@ -153,14 +153,14 @@
 #' data(globins)
 #' ## derive a profile hidden Markov model from the alignment
 #' globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
-#' plot(globins.PHMM, main = "Profile hidden Markov model for globins")
+#' plot(globins.PHMM, main = "Profile HMM for small globin alignment")
 #' ##
 #' ## derive a profle HMM from the woodmouse dataset in the
 #' ## ape package and plot the first 5 modules
 #' library(ape)
 #' data(woodmouse)
 #' woodmouse.PHMM <- derivePHMM(woodmouse)
-#' plot(woodmouse.PHMM, from = 0, to = 4, main = "Woodmouse profile HMM")
+#' plot(woodmouse.PHMM, from = 0, to = 5, main = "profile HMM for woodmouse alignment")
 #' @name derivePHMM
 ################################################################################
 # derivePHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,

@@ -564,7 +564,12 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
   // traceback
   IntegerVector path(m + n); // if being picky should be m + n - 2 but doesnt matter
   LogicalVector keeppath(m + n);
-  int counter = m + n - 1;
+  int counter = m + n - 1; // start at end and work backwards
+  // if(type < 2){//include transition to end state if not local alignment
+  //   path[counter] = 1;
+  //   keeppath[counter] = true;
+  //   counter--;
+  // }
   int tbr;
   int tbc;
   int tbm;
@@ -726,7 +731,8 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
 // [[Rcpp::export(name = ".ViterbiPP")]]
 List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
                 NumericMatrix Ex, NumericMatrix Ey,
-                NumericVector qe, int type, IntegerVector windowspace, double offset = 0){
+                NumericVector qe, int type, IntegerVector windowspace,
+                double offset = 0){
   int n = Ex.ncol() + 1;
   int m = Ey.ncol() + 1;
   NumericMatrix Saa(n - 1, m - 1);
@@ -735,8 +741,6 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
       Saa(i, j) = logsum(Ex(_, i) + Ey(_, j) - qe);
     }
   }
-
-
   double sij;
   NumericVector MIcdt(2);
   NumericVector DGcdt(2);
@@ -777,7 +781,6 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
     for(int i = 2; i < n; i++){
       MImatrix(i, 0) = MImatrix(i - 1, 0) + Ax(4, i - 1) + Ay(8, 0); // MM + II
       DGmatrix(i, 0) = DGmatrix(i - 1, 0) + Ax(0, i - 1); // DD
-
     }
     MMmatrix(0, 0) = 0;
     GDmatrix(0, 1) = Ay(3, 0); //MD
@@ -787,7 +790,6 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
     for(int j = 2; j < m; j++){
       GDmatrix(0, j) = GDmatrix(0, j - 1) + Ay(0, j - 1); // DD
       IMmatrix(0, j) = IMmatrix(0, j - 1) + Ay(4, j - 1) + Ax(8, 0); // MM + II
-
     }
   }else{
     for(int i = 1; i < n; i++) {
@@ -806,8 +808,7 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
     GDpointer(0, 1) = 2;
     IMpointer(0, 1) = 2;
   }
-
-  // recursion
+  // recursion step
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
       if(j - i >= windowspace[0] & j - i <= windowspace[1]){
@@ -848,6 +849,11 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
   IntegerVector path(m + n); // if being picky should be m + n - 2 but doesnt matter
   LogicalVector keeppath(m + n);
   int counter = m + n - 1;
+  // if(type < 2){//include matchy-matchy for end states if alignment type is not local
+  //   path[counter] = 2;
+  //   keeppath[counter] = true;
+  //   counter--;
+  // }
   int tbr;
   int tbc;
   int tbm;
@@ -1020,7 +1026,6 @@ List forwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
   NumericMatrix R(nstates, nrolls);
   NumericVector s = A(0, _);
   NumericVector e = A(_, 0);
-
   NumericMatrix tmp(nstates, nstates);
   NumericVector coltotals(nstates);
   if(DNA){
