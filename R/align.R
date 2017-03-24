@@ -294,6 +294,8 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     resnames[odds] <- lapply(insmaxs, function(e) rep("I", e))
     resnames <- unlist(resnames)
     colnames(res) <- resnames
+    rownames(res) <- names(sequences)
+    class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     attr(res, "score") <- score
     attr(res, "inserts") <- inserts
     return(res)
@@ -319,7 +321,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
         class(sequences) <- "DNAbin"
       }else stop("Invalid input: multi-sequence list")
     }else{
-      if(!is.matrix(sequences)) {
+      if(!is.matrix(sequences)){
         sequences <- matrix(sequences, nrow = 1, dimnames = list(deparse(substitute(sequences)), NULL))
       }
       class(sequences) <- "DNAbin"
