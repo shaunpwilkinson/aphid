@@ -4,15 +4,17 @@
 
 Analysis with profile hidden Markov models in R
 
-`aphid` is an R package containing functions for building and using 
-profile hidden Markov models for biological sequence analysis. Functions are included for
-multiple and pairwise sequence alignment, model construction and parameter optimization,
-calculation of conditional probabilities (with the forward, backward and Viterbi algorithms),
-tree-based sequence weighting, k-mer distance calculation, sequence simulation,
-and file import/export compatible with the  [HMMER](http://www.hmmer.org/) 
-software package. `aphid` also includes functions for standard hidden Markov
-models, and other handy tools for computing distance matrices and building
-phylogenetic trees.
+--------------------------------------------------------------------------------
+
+`aphid` is an R package containing functions for building and utilizing 
+profile hidden Markov models for biological sequence analysis. 
+Functions are included for multiple and pairwise sequence alignment, 
+model construction and parameter optimization, calculation of conditional 
+probabilities (using the forward, backward and Viterbi algorithms),
+tree-based sequence weighting, sequence simulation, and file import/export 
+compatible with the  [HMMER](http://www.hmmer.org/) software package. 
+`aphid` also includes functions for developing and working with 
+standard hidden Markov models
 
 This package was written based on the algorithms described in the book 
 [Biological Sequence Analysis](
@@ -55,8 +57,10 @@ To build the vignette users will need to have LaTeX installed. RStudio recommend
 If you experience a problem using this package please feel free to
 raise it as an issue on [GitHub](http://github.com/shaunpwilkinson/aphid/issues).
 
+
 ### Acknowledgements
-The production of this software was made possible with funding from a Rutherford Foundation
-Postdoctoral Research Fellowship awarded by the Royal Society of New Zealand, and 
-carried out through [Victoria University of Wellington](http://www.victoria.ac.nz/).
+This software was developed at 
+[Victoria University of Wellington](http://www.victoria.ac.nz/) 
+with funding from a Rutherford Foundation Postdoctoral Research Fellowship 
+award from the Royal Society of New Zealand.
 

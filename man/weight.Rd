@@ -27,7 +27,7 @@ weight(x, ...)
 \arguments{
 \item{x}{an object of class \code{"dendrogram"}, or a list or matrix of
 sequences (possibly a "DNAbin" or "AAbin" object) from which to derive a
-dendrogram via the \code{\link{topdown}} function.}
+dendrogram via the \code{\link[phylogram]{topdown}} function.}
 
 \item{...}{additional arguments to be passed between methods.}
 
@@ -85,7 +85,7 @@ Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 }
 \seealso{
-\code{\link{topdown}}
+\code{\link[phylogram]{topdown}}
 }
 \author{
 Shaun Wilkinson

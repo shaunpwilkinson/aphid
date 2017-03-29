@@ -14,10 +14,8 @@
 #'   and the NUC.4.2 and NUC.4.4 substitution matrices for DNA.}
 #' }
 #' @source \url{ftp://ftp.ncbi.nih.gov/blast/matrices/}
-"substitution_matrices"
-
-
-
+"substitution"
+################################################################################
 #' Dishonest casino example.
 #'
 #' The 'dishonest casino' example from Durbin et al. (1998) chapter 3.2.
@@ -36,8 +34,7 @@
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
 "casino"
-
-
+################################################################################
 #' Globin protein alignment.
 #'
 #' The small globin protein alignment from figure 5.3 of
@@ -51,3 +48,4 @@
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
 "globins"
+################################################################################

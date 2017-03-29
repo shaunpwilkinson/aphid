@@ -42,13 +42,6 @@ print.Viterbi <- function(x, ...){
       "and score",
       x$score)
 }
-#' @rdname print
-print.mbed <- function(x, ...){
-  cat("Matrix of", nrow(x),
-      "embedded sequences, represented as vectors of distances to",
-      ncol(x),
-      "seed sequences")
-}
 
 
 # digits integer, for compatibility with other print methods.

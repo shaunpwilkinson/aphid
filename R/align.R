@@ -19,7 +19,7 @@
 #'   the sequence weights used to derive the model, or a character string giving
 #'   the method to derive the weights from the sequences. Currently only the
 #'   \code{"Gerstein"} method is supported (default). For this method, a
-#'   tree is first created by k-mer counting (see \code{\link{topdown}}),
+#'   tree is first created by k-mer counting (see \code{\link[phylogram]{topdown}}),
 #'   and sequence weights are then derived from the tree using the 'bottom up'
 #'   algorithm of Gerstein et al. (1994).
 #' @param refine the method used to iteratively refine the model parameters
@@ -238,7 +238,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     }else seeds <- seq_along(sequences)
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")
-      guidetree <- topdown(sequences, k = k, residues = residues, gap = gap)
+      guidetree <- phylogram::topdown(sequences, k = k, residues = residues, gap = gap)
       myseqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(sequences)]
     }else if(is.null(seqweights)){
       myseqweights <- rep(1, nseq)

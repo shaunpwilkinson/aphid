@@ -9,7 +9,7 @@ output: pdf_document
 Markov models for biological sequence analysis. Functions are included for
 multiple and pairwise sequence alignment, model construction and parameter optimization,
 calculation of conditional probabilities (with the forward and Viterbi algorithms),
-tree-based sequence weighting, k-mer distance calculation, sequence simulation,
+tree-based sequence weighting, sequence simulation,
 and file import/export compatible with the 
 [HMMER](http://www.hmmer.org/) software package.
 

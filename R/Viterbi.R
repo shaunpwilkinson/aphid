@@ -745,7 +745,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       }else stop("Invalid input object y: multi-sequence list")
     }
     if(is.null(S)){
-      S <- aphid::substitution_matrices$NUC.4.4
+      S <- aphid::substitution$NUC.4.4
     }else{
       IUPAC <- c("A", "T", "G", "C", "S", "W", "R", "Y", "K", "M", "B", "V", "H", "D", "N")
       if(!(identical(rownames(S), IUPAC) & identical(colnames(S), IUPAC))) {
@@ -780,7 +780,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       }else stop("Invalid input object y: multi-sequence list")
     }
     if(is.null(S)){
-      S <- aphid::substitution_matrices$MATCH
+      S <- aphid::substitution$MATCH
     }else{
       IUPAC <- c("A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K",
                  "M", "F", "P", "S", "T", "W", "Y", "V", "B", "Z", "X", "*")
@@ -796,7 +796,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
-    if(identical(S, aphid::substitution_matrices$GONNET)){
+    if(identical(S, aphid::substitution$GONNET)){
       #x <- AA2duovigesimal(x, na.rm = TRUE)
       #y <- AA2duovigesimal(y, na.rm = TRUE)
       x <- .encodeAA(x, arity = 22, na.rm = TRUE)

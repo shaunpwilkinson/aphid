@@ -10,7 +10,7 @@
 #'   the sequence weights used to derive the model, or a character string giving
 #'   the method to derive the weights from the sequences. Currently only the
 #'   \code{"Gerstein"} method is supported (default). For this method, a
-#'   tree is first created by k-mer counting (see \code{\link{topdown}}),
+#'   tree is first created by k-mer counting (see \code{\link[phylogram]{topdown}}),
 #'   and sequence weights are then derived from the tree using the 'bottom up'
 #'   algorithm of Gerstein et al. (1994).
 #' @param wfactor numeric. The factor to multiply the sequence weights by.
@@ -288,8 +288,8 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
       seeds <- seq_along(x)
     }
     if(!quiet) cat("Building guide tree\n")
-    guidetree <- topdown(x[seeds], k = k, residues = residues, gap = gap)
-    # qds <- kdistance(x[seeds], k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+    guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues, gap = gap)
+    # qds <- phylogram::kdistance(x[seeds], k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
     # guidetree <- as.dendrogram(hclust(qds, method = "average"))
     seedweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)[seeds]]
     attachseqs <- function(tree, sequences){
@@ -350,8 +350,8 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
       if(identical(sort(seeds), seq_along(x))){
         seqweights <- seedweights * wfactor
       }else{
-        guidetree <- topdown(x, k = k, residues = residues, gap = gap)
-        # qds <- kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+        guidetree <- phylogram::topdown(x, k = k, residues = residues, gap = gap)
+        # qds <- phylogram::kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
         # guidetree <- as.dendrogram(hclust(qds, method = "average"))
         seqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)] * wfactor
       }
@@ -404,8 +404,8 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     seqweights <- rep(wfactor, n)
   }else if(identical(seqweights, "Gerstein")){
     if(n > 2){
-      guidetree <- topdown(xlist, k = k, residues = residues, gap = gap)
-      #qds <- kdistance(xlist, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+      guidetree <- phylogram::topdown(xlist, k = k, residues = residues, gap = gap)
+      #qds <- phylogram::kdistance(xlist, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
       #guidetree <- as.dendrogram(hclust(qds, method = "average"))
       seqweights <- weight(guidetree, method = "Gerstein")[names(xlist)] * wfactor
     }else{

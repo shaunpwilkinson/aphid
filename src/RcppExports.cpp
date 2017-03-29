@@ -5,33 +5,6 @@
 
 using namespace Rcpp;
 
-// kcountDNA
-NumericMatrix kcountDNA(List x, int k);
-RcppExport SEXP aphid_kcountDNA(SEXP xSEXP, SEXP kSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    rcpp_result_gen = Rcpp::wrap(kcountDNA(x, k));
-    return rcpp_result_gen;
-END_RCPP
-}
-// kdist
-NumericMatrix kdist(NumericMatrix x, IntegerVector from, IntegerVector to, IntegerVector seqlengths, int k);
-RcppExport SEXP aphid_kdist(SEXP xSEXP, SEXP fromSEXP, SEXP toSEXP, SEXP seqlengthsSEXP, SEXP kSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type from(fromSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type to(toSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type seqlengths(seqlengthsSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    rcpp_result_gen = Rcpp::wrap(kdist(x, from, to, seqlengths, k));
-    return rcpp_result_gen;
-END_RCPP
-}
 // map
 LogicalVector map(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts, NumericVector seqweights, NumericVector qe, double lambda);
 RcppExport SEXP aphid_map(SEXP ecsSEXP, SEXP notgapsSEXP, SEXP pseudocountsSEXP, SEXP seqweightsSEXP, SEXP qeSEXP, SEXP lambdaSEXP) {

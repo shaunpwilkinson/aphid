@@ -6,7 +6,6 @@
 \alias{print.HMM}
 \alias{print.fullprob}
 \alias{print.Viterbi}
-\alias{print.mbed}
 \title{Print summary methods.}
 \usage{
 \method{print}{PHMM}(x, ...)
@@ -16,8 +15,6 @@
 \method{print}{fullprob}(x, ...)
 
 \method{print}{Viterbi}(x, ...)
-
-\method{print}{mbed}(x, ...)
 }
 \arguments{
 \item{x}{object of various classes.}

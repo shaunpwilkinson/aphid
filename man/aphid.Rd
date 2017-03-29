@@ -128,24 +128,18 @@ of a sequence given a HMM or PHMM
 }
 }
 
-\section{Other functions}{
+\section{Sequence simulation}{
 
 \itemize{
 \item \code{\link{generate}} simulates random sequences from a HMM
 or PHMM
-\item \code{\link{kdistance}} calculates pairwise
-distances between sequences by k-mer counting
-\item \code{\link{mbed}} embeds sequences as vectors of distances to a set of
-'seed' sequences (see Blackshields et al. (2010))
-\item \code{\link{topdown}} builds a phylogenetic tree by successively
-splitting a set of sequences (recursive partitioning)
 }
 }
 
 \section{Datasets}{
 
 \itemize{
-\item \code{\link{substitution_matrices}} DNA and protein substitution
+\item \code{\link{substitution}} DNA and protein substitution
 matrices including PAM, BLOSUM, GONNET, DAYHOFF, NUC.4.2 and NUC.4.4
 \item \code{\link{casino}} the dishonest casino example from Durbin et al.
 (1998) chapter 3.2
