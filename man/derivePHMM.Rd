@@ -14,7 +14,7 @@ derivePHMM(x, ...)
   k = 5, residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
+  DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
   description = NULL, compo = FALSE, consensus = FALSE,
   seeds = "random", refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
   cpp = TRUE, quiet = FALSE, ...)
@@ -23,7 +23,7 @@ derivePHMM(x, ...)
   residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
+  DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
   description = NULL, compo = FALSE, consensus = FALSE,
   seeds = "random", refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
   cpp = TRUE, quiet = FALSE, ...)
@@ -33,14 +33,15 @@ derivePHMM(x, ...)
   k = 5, residues = NULL, gap = "-", pseudocounts = "background",
   logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
   inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
-  threshold = 0.5, omit.endgaps = TRUE, name = NULL, description = NULL,
-  compo = FALSE, consensus = FALSE, cpp = TRUE, quiet = FALSE, ...)
+  threshold = 0.5, omit.endgaps = FALSE, name = NULL,
+  description = NULL, compo = FALSE, consensus = FALSE, cpp = TRUE,
+  quiet = FALSE, ...)
 
 \method{derivePHMM}{default}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
-  DI = FALSE, ID = FALSE, omit.endgaps = TRUE, name = NULL,
+  DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
   description = NULL, compo = FALSE, consensus = FALSE, cpp = TRUE,
   quiet = FALSE, ...)
 }
@@ -158,9 +159,10 @@ FALSE.}
 
 \item{omit.endgaps}{logical. Should gap characters at each end of the
 sequences be ignored when deriving the transition probabilities
-of the model? Defaults to TRUE.
-Set to FALSE only if x is a true global alignment
-and all sequences are represented in their entirety.}
+of the model? Defaults to FALSE.
+Set to TRUE if \code{x} is not a strict global alignment
+(i.e. if the alignment contains partial sequences with missing
+sections represented with gap characters).}
 
 \item{name}{an optional character string. The name of the
 new profile hidden Markov model.}

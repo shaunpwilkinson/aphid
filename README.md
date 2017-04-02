@@ -39,7 +39,7 @@ devtools, run
 ```R
 install.packages("devtools")
 ``` 
-Then install and load `aphid` by running 
+then install and load `aphid` by running 
 ```R
 devtools::install_github("shaunpwilkinson/aphid") 
 library("aphid")

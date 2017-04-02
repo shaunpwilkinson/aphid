@@ -216,7 +216,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
   DNA <- .isDNA(sequences)
   AA <- .isAA(sequences)
   if(DNA) class(sequences) <- "DNAbin" else if(AA) class(sequences) <- "AAbin"
-  residues <-.alphadetect(sequences, residues = residues, gap = gap)
+  residues <- .alphadetect(sequences, residues = residues, gap = gap)
   gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
   for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gap]
   if(is.null(model)){
@@ -231,18 +231,23 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
       rownames(alignment) <- names(sequences)
       return(alignment)
     }
-    if(!quiet) cat("Calculating pairwise distances\n")
+    #if(!quiet) cat("Calculating pairwise distances\n")
     if(nseq > 100){
       nseeds <- ceiling(log(nseq, 2)^2) # LLR algorithm see Blacksheilds et al 2010
       seeds <- sample(1:nseq, size = nseeds)
-    }else seeds <- seq_along(sequences)
+    }else{
+      seeds <- seq_along(sequences)
+    }
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")
       guidetree <- phylogram::topdown(sequences, k = k, residues = residues, gap = gap)
       myseqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(sequences)]
     }else if(is.null(seqweights)){
       myseqweights <- rep(1, nseq)
+    }else{
+      myseqweights <- seqweights
     }
+    #if(!quiet) cat("Aligning seed sequences and deriving model\n")
     phmm <- derivePHMM.list(sequences, seeds = seeds, refine = refine, maxiter = maxiter,
                             seqweights = myseqweights, k = k, residues = residues, gap = gap,
                             maxsize = maxsize, inserts = inserts, lambda = lambda,
@@ -490,13 +495,17 @@ align.default <- function(sequences, model, pseudocounts = "background",
     # res <- align.list(sequences = res.list, model = res.phmm, quiet = TRUE, ... = ...)
     return(res)
   }else if(nrow(sequences) > 1 & nrow(model) > 1){
+    #cat(rownames(sequences), "\n")
+    #cat(rownames(model), "\n")
+    # mat1 <<- sequences
+    # mat2 <<- model
     nx <- nrow(sequences)
     ny <- nrow(model)
     zx <- derivePHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     zy <- derivePHMM(model,  seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     lx <- zx$size
     ly <- zy$size
-    alignment <- Viterbi(zx, zy, ... = ...)
+    alignment <- Viterbi(zx, zy, cpp = FALSE, ... = ...)
     path <- alignment$path
     # lay x out as list with insert elements
     newrow <- vector(length = lx * 2 + 1, mode = "list")
