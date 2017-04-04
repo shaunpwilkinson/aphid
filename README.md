@@ -6,7 +6,7 @@ Analysis with profile hidden Markov models in R
 
 --------------------------------------------------------------------------------
 
-`aphid` is an R package containing functions for building and utilizing 
+`aphid` is an R package containing functions for building and using 
 profile hidden Markov models for biological sequence analysis. 
 Functions are included for multiple and pairwise sequence alignment, 
 model construction and parameter optimization, calculation of conditional 

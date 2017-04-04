@@ -126,11 +126,13 @@
 #'               nrow = 2, byrow = TRUE) # emission probability matrix
 #'   dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
 #'   x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
+#'   op <- par(no.readonly = TRUE)
 #'   par(mfrow = c(2, 1))
 #'   plot(x, main = "Dishonest casino HMM before training")
 #'   data(casino)
 #'   x <- train(x, list(casino), method = "BaumWelch", deltaLL = 0.001)
 #'   plot(x, main = "Dishonest casino HMM after training")
+#'   par(op)
 #' @name train
 ################################################################################
 # train <- function(x, y, method = "Viterbi", seqweights = NULL,

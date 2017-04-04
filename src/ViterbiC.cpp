@@ -214,8 +214,6 @@ List ViterbiD(IntegerVector x, IntegerVector y,
     for(int i = 1; i < n; i++) PIX(i, 0) = 0; // 0 represente IX
     for(int j = 1; j < m; j++) PIY(0, j) = 2; // 2 represents IY
   }
-
-
   // recursion
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
@@ -507,7 +505,6 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
   IntegerMatrix Dpointer(n, m); // pointer matrices
   IntegerMatrix Mpointer = clone(Dpointer);
   IntegerMatrix Ipointer = clone(Dpointer);
-
   // initialize scoring matrices
   Mmatrix(0, 0) = 0;
   if(type == 0){
@@ -526,7 +523,6 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
   Ipointer(0, 1) = 1;
   for(int i = 2; i < n; i++) Dpointer(i, 0) = 0; // 0 represents IX
   for(int j = 2; j < m; j++) Ipointer(0, j) = 2; // 2 represents IY
-
   // recursion
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
@@ -582,7 +578,6 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
     NumericVector LLcdt = NumericVector::create(Dmatrix(n - 1, m - 1) + A(1, n - 1), //DM
                                                 Mmatrix(n - 1, m - 1) + A(4, n - 1), //MM
                                                 Imatrix(n - 1, m - 1) + A(7, n - 1)); //IM
-
     tbm = whichmax(LLcdt, 0);
     score = LLcdt[tbm];
     tbr = n - 1; // traceback row
@@ -781,6 +776,8 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
     for(int i = 2; i < n; i++){
       MImatrix(i, 0) = MImatrix(i - 1, 0) + Ax(4, i - 1) + Ay(8, 0); // MM + II
       DGmatrix(i, 0) = DGmatrix(i - 1, 0) + Ax(0, i - 1); // DD
+      MIpointer(i, 0) = 0; // added apr 4 17
+      DGpointer(i, 0) = 1;// added apr 4 17
     }
     MMmatrix(0, 0) = 0;
     GDmatrix(0, 1) = Ay(3, 0); //MD
@@ -790,6 +787,8 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
     for(int j = 2; j < m; j++){
       GDmatrix(0, j) = GDmatrix(0, j - 1) + Ay(0, j - 1); // DD
       IMmatrix(0, j) = IMmatrix(0, j - 1) + Ay(4, j - 1) + Ax(8, 0); // MM + II
+      GDpointer(0, j) = 3;// added apr 4 17
+      IMpointer(0, j) = 4;// added apr 4 17
     }
   }else{
     for(int i = 1; i < n; i++) {

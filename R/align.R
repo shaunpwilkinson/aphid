@@ -505,7 +505,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     zy <- derivePHMM(model,  seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     lx <- zx$size
     ly <- zy$size
-    alignment <- Viterbi(zx, zy, cpp = FALSE, ... = ...)
+    alignment <- Viterbi(zx, zy, ... = ...)
     path <- alignment$path
     # lay x out as list with insert elements
     newrow <- vector(length = lx * 2 + 1, mode = "list")
