@@ -14,14 +14,14 @@ probabilities (using the forward, backward and Viterbi algorithms),
 tree-based sequence weighting, sequence simulation, and file import/export 
 compatible with the  [HMMER](http://www.hmmer.org/) software package. 
 `aphid` also includes functions for developing and working with 
-standard hidden Markov models
+standard hidden Markov models.
 
 This package was written based on the algorithms described in the book 
 [Biological Sequence Analysis](
 https://www.amazon.com/Biological-Sequence-Analysis-Probabilistic-Proteins/dp/0521629713)
 by Richard Durbin, Sean Eddy, Anders Krogh and Graeme Mitchison. 
 This book offers an in depth explanation of hidden Markov models and 
-profile hidden Markov models for users of all levels of familiarity. 
+profile HMMs for users of all levels of familiarity. 
 Many of the examples and datasets in the package are directly derived from the 
 text, which serves as a useful primer for this package.
 
