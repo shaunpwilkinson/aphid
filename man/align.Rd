@@ -14,19 +14,22 @@ align(sequences, ...)
   refine = "Viterbi", k = 5, maxiter = 100, maxsize = NULL,
   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
   DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
+  pseudocounts = "background", qa = NULL, qe = NULL, ncores = 1,
+  quiet = FALSE, ...)
 
 \method{align}{AAbin}(sequences, model = NULL, seqweights = "Gerstein",
   refine = "Viterbi", k = 5, maxiter = 100, maxsize = NULL,
   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
   DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
+  pseudocounts = "background", qa = NULL, qe = NULL, ncores = 1,
+  quiet = FALSE, ...)
 
 \method{align}{list}(sequences, model = NULL, seqweights = "Gerstein",
   k = 5, refine = "Viterbi", maxiter = 100, maxsize = NULL,
   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
   DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, quiet = FALSE, ...)
+  pseudocounts = "background", qa = NULL, qe = NULL, ncores = 1,
+  quiet = FALSE, ...)
 
 \method{align}{default}(sequences, model, pseudocounts = "background",
   residues = NULL, gap = "-", maxsize = NULL, quiet = FALSE, ...)
@@ -158,6 +161,11 @@ the same length as the residue alphabet (i.e. 4 for nucleotides and 20
 for amino acids) and with corresponding names (i.e. \code{c("A", "T",
 "G", "C")} for DNA). If \code{qe = NULL}, background emission probabilities
 are automatically derived from the sequences.}
+
+\item{ncores}{integer giving the number of CPUs to parallelize the operation
+over. Defaults to 1, and reverts to 1 if 'sequences' is not a list.
+The string 'autodetect' is also accepted, in which case the number of cores
+used is one less than the total number of cores available.}
 
 \item{quiet}{logical indicating whether feedback should be printed
 to the console.}

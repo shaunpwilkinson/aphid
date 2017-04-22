@@ -108,6 +108,10 @@
 #'   for amino acids) and with corresponding names (i.e. \code{c("A", "T",
 #'   "G", "C")} for DNA). If \code{qe = NULL}, background emission probabilities
 #'   are automatically derived from the sequences.
+#' @param ncores integer giving the number of CPUs to parallelize the operation
+#'   over. Defaults to 1, and reverts to 1 if 'sequences' is not a list.
+#'   The string 'autodetect' is also accepted, in which case the number of cores
+#'   used is one less than the total number of cores available.
 #' @param quiet logical indicating whether feedback should be printed
 #'   to the console.
 #' @param ... aditional arguments to be passed to \code{"Viterbi"} (if
@@ -169,13 +173,13 @@ align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein",
                          threshold = 0.5, deltaLL = 1E-07, DI = FALSE,
                          ID = FALSE, residues = NULL, gap = "-",
                          pseudocounts = "background", qa = NULL, qe = NULL,
-                         quiet = FALSE, ...){
+                         ncores = 1, quiet = FALSE, ...){
   if(is.list(sequences)){
     align.list(sequences, model = model, seqweights = seqweights, refine = refine, k = k,
                maxiter = maxiter, maxsize = maxsize, inserts = inserts, lambda = lambda,
                threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
                residues = residues, gap = gap, pseudocounts = pseudocounts,
-               qa = qa, qe = qe, quiet = quiet, ... = ...)
+               qa = qa, qe = qe, ncores = ncores, quiet = quiet, ... = ...)
   }else{
     align.default(sequences, model = model, residues = residues, gap = gap,
                   pseudocounts = pseudocounts, maxsize = maxsize, quiet = quiet, ... = ...)
@@ -190,13 +194,13 @@ align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein",
                         threshold = 0.5, deltaLL = 1E-07, DI = FALSE,
                         ID = FALSE, residues = NULL, gap = "-",
                         pseudocounts = "background", qa = NULL, qe = NULL,
-                        quiet = FALSE, ...){
+                        ncores = 1, quiet = FALSE, ...){
   if(is.list(sequences)){
     align.list(sequences, model = model, seqweights = seqweights, refine = refine, k = k,
                maxiter = maxiter, maxsize = maxsize, inserts = inserts, lambda = lambda,
                threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
                residues = residues, gap = gap, pseudocounts = pseudocounts,
-               qa = qa, qe = qe, quiet = quiet, ... = ...)
+               qa = qa, qe = qe, ncores = ncores, quiet = quiet, ... = ...)
   }else{
     align.default(sequences, model = model, residues = residues, gap = gap,
                   pseudocounts = pseudocounts, maxsize = maxsize, quiet = quiet, ... = ...)
@@ -211,7 +215,7 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
                        threshold = 0.5, deltaLL = 1E-07,
                        DI = FALSE, ID = FALSE, residues = NULL,
                        gap = "-", pseudocounts = "background",
-                       qa = NULL, qe = NULL, quiet = FALSE, ...){
+                       qa = NULL, qe = NULL, ncores = 1, quiet = FALSE, ...){
   nseq <- length(sequences)
   DNA <- .isDNA(sequences)
   AA <- .isAA(sequences)
@@ -269,7 +273,19 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
       attr(res, "score") <- vit$score
       return(res)
     }
-    paths <- lapply(sequences, pathfinder, model, ...)
+    ### insert parLapply code here
+    #paths <- lapply(sequences, pathfinder, model, ...)
+    if(ncores == 1){
+      paths <- lapply(sequences, pathfinder, model, ...)
+    }else{
+      navailcores <- parallel::detectCores()
+      if(identical(ncores, "autodetect")) ncores <- navailcores - 1
+      if(ncores > navailcores) stop("Number of cores is more than the number available")
+      cl <- parallel::makeCluster(ncores)
+      paths <- parallel::parLapply(cl, sequences, pathfinder, model = model, ...)
+      parallel::stopCluster(cl)
+    }
+    ###
     fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, sequences, paths, l = l,
                        gap = gap, SIMPLIFY = FALSE)
     odds <- seq(1, 2 * l + 1, by = 2)
