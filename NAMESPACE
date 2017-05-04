@@ -52,4 +52,4 @@ importFrom(stats, runif)
 importFrom(stats, sd)
 importFrom(stats, setNames)
 
-useDynLib(aphid)
+useDynLib(aphid, .registration = TRUE)

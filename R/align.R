@@ -114,8 +114,8 @@
 #'   in which case it is the user's responsibility to close the socket
 #'   connection at the conclusion of the operation,
 #'   for example by running \code{parallel::stopCluster(cores)}.
-#'   The string 'autodetect' is also accepted, in which case the number of cores
-#'   used is one less than the total number of cores available.
+#'   The string 'autodetect' is also accepted, in which case the maximum
+#'   number of cores to use is one less than the total number of cores available.
 #'   Note that in this case there
 #'   may be a tradeoff in terms of speed depending on the number and size
 #'   of sequences to be aligned, due to the extra time required to initialize
@@ -289,8 +289,12 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
       paths <- lapply(sequences, pathfinder, model, ...)
     }else{
       navailcores <- parallel::detectCores()
-      if(identical(cores, "autodetect")) cores <- navailcores - 1
+      if(identical(cores, "autodetect")){
+        maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
+        cores <- min(navailcores - 1, maxcores)
+      }
       if(cores > navailcores) stop("Number of cores is more than number available")
+      if(!quiet) cat("Multithreading over", cores, "cores\n")
       cl <- parallel::makeCluster(cores)
       paths <- parallel::parLapply(cl, sequences, pathfinder, model = model, ...)
       parallel::stopCluster(cl)
@@ -536,7 +540,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     # lay x out as list with insert elements
     newrow <- vector(length = lx * 2 + 1, mode = "list")
     odds <- seq(from = 1, to = length(newrow), by = 2) #insert columns
-    evens <- seq(from = 2, to = length(newrow), by = 2) # match columns
+    evens <- seq(from = 2, to = length(newrow), by = 2) # match columns (1 less than inserts)
     newrow[evens] <- lapply(which(!zx$inserts), function(e) e)
     if(any(zx$inserts)){
       itp <- apply(rbind(c(FALSE, zx$inserts), c(zx$inserts, FALSE)), 2, .decimal, from = 2)
@@ -576,7 +580,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
     xcounter <- 2 * alignment$start[1]
     ycounter <- 2 * alignment$start[2]
     if(xcounter == 2 & ycounter == 2){
-      rightshift <- max(c(ncol(newx[[1]]), newy[[1]]))
+      rightshift <- max(ncol(newx[[1]]), ncol(newy[[1]]))
       if(rightshift > 0){
         newxrows <- .insert(newx[[1]], into = newxrows, at = 1)
         newyrows <- .insert(newy[[1]], into = newyrows, at = 1)

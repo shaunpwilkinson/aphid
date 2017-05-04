@@ -268,37 +268,40 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                              name = NULL, description = NULL, compo = FALSE,
                              consensus = FALSE,
                              cpp = TRUE, quiet = FALSE, ...){
-  nsq <- length(x)
+  nseq <- length(x)
   DNA <- .isDNA(x)
   AA <- .isAA(x)
   if(DNA) class(x) <- "DNAbin" else if(AA) class(x) <- "AAbin"
   residues <- .alphadetect(x, residues = residues, gap = gap)
   gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
-  for(i in 1:nsq) x[[i]] <- x[[i]][x[[i]] != gap]
-  if(nsq > 2){
+  for(i in 1:nseq) x[[i]] <- x[[i]][x[[i]] != gap]
+  if(nseq > 2){
     if(!quiet) cat("Calculating pairwise distances\n")
-    names(x) <- paste0("S", 1:nsq)
+    names(x) <- paste0("S", 1:nseq)
     if(identical(seeds, "random")){
-      if(nsq > 100){
+      if(nseq > 100){
         duplicates <- duplicated(lapply(x, as.vector))
-        nseeds <- min(sum(!duplicates), ceiling(log(nsq, 2)^2))
-        #nseeds <- min(nsq, 100 + 2 * ceiling(log(nsq, 2)))
+        nseeds <- min(sum(!duplicates), ceiling(log(nseq, 2)^2))
+        #nseeds <- min(nseq, 100 + 2 * ceiling(log(nseq, 2)))
         seeds <- sample(1:length(x), size = nseeds)
       }else seeds <- seq_along(x)
     }else if(identical(seeds, "all")){
       seeds <- seq_along(x)
+    }else{
+      if(!(mode(seeds) %in% c("numeric", "integer")) | max(seeds) > nseq) stop("Invalid 'seeds'")
     }
     if(!quiet) cat("Building guide tree\n")
     guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues, gap = gap)
     # qds <- phylogram::kdistance(x[seeds], k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
     # guidetree <- as.dendrogram(hclust(qds, method = "average"))
+    ###TODO option to take seedweights from seqweights to save time
     seedweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)[seeds]]
     attachseqs <- function(tree, sequences){
       if(!is.list(tree)) attr(tree, "seqs") <- sequences[attr(tree, "label")]
       return(tree)
     }
     guidetree <- dendrapply(guidetree, attachseqs, sequences = x)
-    progressive <- function(tree, ...){
+    progressive <- function(tree, maxsize, ...){
       if(is.list(tree)){
         if(!is.null(attr(tree[[1]], "seqs")) &
            !is.null(attr(tree[[2]], "seqs"))){
@@ -310,21 +313,21 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
       }
       return(tree)
     }
-    progressive1 <- function(tree, ...){
-      tree <- progressive(tree, ... = ...)
-      if(is.list(tree)) tree[] <- lapply(tree, progressive1, ... = ...)
+    progressive1 <- function(tree, maxsize, ...){
+      tree <- progressive(tree, maxsize = maxsize, ... = ...)
+      if(is.list(tree)) tree[] <- lapply(tree, progressive1, maxsize = maxsize, ... = ...)
       return(tree)
     }
     if(!quiet) cat("Aligning seed sequences\n")
     while(is.null(attr(guidetree, "seqs"))){
-      guidetree <- progressive1(guidetree, ... = ...)
+      guidetree <- progressive1(guidetree, maxsize = maxsize, ... = ...)
     }
     msa1 <- attr(guidetree, "seqs")
-  }else if(nsq == 2){
+  }else if(nseq == 2){
     if(!quiet) cat("Aligning seed sequences\n")
     msa1 <- align.default(x[[1]], x[[2]], residues = residues, gap = gap,  ... = ...)
     seedweights <- c(1, 1)
-  }else if(nsq == 1){
+  }else if(nseq == 1){
     msa1 <- matrix(x[[1]], nrow = 1)
     seedweights <- 1
   }else stop("Empty list")
@@ -339,7 +342,7 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                                  name = name, description = description,
                                  compo = compo, consensus = consensus,
                                  cpp = cpp, quiet = quiet)
-  if(nsq < 3){
+  if(nseq < 3){
     if(!quiet) cat("Done\n")
     return(omniphmm)
   }
@@ -357,12 +360,12 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
         seqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)] * wfactor
       }
     }else if(is.null(seqweights)){
-      seqweights <- rep(wfactor, nsq)
+      seqweights <- rep(wfactor, nseq)
     }else{
-      if(length(seqweights) != nsq) stop("invalid seqweights argument")
+      if(length(seqweights) != nseq) stop("invalid seqweights argument")
       seqweights <- seqweights * wfactor
     }
-    if(length(seqweights) != nsq) stop("invalid seqweights argument")
+    if(length(seqweights) != nseq) stop("invalid seqweights argument")
     if(!quiet) cat("Refining model\n")
     finalphmm <- train(omniphmm, x, seqweights = seqweights, method = refine,
                        maxiter = maxiter, deltaLL = deltaLL,
