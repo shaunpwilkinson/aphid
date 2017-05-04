@@ -275,12 +275,14 @@ align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
     }
     ### insert parLapply code here
     #paths <- lapply(sequences, pathfinder, model, ...)
-    if(ncores == 1){
+    if(inherits(ncores, "cluster")){
+      paths <- parallel::parLapply(ncores, sequences, pathfinder, model = model, ...)
+    }else if(ncores == 1){
       paths <- lapply(sequences, pathfinder, model, ...)
     }else{
       navailcores <- parallel::detectCores()
       if(identical(ncores, "autodetect")) ncores <- navailcores - 1
-      if(ncores > navailcores) stop("Number of cores is more than the number available")
+      if(ncores > navailcores) stop("Number of cores is more than number available")
       cl <- parallel::makeCluster(ncores)
       paths <- parallel::parLapply(cl, sequences, pathfinder, model = model, ...)
       parallel::stopCluster(cl)
