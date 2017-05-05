@@ -217,7 +217,7 @@ List ViterbiD(IntegerVector x, IntegerVector y,
   // recursion
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
-      if(j - i >= windowspace[0] & j - i <= windowspace[1]){
+      if(((j - i) >= windowspace[0]) & ((j - i) <= windowspace[1])){
         sij = S(x[i - 1], y[j - 1]) + offset;
         IXcdt[0] = MIX(i - 1, j) - e;
         IXcdt[1] = MMM(i - 1, j) - (d + e);
@@ -256,7 +256,7 @@ List ViterbiD(IntegerVector x, IntegerVector y,
     NumericVector brc = NumericVector::create(MIX(tbr, tbc), MMM(tbr, tbc), MIY(tbr, tbc));
     tbm = whichmax(brc, 0);
     score = brc[tbm];
-    while(tbr > 0 | tbc > 0){
+    while((tbr > 0) | (tbc > 0)){
       keeppath[counter] = true;
       path[counter] = tbm;
       if(tbm == 0) {
@@ -305,7 +305,7 @@ List ViterbiD(IntegerVector x, IntegerVector y,
         counter--;
       }
     }
-    while(tbr > 0 & tbc > 0){
+    while((tbr > 0) & (tbc > 0)){
       keeppath[counter] = true;
       path[counter] = tbm;
       if(tbm == 0) {
@@ -391,10 +391,10 @@ List ViterbiH(IntegerVector y, NumericMatrix A, NumericMatrix E,
                  bool DNA = false, bool AA = false){
   List names = E.attr("dimnames");
   CharacterVector states = VECTOR_ELT(names, 0);
-  CharacterVector residues = VECTOR_ELT(names, 1);
+  //CharacterVector residues = VECTOR_ELT(names, 1);
   int nstates = E.nrow();
   int nrolls = y.size();
-  int nresidues = residues.size();
+  //int nresidues = residues.size();
   NumericMatrix V(nstates, nrolls);
   IntegerVector prerolls = Range(1, nrolls);
   CharacterVector rolls = as<CharacterVector>(prerolls);
@@ -526,7 +526,7 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
   // recursion
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
-      if(j - i >= windowspace[0] & j - i <= windowspace[1]){
+      if(((j - i) >= windowspace[0]) & ((j - i) <= windowspace[1])){
         if(DNA){
           sij = probDNA(y[j - 1], E(_, i - 1)) + offset;
         }else if(AA){
@@ -586,7 +586,7 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
     //NumericVector brc = NumericVector::create(Dmatrix(tbr, tbc), Mmatrix(tbr, tbc), Imatrix(tbr, tbc));
     //tbm = whichmax(brc);
     //score = brc[tbm];
-    while(tbr > 0 | tbc > 0){
+    while((tbr > 0) | (tbc > 0)){
       keeppath[counter] = true;
       path[counter] = tbm;
       if(tbm == 0) {
@@ -635,7 +635,7 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
         counter--;
       }
     }
-    while(tbr > 0 & tbc > 0){
+    while((tbr > 0) & (tbc > 0)){
       keeppath[counter] = true;
       path[counter] = tbm;
       if(tbm == 0) {
@@ -810,7 +810,7 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
   // recursion step
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
-      if(j - i >= windowspace[0] & j - i <= windowspace[1]){
+      if(((j - i) >= windowspace[0]) & ((j - i) <= windowspace[1])){
         sij = Saa(i - 1, j - 1) + offset;
         MIcdt[0] = MMmatrix(i - 1, j) + Ax(4, i - 1) + Ay(5, j); //MM + MI
         MIcdt[1] = MImatrix(i - 1, j) + Ax(4, i - 1) + Ay(8, j); //MM + II
@@ -869,7 +869,7 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
     score = LLcdt[tbm];
     tbr = n - 1; // traceback row
     tbc = m - 1; // traceback column
-    while(tbr > 0 | tbc > 0){
+    while((tbr > 0) | (tbc > 0)){
       keeppath[counter] = true;
       path[counter] = tbm;
       if(tbm < 2){
@@ -917,7 +917,7 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
         counter--;
       }
     }
-    while(tbr > 0 & tbc > 0){
+    while((tbr > 0) & (tbc > 0)){
       keeppath[counter] = true;
       path[counter] = tbm;
       if(tbm < 2){
@@ -1016,7 +1016,7 @@ List forwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
   int nrolls = y.size();
   IntegerVector Edim = E.attr("dim");
   int nstates = Edim[0];
-  int nres = Edim[1];
+  //int nres = Edim[1];
   if(nrolls == 0){
     List out = List::create(Named("score") = A(0, 0), Named("array") = NULL);
     out.attr("class") = "fullprob";
@@ -1105,7 +1105,7 @@ List forwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
   // recursion
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
-      if(j - i >= windowspace[0] & j - i <= windowspace[1]){
+      if(((j - i) >= windowspace[0]) & ((j - i) <= windowspace[1])){
         if(DNA){
           sij = probDNA(y[j - 1], E(_, i - 1));
         }else if(AA){
@@ -1154,7 +1154,7 @@ List backwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
   int nrolls = y.size();
   IntegerVector Edim = E.attr("dim");
   int nstates = Edim[0]; // does not include begin/end state
-  int nres = Edim[1];
+  //int nres = Edim[1];
   if(nrolls == 0){
     List out = List::create(Named("score") = A(0, 0), Named("array") = NULL);
     out.attr("class") = "fullprob";
@@ -1253,7 +1253,7 @@ List backwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector 
   // recursion
   for(int i = n - 2; i >= 0; i--){
     for(int j = m - 2; j >= 0; j--){
-      if(j - i >= windowspace[0] & j - i <= windowspace[1]){
+      if(((j - i) >= windowspace[0]) & ((j - i) <= windowspace[1])){
         if(DNA){
           sij = probDNA(y[j], E(_, i));
         }else if(AA){
