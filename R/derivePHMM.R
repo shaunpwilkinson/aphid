@@ -460,12 +460,12 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
       inserts <- !map(x, seqweights = seqweights, residues = residues,
                       gap = gap, endchar = endchar, pseudocounts = pseudocounts,
                       qa = qa, qe = qe)
-      if(sum(!inserts) < 3) {
-        if(!quiet){
-          cat("Maximum a posteriori insert assignment produced model
-              with fewer than three modules\n")
-          cat("Switching to threshold method\n")
-        }
+      if(sum(!inserts) < 3){
+        # if(!quiet){
+        #   cat("Maximum a posteriori insert assignment produced model
+        #       with fewer than three modules\n")
+        #   cat("Switching to threshold method\n")
+        # }
         inserts <- apply(gapweights, 2, sum) > threshold * n
       }
     }
