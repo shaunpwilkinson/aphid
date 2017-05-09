@@ -311,12 +311,9 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
       stopifnot(mode(seqweights) %in% c("numeric", "integer"),
                 length(seqweights) == nseq)
     }
-################################################################################
     if(!quiet) cat("Building guide tree\n")
     guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues,
                                     gap = gap, weighted = FALSE)
-    ###TODO option to take seedweights from seqweights to save time
-    # seedweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)[seeds]]
     attachseqs <- function(tree, sequences){
       if(!is.list(tree)) attr(tree, "seqs") <- sequences[attr(tree, "label")]
       return(tree)
@@ -344,7 +341,6 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
       guidetree <- progressive1(guidetree, maxsize = maxsize, ... = ...)
     }
     msa1 <- attr(guidetree, "seqs")
-################################################################################
   }else if(nseq == 2){
     if(!quiet) cat("Aligning seed sequences\n")
     msa1 <- align.default(x[[1]], x[[2]], residues = residues, gap = gap,
@@ -369,36 +365,17 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                               cpp = cpp, quiet = quiet)
   if(nseq < 3){
     if(!quiet) cat("Done\n")
-    return(omniphmm)
+    return(model)
   }
   if(is.null(refine)) refine <- "none"
   if(refine %in% c("Viterbi", "BaumWelch")){
-    # if(identical(seqweights, "Gerstein")){
-    #   if(!quiet) cat("Calculating sequence weights\n")
-    #   if(identical(sort(seeds), seq_along(x))){
-    #     seqweights <- seedweights * wfactor
-    #   }else{
-    #     weighttree <- phylogram::topdown(x, k = k, residues = residues, gap = gap)
-    #     # qds <- phylogram::kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-    #     # weighttree <- as.dendrogram(hclust(qds, method = "average"))
-    #     seqweights <- weight.dendrogram(weighttree, method = "Gerstein")[names(x)] * wfactor
-    #   }
-    # }else if(is.null(seqweights)){
-    #   seqweights <- rep(wfactor, nseq)
-    # }else{
-    #   if(length(seqweights) != nseq) stop("Invalid seqweights argument")
-    #   seqweights <- seqweights * wfactor
-    # }
-    # if(length(seqweights) != nseq) stop("invalid seqweights argument")
     if(!quiet) cat("Refining model\n")
     model <- train(model, x, seqweights = seqweights, method = refine,
                    maxiter = maxiter, deltaLL = deltaLL,
                    pseudocounts = pseudocounts, maxsize = maxsize,
                    inserts = inserts, lambda = lambda, threshold = threshold,
                    quiet = quiet, ... = ...)
-  }else stopifnot(identical(refine, "none"))# if (refine == "none"){
-    #finalphmm <- omniphmm
-  #}else stop("Argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none'.")
+  }else stopifnot(identical(refine, "none"))
   if(!quiet) cat("Done\n")
   return(model)
 }

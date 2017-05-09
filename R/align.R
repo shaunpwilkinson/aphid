@@ -277,41 +277,6 @@ align.list <- function(x, model = NULL, seeds = "random",
         min(seeds) > 0
       )
     }
-################################################################################
-    # if(!quiet) cat("Building guide tree\n")
-    # catchnames <- names(x)
-    # names(x) <- paste0("S", 1:nseq)
-    # guidetree <- phylogram::topdown(x[seeds], seeds = "all", k = k,
-    #                                 residues = residues, gap = gap,
-    #                                 weighted = FALSE)
-    # attachseqs <- function(tree, sequences){
-    #   if(!is.list(tree)) attr(tree, "seqs") <- sequences[attr(tree, "label")]
-    #   return(tree)
-    # }
-    # guidetree <- dendrapply(guidetree, attachseqs, sequences = x)
-    # progressive <- function(tree, maxsize, ...){
-    #   if(is.list(tree)){
-    #     if(!is.null(attr(tree[[1]], "seqs")) & !is.null(attr(tree[[2]], "seqs"))){
-    #       attr(tree, "seqs") <- align.default(attr(tree[[1]], "seqs"),
-    #                                           attr(tree[[2]], "seqs"),
-    #                                           maxsize = maxsize, ... = ...)
-    #       attr(tree[[1]], "seqs") <- attr(tree[[2]], "seqs") <- NULL
-    #     }
-    #   }
-    #   return(tree)
-    # }
-    # prog1 <- function(tree, maxsize, ...){
-    #   tree <- progressive(tree, maxsize = maxsize, ... = ...)
-    #   if(is.list(tree)) tree[] <- lapply(tree, prog1, maxsize = maxsize,
-    #                                      ... = ...)
-    #   return(tree)
-    # }
-    # if(!quiet) cat("Progressively aligning sequences\n")
-    # while(is.null(attr(guidetree, "seqs"))){
-    #   guidetree <- prog1(guidetree, maxsize = maxsize, ... = ...)
-    # }
-    # msa1 <- attr(guidetree, "seqs")
-################################################################################
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")
       weighttree <- phylogram::topdown(x, seeds = seeds, k = k, #diff seeds opt?
@@ -333,26 +298,6 @@ align.list <- function(x, model = NULL, seeds = "random",
                              deltaLL = deltaLL, DI = DI, ID = ID,
                              pseudocounts = pseudocounts, logspace = TRUE,
                              qa = qa, qe = qe, quiet = quiet, ... = ...)
-    # model <- derivePHMM(msa1, seqweights = seqweights[seeds], residues = residues,
-    #                     gap = gap, maxsize = maxsize, inserts = inserts,
-    #                     lambda = lambda, threshold = threshold,
-    #                     deltaLL = deltaLL, DI = DI, ID = ID,
-    #                     pseudocounts = pseudocounts, logspace = TRUE,
-    #                     qa = qa, qe = qe, quiet = quiet, ... = ...)
-
-    # if(refine %in% c("Viterbi", "BaumWelch")){
-    #   if(!quiet) cat("Refining model\n")
-    #   model <- train(model, x, seqweights = seqweights, method = refine,
-    #                  maxiter = maxiter, deltaLL = deltaLL,
-    #                  pseudocounts = pseudocounts, maxsize = maxsize,
-    #                  inserts = inserts, lambda = lambda,
-    #                  threshold = threshold, quiet = quiet, ... = ...)
-    # }else stopifnot(identical(refine, "none"))
-    # names(x) <- catchnames
-
-    #res <- align.list(x, model = phmm, ... = ...)
-    #if(!quiet) cat("Produced alignment with", ncol(res), "columns (including inserts)\n")
-    #return(res)
   }
   #note changes here also need apply to 'train'
   stopifnot(inherits(model, "PHMM"))
