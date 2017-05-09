@@ -179,7 +179,8 @@ a future version.}
 
 \item{seeds}{optional integer vector indicating which sequences should
 be used as seeds for building the guide tree for the progressive
-alignment (assuming x is a list of unaligned sequences, ignored otherwise).
+alignment (assuming input is a list of unaligned sequences,
+ignored otherwise).
 Defaults to "random", in which a set of log(n, 2)^2 non-identical
 sequences are randomly chosen from the list of sequences.}
 

@@ -8,39 +8,42 @@
 \alias{align.default}
 \title{Multiple sequence alignment in R.}
 \usage{
-align(sequences, ...)
+align(x, ...)
 
-\method{align}{DNAbin}(sequences, model = NULL, seqweights = "Gerstein",
-  refine = "Viterbi", k = 5, maxiter = 100, maxsize = NULL,
-  inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
+\method{align}{DNAbin}(x, model = NULL, seeds = "random",
+  seqweights = "Gerstein", refine = "Viterbi", k = 5, maxiter = 100,
+  maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
+  deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
   pseudocounts = "background", qa = NULL, qe = NULL, cores = 1,
   quiet = FALSE, ...)
 
-\method{align}{AAbin}(sequences, model = NULL, seqweights = "Gerstein",
-  refine = "Viterbi", k = 5, maxiter = 100, maxsize = NULL,
-  inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
+\method{align}{AAbin}(x, model = NULL, seeds = "random",
+  seqweights = "Gerstein", refine = "Viterbi", k = 5, maxiter = 100,
+  maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
+  deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
   pseudocounts = "background", qa = NULL, qe = NULL, cores = 1,
   quiet = FALSE, ...)
 
-\method{align}{list}(sequences, model = NULL, seqweights = "Gerstein",
-  k = 5, refine = "Viterbi", maxiter = 100, maxsize = NULL,
-  inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1e-07,
-  DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
+\method{align}{list}(x, model = NULL, seeds = "random",
+  seqweights = "Gerstein", k = 5, refine = "Viterbi", maxiter = 100,
+  maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
+  deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
   pseudocounts = "background", qa = NULL, qe = NULL, cores = 1,
   quiet = FALSE, ...)
 
-\method{align}{default}(sequences, model, pseudocounts = "background",
+\method{align}{default}(x, model, pseudocounts = "background",
   residues = NULL, gap = "-", maxsize = NULL, quiet = FALSE, ...)
 }
 \arguments{
-\item{sequences}{a list of DNA, amino acid, or other character sequences
+\item{x}{a list of DNA, amino acid, or other character sequences
 consisting of symbols emitted from the chosen residue alphabet.
 The vectors can either be of mode "raw" (consistent with the "DNAbin"
 or "AAbin" coding scheme set out in the \code{\link[ape]{ape}} package),
-or "character", in which case the alphabet should be ideally be specified in
-the \code{residues} argument.}
+or "character", in which case the alphabet should be specified in
+the \code{residues} argument. This argument can alternatively be a
+vector representing a single sequence. In this case, and if the
+second argument is also a single sequence, a standard pairwise
+alignment is returned.}
 
 \item{...}{aditional arguments to be passed to \code{"Viterbi"} (if
 \code{refine = "Viterbi"}) or \code{"forward"} (if
@@ -51,6 +54,13 @@ object) to align the sequences to. If \code{NULL} a PHMM will
 be derived from the list of sequences, and each sequence
 will be aligned back to the model to produce the multiple sequence
 alignment.}
+
+\item{seeds}{optional integer vector indicating which sequences should
+be used as seeds for building the guide tree for the progressive
+alignment (assuming input is a list of unaligned sequences,
+ignored otherwise).
+Defaults to "random", in which a set of log(n, 2)^2 non-identical
+sequences are randomly chosen from the list of sequences.}
 
 \item{seqweights}{either NULL (default; all sequences are given weights
 of 1), a numeric vector the same length as \code{x} representing
@@ -163,7 +173,7 @@ for amino acids) and with corresponding names (i.e. \code{c("A", "T",
 are automatically derived from the sequences.}
 
 \item{cores}{integer giving the number of CPUs to parallelize the operation
-over. Defaults to 1, and reverts to 1 if 'sequences' is not a list.
+over. Defaults to 1, and reverts to 1 if x is not a list.
 This argument may alternatively be a 'cluster' object,
 in which case it is the user's responsibility to close the socket
 connection at the conclusion of the operation,

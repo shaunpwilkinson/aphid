@@ -110,7 +110,8 @@
 #'   a future version.
 #' @param seeds optional integer vector indicating which sequences should
 #'   be used as seeds for building the guide tree for the progressive
-#'   alignment (assuming x is a list of unaligned sequences, ignored otherwise).
+#'   alignment (assuming input is a list of unaligned sequences,
+#'   ignored otherwise).
 #'   Defaults to "random", in which a set of log(n, 2)^2 non-identical
 #'   sequences are randomly chosen from the list of sequences.
 #' @param refine the method used to iteratively refine the model parameters
@@ -192,10 +193,12 @@ derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                               description = NULL, compo = FALSE,
                               consensus = FALSE, seeds = "random",
                               refine = "Viterbi", maxiter = 100,
-                              deltaLL = 1E-07, cpp = TRUE, quiet = FALSE, ...){
+                              deltaLL = 1E-07, cpp = TRUE,
+                              quiet = FALSE, ...){
   ##TODO don't need gap, residues etc?
   if(is.list(x)){
-    derivePHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter, deltaLL = deltaLL,
+    derivePHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
+                    deltaLL = deltaLL,
                     seqweights = seqweights, wfactor = wfactor,
                     k = k, residues = residues, gap = gap,
                     pseudocounts = pseudocounts,
@@ -234,7 +237,8 @@ derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                              refine = "Viterbi", maxiter = 100,
                              deltaLL = 1E-07, cpp = TRUE, quiet = FALSE, ...){
   if(is.list(x)){
-    derivePHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter, deltaLL = deltaLL,
+    derivePHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
+                    deltaLL = deltaLL,
                     seqweights = seqweights, wfactor = wfactor,
                     k = k, residues = residues, gap = gap,
                     pseudocounts = pseudocounts,
@@ -245,29 +249,29 @@ derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                     consensus = consensus,
                     cpp = cpp, quiet = quiet, ... = ...)
   }else{
-    derivePHMM.default(x, seqweights = seqweights, wfactor = wfactor, k = k, residues = residues,
-                       gap = gap, endchar = endchar, pseudocounts = pseudocounts,
-                        logspace = logspace, qa = qa, qe = qe, maxsize = maxsize,
-                        inserts = inserts, threshold = threshold,
-                        lambda = lambda, DI = DI, ID = ID, omit.endgaps = omit.endgaps,
-                        name = name, description = description,
-                        compo = compo, consensus = consensus, cpp = cpp, quiet = quiet)
+    derivePHMM.default(x, seqweights = seqweights, wfactor = wfactor, k = k,
+                       residues = residues, gap = gap, endchar = endchar,
+                       pseudocounts = pseudocounts, logspace = logspace,
+                       qa = qa, qe = qe, maxsize = maxsize, inserts = inserts,
+                       threshold = threshold, lambda = lambda, DI = DI, ID = ID,
+                       omit.endgaps = omit.endgaps, name = name,
+                       description = description, compo = compo,
+                       consensus = consensus, cpp = cpp, quiet = quiet)
   }
 }
 ################################################################################
 #' @rdname derivePHMM
 ################################################################################
 derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
-                             maxiter = 100, deltaLL = 1E-07,
-                             seqweights = "Gerstein", wfactor = 1,
-                             k = 5, residues = NULL, gap = "-",
-                             pseudocounts = "background",
-                             logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
-                             inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
-                             threshold = 0.5, omit.endgaps = FALSE,
-                             name = NULL, description = NULL, compo = FALSE,
-                             consensus = FALSE,
-                             cpp = TRUE, quiet = FALSE, ...){
+                            maxiter = 100, deltaLL = 1E-07,
+                            seqweights = "Gerstein", wfactor = 1, k = 5,
+                            residues = NULL, gap = "-",
+                            pseudocounts = "background", logspace = TRUE,
+                            qa = NULL, qe = NULL, maxsize = NULL,
+                            inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
+                            threshold = 0.5, omit.endgaps = FALSE,
+                            name = NULL, description = NULL, compo = FALSE,
+                            consensus = FALSE, cpp = TRUE, quiet = FALSE, ...){
   nseq <- length(x)
   DNA <- .isDNA(x)
   AA <- .isAA(x)
@@ -276,26 +280,43 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
   gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
   for(i in 1:nseq) x[[i]] <- x[[i]][x[[i]] != gap]
   if(nseq > 2){
-    if(!quiet) cat("Calculating pairwise distances\n")
+    #if(!quiet) cat("Calculating pairwise distances\n")
     names(x) <- paste0("S", 1:nseq)
     if(identical(seeds, "random")){
-      if(nseq > 100){
+      if(nseq > 19){ # log(19, 2)^2 = 19
         duplicates <- duplicated(lapply(x, as.vector))
         nseeds <- min(sum(!duplicates), ceiling(log(nseq, 2)^2))
         #nseeds <- min(nseq, 100 + 2 * ceiling(log(nseq, 2)))
-        seeds <- sample(1:length(x), size = nseeds)
+        if(!quiet) cat("Selecting", nseeds, "seed sequences\n")
+        seeds <- sample(which(!duplicates), size = nseeds)
       }else seeds <- seq_along(x)
     }else if(identical(seeds, "all")){
       seeds <- seq_along(x)
     }else{
-      if(!(mode(seeds) %in% c("numeric", "integer")) | max(seeds) > nseq) stop("Invalid 'seeds'")
+      stopifnot(
+        mode(seeds) %in% c("numeric", "integer"),
+        max(seeds) <= nseq,
+        min(seeds) > 0
+      )
     }
+    if(identical(seqweights, "Gerstein")){
+      if(!quiet) cat("Calculating sequence weights\n")
+      weighttree <- phylogram::topdown(x, seeds = seeds, k = k, #diff seeds opt?
+                                       residues = residues, gap = gap,
+                                       weighted = TRUE)
+      seqweights <- weight.dendrogram(weighttree, method = "Gerstein")[names(x)]
+    }else if(is.null(seqweights)){
+      seqweights <- rep(1, nseq)
+    }else{
+      stopifnot(mode(seqweights) %in% c("numeric", "integer"),
+                length(seqweights) == nseq)
+    }
+################################################################################
     if(!quiet) cat("Building guide tree\n")
-    guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues, gap = gap)
-    # qds <- phylogram::kdistance(x[seeds], k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-    # guidetree <- as.dendrogram(hclust(qds, method = "average"))
+    guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues,
+                                    gap = gap, weighted = FALSE)
     ###TODO option to take seedweights from seqweights to save time
-    seedweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)[seeds]]
+    # seedweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)[seeds]]
     attachseqs <- function(tree, sequences){
       if(!is.list(tree)) attr(tree, "seqs") <- sequences[attr(tree, "label")]
       return(tree)
@@ -318,65 +339,68 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
       if(is.list(tree)) tree[] <- lapply(tree, progressive1, maxsize = maxsize, ... = ...)
       return(tree)
     }
-    if(!quiet) cat("Aligning seed sequences\n")
+    if(!quiet) cat("Progressively aligning sequences\n")
     while(is.null(attr(guidetree, "seqs"))){
       guidetree <- progressive1(guidetree, maxsize = maxsize, ... = ...)
     }
     msa1 <- attr(guidetree, "seqs")
+################################################################################
   }else if(nseq == 2){
     if(!quiet) cat("Aligning seed sequences\n")
-    msa1 <- align.default(x[[1]], x[[2]], residues = residues, gap = gap,  ... = ...)
-    seedweights <- c(1, 1)
+    msa1 <- align.default(x[[1]], x[[2]], residues = residues, gap = gap,
+                          ... = ...)
+    seqweights <- c(1, 1)
+    seeds <- 1:2
   }else if(nseq == 1){
     msa1 <- matrix(x[[1]], nrow = 1)
-    seedweights <- 1
+    seqweights <- 1
+    seeds <- 1
   }else stop("Empty list")
-  if(!quiet) cat("Deriving profile hidden Markov model\n")
-  omniphmm <- derivePHMM.default(msa1, seqweights = seedweights,
-                                 wfactor = wfactor, k = k, residues = residues,
-                                 gap = gap, pseudocounts = pseudocounts,
-                                 logspace = logspace, qa = qa, qe = qe,
-                                 DI = DI, ID = ID, omit.endgaps = omit.endgaps,
-                                 maxsize = maxsize, inserts = inserts,
-                                 lambda = lambda, threshold = threshold,
-                                 name = name, description = description,
-                                 compo = compo, consensus = consensus,
-                                 cpp = cpp, quiet = quiet)
+  if(!quiet) cat("Deriving profile HMM\n")
+  model <- derivePHMM.default(msa1, seqweights = seqweights[seeds],
+                              wfactor = wfactor, k = k, residues = residues,
+                              gap = gap, pseudocounts = pseudocounts,
+                              logspace = logspace, qa = qa, qe = qe,
+                              DI = DI, ID = ID, omit.endgaps = omit.endgaps,
+                              maxsize = maxsize, inserts = inserts,
+                              lambda = lambda, threshold = threshold,
+                              name = name, description = description,
+                              compo = compo, consensus = consensus,
+                              cpp = cpp, quiet = quiet)
   if(nseq < 3){
     if(!quiet) cat("Done\n")
     return(omniphmm)
   }
   if(is.null(refine)) refine <- "none"
-  #refine <- toupper(refine)
   if(refine %in% c("Viterbi", "BaumWelch")){
-    if(identical(seqweights, "Gerstein")){
-      if(!quiet) cat("Calculating sequence weights\n")
-      if(identical(sort(seeds), seq_along(x))){
-        seqweights <- seedweights * wfactor
-      }else{
-        guidetree <- phylogram::topdown(x, k = k, residues = residues, gap = gap)
-        # qds <- phylogram::kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-        # guidetree <- as.dendrogram(hclust(qds, method = "average"))
-        seqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)] * wfactor
-      }
-    }else if(is.null(seqweights)){
-      seqweights <- rep(wfactor, nseq)
-    }else{
-      if(length(seqweights) != nseq) stop("invalid seqweights argument")
-      seqweights <- seqweights * wfactor
-    }
-    if(length(seqweights) != nseq) stop("invalid seqweights argument")
+    # if(identical(seqweights, "Gerstein")){
+    #   if(!quiet) cat("Calculating sequence weights\n")
+    #   if(identical(sort(seeds), seq_along(x))){
+    #     seqweights <- seedweights * wfactor
+    #   }else{
+    #     weighttree <- phylogram::topdown(x, k = k, residues = residues, gap = gap)
+    #     # qds <- phylogram::kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
+    #     # weighttree <- as.dendrogram(hclust(qds, method = "average"))
+    #     seqweights <- weight.dendrogram(weighttree, method = "Gerstein")[names(x)] * wfactor
+    #   }
+    # }else if(is.null(seqweights)){
+    #   seqweights <- rep(wfactor, nseq)
+    # }else{
+    #   if(length(seqweights) != nseq) stop("Invalid seqweights argument")
+    #   seqweights <- seqweights * wfactor
+    # }
+    # if(length(seqweights) != nseq) stop("invalid seqweights argument")
     if(!quiet) cat("Refining model\n")
-    finalphmm <- train(omniphmm, x, seqweights = seqweights, method = refine,
-                       maxiter = maxiter, deltaLL = deltaLL,
-                       pseudocounts = pseudocounts, maxsize = maxsize,
-                       inserts = inserts, lambda = lambda, threshold = threshold,
-                       quiet = quiet, ... = ...)
-  }else if (refine == "none"){
-    finalphmm <- omniphmm
-  }else stop("Argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none'.")
+    model <- train(model, x, seqweights = seqweights, method = refine,
+                   maxiter = maxiter, deltaLL = deltaLL,
+                   pseudocounts = pseudocounts, maxsize = maxsize,
+                   inserts = inserts, lambda = lambda, threshold = threshold,
+                   quiet = quiet, ... = ...)
+  }else stopifnot(identical(refine, "none"))# if (refine == "none"){
+    #finalphmm <- omniphmm
+  #}else stop("Argument 'refine' must be set to either 'Viterbi', 'BaumWelch' or 'none'.")
   if(!quiet) cat("Done\n")
-  return(finalphmm)
+  return(model)
 }
 ################################################################################
 #'@rdname derivePHMM
@@ -408,10 +432,9 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     seqweights <- rep(wfactor, n)
   }else if(identical(seqweights, "Gerstein")){
     if(n > 2){
-      guidetree <- phylogram::topdown(xlist, k = k, residues = residues, gap = gap)
-      #qds <- phylogram::kdistance(xlist, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-      #guidetree <- as.dendrogram(hclust(qds, method = "average"))
-      seqweights <- weight(guidetree, method = "Gerstein")[names(xlist)] * wfactor
+      weighttree <- phylogram::topdown(xlist, k = k, residues = residues,
+                                      gap = gap, weighted = TRUE)
+      seqweights <- weight(weighttree, method = "Gerstein")[names(xlist)] * wfactor
     }else{
       seqweights <- rep(wfactor, n)
     }

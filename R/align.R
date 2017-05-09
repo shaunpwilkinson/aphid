@@ -3,17 +3,26 @@
 #' \code{align} performs a multiple alignment on a list of
 #'   sequences using profile hidden Markov models.
 #'
-#' @param sequences a list of DNA, amino acid, or other character sequences
+#' @param x a list of DNA, amino acid, or other character sequences
 #'   consisting of symbols emitted from the chosen residue alphabet.
 #'   The vectors can either be of mode "raw" (consistent with the "DNAbin"
 #'   or "AAbin" coding scheme set out in the \code{\link[ape]{ape}} package),
-#'   or "character", in which case the alphabet should be ideally be specified in
-#'   the \code{residues} argument.
+#'   or "character", in which case the alphabet should be specified in
+#'   the \code{residues} argument. This argument can alternatively be a
+#'   vector representing a single sequence. In this case, and if the
+#'   second argument is also a single sequence, a standard pairwise
+#'   alignment is returned.
 #' @param model an optional profile hidden Markov model (a \code{"PHMM"}
 #'   object) to align the sequences to. If \code{NULL} a PHMM will
 #'   be derived from the list of sequences, and each sequence
 #'   will be aligned back to the model to produce the multiple sequence
 #'   alignment.
+#' @param seeds optional integer vector indicating which sequences should
+#'   be used as seeds for building the guide tree for the progressive
+#'   alignment (assuming input is a list of unaligned sequences,
+#'   ignored otherwise).
+#'   Defaults to "random", in which a set of log(n, 2)^2 non-identical
+#'   sequences are randomly chosen from the list of sequences.
 #' @param seqweights either NULL (default; all sequences are given weights
 #'   of 1), a numeric vector the same length as \code{x} representing
 #'   the sequence weights used to derive the model, or a character string giving
@@ -109,7 +118,7 @@
 #'   "G", "C")} for DNA). If \code{qe = NULL}, background emission probabilities
 #'   are automatically derived from the sequences.
 #' @param cores integer giving the number of CPUs to parallelize the operation
-#'   over. Defaults to 1, and reverts to 1 if 'sequences' is not a list.
+#'   over. Defaults to 1, and reverts to 1 if x is not a list.
 #'   This argument may alternatively be a 'cluster' object,
 #'   in which case it is the user's responsibility to close the socket
 #'   connection at the conclusion of the operation,
@@ -161,7 +170,7 @@
 #'   loc
 #' @name align
 ################################################################################
-# align <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
+# align <- function(x, model = NULL, seqweights = "Gerstein", k = 5,
 #                   refine = "Viterbi", maxiter = 100, maxsize = NULL,
 #                   inserts = "map", lambda = 0, threshold = 0.5, deltaLL = 1E-07,
 #                   DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
@@ -169,201 +178,278 @@
 #                   quiet = FALSE, ...){
 #   UseMethod("align")
 # }
-align <- function(sequences, ...){
+align <- function(x, ...){
   UseMethod("align")
 }
 
 #' @rdname align
 ################################################################################
-align.DNAbin <- function(sequences, model = NULL, seqweights = "Gerstein",
-                         refine = "Viterbi", k = 5, maxiter = 100,
-                         maxsize = NULL, inserts = "map", lambda = 0,
-                         threshold = 0.5, deltaLL = 1E-07, DI = FALSE,
-                         ID = FALSE, residues = NULL, gap = "-",
+align.DNAbin <- function(x, model = NULL, seeds = "random",
+                         seqweights = "Gerstein", refine = "Viterbi", k = 5,
+                         maxiter = 100, maxsize = NULL, inserts = "map",
+                         lambda = 0, threshold = 0.5, deltaLL = 1E-07,
+                         DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
                          pseudocounts = "background", qa = NULL, qe = NULL,
                          cores = 1, quiet = FALSE, ...){
-  if(is.list(sequences)){
-    align.list(sequences, model = model, seqweights = seqweights, refine = refine, k = k,
-               maxiter = maxiter, maxsize = maxsize, inserts = inserts, lambda = lambda,
-               threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
+  if(is.list(x)){
+    align.list(x, model = model, seeds = seeds, seqweights = seqweights,
+               refine = refine, k = k, maxiter = maxiter, maxsize = maxsize,
+               inserts = inserts, lambda = lambda, threshold = threshold,
+               deltaLL = deltaLL, DI = DI, ID = ID,
                residues = residues, gap = gap, pseudocounts = pseudocounts,
                qa = qa, qe = qe, cores = cores, quiet = quiet, ... = ...)
   }else{
-    align.default(sequences, model = model, residues = residues, gap = gap,
-                  pseudocounts = pseudocounts, maxsize = maxsize, quiet = quiet, ... = ...)
+    align.default(x, model = model, residues = residues, gap = gap,
+                  pseudocounts = pseudocounts, maxsize = maxsize,
+                  quiet = quiet, ... = ...)
   }
 }
 
 #' @rdname align
 ################################################################################
-align.AAbin <- function(sequences, model = NULL, seqweights = "Gerstein",
-                        refine = "Viterbi", k = 5, maxiter = 100,
-                        maxsize = NULL, inserts = "map", lambda = 0,
-                        threshold = 0.5, deltaLL = 1E-07, DI = FALSE,
-                        ID = FALSE, residues = NULL, gap = "-",
+align.AAbin <- function(x, model = NULL, seeds = "random",
+                        seqweights = "Gerstein", refine = "Viterbi", k = 5,
+                        maxiter = 100, maxsize = NULL, inserts = "map",
+                        lambda = 0, threshold = 0.5, deltaLL = 1E-07,
+                        DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
                         pseudocounts = "background", qa = NULL, qe = NULL,
                         cores = 1, quiet = FALSE, ...){
-  if(is.list(sequences)){
-    align.list(sequences, model = model, seqweights = seqweights, refine = refine, k = k,
-               maxiter = maxiter, maxsize = maxsize, inserts = inserts, lambda = lambda,
-               threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
-               residues = residues, gap = gap, pseudocounts = pseudocounts,
+  if(is.list(x)){
+    align.list(x, model = model, seeds = seeds, seqweights = seqweights,
+               refine = refine, k = k, maxiter = maxiter, maxsize = maxsize,
+               inserts = inserts, lambda = lambda, threshold = threshold,
+               deltaLL = deltaLL, DI = DI, ID = ID, residues = residues,
+               gap = gap, pseudocounts = pseudocounts,
                qa = qa, qe = qe, cores = cores, quiet = quiet, ... = ...)
   }else{
-    align.default(sequences, model = model, residues = residues, gap = gap,
-                  pseudocounts = pseudocounts, maxsize = maxsize, quiet = quiet, ... = ...)
+    align.default(x, model = model, residues = residues, gap = gap,
+                  pseudocounts = pseudocounts, maxsize = maxsize,
+                  quiet = quiet, ... = ...)
   }
 }
 
 #' @rdname align
 ################################################################################
-align.list <- function(sequences, model = NULL, seqweights = "Gerstein", k = 5,
+align.list <- function(x, model = NULL, seeds = "random",
+                       seqweights = "Gerstein", k = 5,
                        refine = "Viterbi", maxiter = 100,
                        maxsize = NULL, inserts = "map", lambda = 0,
                        threshold = 0.5, deltaLL = 1E-07,
                        DI = FALSE, ID = FALSE, residues = NULL,
                        gap = "-", pseudocounts = "background",
                        qa = NULL, qe = NULL, cores = 1, quiet = FALSE, ...){
-  nseq <- length(sequences)
-  DNA <- .isDNA(sequences)
-  AA <- .isAA(sequences)
-  if(DNA) class(sequences) <- "DNAbin" else if(AA) class(sequences) <- "AAbin"
-  residues <- .alphadetect(sequences, residues = residues, gap = gap)
+  nseq <- length(x)
+  DNA <- .isDNA(x)
+  AA <- .isAA(x)
+  if(DNA) class(x) <- "DNAbin" else if(AA) class(x) <- "AAbin"
+  residues <- .alphadetect(x, residues = residues, gap = gap)
   gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
-  for(i in 1:length(sequences)) sequences[[i]] <- sequences[[i]][sequences[[i]] != gap]
+  for(i in 1:length(x)) x[[i]] <- x[[i]][x[[i]] != gap]
   if(is.null(model)){
     if(nseq == 2){
-      alignment <- align.default(sequences[[1]], sequences[[2]], residues = residues,
+      alignment <- align.default(x[[1]], x[[2]], residues = residues,
                                  gap = gap, pseudocounts = pseudocounts,
                                  quiet = quiet, ... = ...)
-      rownames(alignment) <- names(sequences)
+      rownames(alignment) <- names(x)
       return(alignment)
     }else if(nseq == 1){
-      alignment <- matrix(sequences[[1]], nrow = 1)
-      rownames(alignment) <- names(sequences)
+      alignment <- matrix(x[[1]], nrow = 1)
+      rownames(alignment) <- names(x)
       return(alignment)
     }
-    #if(!quiet) cat("Calculating pairwise distances\n")
-    if(nseq > 100){
-      nseeds <- ceiling(log(nseq, 2)^2) # LLR algorithm see Blacksheilds et al 2010
-      seeds <- sample(1:nseq, size = nseeds)
+    if(identical(seeds, "random")){
+      if(nseq > 19){ # log(19, 2)^2 = 19
+        if(!quiet) cat("Selecting seed sequences\n")
+        duplicates <- duplicated(lapply(x, as.vector))
+        nseeds <- min(sum(!duplicates), ceiling(log(nseq, 2)^2))
+        #LLR algorithm see Blacksheilds etal 2010
+        #nseeds <- ceiling(log(nseq, 2)^2)
+        seeds <- sample(which(!duplicates), size = nseeds)
+      }else{
+        seeds <- seq_along(x)
+      }
+    }else if(identical(seeds, "all")){
+      seeds <- seq_along(x)
     }else{
-      seeds <- seq_along(sequences)
+      stopifnot(
+        mode(seeds) %in% c("numeric", "integer"),
+        max(seeds) <= nseq,
+        min(seeds) > 0
+      )
     }
+################################################################################
+    # if(!quiet) cat("Building guide tree\n")
+    # catchnames <- names(x)
+    # names(x) <- paste0("S", 1:nseq)
+    # guidetree <- phylogram::topdown(x[seeds], seeds = "all", k = k,
+    #                                 residues = residues, gap = gap,
+    #                                 weighted = FALSE)
+    # attachseqs <- function(tree, sequences){
+    #   if(!is.list(tree)) attr(tree, "seqs") <- sequences[attr(tree, "label")]
+    #   return(tree)
+    # }
+    # guidetree <- dendrapply(guidetree, attachseqs, sequences = x)
+    # progressive <- function(tree, maxsize, ...){
+    #   if(is.list(tree)){
+    #     if(!is.null(attr(tree[[1]], "seqs")) & !is.null(attr(tree[[2]], "seqs"))){
+    #       attr(tree, "seqs") <- align.default(attr(tree[[1]], "seqs"),
+    #                                           attr(tree[[2]], "seqs"),
+    #                                           maxsize = maxsize, ... = ...)
+    #       attr(tree[[1]], "seqs") <- attr(tree[[2]], "seqs") <- NULL
+    #     }
+    #   }
+    #   return(tree)
+    # }
+    # prog1 <- function(tree, maxsize, ...){
+    #   tree <- progressive(tree, maxsize = maxsize, ... = ...)
+    #   if(is.list(tree)) tree[] <- lapply(tree, prog1, maxsize = maxsize,
+    #                                      ... = ...)
+    #   return(tree)
+    # }
+    # if(!quiet) cat("Progressively aligning sequences\n")
+    # while(is.null(attr(guidetree, "seqs"))){
+    #   guidetree <- prog1(guidetree, maxsize = maxsize, ... = ...)
+    # }
+    # msa1 <- attr(guidetree, "seqs")
+################################################################################
     if(identical(seqweights, "Gerstein")){
       if(!quiet) cat("Calculating sequence weights\n")
-      guidetree <- phylogram::topdown(sequences, k = k, residues = residues, gap = gap)
-      myseqweights <- weight.dendrogram(guidetree, method = "Gerstein")[names(sequences)]
+      weighttree <- phylogram::topdown(x, seeds = seeds, k = k, #diff seeds opt?
+                                      residues = residues, gap = gap,
+                                      weighted = TRUE)
+      seqweights <- weight.dendrogram(weighttree, method = "Gerstein")[names(x)]
     }else if(is.null(seqweights)){
-      myseqweights <- rep(1, nseq)
+      seqweights <- rep(1, nseq)
     }else{
-      myseqweights <- seqweights
+      stopifnot(mode(seqweights) %in% c("numeric", "integer"),
+                length(seqweights) == nseq)
     }
-    #if(!quiet) cat("Aligning seed sequences and deriving model\n")
-    phmm <- derivePHMM.list(sequences, seeds = seeds, refine = refine, maxiter = maxiter,
-                            seqweights = myseqweights, k = k, residues = residues, gap = gap,
-                            maxsize = maxsize, inserts = inserts, lambda = lambda,
-                            threshold = threshold, deltaLL = deltaLL, DI = DI, ID = ID,
-                            pseudocounts = pseudocounts, logspace = TRUE, qa = qa, qe = qe,
-                            quiet = quiet, ... = ...)
-    if(!quiet) cat("Aligning sequences to model\n")
-    res <- align.list(sequences, model = phmm, ... = ...)
-    if(!quiet) cat("Produced alignment with", ncol(res), "columns (including inserts)\n")
-    return(res)
-  }else{
-    #note changes here also need apply to 'train'
-    stopifnot(inherits(model, "PHMM"))
-    l <- model$size
-    pathfinder <- function(s, model, ...){
-      vit <- Viterbi(model, s, ... = ...)
-      res <- c(vit$path, 1) #append the final transition to end state
-      # this is just so the c++ function knows where to stop
-      attr(res, "score") <- vit$score
-      return(res)
-    }
-    ### insert parLapply code here
-    #paths <- lapply(sequences, pathfinder, model, ...)
-    if(inherits(cores, "cluster")){
-      paths <- parallel::parLapply(cores, sequences, pathfinder, model = model, ...)
-    }else if(cores == 1){
-      paths <- lapply(sequences, pathfinder, model, ...)
-    }else{
-      navailcores <- parallel::detectCores()
-      if(identical(cores, "autodetect")){
-        maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
-        cores <- min(navailcores - 1, maxcores)
-      }
-      if(cores > navailcores) stop("Number of cores is more than number available")
-      if(!quiet) cat("Multithreading over", cores, "cores\n")
-      cl <- parallel::makeCluster(cores)
-      paths <- parallel::parLapply(cl, sequences, pathfinder, model = model, ...)
-      parallel::stopCluster(cl)
-    }
-    ###
-    fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, sequences, paths, l = l,
-                       gap = gap, SIMPLIFY = FALSE)
-    odds <- seq(1, 2 * l + 1, by = 2)
-    evens <- seq(2, 2 * l, by = 2)
-    length(fragseqs)
-    inslens <- lapply(fragseqs, function(e) sapply(e[odds], length))
-    inslens <- matrix(unlist(inslens), nrow = nseq, byrow = TRUE)
-    insmaxs <- apply(inslens, 2, max)
-    insappends <- t(insmaxs - t(inslens))
-    for(i in 1:nseq){
-      needsapp <- insappends[i, ] > 0
-      if(any(needsapp)){
-        apps <- lapply(insappends[i, needsapp], function(e) rep(gap, e))
-        fragseqs[[i]][odds][needsapp] <- mapply(c, fragseqs[[i]][odds][needsapp],
-                                                apps, SIMPLIFY = FALSE)
-      }
-    }
-    unfragseqs <- lapply(fragseqs, unlist)
-    res <- matrix(unlist(unfragseqs), nrow = nseq, byrow = TRUE)
-    score <- sum(sapply(paths, function(p) attr(p, "score")))
-    inserts <- vector(length = 2 * l + 1, mode = "list")
-    inserts[evens] <- FALSE
-    inserts[odds] <- lapply(insmaxs, function(e) rep(TRUE, e))
-    inserts <- unlist(inserts)
-    resnames <- vector(length = 2 * l + 1, mode = "list")
-    resnames[evens] <- paste(1:l)
-    resnames[odds] <- lapply(insmaxs, function(e) rep("I", e))
-    resnames <- unlist(resnames)
-    colnames(res) <- resnames
-    rownames(res) <- names(sequences)
-    class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
-    attr(res, "score") <- score
-    attr(res, "inserts") <- inserts
+    if(!quiet) cat("Deriving model\n")
+    model <- derivePHMM.list(x, seeds = seeds, refine = refine,
+                             maxiter = maxiter, seqweights = seqweights,
+                             k = k, residues = residues, gap = gap,
+                             maxsize = maxsize, inserts = inserts,
+                             lambda = lambda, threshold = threshold,
+                             deltaLL = deltaLL, DI = DI, ID = ID,
+                             pseudocounts = pseudocounts, logspace = TRUE,
+                             qa = qa, qe = qe, quiet = quiet, ... = ...)
+    # model <- derivePHMM(msa1, seqweights = seqweights[seeds], residues = residues,
+    #                     gap = gap, maxsize = maxsize, inserts = inserts,
+    #                     lambda = lambda, threshold = threshold,
+    #                     deltaLL = deltaLL, DI = DI, ID = ID,
+    #                     pseudocounts = pseudocounts, logspace = TRUE,
+    #                     qa = qa, qe = qe, quiet = quiet, ... = ...)
+
+    # if(refine %in% c("Viterbi", "BaumWelch")){
+    #   if(!quiet) cat("Refining model\n")
+    #   model <- train(model, x, seqweights = seqweights, method = refine,
+    #                  maxiter = maxiter, deltaLL = deltaLL,
+    #                  pseudocounts = pseudocounts, maxsize = maxsize,
+    #                  inserts = inserts, lambda = lambda,
+    #                  threshold = threshold, quiet = quiet, ... = ...)
+    # }else stopifnot(identical(refine, "none"))
+    # names(x) <- catchnames
+
+    #res <- align.list(x, model = phmm, ... = ...)
+    #if(!quiet) cat("Produced alignment with", ncol(res), "columns (including inserts)\n")
+    #return(res)
+  }
+  #note changes here also need apply to 'train'
+  stopifnot(inherits(model, "PHMM"))
+  l <- model$size
+  pathfinder <- function(s, model, ...){
+    vit <- Viterbi(model, s, ... = ...)
+    res <- c(vit$path, 1) #append the final transition to end state
+    # this is just so the c++ function knows where to stop
+    attr(res, "score") <- vit$score
     return(res)
   }
+  #if(!quiet) cat("Aligning sequences to model\n")
+  if(inherits(cores, "cluster")){
+    paths <- parallel::parLapply(cores, x, pathfinder, model = model, ...)
+  }else if(cores == 1){
+    paths <- lapply(x, pathfinder, model, ...)
+  }else{
+    navailcores <- parallel::detectCores()
+    if(identical(cores, "autodetect")){
+      maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
+      cores <- min(navailcores - 1, maxcores)
+    }
+    if(cores > navailcores) stop("Number of cores is more than number available")
+    if(!quiet) cat("Multithreading over", cores, "cores\n")
+    cl <- parallel::makeCluster(cores)
+    paths <- parallel::parLapply(cl, x, pathfinder, model = model, ...)
+    parallel::stopCluster(cl)
+  }
+  ###
+  fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, x, paths, l = l,
+                     gap = gap, SIMPLIFY = FALSE)
+  odds <- seq(1, 2 * l + 1, by = 2)
+  evens <- seq(2, 2 * l, by = 2)
+  length(fragseqs)
+  inslens <- lapply(fragseqs, function(e) sapply(e[odds], length))
+  inslens <- matrix(unlist(inslens), nrow = nseq, byrow = TRUE)
+  insmaxs <- apply(inslens, 2, max)
+  insappends <- t(insmaxs - t(inslens))
+  for(i in 1:nseq){
+    needsapp <- insappends[i, ] > 0
+    if(any(needsapp)){
+      apps <- lapply(insappends[i, needsapp], function(e) rep(gap, e))
+      fragseqs[[i]][odds][needsapp] <- mapply(c, fragseqs[[i]][odds][needsapp],
+                                              apps, SIMPLIFY = FALSE)
+    }
+  }
+  unfragseqs <- lapply(fragseqs, unlist)
+  res <- matrix(unlist(unfragseqs), nrow = nseq, byrow = TRUE)
+  score <- sum(sapply(paths, function(p) attr(p, "score")))
+  inserts <- vector(length = 2 * l + 1, mode = "list")
+  inserts[evens] <- FALSE
+  inserts[odds] <- lapply(insmaxs, function(e) rep(TRUE, e))
+  inserts <- unlist(inserts)
+  resnames <- vector(length = 2 * l + 1, mode = "list")
+  resnames[evens] <- paste(1:l)
+  resnames[odds] <- lapply(insmaxs, function(e) rep("I", e))
+  resnames <- unlist(resnames)
+  colnames(res) <- resnames
+  rownames(res) <- names(x)
+  class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
+  attr(res, "score") <- score
+  attr(res, "inserts") <- inserts
+  return(res)
 }
 ################################################################################
 #' @rdname align
 ################################################################################
-align.default <- function(sequences, model, pseudocounts = "background",
+align.default <- function(x, model, pseudocounts = "background",
                           residues = NULL, gap = "-", maxsize = NULL,
                           quiet = FALSE, ...){
-  if(is.null(model)) return(sequences)
-  DNA <- .isDNA(sequences)
-  AA <- .isAA(sequences)
+  if(is.null(model)) return(x)
+  DNA <- .isDNA(x)
+  AA <- .isAA(x)
   if(DNA){
-    if(!.isDNA(model)) stop("class(sequences) and class(model) must match")
+    if(!.isDNA(model)) stop("class(x) and class(model) must match")
     gap <- as.raw(4)
     # changes here need also apply in Viterbi.default and Viterbi.PHMM
-    if(is.list(sequences)){
-      if(length(sequences) == 1){
-        if(!is.matrix(sequences)) sequences <- matrix(sequences[[1]], nrow = 1,
-                                                      dimnames = list(names(sequences), NULL))
-        class(sequences) <- "DNAbin"
+    if(is.list(x)){
+      if(length(x) == 1){
+        if(!is.matrix(x)){
+          namesx <- names(x)
+          x <- matrix(x[[1]], nrow = 1)
+          if(!is.null(namesx)) rownames(x) <- namesx
+        }
+        class(x) <- "DNAbin"
       }else stop("Invalid input: multi-sequence list")
     }else{
-      if(!is.matrix(sequences)){
-        sequences <- matrix(sequences, nrow = 1, dimnames = list(deparse(substitute(sequences)), NULL))
+      if(!is.matrix(x)){
+        x <- matrix(x, nrow = 1, dimnames = list(deparse(substitute(x)), NULL))
       }
-      class(sequences) <- "DNAbin"
+      class(x) <- "DNAbin"
     }
     if(is.list(model)){
       if(length(model) == 1){
-        if(!is.matrix(model)) model <- matrix(model[[1]], nrow = 1, dimnames = list(names(model), NULL))
+        if(!is.matrix(model)) {
+          model <- matrix(model[[1]], nrow = 1, dimnames = list(names(model), NULL))
+        }
         class(model) <- "DNAbin"
       }else stop("Invalid input: multi-sequence list")
     }else{
@@ -373,21 +459,30 @@ align.default <- function(sequences, model, pseudocounts = "background",
       class(model) <- "DNAbin"
     }
   }else if(AA){
-    if(!.isAA(model)) stop("class(sequences) and class(model) must match")
+    if(!.isAA(model)) stop("class(x) and class(model) must match")
     gap <- as.raw(45)
     # changes here need also apply in Viterbi.default and Viterbi.PHMM
-    if(is.list(sequences)){
-      if(length(sequences) == 1){
-        if(!is.matrix(sequences)) sequences <- matrix(sequences[[1]], nrow = 1, dimnames = list(names(sequences), NULL))
-        class(sequences) <- "AAbin"
+    if(is.list(x)){
+      if(length(x) == 1){
+        if(!is.matrix(x)){
+          namesx <- names(x)
+          x <- matrix(x[[1]], nrow = 1)
+          if(!is.null(namesx)) rownames(x) <- namesx
+          #x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
+        }
+        class(x) <- "AAbin"
       }else stop("Invalid input: multi-sequence list")
     }else{
-      if(!is.matrix(sequences)) sequences <- matrix(sequences, nrow = 1, dimnames = list(deparse(substitute(sequences)), NULL))
-      class(sequences) <- "AAbin"
+      if(!is.matrix(x)){
+        x <- matrix(x, nrow = 1, dimnames = list(deparse(substitute(x)), NULL))
+      }
+      class(x) <- "AAbin"
     }
     if(is.list(model)){
       if(length(model) == 1){
-        if(!is.matrix(model)) model <- matrix(model[[1]], nrow = 1, dimnames = list(names(model), NULL))
+        if(!is.matrix(model)) {
+          model <- matrix(model[[1]], nrow = 1, dimnames = list(names(model), NULL))
+        }
         class(model) <- "AAbin"
       }else stop("Invalid input: multi-sequence list")
     }else{
@@ -396,18 +491,15 @@ align.default <- function(sequences, model, pseudocounts = "background",
       class(model) <- "AAbin"
     }
   }else{
-    if(!is.matrix(sequences)){
-      sequences <- matrix(sequences, nrow = 1, dimnames = list(
-        deparse(substitute(sequences)), NULL))
-      #rownames(sequences) <-
+    if(!is.matrix(x)){
+      x <- matrix(x, nrow = 1, dimnames = list(deparse(substitute(x)), NULL))
     }
     if(!is.matrix(model)){
-      model <- matrix(model, nrow = 1, dimnames = list(
-        deparse(substitute(model)), NULL))
+      model <- matrix(model, nrow = 1, dimnames = list(deparse(substitute(model)), NULL))
     }
   }
-  if(nrow(sequences) == 1 & nrow(model) == 1){
-    alig <- Viterbi(sequences, model, ... = ...)
+  if(nrow(x) == 1 & nrow(model) == 1){
+    alig <- Viterbi(x, model, ... = ...)
     #, offset = offset) ###not necessary for vec vs vec
     ## TODO local alignment
     if(!any(alig$path == 1)){
@@ -415,27 +507,27 @@ align.default <- function(sequences, model, pseudocounts = "background",
       return(NULL)
     }
     xind <- yind <- alig$path
-    #xind[alig$path != 2] <- 1:length(sequences)
+    #xind[alig$path != 2] <- 1:length(x)
     xind[alig$path != 2] <- seq(alig$start[1], length.out = sum(alig$path != 2))
     xind[alig$path == 2] <- 0
-    newx <- c(gap, as.vector(sequences))[xind + 1]
+    newx <- c(gap, as.vector(x))[xind + 1]
     # yind[alig$path != 0] <- 1:length(model)
     yind[alig$path != 0] <- seq(alig$start[2], length.out = sum(alig$path != 0))
     yind[alig$path == 0] <- 0
     newy <- c(gap, as.vector(model))[yind + 1]
     res <- rbind(newx, newy)
-    rownames(res) <- c(rownames(sequences), rownames(model))
+    rownames(res) <- c(rownames(x), rownames(model))
     class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
     return(res)
-  }else if(sum(c(nrow(sequences) == 1, nrow(model) == 1)) == 1){
-    if(nrow(sequences) == 1){
-      tmp <- sequences
-      sequences <- model
+  }else if(sum(c(nrow(x) == 1, nrow(model) == 1)) == 1){
+    if(nrow(x) == 1){
+      tmp <- x
+      x <- model
       model <- tmp
       rm(tmp) # the old switcharoo
     }
-    n <- nrow(sequences)
-    z <- derivePHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts,
+    n <- nrow(x)
+    z <- derivePHMM(x, seqweights = "Gerstein", pseudocounts = pseudocounts,
                      residues = residues, logspace = TRUE)
     l <- z$size
     alignment <- Viterbi(z, model, ... = ...) ### changed from alig
@@ -452,16 +544,16 @@ align.default <- function(sequences, model, pseudocounts = "background",
       newrow[odds][which(itp[itp < 2] == 1)] <- mapply(":", ist, ien, SIMPLIFY = FALSE)
     }
     newrow <- lapply(newrow, function(e) if(is.null(e)) 0 else e)
-    newx <- lapply(newrow, function(e) sequences[, e, drop = FALSE])
+    newx <- lapply(newrow, function(e) x[, e, drop = FALSE])
     # analogous list for y but witout insert elements
     newrow <- lapply(1:ncol(model), function(e) e)
     newy <- lapply(newrow, function(e) model[, e, drop = FALSE])
     #
-    newxrows <- matrix(gap, nrow = n, ncol = ncol(sequences) + ncol(model))
-    rownames(newxrows) <- rownames(sequences)
-    newyrow <- matrix(gap, nrow = 1, ncol = ncol(sequences) + ncol(model))
+    newxrows <- matrix(gap, nrow = n, ncol = ncol(x) + ncol(model))
+    rownames(newxrows) <- rownames(x)
+    newyrow <- matrix(gap, nrow = 1, ncol = ncol(x) + ncol(model))
     rownames(newyrow) = rownames(model)
-    isinsert <- vector(mode = "logical", length = ncol(sequences) + ncol(model))
+    isinsert <- vector(mode = "logical", length = ncol(x) + ncol(model))
     if(DNA){
       class(newxrows) <- "DNAbin"
       class(newyrow) <- "DNAbin"
@@ -522,16 +614,16 @@ align.default <- function(sequences, model, pseudocounts = "background",
     # res.phmm <- derivePHMM.default(res, seqweights = res.weights, quiet = TRUE)
     # res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 10,
     #                   logspace = TRUE, quiet = TRUE, ... = ...)
-    # res <- align.list(sequences = res.list, model = res.phmm, quiet = TRUE, ... = ...)
+    # res <- align.list(x = res.list, model = res.phmm, quiet = TRUE, ... = ...)
     return(res)
-  }else if(nrow(sequences) > 1 & nrow(model) > 1){
-    #cat(rownames(sequences), "\n")
+  }else if(nrow(x) > 1 & nrow(model) > 1){
+    #cat(rownames(x), "\n")
     #cat(rownames(model), "\n")
-    # mat1 <<- sequences
+    # mat1 <<- x
     # mat2 <<- model
-    nx <- nrow(sequences)
+    nx <- nrow(x)
     ny <- nrow(model)
-    zx <- derivePHMM(sequences, seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
+    zx <- derivePHMM(x, seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     zy <- derivePHMM(model,  seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
     lx <- zx$size
     ly <- zy$size
@@ -549,7 +641,7 @@ align.default <- function(sequences, model, pseudocounts = "background",
       newrow[odds][which(itp[itp < 2] == 1)] <- mapply(":", ist, ien, SIMPLIFY = FALSE)
     }
     newrow <- lapply(newrow, function(e) if(is.null(e)) 0 else e)
-    newx <- lapply(newrow, function(e) sequences[, e, drop = FALSE])
+    newx <- lapply(newrow, function(e) x[, e, drop = FALSE])
     # lay y out as list with insert elements
     newrow <- vector(length = ly * 2 + 1, mode = "list")
     odds <- seq(from = 1, to = length(newrow), by = 2) #insert columns
@@ -564,11 +656,11 @@ align.default <- function(sequences, model, pseudocounts = "background",
     newrow <- lapply(newrow, function(e) if(is.null(e)) 0 else e)
     newy <- lapply(newrow, function(e) model[, e, drop = FALSE])
     #create output alignment
-    newxrows <- matrix(gap, nrow = nx, ncol = ncol(sequences) + ncol(model))
-    rownames(newxrows) <- rownames(sequences)
-    newyrows <- matrix(gap, nrow = ny, ncol = ncol(sequences) + ncol(model))
+    newxrows <- matrix(gap, nrow = nx, ncol = ncol(x) + ncol(model))
+    rownames(newxrows) <- rownames(x)
+    newyrows <- matrix(gap, nrow = ny, ncol = ncol(x) + ncol(model))
     rownames(newyrows) <- rownames(model)
-    isinsert <- vector(mode = "logical", length = ncol(sequences) + ncol(model))
+    isinsert <- vector(mode = "logical", length = ncol(x) + ncol(model))
     if(DNA){
       class(newxrows) <- "DNAbin"
       class(newyrows) <- "DNAbin"
@@ -643,10 +735,10 @@ align.default <- function(sequences, model, pseudocounts = "background",
     res.phmm <- derivePHMM.default(res, seqweights = res.weights, maxsize = newmaxsize)
     res.phmm <- train(res.phmm, res.list, method = "Viterbi", maxiter = 3,
                       maxsize = newmaxsize, logspace = TRUE, quiet = TRUE, ... = ...)
-    res <- align.list(sequences = res.list, model = res.phmm, ... = ...)
+    res <- align.list(x = res.list, model = res.phmm, ... = ...)
     return(res)
   }else{
-    stop("invalid arguments provided for sequences and or y")
+    stop("invalid arguments provided for x and or y")
   }
 }
 ################################################################################

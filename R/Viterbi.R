@@ -734,7 +734,10 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     # changes here need also apply in Viterbi.PHMM, alignpair
     if(is.list(x)){
       if(length(x) == 1){
-        x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
+        namesx <- names(x)
+        x <- matrix(x[[1]], nrow = 1)
+        if(!is.null(namesx)) rownames(x) <- namesx
+        #x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
         class(x) <- "DNAbin"
       }else stop("Invalid input object x: multi-sequence list")
     }
@@ -769,7 +772,10 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     if(!.isAA(y)) stop("x is an AAbin object but y is not")
     if(is.list(x)){
       if(length(x) == 1){
-        x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
+        namesx <- names(x)
+        x <- matrix(x[[1]], nrow = 1)
+        if(!is.null(namesx)) rownames(x) <- namesx
+        #x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
         class(x) <- "AAbin"
       }else stop("Invalid input object x: multi-sequence list")
     }
