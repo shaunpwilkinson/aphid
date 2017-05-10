@@ -257,7 +257,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                                 qe = if(fixqe) x$qe else NULL)
       if(!quiet){
         cat("Iteration", i, "\n")
-        cat("  Alignment with", nrow(newalig), "rows and", ncol(newalig), "columns\n")
+        cat("  Alignment with", nrow(alignment), "rows and", ncol(alignment), "columns\n")
         cat("  PHMM with", out$size, "modules\n")
       }
       ### what about DI and ID
