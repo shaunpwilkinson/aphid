@@ -327,13 +327,15 @@ align.list <- function(x, model = NULL, seeds = "random",
     parallel::stopCluster(cl)
   }
   ###
+  score <- sum(sapply(paths, function(p) attr(p, "score")))
   fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, x, paths, l = l,
                      gap = gap, SIMPLIFY = FALSE)
+  rm(paths)
   odds <- seq(1, 2 * l + 1, by = 2)
   evens <- seq(2, 2 * l, by = 2)
-  length(fragseqs)
+  # length(fragseqs)
   inslens <- lapply(fragseqs, function(e) sapply(e[odds], length))
-  inslens <- matrix(unlist(inslens), nrow = nseq, byrow = TRUE)
+  inslens <- matrix(unlist(inslens, use.names = FALSE), nrow = nseq, byrow = TRUE)
   insmaxs <- apply(inslens, 2, max)
   insappends <- t(insmaxs - t(inslens))
   for(i in 1:nseq){
@@ -344,17 +346,19 @@ align.list <- function(x, model = NULL, seeds = "random",
                                               apps, SIMPLIFY = FALSE)
     }
   }
-  unfragseqs <- lapply(fragseqs, unlist)
-  res <- matrix(unlist(unfragseqs), nrow = nseq, byrow = TRUE)
-  score <- sum(sapply(paths, function(p) attr(p, "score")))
+  unfragseqs <- lapply(fragseqs, unlist, use.names = FALSE)
+  # note prev line was causing major probs until use.names=F added
+  rm(fragseqs)
+  res <- matrix(unlist(unfragseqs, use.names = FALSE), nrow = nseq, byrow = TRUE)
+  rm(unfragseqs)
   inserts <- vector(length = 2 * l + 1, mode = "list")
   inserts[evens] <- FALSE
   inserts[odds] <- lapply(insmaxs, function(e) rep(TRUE, e))
-  inserts <- unlist(inserts)
+  inserts <- unlist(inserts, use.names = TRUE)
   resnames <- vector(length = 2 * l + 1, mode = "list")
   resnames[evens] <- paste(1:l)
   resnames[odds] <- lapply(insmaxs, function(e) rep("I", e))
-  resnames <- unlist(resnames)
+  resnames <- unlist(resnames, use.names = TRUE)
   colnames(res) <- resnames
   rownames(res) <- names(x)
   class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL

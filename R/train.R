@@ -255,28 +255,20 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                                 pseudocounts = pseudocounts, logspace = TRUE,
                                 qa = if(fixqa) x$qa else NULL,
                                 qe = if(fixqe) x$qe else NULL)
-      if(!quiet) cat("Iteration", i, "PHMM with", out$size, "internal modules\n")
+      if(!quiet){
+        cat("Iteration", i, "\n")
+        cat("  Alignment with", nrow(newalig), "rows and", ncol(newalig), "columns\n")
+        cat("  PHMM with", out$size, "modules\n")
+      }
       ### what about DI and ID
       newalig <- align(y, model = out, logspace = TRUE, ... = ...)
-      if(!quiet){
-        cat("New alignment generated with", nrow(newalig), "rows and",
-            ncol(newalig), "columns,",
-            object.size(newalig)/1000000, "Mb\n")
-      }
-      cat("Max obj size:", max( sapply(ls(),function(z){object.size(get(z))})) , "\n")
-      # newhash <- as.vector(newalig)
+      #if(!quiet) cat("Max obj size:", max( sapply(ls(),function(z){object.size(get(z))})) , "\n")
       newhash <- paste(openssl::md5(as.vector(newalig)))
       if(!any(sapply(alig_cache, identical, newhash))){
-        # alig_cache[[i + 1]] <- newhash
         alig_cache[i + 1] <- newhash
-      #score <- attr(newalig, "score")
-      #newscore <- attr(newalig, "score")
-      #if(!identical(alignment, newalig) & !(score %in% scores)){
-      #if(!identical(as.vector(alignment), as.vector(newalig))){
         alignment <- newalig
         rm(newalig)
-        #scores <- c(scores, score)
-        #maxscore <- newscore
+        gc()
       }else{
         if(!logspace){
           out$A <- exp(out$A)
@@ -437,6 +429,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         return(out)
       }
       LL <- logPx
+      gc()
     }
     warning("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
     if(!logspace){
