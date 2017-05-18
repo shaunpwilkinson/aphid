@@ -280,7 +280,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         return(out)
       }
     }
-    if(!quiet) cat("Note: sequential alignments were not identical after", i, "iterations\n")
+    if(!quiet) cat("Sequential alignments were not identical after", i, "iterations\n")
     return(out)
     #stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
   }else if(method == "BaumWelch"){

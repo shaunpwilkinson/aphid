@@ -75,7 +75,7 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL,
   namesok <- all(sapply(x, function(y) !is.null(names(y)) | length(y) == 0))
   if(!(namesok)) stop("x must be a list of named vectors")
   residues <- .alphadetect(x, residues = residues)
-  if(is.null(states)) states <- unique(unlist(lapply(x, names)))
+  if(is.null(states)) states <- unique(unlist(lapply(x, names), use.names = FALSE))
   if(states[1] != "Begin") states <- c("Begin", states)
   nres <- length(residues)
   nstates <- length(states)

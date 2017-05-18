@@ -11,7 +11,7 @@
     residues <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
   }
   else if(is.null(residues)){
-    residues <- sort(unique(as.vector(unlist(sequences))))
+    residues <- sort(unique(as.vector(unlist(sequences, use.names = FALSE))))
     if(!is.null(gap)) residues <- residues[residues != gap]
     if(!is.null(endchar)) residues <- residues[residues != endchar]
   }else{
@@ -88,8 +88,8 @@
                                        224, 176, 208, 112, 240, 4, 2))))
   }else if(mode(x) == "list"){
     if(length(x) > 0){
-      return(all(unlist(x) %in% as.raw(c(136, 72, 40, 24, 192, 160, 144, 96, 80, 48,
-                             224, 176, 208, 112, 240, 4, 2))))
+      return(all(unlist(x, use.names = FALSE) %in% as.raw(c(
+        136, 72, 40, 24, 192, 160, 144, 96, 80, 48, 224, 176, 208, 112, 240, 4, 2))))
     }else{
       return(FALSE)
     }
@@ -109,7 +109,7 @@
     return(all(x %in% as.raw(c(65:90, 42, 45, 63))))
   }else if(mode(x) == "list"){
     if(length(x) > 0){
-      return(all(unlist(x) %in% as.raw(c(65:90, 42, 45, 63))))
+      return(all(unlist(x, use.names = FALSE) %in% as.raw(c(65:90, 42, 45, 63))))
     }else{
       return(FALSE)
     }
@@ -486,7 +486,7 @@
   tmp <- apply(ykm, 2, .decimal, from = arity) + 1 ### poss bug here with auto-simplify
   pointer <- lapply(1:arity^k, function(x) which(tmp == x))
   S1 <- apply(xkm, 2, function(x) pointer[[.decimal(x, from = arity) + 1]])
-  diagbin <- unlist(mapply("-", S1, 1:ncol(xkm)))
+  diagbin <- unlist(mapply("-", S1, 1:ncol(xkm)), use.names = FALSE)
   diags <- tabulate(diagbin + (N1 + 1), nbins = N1 + N2 + 1)
   #names(diags) <- -N1:N2
   #diags <- table(unlist(mapply("-", S1, 1:ncol(xkm)))) # could prob speed this up a lot
