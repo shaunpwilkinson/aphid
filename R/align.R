@@ -311,7 +311,11 @@ align.list <- function(x, model = NULL, seeds = "random",
   }
   #if(!quiet) cat("Aligning sequences to model\n")
   if(inherits(cores, "cluster")){
-    paths <- parallel::parLapply(cores, x, pathfinder, model = model, ...)
+    paths <- if(nseq > 10){
+      parallel::parLapply(cores, x, pathfinder, model = model, ...)
+    }else{
+      lapply(x, pathfinder, model, ...)
+    }
   }else if(cores == 1){
     paths <- lapply(x, pathfinder, model, ...)
   }else{
@@ -321,10 +325,14 @@ align.list <- function(x, model = NULL, seeds = "random",
       cores <- min(navailcores - 1, maxcores)
     }
     if(cores > navailcores) stop("Number of cores is more than number available")
-    if(!quiet) cat("Multithreading over", cores, "cores\n")
-    cl <- parallel::makeCluster(cores)
-    paths <- parallel::parLapply(cl, x, pathfinder, model = model, ...)
-    parallel::stopCluster(cl)
+    if(cores > 1){
+      if(!quiet) cat("Multithreading over", cores, "cores\n")
+      cl <- parallel::makeCluster(cores)
+      paths <- parallel::parLapply(cl, x, pathfinder, model = model, ...)
+      parallel::stopCluster(cl)
+    }else{
+      paths <- lapply(x, pathfinder, model, ...)
+    }
   }
   ###
   score <- sum(sapply(paths, function(p) attr(p, "score")))
