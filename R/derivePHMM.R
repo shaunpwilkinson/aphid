@@ -392,6 +392,8 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                                consensus = FALSE, cpp = TRUE, quiet = FALSE,
                                ...){
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
+  catchnames <- rownames(x)
+  rownames(x) <- paste0("S", 1:nrow(x)) ## just ensures names are unique
   DNA <- .isDNA(x) # raw DNA bytes
   AA <- .isAA(x) # raw AA bytes
   gap <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gap
@@ -447,14 +449,12 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     inserts <- rep(FALSE, m)
   }else if(identical(inserts, "inherited")){
     inserts <- attr(x, "inserts")
-    if(is.null(inserts)) stop("No inserts available to inherit from alignment")
+    if(is.null(inserts)) stop("Alignment missing 'inserts' attribute, nothing to inherit")
   }else if(identical(inserts, "threshold")){
     inserts <- apply(gapweights, 2, sum) > threshold * n
   }else if(identical(inserts, "map")){
     if(n < 5){
-      # if(!quiet) cat("Maximum a posteriori insert assignment unsuitable
-      #                for fewer than five sequences.
-      #                Switching to threshold method\n")
+      # Maximum a posteriori insert assignment unsuitable for fewer than five sequences.
       inserts <- apply(gapweights, 2, sum) > threshold * n
     }else{
       inserts <- !map(x, seqweights = seqweights, residues = residues,
@@ -496,7 +496,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   }
   if(length(ecs) > 0){
     dimnames(ecs) <- list(residue = residues, position = 1:l)
-  }else ecs = NULL
+  }else ecs <- NULL
 
   #transitions
   xtr <- matrix(nrow = n, ncol = m)
@@ -582,6 +582,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   }else if(identical(toupper(sort(residues)), LETTERS[-c(2, 10, 15, 21, 24, 26)])){
     "amino"
   } else "custom"
+  if(!is.null(catchnames)) names(seqweights) <- catchnames
   res <- structure(list(name = name, description = description,
                         size = l, alphabet = alphabet,
                         A = A, E = E, qa = qa, qe = qe, inserts = inserts,
@@ -684,16 +685,14 @@ map <- function(x, seqweights = NULL, residues = NULL,
   nres <- length(residues)
   transitions = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
   S <- sigma <- c(0, rep(NA, L + 1))
-  if(is.null(seqweights)){
-    seqweights <- rep(1, n)
-  }
+  if(is.null(seqweights)) seqweights <- rep(1, n)
   if(length(seqweights) != n) stop("invalid seqweights argument")
-  if(AA){
-    ecs <- apply(x, 2, .tabulateAA, ambiguities = TRUE, seqweights = seqweights)
+  ecs <- if(AA){
+    apply(x, 2, .tabulateAA, ambiguities = TRUE, seqweights = seqweights)
   }else if(DNA){
-    ecs <- apply(x, 2, .tabulateDNA, ambiguities = TRUE, seqweights = seqweights)
+    apply(x, 2, .tabulateDNA, ambiguities = TRUE, seqweights = seqweights)
   }else{
-    ecs <- apply(x, 2, .tabulateCH, residues = residues, seqweights = seqweights)
+    apply(x, 2, .tabulateCH, residues = residues, seqweights = seqweights)
   }
   # ecs <- t(t(ecs) * seqweights)
   allecs <- apply(ecs, 1, sum)

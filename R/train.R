@@ -249,9 +249,16 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     # alig_cache <- list()
     # alig_cache[[1]] <- as.vector(alignment)
     for(i in 1:maxiter){
+      tmpinserts <- inserts
+      if(identical(inserts, "map")){
+        propgaps <- sum(alignment == gap)/length(alignment)
+        if(propgaps > 0.5) tmpinserts <- "inherited"
+        if(propgaps > 0.5) cat("Testing...\n")
+        ### prevents excessive memory use by 'map' for sparse alignments
+      }
       out <- derivePHMM.default(alignment, seqweights = seqweights, residues = residues,
                                 gap = gap, DI = DI, ID = ID, maxsize = maxsize,
-                                inserts = inserts, lambda = lambda, threshold = threshold,
+                                inserts = tmpinserts, lambda = lambda, threshold = threshold,
                                 pseudocounts = pseudocounts, logspace = TRUE,
                                 qa = if(fixqa) x$qa else NULL,
                                 qe = if(fixqe) x$qe else NULL)
