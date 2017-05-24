@@ -253,7 +253,6 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       if(identical(inserts, "map")){
         propgaps <- sum(alignment == gap)/length(alignment)
         if(propgaps > 0.5) tmpinserts <- "inherited"
-        if(propgaps > 0.5) cat("Testing...\n")
         ### prevents excessive memory use by 'map' for sparse alignments
       }
       out <- derivePHMM.default(alignment, seqweights = seqweights, residues = residues,
