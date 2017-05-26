@@ -48,7 +48,7 @@ writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f")
   mml <- if(is.null(x$mask))      "MM    no" else "MM    yes"
   cl <- if(is.null(x$consensus))  "CONS  no" else "CONS  yes"
   csl <- if(is.null(x$construct)) "CS    no" else "CS    yes"
-  mpl <- if(is.null(x$alignment)) "MAP   no" else "MAP   yes"
+  mpl <- if(is.null(x$map)) "MAP   no" else "MAP   yes"
   cat(rfl, mml, cl, csl, mpl, file = file, sep = "\n", append = TRUE)
 
   if(!is.null(x$date)) cat(paste0("DATE  ", x$date), file = file,
@@ -73,7 +73,6 @@ writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f")
     compoline = paste0("  COMPO   ", paste(compoline, collapse = "  "))
     cat(compoline, file = file, sep = "\n", append = TRUE)
   }
-
   qe <- formatC(-x$qe, digits = 5, format = "f")
   qe[trimws(qe) == "Inf"] <- "      *"
   qe <- gsub("(.......).+", "\\1", qe)
@@ -82,26 +81,22 @@ writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f")
   # qe <- as.character(format(-x$qe, digits = 6, scientific = FALSE))
   # qeline <- paste0("          ", paste(qe, collapse = "  "))
   cat(qeline, file = file, sep = "\n", append = TRUE)
-
   A <- formatC(-x$A[c(5, 6, 4, 8, 9, 2, 1), ], digits = 6, format = "f")
   A[trimws(A) == "Inf"] <- "      *"
   A <- gsub("(.......).+", "\\1", A)
   dim(A) <- c(7, x$size + 1)
   A[6, 1] <- A[6, x$size + 1] <- "0.00000"
-
-  #E <- as.character(format(-x$E, digits = 6, scientific = FALSE))
   E <- formatC(-x$E, digits = 6, format = "f")
   E[trimws(E) == "Inf"] <- "      *"
   E <- gsub("(.......).+", "\\1", E)
   dim(E) <- c(length(residues), x$size)
-
   trans0line = paste("         ", paste(A[, 1], collapse = "  "))
   cat(trans0line, file = file, sep = "\n", append = TRUE)
   for(i in 1:x$size){
     emline <- paste0(if(i < 10) "      " else if(i < 100) "     " else "    ", i, "   ")
     emline <- paste0(emline, paste(E[, i], collapse = "  "))
-    if(!is.null(x$alignment)){
-      tmp <- x$alignment[i]
+    if(!is.null(x$map)){
+      tmp <- x$map[i]
       emline <- paste0(emline, if(tmp < 10) "      " else if(tmp < 100) "     " else  "    ")
       emline <- paste0(emline, tmp)
     }else{

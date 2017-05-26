@@ -86,6 +86,9 @@
 #'   states. Equivalent to the log of the prior probability of marking each
 #'   column (Durbin et al. 1998, chapter 5.7). Only applicable when
 #'   \code{inserts = "map"}.
+#' @param alignment logical indicating whether the alignment used to
+#'   derive the final model (if applicable) should be included as an element of
+#'   the returned PHMM object. Defaults to FALSE.
 #' @param quiet logical indicating whether feedback should be printed
 #'   to the console.
 #' @param ... aditional arguments to be passed to \code{"Viterbi"} (if
@@ -155,7 +158,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
                        pseudocounts = "background", gap = "-",
                        fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
                        inserts = "map", threshold = 0.5, lambda = 0,
-                       quiet = FALSE, ...){
+                       alignment = FALSE, quiet = FALSE, ...){
   if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   #note any changes below also need apply to align2phmm
   DNA <- .isDNA(y)
@@ -225,11 +228,11 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
   if(!is.null(x$qa)){
     if(!logspace) x$qa <- log(x$qa)
   }else{
-    alignment <- align(y, x, ... = ...)
-    gaps <- alignment == gap
-    inserts <- apply(gaps, 2, sum) > 0.5 * n
-    xtr <- matrix(nrow = n, ncol = ncol(alignment))
-    insertsn <- matrix(rep(inserts, n), nrow = n, byrow = T)
+    alig <- align(y, x, ... = ...)
+    gaps <- alig == gap
+    insrts <- apply(gaps, 2, sum) > 0.5 * n
+    xtr <- matrix(nrow = n, ncol = ncol(alig))
+    insertsn <- matrix(rep(insrts, n), nrow = n, byrow = T)
     xtr[gaps & !insertsn] <- 0L # Delete
     xtr[!gaps & !insertsn] <- 1L # Match
     xtr[!gaps & insertsn] <- 2L # Insert
@@ -241,30 +244,31 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     x$qa <- log(transtotals/sum(transtotals)) ### needs tidying up
   }
   if(method  == "Viterbi"){
-    alignment <- align(y, model = x, logspace = TRUE, ... = ...)
-    #scores <- attr(alignment, "score")
-    #maxscore <- attr(alignment, "score")
+    alig <- align(y, model = x, logspace = TRUE, ... = ...)
+    #scores <- attr(alig, "score")
+    #maxscore <- attr(alig, "score")
     alig_cache <- character(maxiter)
-    alig_cache[1] <- paste(openssl::md5(as.vector(alignment)))
+    alig_cache[1] <- paste(openssl::md5(as.vector(alig)))
     # alig_cache <- list()
-    # alig_cache[[1]] <- as.vector(alignment)
+    # alig_cache[[1]] <- as.vector(alig)
     for(i in 1:maxiter){
       # tmpinserts <- inserts
       # if(identical(inserts, "map")){
-      #   propgaps <- sum(alignment == gap)/length(alignment)
+      #   propgaps <- sum(alig == gap)/length(alig)
       #   if(propgaps > 0.5) tmpinserts <- "inherited"
-      #   ### prevents excessive memory use by 'map' for sparse alignments
+      #   ### prevents excessive memory use by 'map' for sparse aligs
       # }
-      out <- derivePHMM.default(alignment, seqweights = seqweights, residues = residues,
+      out <- derivePHMM.default(alig, seqweights = seqweights, residues = residues,
                                 gap = gap, DI = DI, ID = ID, maxsize = maxsize,
                                 inserts = inserts, lambda = lambda, threshold = threshold,
                                 pseudocounts = pseudocounts, logspace = TRUE,
+                                alignment = alignment,
                                 qa = if(fixqa) x$qa else NULL,
                                 qe = if(fixqe) x$qe else NULL)
       if(!quiet){
-        cat("Iteration", i, "\n")
-        cat("  Alignment with", nrow(alignment), "rows and", ncol(alignment), "columns\n")
-        cat("  PHMM with", out$size, "modules\n")
+        cat("Iteration", i)
+        cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ")
+        cat("PHMM with", out$size, "modules\n")
       }
       ### what about DI and ID
       newalig <- align(y, model = out, logspace = TRUE, ... = ...)
@@ -272,7 +276,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       newhash <- paste(openssl::md5(as.vector(newalig)))
       if(!any(sapply(alig_cache, identical, newhash))){
         alig_cache[i + 1] <- newhash
-        alignment <- newalig
+        alig <- newalig
         rm(newalig)
         gc()
       }else{

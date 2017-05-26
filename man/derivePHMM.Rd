@@ -16,8 +16,8 @@ derivePHMM(x, ...)
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
   DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
   description = NULL, compo = FALSE, consensus = FALSE,
-  seeds = "random", refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
-  cpp = TRUE, quiet = FALSE, ...)
+  alignment = FALSE, seeds = "random", refine = "Viterbi",
+  maxiter = 100, deltaLL = 1e-07, cpp = TRUE, quiet = FALSE, ...)
 
 \method{derivePHMM}{AAbin}(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   residues = NULL, gap = "-", endchar = "?",
@@ -25,8 +25,8 @@ derivePHMM(x, ...)
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
   DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
   description = NULL, compo = FALSE, consensus = FALSE,
-  seeds = "random", refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
-  cpp = TRUE, quiet = FALSE, ...)
+  alignment = FALSE, seeds = "random", refine = "Viterbi",
+  maxiter = 100, deltaLL = 1e-07, cpp = TRUE, quiet = FALSE, ...)
 
 \method{derivePHMM}{list}(x, seeds = "random", refine = "Viterbi",
   maxiter = 100, deltaLL = 1e-07, seqweights = "Gerstein", wfactor = 1,
@@ -34,16 +34,16 @@ derivePHMM(x, ...)
   logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
   inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
   threshold = 0.5, omit.endgaps = FALSE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE, cpp = TRUE,
-  quiet = FALSE, ...)
+  description = NULL, compo = FALSE, consensus = FALSE,
+  alignment = FALSE, cpp = TRUE, quiet = FALSE, ...)
 
 \method{derivePHMM}{default}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
   maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
   DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE, cpp = TRUE,
-  quiet = FALSE, ...)
+  description = NULL, compo = FALSE, consensus = FALSE,
+  alignment = FALSE, cpp = TRUE, quiet = FALSE, ...)
 }
 \arguments{
 \item{x}{a matrix of aligned sequences or a list of unaligned sequences.
@@ -176,6 +176,10 @@ PHMM object.}
 
 \item{consensus}{placeholder. Consensus sequences will be available in
 a future version.}
+
+\item{alignment}{logical indicating whether the alignment used to
+derive the final model (if applicable) should be included as an element of
+the returned PHMM object. Defaults to FALSE.}
 
 \item{seeds}{optional integer vector indicating which sequences should
 be used as seeds for building the guide tree for the progressive

@@ -12,7 +12,7 @@ train(x, y, ...)
   logspace = "autodetect", maxiter = 100, deltaLL = 1e-07,
   pseudocounts = "background", gap = "-", fixqa = FALSE, fixqe = FALSE,
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  quiet = FALSE, ...)
+  alignment = FALSE, quiet = FALSE, ...)
 
 \method{train}{HMM}(x, y, method = "Viterbi", seqweights = NULL,
   maxiter = 100, deltaLL = 1e-07, logspace = "autodetect",
@@ -117,6 +117,10 @@ automatically used when the number of sequences is less than 5.}
 states. Equivalent to the log of the prior probability of marking each
 column (Durbin et al. 1998, chapter 5.7). Only applicable when
 \code{inserts = "map"}.}
+
+\item{alignment}{logical indicating whether the alignment used to
+derive the final model (if applicable) should be included as an element of
+the returned PHMM object. Defaults to FALSE.}
 
 \item{quiet}{logical indicating whether feedback should be printed
 to the console.}

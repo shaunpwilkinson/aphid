@@ -107,6 +107,7 @@ LogicalVector map(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts,
     NumericVector tmp = Stmp + tau + iota + M[j] + lambda;
     sigma[j] = which_max(tmp) + 1;
     S[j] = tmp[sigma[j] - 1];
+    checkUserInterrupt();
   }
   int j = sigma[L + 1];
   while(j > 0){

@@ -26,7 +26,7 @@ Many of the examples and datasets in the package are directly derived from the
 text, which serves as a useful primer for this package.
 
 ### Installation
-`aphid` is currently only available as a development version, with a stable
+`aphid` is currently available as a development version, with a stable
 release available on CRAN shortly. To download the package from 
 GitHub you will first need to ensure you have a C/C++ compliler and the 
 [devtools](https://github.com/hadley/devtools) R package installed. 

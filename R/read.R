@@ -84,7 +84,7 @@ readPHMM <- function(file = "", ...){
   begintrans <- unlist(strsplit(gsub("^ +", "", x[whichqe + 1]), split = " +"))
   tmp <- if(out$ID) 6 else 5
   out$A[1:tmp, 1] <- -as.numeric(begintrans[1:tmp])
-  if(hasmap) out$alignment <- integer(out$size)
+  if(hasmap) out$map <- integer(out$size)
   if(hascons) out$consensus <- character(out$size)
   if(hasref) out$reference <- character(out$size)
   if(hasmm) out$mask <- logical(out$size)
@@ -96,7 +96,7 @@ readPHMM <- function(file = "", ...){
     counter <- length(out$residues) + 1
     out$E[, i] <- -as.numeric(matchprobs[2:counter])
     counter <- counter + 1
-    if(hasmap) out$alignment[i] <- as.integer(matchprobs[counter])
+    if(hasmap) out$map[i] <- as.integer(matchprobs[counter])
     if(hascons) out$consensus[i] <- matchprobs[counter + 1]
     if(hasref) out$reference[i] <- matchprobs[counter + 2]
     if(hasmm) out$mask[i] <- switch(matchprobs[counter + 3], m = TRUE, FALSE)

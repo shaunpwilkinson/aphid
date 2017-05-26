@@ -397,7 +397,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           z <- z - switch(path[1], c(1,0,0), c(1,0,0), c(1,1,0), c(0,1,0), c(0,1,0))
         }
         startposition = z[1:2]
-      }else(stop("invalid alignment type"))
+      }else(stop("Invalid alignment type"))
       key <- "MI = 1, DG = 2, MM = 3, GD = 4, IM = 5"
       rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
       progression <- progression - 1 #to account for 0 row
@@ -570,7 +570,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }else if(type == 2){
         ind <- which(V[, , "M"] == max(V[, , "M"]), arr.ind = TRUE)
         if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
-        if(V[ind[1], ind[2], "M"] == 0) stop("alignment failed, try increasing
+        if(V[ind[1], ind[2], "M"] == 0) stop("Alignment failed, try increasing
                                            offset or changing type")
         z <- c(ind, 2)
         score <- V[z[1], z[2], z[3]]
@@ -913,7 +913,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       ind <- which(border == max(border), arr.ind = TRUE)
       if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
       z <- if(ind[1] <= m) c(n, ind) else c(ind[1] - m, m, ind[2])
-      if(is.na(P[z[1], z[2], z[3]])) stop("alignment failed, try increasing offset")
+      if(is.na(P[z[1], z[2], z[3]])) stop("Alignment failed, try increasing offset")
       score <- M[z[1], z[2], z[3]]
       if(z[1] < n){
         path <- rep(1, n - z[1])

@@ -108,6 +108,9 @@
 #'   PHMM object.
 #' @param consensus placeholder. Consensus sequences will be available in
 #'   a future version.
+#' @param alignment logical indicating whether the alignment used to
+#'   derive the final model (if applicable) should be included as an element of
+#'   the returned PHMM object. Defaults to FALSE.
 #' @param seeds optional integer vector indicating which sequences should
 #'   be used as seeds for building the guide tree for the progressive
 #'   alignment (assuming input is a list of unaligned sequences,
@@ -191,9 +194,9 @@ derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                               DI = FALSE, ID = FALSE,
                               omit.endgaps = FALSE, name = NULL,
                               description = NULL, compo = FALSE,
-                              consensus = FALSE, seeds = "random",
-                              refine = "Viterbi", maxiter = 100,
-                              deltaLL = 1E-07, cpp = TRUE,
+                              consensus = FALSE, alignment = FALSE,
+                              seeds = "random", refine = "Viterbi",
+                              maxiter = 100, deltaLL = 1E-07, cpp = TRUE,
                               quiet = FALSE, ...){
   ##TODO don't need gap, residues etc?
   if(is.list(x)){
@@ -208,8 +211,8 @@ derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                     threshold = threshold,
                     omit.endgaps = omit.endgaps, name = name,
                     description = description, compo = compo,
-                    consensus = consensus, cpp = cpp,
-                    quiet = quiet, ... = ...)
+                    consensus = consensus, alignment = alignment,
+                    cpp = cpp, quiet = quiet, ... = ...)
   }else{
     derivePHMM.default(x, seqweights = seqweights, wfactor = wfactor,
                        k = k, residues = residues, gap = gap,
@@ -219,8 +222,8 @@ derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                        threshold = threshold, lambda = lambda,
                        DI = DI, ID = ID, omit.endgaps = omit.endgaps,
                        name = name, description = description,
-                       compo = compo, consensus = consensus, cpp = cpp,
-                       quiet = quiet)
+                       compo = compo, consensus = consensus, alignment = alignment,
+                       cpp = cpp, quiet = quiet)
   }
 }
 ################################################################################
@@ -233,8 +236,8 @@ derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                              inserts = "map", threshold = 0.5, lambda = 0,
                              DI = FALSE, ID = FALSE, omit.endgaps = FALSE,
                              name = NULL, description = NULL, compo = FALSE,
-                             consensus = FALSE, seeds = "random",
-                             refine = "Viterbi", maxiter = 100,
+                             consensus = FALSE,  alignment = FALSE,
+                             seeds = "random", refine = "Viterbi", maxiter = 100,
                              deltaLL = 1E-07, cpp = TRUE, quiet = FALSE, ...){
   if(is.list(x)){
     derivePHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
@@ -246,7 +249,7 @@ derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                     inserts = inserts, lambda = lambda, DI = DI, ID = ID,
                     threshold = threshold, omit.endgaps = omit.endgaps,
                     name = name, description = description, compo = compo,
-                    consensus = consensus,
+                    consensus = consensus, alignment = alignment,
                     cpp = cpp, quiet = quiet, ... = ...)
   }else{
     derivePHMM.default(x, seqweights = seqweights, wfactor = wfactor, k = k,
@@ -256,7 +259,8 @@ derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                        threshold = threshold, lambda = lambda, DI = DI, ID = ID,
                        omit.endgaps = omit.endgaps, name = name,
                        description = description, compo = compo,
-                       consensus = consensus, cpp = cpp, quiet = quiet)
+                       consensus = consensus, alignment = alignment, cpp = cpp,
+                       quiet = quiet)
   }
 }
 ################################################################################
@@ -271,7 +275,8 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                             inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
                             threshold = 0.5, omit.endgaps = FALSE,
                             name = NULL, description = NULL, compo = FALSE,
-                            consensus = FALSE, cpp = TRUE, quiet = FALSE, ...){
+                            consensus = FALSE, alignment = FALSE, cpp = TRUE,
+                            quiet = FALSE, ...){
   nseq <- length(x)
   DNA <- .isDNA(x)
   AA <- .isAA(x)
@@ -362,7 +367,8 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                               lambda = lambda, threshold = threshold,
                               name = name, description = description,
                               compo = compo, consensus = consensus,
-                              cpp = cpp, quiet = quiet)
+                              alignment = alignment, cpp = cpp,
+                              quiet = quiet)
   if(nseq < 3){
     if(!quiet) cat("Done\n")
     return(model)
@@ -374,7 +380,7 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                    maxiter = maxiter, deltaLL = deltaLL,
                    pseudocounts = pseudocounts, maxsize = maxsize,
                    inserts = inserts, lambda = lambda, threshold = threshold,
-                   quiet = quiet, ... = ...)
+                   alignment = alignment, quiet = quiet, ... = ...)
   }else stopifnot(identical(refine, "none"))
   if(!quiet) cat("Done\n")
   return(model)
@@ -389,7 +395,8 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                                inserts = "map", lambda = 0, threshold = 0.5,
                                DI = FALSE, ID = FALSE, omit.endgaps = FALSE,
                                name = NULL, description = NULL, compo = FALSE,
-                               consensus = FALSE, cpp = TRUE, quiet = FALSE,
+                               consensus = FALSE, alignment = FALSE, cpp = TRUE,
+                               quiet = FALSE,
                                ...){
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
   catchnames <- rownames(x)
@@ -553,8 +560,8 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   A <- t(A)
   inslens <- .insertlengths(!inserts)
   #which alignment columns correspond to which model positions?
-  alignment <- which(!inserts)
-  if(length(alignment) > 0) names(alignment) <- 1:l
+  whichcols <- which(!inserts)
+  if(length(whichcols) > 0) names(whichcols) <- 1:l
   if(logspace){
     A <- log(A)
     E <- log(E)
@@ -579,13 +586,17 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                         size = l, alphabet = alphabet,
                         A = A, E = E, qa = qa, qe = qe, inserts = inserts,
                         insertlengths = inslens,
-                        alignment = alignment,
+                        map = whichcols,
                         date = date(), nseq = n, weights = seqweights,
                         reference = reference, mask = mask),
                    class = "PHMM")
   # if(consensus){
   #   res$consensus <- generate(res, size = l * 100, random = FALSE, gap = ".")
   # }
+  if(alignment){
+    rownames(x) <- catchnames
+    res$alignment <- x
+  }
   if(compo) res$compo <- log(apply(exp(E), 1, mean))
   return(res)
 }
