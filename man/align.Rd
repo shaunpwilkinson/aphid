@@ -10,21 +10,21 @@
 \usage{
 align(x, ...)
 
-\method{align}{DNAbin}(x, model = NULL, seeds = "random",
+\method{align}{DNAbin}(x, model = NULL, progressive = FALSE, seeds = NULL,
   seqweights = "Gerstein", refine = "Viterbi", k = 5, maxiter = 100,
   maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
   deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
   pseudocounts = "background", qa = NULL, qe = NULL, cores = 1,
   quiet = FALSE, ...)
 
-\method{align}{AAbin}(x, model = NULL, seeds = "random",
+\method{align}{AAbin}(x, model = NULL, progressive = FALSE, seeds = NULL,
   seqweights = "Gerstein", refine = "Viterbi", k = 5, maxiter = 100,
   maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
   deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
   pseudocounts = "background", qa = NULL, qe = NULL, cores = 1,
   quiet = FALSE, ...)
 
-\method{align}{list}(x, model = NULL, seeds = "random",
+\method{align}{list}(x, model = NULL, progressive = FALSE, seeds = NULL,
   seqweights = "Gerstein", k = 5, refine = "Viterbi", maxiter = 100,
   maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
   deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
@@ -55,12 +55,19 @@ be derived from the list of sequences, and each sequence
 will be aligned back to the model to produce the multiple sequence
 alignment.}
 
+\item{progressive}{logical indicating whether the alignment used
+to derive the initial model parameters
+should be built progressively (assuming input is a list of
+unaligned sequences, ignored otherwise).
+Defaults to FALSE, in which case the longest sequence or sequences
+are used (faster, but possibly less accurate).}
+
 \item{seeds}{optional integer vector indicating which sequences should
 be used as seeds for building the guide tree for the progressive
 alignment (assuming input is a list of unaligned sequences,
-ignored otherwise).
-Defaults to "random", in which a set of log(n, 2)^2 non-identical
-sequences are randomly chosen from the list of sequences.}
+and \code{progressive = TRUE}, ignored otherwise).
+Defaults to NULL, in which a set of log(n, 2)^2 non-identical
+sequences are chosen from the list of sequences by k-means clustering.}
 
 \item{seqweights}{either NULL (default; all sequences are given weights
 of 1), a numeric vector the same length as \code{x} representing

@@ -257,6 +257,7 @@ List ViterbiD(IntegerVector x, IntegerVector y,
     tbm = whichmax(brc, 0);
     score = brc[tbm];
     while((tbr > 0) | (tbc > 0)){
+      if((tbr < 0) | (tbc < 0)) throw Rcpp::exception("Error 2");
       keeppath[counter] = true;
       path[counter] = tbm;
       if(tbm == 0) {
@@ -269,7 +270,8 @@ List ViterbiD(IntegerVector x, IntegerVector y,
       }else if(tbm == 2){
         tbm = PIY(tbr, tbc);
         tbc--;
-      }else throw Rcpp::exception("error 1");
+      }else throw Rcpp::exception("Error 1");
+
       counter--;
       checkUserInterrupt();
     }
@@ -355,7 +357,7 @@ List ViterbiD(IntegerVector x, IntegerVector y,
       }else if(tbm == 2){
         tbm = PIY(tbr, tbc);
         tbc--;
-      }else throw Rcpp::exception("error 1");
+      }else throw Rcpp::exception("Error 3");
       counter--;
       startposition[0] = tbr;
       startposition[1] = tbc;
@@ -365,7 +367,7 @@ List ViterbiD(IntegerVector x, IntegerVector y,
         advance = PMM(tbr, tbc) != 3;
       }else if(tbm == 2){
         advance = PIY(tbr, tbc) != 3;
-      } else throw Rcpp::exception("error 2");
+      }else throw Rcpp::exception("Error 4");
       checkUserInterrupt();
     }
   }
@@ -575,9 +577,10 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
     // LLcdt <- c(V[n, m, "D"] + A["DM", n],
     //            V[n, m, "M"] + A["MM", n],
     //                            V[n, m, "I"] + A["IM", n])
-    NumericVector LLcdt = NumericVector::create(Dmatrix(n - 1, m - 1) + A(1, n - 1), //DM
-                                                Mmatrix(n - 1, m - 1) + A(4, n - 1), //MM
-                                                Imatrix(n - 1, m - 1) + A(7, n - 1)); //IM
+    NumericVector LLcdt = NumericVector::create(
+      Dmatrix(n - 1, m - 1) + A(1, n - 1), //DM
+      Mmatrix(n - 1, m - 1) + A(4, n - 1), //MM
+      Imatrix(n - 1, m - 1) + A(7, n - 1)); //IM
     tbm = whichmax(LLcdt, 0);
     score = LLcdt[tbm];
     tbr = n - 1; // traceback row
@@ -587,6 +590,7 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
     //tbm = whichmax(brc);
     //score = brc[tbm];
     while((tbr > 0) | (tbc > 0)){
+      if((tbr < 0) | (tbc < 0)) throw Rcpp::exception("Error 2");
       keeppath[counter] = true;
       path[counter] = tbm;
       if(tbm == 0) {
@@ -599,7 +603,7 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
       }else if(tbm == 2){
         tbm = Ipointer(tbr, tbc);
         tbc--;
-      }else throw Rcpp::exception("error 1");
+      }else throw Rcpp::exception("Error 1");
       counter--;
       checkUserInterrupt();
     }
@@ -648,7 +652,7 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
       }else if(tbm == 2){
         tbm = Ipointer(tbr, tbc);
         tbc--;
-      }else throw Rcpp::exception("error 1");
+      }else throw Rcpp::exception("Error 1");
       counter--;
       checkUserInterrupt();
     }
@@ -686,7 +690,7 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
       }else if(tbm == 2){
         tbm = Ipointer(tbr, tbc);
         tbc--;
-      }else throw Rcpp::exception("error 1");
+      }else throw Rcpp::exception("Error 5");
       counter--;
       startposition[0] = tbr;
       startposition[1] = tbc;
@@ -696,7 +700,7 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
         advance = Mpointer(tbr, tbc) != 3;
       }else if(tbm == 2){
         advance = Ipointer(tbr, tbc) != 3;
-      } else throw Rcpp::exception("error 2");
+      } else throw Rcpp::exception("Error 6");
       checkUserInterrupt();
     }
   }
@@ -870,6 +874,7 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
     tbr = n - 1; // traceback row
     tbc = m - 1; // traceback column
     while((tbr > 0) | (tbc > 0)){
+      if((tbr < 0) | (tbc < 0)) throw Rcpp::exception("Error 2");
       keeppath[counter] = true;
       path[counter] = tbm;
       if(tbm < 2){

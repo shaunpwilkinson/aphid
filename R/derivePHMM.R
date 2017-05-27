@@ -111,12 +111,19 @@
 #' @param alignment logical indicating whether the alignment used to
 #'   derive the final model (if applicable) should be included as an element of
 #'   the returned PHMM object. Defaults to FALSE.
+#' @param progressive logical indicating whether the alignment used
+#'   to derive the initial model parameters
+#'   should be built progressively (assuming input is a list of
+#'   unaligned sequences, ignored otherwise).
+#'   Defaults to FALSE, in which case the
+#'   longest sequence or sequences are used (faster,
+#'   but possibly less accurate).
 #' @param seeds optional integer vector indicating which sequences should
 #'   be used as seeds for building the guide tree for the progressive
 #'   alignment (assuming input is a list of unaligned sequences,
-#'   ignored otherwise).
-#'   Defaults to "random", in which a set of log(n, 2)^2 non-identical
-#'   sequences are randomly chosen from the list of sequences.
+#'   and \code{progressive = TRUE}, ignored otherwise).
+#'   Defaults to NULL, in which a set of log(n, 2)^2 non-identical
+#'   sequences are chosen from the list of sequences by k-means clustering.
 #' @param refine the method used to iteratively refine the model parameters
 #'   following the initial progressive alignment and model derivation step.
 #'   Current supported options are \code{"Viterbi"} (Viterbi training;
@@ -133,6 +140,18 @@
 #' @param cpp logical, indicates whether the dynamic programming matrix
 #'   should be filled using compiled C++ functions (default; many times faster).
 #'   The FALSE option is primarily retained for bug fixing and experimentation.
+#' @param cores integer giving the number of CPUs to parallelize the operation
+#'   over. Defaults to 1, and reverts to 1 if x is not a list.
+#'   This argument may alternatively be a 'cluster' object,
+#'   in which case it is the user's responsibility to close the socket
+#'   connection at the conclusion of the operation,
+#'   for example by running \code{parallel::stopCluster(cores)}.
+#'   The string 'autodetect' is also accepted, in which case the maximum
+#'   number of cores to use is one less than the total number of cores available.
+#'   Note that in this case there
+#'   may be a tradeoff in terms of speed depending on the number and size
+#'   of sequences to be aligned, due to the extra time required to initialize
+#'   the cluster.
 #' @param quiet logical indicating whether feedback should be printed
 #'   to the console.
 #' @param ... aditional arguments to be passed to \code{"Viterbi"} (if
@@ -195,12 +214,14 @@ derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                               omit.endgaps = FALSE, name = NULL,
                               description = NULL, compo = FALSE,
                               consensus = FALSE, alignment = FALSE,
-                              seeds = "random", refine = "Viterbi",
+                              progressive = FALSE, seeds = NULL,
+                              refine = "Viterbi",
                               maxiter = 100, deltaLL = 1E-07, cpp = TRUE,
-                              quiet = FALSE, ...){
+                              cores = 1, quiet = FALSE, ...){
   ##TODO don't need gap, residues etc?
   if(is.list(x)){
-    derivePHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
+    derivePHMM.list(x, progressive = progressive, seeds = seeds,
+                    refine = refine, maxiter = maxiter,
                     deltaLL = deltaLL,
                     seqweights = seqweights, wfactor = wfactor,
                     k = k, residues = residues, gap = gap,
@@ -212,7 +233,7 @@ derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                     omit.endgaps = omit.endgaps, name = name,
                     description = description, compo = compo,
                     consensus = consensus, alignment = alignment,
-                    cpp = cpp, quiet = quiet, ... = ...)
+                    cpp = cpp, cores = cores, quiet = quiet, ... = ...)
   }else{
     derivePHMM.default(x, seqweights = seqweights, wfactor = wfactor,
                        k = k, residues = residues, gap = gap,
@@ -222,8 +243,8 @@ derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                        threshold = threshold, lambda = lambda,
                        DI = DI, ID = ID, omit.endgaps = omit.endgaps,
                        name = name, description = description,
-                       compo = compo, consensus = consensus, alignment = alignment,
-                       cpp = cpp, quiet = quiet)
+                       compo = compo, consensus = consensus,
+                       alignment = alignment, cpp = cpp, quiet = quiet)
   }
 }
 ################################################################################
@@ -237,10 +258,13 @@ derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                              DI = FALSE, ID = FALSE, omit.endgaps = FALSE,
                              name = NULL, description = NULL, compo = FALSE,
                              consensus = FALSE,  alignment = FALSE,
-                             seeds = "random", refine = "Viterbi", maxiter = 100,
-                             deltaLL = 1E-07, cpp = TRUE, quiet = FALSE, ...){
+                             progressive = FALSE, seeds = NULL,
+                             refine = "Viterbi", maxiter = 100,
+                             deltaLL = 1E-07, cpp = TRUE, cores = 1,
+                             quiet = FALSE, ...){
   if(is.list(x)){
-    derivePHMM.list(x, seeds = seeds, refine = refine, maxiter = maxiter,
+    derivePHMM.list(x, progressive = progressive, seeds = seeds,
+                    refine = refine, maxiter = maxiter,
                     deltaLL = deltaLL,
                     seqweights = seqweights, wfactor = wfactor,
                     k = k, residues = residues, gap = gap,
@@ -250,7 +274,7 @@ derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                     threshold = threshold, omit.endgaps = omit.endgaps,
                     name = name, description = description, compo = compo,
                     consensus = consensus, alignment = alignment,
-                    cpp = cpp, quiet = quiet, ... = ...)
+                    cpp = cpp, cores = cores, quiet = quiet, ... = ...)
   }else{
     derivePHMM.default(x, seqweights = seqweights, wfactor = wfactor, k = k,
                        residues = residues, gap = gap, endchar = endchar,
@@ -266,8 +290,8 @@ derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 ################################################################################
 #' @rdname derivePHMM
 ################################################################################
-derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
-                            maxiter = 100, deltaLL = 1E-07,
+derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
+                            refine = "Viterbi", maxiter = 100, deltaLL = 1E-07,
                             seqweights = "Gerstein", wfactor = 1, k = 5,
                             residues = NULL, gap = "-",
                             pseudocounts = "background", logspace = TRUE,
@@ -276,7 +300,8 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                             threshold = 0.5, omit.endgaps = FALSE,
                             name = NULL, description = NULL, compo = FALSE,
                             consensus = FALSE, alignment = FALSE, cpp = TRUE,
-                            quiet = FALSE, ...){
+                            cores = 1, quiet = FALSE, ...){
+  #if(progressive) stop("Progressive alignment temporarily out of action due to bug")
   nseq <- length(x)
   DNA <- .isDNA(x)
   AA <- .isAA(x)
@@ -284,79 +309,112 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
   residues <- .alphadetect(x, residues = residues, gap = gap)
   gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
   for(i in 1:nseq) x[[i]] <- x[[i]][x[[i]] != gap]
-  if(nseq > 2){
-    #if(!quiet) cat("Calculating pairwise distances\n")
-    names(x) <- paste0("S", 1:nseq)
-    if(identical(seeds, "random")){
-      if(nseq > 19){ # log(19, 2)^2 = 19
-        duplicates <- duplicated(lapply(x, as.vector))
-        nseeds <- min(sum(!duplicates), ceiling(log(nseq, 2)^2))
-        #nseeds <- min(nseq, 100 + 2 * ceiling(log(nseq, 2)))
-        if(!quiet) cat("Selecting", nseeds, "seed sequences\n")
-        seeds <- sample(which(!duplicates), size = nseeds)
-      }else seeds <- seq_along(x)
-    }else if(identical(seeds, "all")){
-      seeds <- seq_along(x)
+  ## set up multithread
+  if(inherits(cores, "cluster")){
+    para <- TRUE
+    stopclustr <- FALSE
+  }else if(cores == 1){
+    para <- FALSE
+    stopclustr <- FALSE
+  }else{
+    navailcores <- parallel::detectCores()
+    if(identical(cores, "autodetect")) cores <- navailcores - 1
+    if(cores > 1){
+      if(cores > navailcores) stop("Number of cores is more than number available")
+      if(!quiet) cat("Multithreading over", cores, "cores\n")
+      cores <- parallel::makeCluster(cores)
+      para <- TRUE
+      stopclustr <- TRUE
     }else{
+      para <- FALSE
+      stopclustr <- FALSE
+    }
+  }
+  ## calculate sequance weights and initial alignment
+  if(nseq > 2){
+    if(progressive){
+      catchnames <- names(x)
+      names(x) <- paste0("S", 1:nseq)
+      distances <- phylogram::mbed(x, seeds = seeds, k = k, residues = residues,
+                                   gap = gap, counts = TRUE)
+      seeds <- attr(distances, "seeds")
+      ## just a check - can remove eventually
       stopifnot(
         mode(seeds) %in% c("numeric", "integer"),
         max(seeds) <= nseq,
         min(seeds) > 0
       )
+      ## Opportunity to calculate weights cheaply here:
+      if(identical(seqweights, "Gerstein")){ ## TODO if not progressive
+        if(!quiet) cat("Calculating sequence weights\n")
+        weighttree <- phylogram::topdown(distances, weighted = TRUE)
+        seqweights <- weight.dendrogram(weighttree)[names(x)]
+        names(seqweights) <- catchnames
+      }
+      ### this is just easier than trying to subset distances:
+      guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues,
+                                      gap = gap, weighted = FALSE)
+      attachseqs <- function(tree, sequences){
+        if(!is.list(tree)) attr(tree, "seqs") <- sequences[attr(tree, "label")]
+        return(tree)
+      }
+      guidetree <- dendrapply(guidetree, attachseqs, sequences = x)
+      progressive2 <- function(tree, maxsize, ...){
+        if(is.list(tree)){
+          if(!is.null(attr(tree[[1]], "seqs")) &
+             !is.null(attr(tree[[2]], "seqs"))){
+            attr(tree, "seqs") <- align.default(attr(tree[[1]], "seqs"),
+                                                attr(tree[[2]], "seqs"),
+                                                maxsize = maxsize, ... = ...)
+            attr(tree[[1]], "seqs") <- attr(tree[[2]], "seqs") <- NULL
+          }
+        }
+        return(tree)
+      }
+      progressive1 <- function(tree, maxsize, ...){
+        tree <- progressive2(tree, maxsize = maxsize, ... = ...)
+        if(is.list(tree)) tree[] <- lapply(tree, progressive1,
+                                           maxsize = maxsize, ... = ...)
+        return(tree)
+      }
+      if(!quiet) cat("Progressively aligning sequences\n")
+      while(is.null(attr(guidetree, "seqs"))){
+        guidetree <- progressive1(guidetree, maxsize = maxsize, ... = ...)
+      }
+      msa1 <- attr(guidetree, "seqs")
+      rownames(msa1) <- catchnames[match(rownames(msa1), paste0("S", 1:nseq))]
+      names(x) <- catchnames
+    }else{
+      if(identical(seqweights, "Gerstein")){
+        seqweights <- weight(x, method = "Gerstein", k = k,
+                             residues = residues, gap = gap)
+      }
+      xlengths <- sapply(x, length)
+      seeds <- which(xlengths == max(xlengths))
+      nseeds <- length(seeds)
+      msa1 <- matrix(unlist(x[seeds], use.names = FALSE), nrow = nseeds, byrow = TRUE)
+      #### in future could offer max freq seq option
     }
-    if(identical(seqweights, "Gerstein")){
-      if(!quiet) cat("Calculating sequence weights\n")
-      weighttree <- phylogram::topdown(x, seeds = seeds, k = k, #diff seeds opt?
-                                       residues = residues, gap = gap,
-                                       weighted = TRUE)
-      seqweights <- weight.dendrogram(weighttree, method = "Gerstein")[names(x)]
-    }else if(is.null(seqweights)){
+    if(is.null(seqweights)){
       seqweights <- rep(1, nseq)
     }else{
       stopifnot(mode(seqweights) %in% c("numeric", "integer"),
                 length(seqweights) == nseq)
     }
-    if(!quiet) cat("Building guide tree\n")
-    guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues,
-                                    gap = gap, weighted = FALSE)
-    attachseqs <- function(tree, sequences){
-      if(!is.list(tree)) attr(tree, "seqs") <- sequences[attr(tree, "label")]
-      return(tree)
-    }
-    guidetree <- dendrapply(guidetree, attachseqs, sequences = x)
-    progressive <- function(tree, maxsize, ...){
-      if(is.list(tree)){
-        if(!is.null(attr(tree[[1]], "seqs")) &
-           !is.null(attr(tree[[2]], "seqs"))){
-          attr(tree, "seqs") <- align.default(attr(tree[[1]], "seqs"),
-                                                   attr(tree[[2]], "seqs"),
-                                                   maxsize = maxsize, ... = ...)
-          attr(tree[[1]], "seqs") <- attr(tree[[2]], "seqs") <- NULL
-        }
-      }
-      return(tree)
-    }
-    progressive1 <- function(tree, maxsize, ...){
-      tree <- progressive(tree, maxsize = maxsize, ... = ...)
-      if(is.list(tree)) tree[] <- lapply(tree, progressive1, maxsize = maxsize, ... = ...)
-      return(tree)
-    }
-    if(!quiet) cat("Progressively aligning sequences\n")
-    while(is.null(attr(guidetree, "seqs"))){
-      guidetree <- progressive1(guidetree, maxsize = maxsize, ... = ...)
-    }
-    msa1 <- attr(guidetree, "seqs")
   }else if(nseq == 2){
     if(!quiet) cat("Aligning seed sequences\n")
     msa1 <- align.default(x[[1]], x[[2]], residues = residues, gap = gap,
                           ... = ...)
     seqweights <- c(1, 1)
+    rownames(msa1) <- names(seqweights) <- names(x)
     seeds <- 1:2
   }else if(nseq == 1){
     msa1 <- matrix(x[[1]], nrow = 1)
     seqweights <- 1
+    rownames(msa1) <- names(seqweights) <- names(x)
     seeds <- 1
   }else stop("Empty list")
+  ## derive PHMM from alignnment
   if(!quiet) cat("Deriving profile HMM\n")
   model <- derivePHMM.default(msa1, seqweights = seqweights[seeds],
                               wfactor = wfactor, k = k, residues = residues,
@@ -373,6 +431,7 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
     if(!quiet) cat("Done\n")
     return(model)
   }
+  ## train model
   if(is.null(refine)) refine <- "none"
   if(refine %in% c("Viterbi", "BaumWelch")){
     if(!quiet) cat("Refining model\n")
@@ -380,8 +439,15 @@ derivePHMM.list <- function(x, seeds = "random", refine = "Viterbi",
                    maxiter = maxiter, deltaLL = deltaLL,
                    pseudocounts = pseudocounts, maxsize = maxsize,
                    inserts = inserts, lambda = lambda, threshold = threshold,
-                   alignment = alignment, quiet = quiet, ... = ...)
-  }else stopifnot(identical(refine, "none"))
+                   alignment = alignment, cores = cores, quiet = quiet, cpp = cpp,
+                   ... = ...)
+  }else {
+    stopifnot(identical(refine, "none"))
+    # Next line communicates with align.list and ensures all seqs get
+    # aligned back to the model
+    if(length(seeds) < nseq) attr(model, "alignment") <- NULL
+  }
+  if(para & stopclustr) parallel::stopCluster(cores)
   if(!quiet) cat("Done\n")
   return(model)
 }
@@ -465,10 +531,10 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
       # Also can use too much memory for very gappy (sparse) alignments
       inserts <- apply(gapweights, 2, sum) > threshold * n
     }else{
-      if(!quiet) cat("Marking alignment columns using maximum a posteriori algorithm\n")
+      # if(!quiet) cat("Marking alignment columns using maximum a posteriori algorithm\n")
       inserts <- !map(x, seqweights = seqweights, residues = residues,
                       gap = gap, endchar = endchar, pseudocounts = pseudocounts,
-                      qa = qa, qe = qe, cpp = TRUE)
+                      qa = qa, qe = qe, cpp = cpp)
       if(sum(!inserts) < 3) inserts <- apply(gapweights, 2, sum) > threshold * n
     }
   }else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
@@ -747,6 +813,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
   if(cpp){
     res <- .map(ecs, notgaps, pseudocounts, seqweights, qe, lambda)
   }else{
+    cat("cpp not used\n")
     ecs2 <- ecs + pseudocounts$E
     term2 <- t(t(ecs2)/apply(ecs2, 2, sum))
     term2[ecs != 0] <- log(term2[ecs != 0]) # increase speed for conserved alignments

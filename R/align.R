@@ -17,12 +17,18 @@
 #'   be derived from the list of sequences, and each sequence
 #'   will be aligned back to the model to produce the multiple sequence
 #'   alignment.
+#' @param progressive logical indicating whether the alignment used
+#'   to derive the initial model parameters
+#'   should be built progressively (assuming input is a list of
+#'   unaligned sequences, ignored otherwise).
+#'   Defaults to FALSE, in which case the longest sequence or sequences
+#'   are used (faster, but possibly less accurate).
 #' @param seeds optional integer vector indicating which sequences should
 #'   be used as seeds for building the guide tree for the progressive
 #'   alignment (assuming input is a list of unaligned sequences,
-#'   ignored otherwise).
-#'   Defaults to "random", in which a set of log(n, 2)^2 non-identical
-#'   sequences are randomly chosen from the list of sequences.
+#'   and \code{progressive = TRUE}, ignored otherwise).
+#'   Defaults to NULL, in which a set of log(n, 2)^2 non-identical
+#'   sequences are chosen from the list of sequences by k-means clustering.
 #' @param seqweights either NULL (default; all sequences are given weights
 #'   of 1), a numeric vector the same length as \code{x} representing
 #'   the sequence weights used to derive the model, or a character string giving
@@ -184,7 +190,7 @@ align <- function(x, ...){
 
 #' @rdname align
 ################################################################################
-align.DNAbin <- function(x, model = NULL, seeds = "random",
+align.DNAbin <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
                          seqweights = "Gerstein", refine = "Viterbi", k = 5,
                          maxiter = 100, maxsize = NULL, inserts = "map",
                          lambda = 0, threshold = 0.5, deltaLL = 1E-07,
@@ -192,7 +198,8 @@ align.DNAbin <- function(x, model = NULL, seeds = "random",
                          pseudocounts = "background", qa = NULL, qe = NULL,
                          cores = 1, quiet = FALSE, ...){
   if(is.list(x)){
-    align.list(x, model = model, seeds = seeds, seqweights = seqweights,
+    align.list(x, model = model, progressive = progressive, seeds = seeds,
+               seqweights = seqweights,
                refine = refine, k = k, maxiter = maxiter, maxsize = maxsize,
                inserts = inserts, lambda = lambda, threshold = threshold,
                deltaLL = deltaLL, DI = DI, ID = ID,
@@ -207,7 +214,7 @@ align.DNAbin <- function(x, model = NULL, seeds = "random",
 
 #' @rdname align
 ################################################################################
-align.AAbin <- function(x, model = NULL, seeds = "random",
+align.AAbin <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
                         seqweights = "Gerstein", refine = "Viterbi", k = 5,
                         maxiter = 100, maxsize = NULL, inserts = "map",
                         lambda = 0, threshold = 0.5, deltaLL = 1E-07,
@@ -215,7 +222,8 @@ align.AAbin <- function(x, model = NULL, seeds = "random",
                         pseudocounts = "background", qa = NULL, qe = NULL,
                         cores = 1, quiet = FALSE, ...){
   if(is.list(x)){
-    align.list(x, model = model, seeds = seeds, seqweights = seqweights,
+    align.list(x, model = model, progressive = progressive, seeds = seeds,
+               seqweights = seqweights,
                refine = refine, k = k, maxiter = maxiter, maxsize = maxsize,
                inserts = inserts, lambda = lambda, threshold = threshold,
                deltaLL = deltaLL, DI = DI, ID = ID, residues = residues,
@@ -230,7 +238,7 @@ align.AAbin <- function(x, model = NULL, seeds = "random",
 
 #' @rdname align
 ################################################################################
-align.list <- function(x, model = NULL, seeds = "random",
+align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
                        seqweights = "Gerstein", k = 5,
                        refine = "Viterbi", maxiter = 100,
                        maxsize = NULL, inserts = "map", lambda = 0,
@@ -245,59 +253,52 @@ align.list <- function(x, model = NULL, seeds = "random",
   residues <- .alphadetect(x, residues = residues, gap = gap)
   gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
   for(i in 1:length(x)) x[[i]] <- x[[i]][x[[i]] != gap]
+  ## set up multithread
+  if(inherits(cores, "cluster")){
+    para <- TRUE
+    stopclustr <- FALSE
+  }else if(cores == 1){
+    para <- FALSE
+    stopclustr <- FALSE
+  }else{
+    navailcores <- parallel::detectCores()
+    if(identical(cores, "autodetect")) cores <- navailcores - 1
+    if(cores > 1){
+      if(cores > navailcores) stop("Number of cores is more than number available")
+      if(!quiet) cat("Multithreading over", cores, "cores\n")
+      cores <- parallel::makeCluster(cores)
+      para <- TRUE
+      stopclustr <- TRUE
+    }else{
+      para <- FALSE
+      stopclustr <- FALSE
+    }
+  }
+  ## derive model if not available
   if(is.null(model)){
     if(nseq == 2){
-      alignment <- align.default(x[[1]], x[[2]], residues = residues,
+      res <- align.default(x[[1]], x[[2]], residues = residues,
                                  gap = gap, pseudocounts = pseudocounts,
                                  quiet = quiet, ... = ...)
-      rownames(alignment) <- names(x)
-      return(alignment)
+      rownames(res) <- names(x)
+      return(res)
     }else if(nseq == 1){
-      alignment <- matrix(x[[1]], nrow = 1)
-      rownames(alignment) <- names(x)
-      return(alignment)
+      res <- matrix(x[[1]], nrow = 1)
+      rownames(res) <- names(x)
+      return(res)
     }
-    if(identical(seeds, "random")){
-      if(nseq > 19){ # log(19, 2)^2 = 19
-        if(!quiet) cat("Selecting seed sequences\n")
-        duplicates <- duplicated(lapply(x, as.vector))
-        nseeds <- min(sum(!duplicates), ceiling(log(nseq, 2)^2))
-        #LLR algorithm see Blacksheilds etal 2010
-        #nseeds <- ceiling(log(nseq, 2)^2)
-        seeds <- sample(which(!duplicates), size = nseeds)
-      }else{
-        seeds <- seq_along(x)
-      }
-    }else if(identical(seeds, "all")){
-      seeds <- seq_along(x)
-    }else{
-      stopifnot(
-        mode(seeds) %in% c("numeric", "integer"),
-        max(seeds) <= nseq,
-        min(seeds) > 0
-      )
-    }
-    if(identical(seqweights, "Gerstein")){
-      if(!quiet) cat("Calculating sequence weights\n")
-      weighttree <- phylogram::topdown(x, seeds = seeds, k = k, #diff seeds opt?
-                                      residues = residues, gap = gap,
-                                      weighted = TRUE)
-      seqweights <- weight.dendrogram(weighttree, method = "Gerstein")[names(x)]
-    }else if(is.null(seqweights)){
-      seqweights <- rep(1, nseq)
-    }else{
-      stopifnot(mode(seqweights) %in% c("numeric", "integer"),
-                length(seqweights) == nseq)
-    }
-    if(!quiet) cat("Deriving model\n")
-    model <- derivePHMM.list(x, seeds = seeds, refine = refine,
+    model <- derivePHMM.list(x, progressive = progressive, seeds = seeds,
+                             refine = refine,
                              maxiter = maxiter, seqweights = seqweights,
                              k = k, residues = residues, gap = gap,
                              maxsize = maxsize, inserts = inserts,
                              lambda = lambda, threshold = threshold,
                              deltaLL = deltaLL, DI = DI, ID = ID,
                              pseudocounts = pseudocounts, logspace = TRUE,
-                             qa = qa, qe = qe, quiet = quiet, ... = ...)
+                             qa = qa, qe = qe, cores = cores, quiet = quiet,
+                             alignment = TRUE,
+                             ... = ...)
+    if(!is.null(model$alignment)) return(model$alignment)
   }
   #note changes here also need apply to 'train'
   stopifnot(inherits(model, "PHMM"))
@@ -310,30 +311,12 @@ align.list <- function(x, model = NULL, seeds = "random",
     return(res)
   }
   #if(!quiet) cat("Aligning sequences to model\n")
-  if(inherits(cores, "cluster")){
-    paths <- if(nseq > 10){
-      parallel::parLapply(cores, x, pathfinder, model = model, ...)
-    }else{
-      lapply(x, pathfinder, model, ...)
-    }
-  }else if(cores == 1){
-    paths <- lapply(x, pathfinder, model, ...)
+  paths <- if(para & nseq > 10){
+    parallel::parLapply(cores, x, pathfinder, model = model, ...)
   }else{
-    navailcores <- parallel::detectCores()
-    if(identical(cores, "autodetect")){
-      maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
-      cores <- min(navailcores - 1, maxcores)
-    }
-    if(cores > navailcores) stop("Number of cores is more than number available")
-    if(cores > 1){
-      if(!quiet) cat("Multithreading over", cores, "cores\n")
-      cl <- parallel::makeCluster(cores)
-      paths <- parallel::parLapply(cl, x, pathfinder, model = model, ...)
-      parallel::stopCluster(cl)
-    }else{
-      paths <- lapply(x, pathfinder, model, ...)
-    }
+    lapply(x, pathfinder, model, ...)
   }
+  if(para & stopclustr) parallel::stopCluster(cores)
   ###
   score <- sum(sapply(paths, function(p) attr(p, "score")))
   fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, x, paths, l = l,
@@ -341,7 +324,6 @@ align.list <- function(x, model = NULL, seeds = "random",
   rm(paths)
   odds <- seq(1, 2 * l + 1, by = 2)
   evens <- seq(2, 2 * l, by = 2)
-  # length(fragseqs)
   inslens <- lapply(fragseqs, function(e) sapply(e[odds], length))
   inslens <- matrix(unlist(inslens, use.names = FALSE), nrow = nseq, byrow = TRUE)
   insmaxs <- apply(inslens, 2, max)
@@ -749,3 +731,35 @@ unalign <- function(x, gap = "-"){
   return(res)
 }
 ################################################################################
+
+
+
+
+
+
+
+#
+# if(inherits(cores, "cluster")){
+#   paths <- if(nseq > 10){
+#     parallel::parLapply(cores, x, pathfinder, model = model, ...)
+#   }else{
+#     lapply(x, pathfinder, model, ...)
+#   }
+# }else if(cores == 1){
+#   paths <- lapply(x, pathfinder, model, ...)
+# }else{
+#   navailcores <- parallel::detectCores()
+#   if(identical(cores, "autodetect")){
+#     maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
+#     cores <- min(navailcores - 1, maxcores)
+#   }
+#   if(cores > navailcores) stop("Number of cores is more than number available")
+#   if(cores > 1){
+#     if(!quiet) cat("Multithreading over", cores, "cores\n")
+#     cl <- parallel::makeCluster(cores)
+#     paths <- parallel::parLapply(cl, x, pathfinder, model = model, ...)
+#     parallel::stopCluster(cl)
+#   }else{
+#     paths <- lapply(x, pathfinder, model, ...)
+#   }
+# }

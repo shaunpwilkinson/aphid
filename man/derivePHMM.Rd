@@ -16,8 +16,9 @@ derivePHMM(x, ...)
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
   DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
   description = NULL, compo = FALSE, consensus = FALSE,
-  alignment = FALSE, seeds = "random", refine = "Viterbi",
-  maxiter = 100, deltaLL = 1e-07, cpp = TRUE, quiet = FALSE, ...)
+  alignment = FALSE, progressive = FALSE, seeds = NULL,
+  refine = "Viterbi", maxiter = 100, deltaLL = 1e-07, cpp = TRUE,
+  cores = 1, quiet = FALSE, ...)
 
 \method{derivePHMM}{AAbin}(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   residues = NULL, gap = "-", endchar = "?",
@@ -25,17 +26,18 @@ derivePHMM(x, ...)
   maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
   DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
   description = NULL, compo = FALSE, consensus = FALSE,
-  alignment = FALSE, seeds = "random", refine = "Viterbi",
-  maxiter = 100, deltaLL = 1e-07, cpp = TRUE, quiet = FALSE, ...)
+  alignment = FALSE, progressive = FALSE, seeds = NULL,
+  refine = "Viterbi", maxiter = 100, deltaLL = 1e-07, cpp = TRUE,
+  cores = 1, quiet = FALSE, ...)
 
-\method{derivePHMM}{list}(x, seeds = "random", refine = "Viterbi",
-  maxiter = 100, deltaLL = 1e-07, seqweights = "Gerstein", wfactor = 1,
-  k = 5, residues = NULL, gap = "-", pseudocounts = "background",
-  logspace = TRUE, qa = NULL, qe = NULL, maxsize = NULL,
-  inserts = "map", lambda = 0, DI = FALSE, ID = FALSE,
-  threshold = 0.5, omit.endgaps = FALSE, name = NULL,
+\method{derivePHMM}{list}(x, progressive = FALSE, seeds = NULL,
+  refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
+  seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
+  gap = "-", pseudocounts = "background", logspace = TRUE, qa = NULL,
+  qe = NULL, maxsize = NULL, inserts = "map", lambda = 0, DI = FALSE,
+  ID = FALSE, threshold = 0.5, omit.endgaps = FALSE, name = NULL,
   description = NULL, compo = FALSE, consensus = FALSE,
-  alignment = FALSE, cpp = TRUE, quiet = FALSE, ...)
+  alignment = FALSE, cpp = TRUE, cores = 1, quiet = FALSE, ...)
 
 \method{derivePHMM}{default}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gap = "-", endchar = "?",
@@ -181,12 +183,20 @@ a future version.}
 derive the final model (if applicable) should be included as an element of
 the returned PHMM object. Defaults to FALSE.}
 
+\item{progressive}{logical indicating whether the alignment used
+to derive the initial model parameters
+should be built progressively (assuming input is a list of
+unaligned sequences, ignored otherwise).
+Defaults to FALSE, in which case the
+longest sequence or sequences are used (faster,
+but possibly less accurate).}
+
 \item{seeds}{optional integer vector indicating which sequences should
 be used as seeds for building the guide tree for the progressive
 alignment (assuming input is a list of unaligned sequences,
-ignored otherwise).
-Defaults to "random", in which a set of log(n, 2)^2 non-identical
-sequences are randomly chosen from the list of sequences.}
+and \code{progressive = TRUE}, ignored otherwise).
+Defaults to NULL, in which a set of log(n, 2)^2 non-identical
+sequences are chosen from the list of sequences by k-means clustering.}
 
 \item{refine}{the method used to iteratively refine the model parameters
 following the initial progressive alignment and model derivation step.
@@ -207,6 +217,19 @@ convergence). Defaults to 1E-07. Only applicable if
 \item{cpp}{logical, indicates whether the dynamic programming matrix
 should be filled using compiled C++ functions (default; many times faster).
 The FALSE option is primarily retained for bug fixing and experimentation.}
+
+\item{cores}{integer giving the number of CPUs to parallelize the operation
+over. Defaults to 1, and reverts to 1 if x is not a list.
+This argument may alternatively be a 'cluster' object,
+in which case it is the user's responsibility to close the socket
+connection at the conclusion of the operation,
+for example by running \code{parallel::stopCluster(cores)}.
+The string 'autodetect' is also accepted, in which case the maximum
+number of cores to use is one less than the total number of cores available.
+Note that in this case there
+may be a tradeoff in terms of speed depending on the number and size
+of sequences to be aligned, due to the extra time required to initialize
+the cluster.}
 
 \item{quiet}{logical indicating whether feedback should be printed
 to the console.}
