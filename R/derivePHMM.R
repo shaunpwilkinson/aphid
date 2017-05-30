@@ -536,6 +536,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                       gap = gap, endchar = endchar, pseudocounts = pseudocounts,
                       qa = qa, qe = qe, cpp = cpp)
       if(sum(!inserts) < 3) inserts <- apply(gapweights, 2, sum) > threshold * n
+      gc()
     }
   }else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
     stop("invalid inserts argument")
