@@ -301,7 +301,6 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
                             name = NULL, description = NULL, compo = FALSE,
                             consensus = FALSE, alignment = FALSE, cpp = TRUE,
                             cores = 1, quiet = FALSE, ...){
-  #if(progressive) stop("Progressive alignment temporarily out of action due to bug")
   nseq <- length(x)
   DNA <- .isDNA(x)
   AA <- .isAA(x)
@@ -330,7 +329,7 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
       stopclustr <- FALSE
     }
   }
-  ## calculate sequance weights and initial alignment
+  ## calculate sequence weights and initial alignment
   if(nseq > 2){
     if(progressive){
       catchnames <- names(x)
@@ -345,11 +344,16 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
         min(seeds) > 0
       )
       ## Opportunity to calculate weights cheaply here:
-      if(identical(seqweights, "Gerstein")){ ## TODO if not progressive
+      if(is.null(seqweights)){
+        seqweights <- rep(1, nseq)
+      }else if(identical(seqweights, "Gerstein")){
         if(!quiet) cat("Calculating sequence weights\n")
         weighttree <- phylogram::topdown(distances, weighted = TRUE)
         seqweights <- weight.dendrogram(weighttree)[names(x)]
         names(seqweights) <- catchnames
+      }else{
+        stopifnot(mode(seqweights) %in% c("numeric", "integer"),
+                  length(seqweights) == nseq)
       }
       ### this is just easier than trying to subset distances:
       guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues,
@@ -385,21 +389,22 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
       rownames(msa1) <- catchnames[match(rownames(msa1), paste0("S", 1:nseq))]
       names(x) <- catchnames
     }else{
-      if(identical(seqweights, "Gerstein")){
+      if(is.null(seqweights)){
+        seqweights <- rep(1, nseq)
+      }else if(identical(seqweights, "Gerstein")){
         seqweights <- weight(x, method = "Gerstein", k = k,
                              residues = residues, gap = gap)
+      }else{
+        stopifnot(mode(seqweights) %in% c("numeric", "integer"),
+                  length(seqweights) == nseq)
       }
       xlengths <- sapply(x, length)
-      seeds <- which(xlengths == max(xlengths))
-      nseeds <- length(seeds)
-      msa1 <- matrix(unlist(x[seeds], use.names = FALSE), nrow = nseeds, byrow = TRUE)
+      longl <- xlengths == max(xlengths) #logical
+      seeds <- which.min(seqweights[longl]) #index (or indices)
+      if(length(seeds) > 1) seeds <- sample(seeds, size = 1) # length 1 index
+      seed <- x[longl][[seeds]]
+      msa1 <- matrix(seed, nrow = 1)
       #### in future could offer max freq seq option
-    }
-    if(is.null(seqweights)){
-      seqweights <- rep(1, nseq)
-    }else{
-      stopifnot(mode(seqweights) %in% c("numeric", "integer"),
-                length(seqweights) == nseq)
     }
   }else if(nseq == 2){
     if(!quiet) cat("Aligning seed sequences\n")
@@ -491,7 +496,11 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
       seqweights <- rep(wfactor, n)
     }
   }else{
-    if(length(seqweights) != n) stop("invalid seqweights argument")
+    stopifnot(
+      length(seqweights) == n,
+      !any(is.na(seqweights)),
+      mode(seqweights) %in% c("numeric", "integer")
+    )
     seqweights <- seqweights * wfactor
   }
   # background emission probabilities (qe)
@@ -785,6 +794,8 @@ map <- function(x, seqweights = NULL, residues = NULL,
     xtr[!gaps & !insertsn] <- 1L # Match
     xtr[!gaps & insertsn] <- 2L # Insert
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
+    xtr<<- xtr ##################
+    seqweights <<- seqweights#######################
     tcs <- .atab(xtr, seqweights) # modules = sum(!inserts) + 2)
     alltcs <- apply(tcs, 1, sum)
     qa <- log((alltcs + 1)/sum(alltcs + 1)) # force addition of Laplace pseudos
