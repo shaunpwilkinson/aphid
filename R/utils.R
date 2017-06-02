@@ -505,3 +505,23 @@
     #return(NULL)
   }
 }
+
+.digest <- function(x, simplify = TRUE){
+  digest1 <- function(s){
+    if(mode(s) != "raw"){
+      if(mode(s) == "character"){
+        s <- sapply(s, charToRaw)
+      }else if(mode(s) == "integer"){
+        s <- sapply(s, as.raw)
+      }else if(mode(s) == "numeric"){
+        stop("Can't digest numeric vectors")
+      }
+    }
+    return(paste(openssl::md5(as.vector(s))))
+  }
+  if(is.list(x)){
+    if(simplify) return(sapply(x, digest1)) else return(lapply(x, digest1))
+  }else{
+    return(digest1(x))
+  }
+}

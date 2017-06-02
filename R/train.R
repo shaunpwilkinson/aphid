@@ -248,7 +248,8 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     #scores <- attr(alig, "score")
     #maxscore <- attr(alig, "score")
     alig_cache <- character(maxiter)
-    alig_cache[1] <- paste(openssl::md5(as.vector(alig)))
+    #alig_cache[1] <- paste(openssl::md5(as.vector(alig)))
+    alig_cache[1] <- .digest(alig, simplify = TRUE)
     # alig_cache <- list()
     # alig_cache[[1]] <- as.vector(alig)
     for(i in 1:maxiter){
@@ -273,7 +274,8 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       ### what about DI and ID
       newalig <- align(y, model = out, logspace = TRUE, ... = ...)
       #if(!quiet) cat("Max obj size:", max( sapply(ls(),function(z){object.size(get(z))})) , "\n")
-      newhash <- paste(openssl::md5(as.vector(newalig)))
+      #newhash <- paste(openssl::md5(as.vector(newalig)))
+      newhash <- .digest(newalig, simplify = TRUE)
       if(!any(sapply(alig_cache, identical, newhash))){
         alig_cache[i + 1] <- newhash
         alig <- newalig
