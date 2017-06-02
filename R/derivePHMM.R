@@ -794,8 +794,6 @@ map <- function(x, seqweights = NULL, residues = NULL,
     xtr[!gaps & !insertsn] <- 1L # Match
     xtr[!gaps & insertsn] <- 2L # Insert
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
-    xtr<<- xtr ##################
-    seqweights <<- seqweights#######################
     tcs <- .atab(xtr, seqweights) # modules = sum(!inserts) + 2)
     alltcs <- apply(tcs, 1, sum)
     qa <- log((alltcs + 1)/sum(alltcs + 1)) # force addition of Laplace pseudos

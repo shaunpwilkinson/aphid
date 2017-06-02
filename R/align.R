@@ -556,10 +556,6 @@ align.default <- function(x, model, pseudocounts = "background",
     # res <- align.list(x = res.list, model = res.phmm, quiet = TRUE, ... = ...)
     return(res)
   }else if(nrow(x) > 1 & nrow(model) > 1){
-    #cat(rownames(x), "\n")
-    #cat(rownames(model), "\n")
-    # mat1 <<- x
-    # mat2 <<- model
     nx <- nrow(x)
     ny <- nrow(model)
     zx <- derivePHMM(x, seqweights = "Gerstein", pseudocounts = pseudocounts, residues = residues, logspace = TRUE)
