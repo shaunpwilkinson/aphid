@@ -60,31 +60,35 @@ The \code{generate} function outputs a random sequence from a HMM or PHMM.
 TBA
 }
 \examples{
-## Generate a random sequence from a standard HMM
-## The dishonest casino example from Durbin et al. (1998) chapter 3.2
-A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
-            nrow = 3) # transition probability matrix
-dimnames(A) <- list(from = c("Begin", "Fair", "Loaded"),
-                    to = c("Begin", "Fair", "Loaded"))
-E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
-              (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
-            nrow = 2, byrow = TRUE) # emission probability matrix
-dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
-x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
-plot(x, main = "Dishonest casino HMM")
-generate(x, size = 300)
-##
-## Generate a random sequence from a profile HMM
-## Small globin alignment data from Durbin et al. (1998) Figure 5.3
-data(globins)
-## derive a profile hidden Markov model from the alignment
-globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
-plot(globins.PHMM, main = "Profile hidden Markov model for globins")
-## simulate a random sequence from the model
-set.seed(999)
-simulation <- generate(globins.PHMM, size = 20)
-simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
-## names indicate that all residues came from "match" states
+  ## Generate a random sequence from a standard HMM
+  ## The dishonest casino example from Durbin et al (1998) chapter 3.2
+  states = c("Begin", "Fair", "Loaded")
+  residues = paste(1:6)
+  ### Define the transition probability matrix
+  A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9), nrow = 3)
+  dimnames(A) <- list(from = states, to = states)
+  ### Define the emission probability matrix
+  E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
+                (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
+              nrow = 2, byrow = TRUE)
+  dimnames(E) <- list(states = states[-1], residues = residues)
+  ### Build and plot the HMM object
+  x <- structure(list(A = A, E = E), class = "HMM")
+  plot(x, main = "Dishonest casino HMM")
+  ### Generate a random sequence from the model
+  generate(x, size = 300)
+  ##
+  ## Generate a random sequence from a profile HMM:
+  ## Small globin alignment data from Durbin et al (1998) Figure 5.3
+  data(globins)
+  ### Derive a profile hidden Markov model from the alignment
+  globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+  plot(globins.PHMM, main = "Profile hidden Markov model for globins")
+  ### Simulate a random sequence from the model
+  set.seed(999)
+  simulation <- generate(globins.PHMM, size = 20)
+  simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
+  ### Names indicate that all residues came from "match" states
 }
 \references{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological

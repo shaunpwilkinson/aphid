@@ -1,10 +1,12 @@
 Package: aphid
 Type: Package
-Title: Analysis with profile hidden Markov models
+Title: Analysis with Profile Hidden Markov Models
 Version: 0.0.0.9000
 Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
-Description: Contains functions for the creation, application and visualization
+Author: Shaun Wilkinson
+Maintainer: Shaun Wilkinson <shaunpwilkinson@gmail.com>
+Description: Contains functions for the creation, visualization and application 
     of profile hidden Markov models for bioinformatic sequence analysis.
 License: GPL-3
 URL: http://github.com/shaunpwilkinson/aphid
@@ -15,18 +17,15 @@ Depends:
     R(>= 3.0.0)
 Imports:
     graphics,
-    openssl (>= 0.9.0),
-    phylogram,
+    openssl,
+    phylogram (>= 1.0.0),
     Rcpp (>= 0.12.5),
-    stats,
-    utils
+    stats
 Suggests:
-    ape (>= 4.0),
+    ape (>= 3.0),
     knitr,
     rmarkdown,
     testthat
-Remotes:
-    shaunpwilkinson/phylogram
 LinkingTo: Rcpp
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1

@@ -29,40 +29,44 @@
 #'   Cambridge University Press, Cambridge, United Kingdom.
 #'
 #'   Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and
-#'   protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{10}, 197-206.
+#'   protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{80}, 726-730.
 #'
 #' @seealso \code{\link{backward}}, \code{\link{Viterbi}}.
 #' @examples
-#' ## Forward algorithm for standard HMMs
-#' ## The dishonest casino example from Durbin et al. (1998) chapter 3.2
-#' A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
-#'             nrow = 3) # transition probability matrix
-#' dimnames(A) <- list(from = c("Begin", "Fair", "Loaded"),
-#'                     to = c("Begin", "Fair", "Loaded"))
-#' E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
-#'               (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
-#'             nrow = 2, byrow = TRUE) # emission probability matrix
-#' dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
-#' x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
-#' plot(x, main = "Dishonest casino HMM")
-#' data(casino)
-#' forward(x, casino)
-#' ##
-#' ## Forward algorithm for profile HMMs
-#' ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
-#' data(globins)
-#' ## derive a profile hidden Markov model from the alignment
-#' globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
-#' plot(globins.PHMM, main = "Profile hidden Markov model for globins")
-#' ## simulate a random sequence from the model
-#' set.seed(999)
-#' simulation <- generate(globins.PHMM, size = 20)
-#' simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
-#' ## calculate the full (log) probability of the sequence given the model
-#' x <- forward(globins.PHMM, simulation, odds = FALSE)
-#' x # -23.0586
-#' ## show the dynammic programming array
-#' x$array
+#'   ## Forward algorithm for standard HMMs:
+#'   ## The dishonest casino example from Durbin et al (1998) chapter 3.2
+#'   states = c("Begin", "Fair", "Loaded")
+#'   residues = paste(1:6)
+#'   ### Define the transition probability matrix
+#'   A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9), nrow = 3)
+#'   dimnames(A) <- list(from = states, to = states)
+#'   ### Define the emission probability matrix
+#'   E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
+#'                 (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
+#'               nrow = 2, byrow = TRUE)
+#'   dimnames(E) <- list(states = states[-1], residues = residues)
+#'   ### Build and plot the HMM object
+#'   x <- structure(list(A = A, E = E), class = "HMM")
+#'   plot(x, main = "Dishonest casino HMM")
+#'   ### Find full probability of the sequence given the model
+#'   data(casino)
+#'   forward(x, casino)
+#'   ###
+#'   ## Forward algorithm for profile HMMs:
+#'   ## Small globin alignment data from Durbin et al (1998) Figure 5.3
+#'   data(globins)
+#'   ### Derive a profile HMM from the alignment
+#'   globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+#'   plot(globins.PHMM, main = "Profile hidden Markov model for globins")
+#'   ### Simulate a random sequence from the model
+#'   set.seed(999)
+#'   simulation <- generate(globins.PHMM, size = 20)
+#'   simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
+#'   ### Calculate the full (log) probability of the sequence given the model
+#'   x <- forward(globins.PHMM, simulation, odds = FALSE)
+#'   x # -23.0586
+#'   ### Show the dynammic programming array
+#'   x$array
 #' @name forward
 ################################################################################
 # forward <- function(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,

@@ -7,7 +7,8 @@ IntegerVector acount(IntegerVector x, int arity){
   // arity is an integer representing the numbering system of the input vector,
   // 2 for binary, 3 for ternary, 4 for quarternary, etc.
   // returns the transition frequencies as an integer vector
-  int newarity = pow(arity, 2);
+  // int newarity = pow(arity, 2);
+  int newarity = arity * arity;
   IntegerVector guide = seq(0, newarity - 1);
   guide.attr("dim") = IntegerVector::create(arity, arity);
   IntegerVector out(newarity);

@@ -29,39 +29,42 @@
 #'   Cambridge University Press, Cambridge, United Kingdom.
 #'
 #'   Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and
-#'   protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{10}, 197-206.
+#'   protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{80}, 726-730.
 #'
 #' @seealso \code{\link{forward}}, \code{\link{Viterbi}}.
 #' @examples
-#'   ## Backward algorithm for standard HMMs
-#'   ## The dishonest casino example from Durbin et al. (1998) chapter 3.2
-#'   A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9),
-#'               nrow = 3) # transition probability matrix
-#'   dimnames(A) <- list(from = c("Begin", "Fair", "Loaded"),
-#'                       to = c("Begin", "Fair", "Loaded"))
+#'   ## Backward algorithm for standard HMMs:
+#'   ## The dishonest casino example from Durbin et al (1998) chapter 3.2
+#'   states = c("Begin", "Fair", "Loaded")
+#'   residues = paste(1:6)
+#'   ### Define the transition probability matrix
+#'   A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9), nrow = 3)
+#'   dimnames(A) <- list(from = states, to = states)
+#'   ### Define the emission probability matrix
 #'   E <- matrix(c((1/6), (1/6), (1/6), (1/6), (1/6), (1/6),
 #'                 (1/10), (1/10), (1/10), (1/10), (1/10), (1/2)),
-#'               nrow = 2, byrow = TRUE) # emission probability matrix
-#'   dimnames(E) <- list(states = c('Fair', 'Loaded'), residues = paste(1:6))
-#'   x <- structure(list(A = A, E = E), class = "HMM") # create hidden Markov model
+#'               nrow = 2, byrow = TRUE)
+#'   dimnames(E) <- list(states = states[-1], residues = residues)
+#'   ### Build and plot the HMM object
+#'   x <- structure(list(A = A, E = E), class = "HMM")
 #'   plot(x, main = "Dishonest casino HMM")
 #'   data(casino)
 #'   backward(x, casino)
 #'   ##
-#'   ## Backward algorithm for profile HMMs
-#'   ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
+#'   ## Backward algorithm for profile HMMs:
+#'   ## Small globin alignment data from Durbin et al (1998) Figure 5.3
 #'   data(globins)
-#'   ## derive a profile hidden Markov model from the alignment
+#'   ### Derive a profile hidden Markov model from the alignment
 #'   globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
 #'   plot(globins.PHMM, main = "Profile hidden Markov model for globins")
-#'   ## simulate a random sequence from the model
+#'   ### Simulate a random sequence from the model
 #'   set.seed(999)
 #'   simulation <- generate(globins.PHMM, size = 20)
 #'   simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
-#'   ## calculate the full (log) probability of the sequence given the model
+#'   ### Calculate the full (log) probability of the sequence given the model
 #'   x <- backward(globins.PHMM, simulation, odds = FALSE)
 #'   x # -23.0586
-#'   ## show dynammic programming array
+#'   ### Show dynammic programming array
 #'   x$array
 #' @name backward
 ################################################################################

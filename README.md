@@ -15,7 +15,7 @@ Functions are included for multiple and pairwise sequence alignment,
 model construction and parameter optimization, calculation of conditional 
 probabilities (using the forward, backward and Viterbi algorithms),
 tree-based sequence weighting, sequence simulation, and file import/export 
-compatible with the  [HMMER](http://www.hmmer.org/) software package. 
+compatible with the [HMMER](http://www.hmmer.org/) software package. 
 `aphid` also includes functions for developing and working with 
 standard hidden Markov models.
 
@@ -29,8 +29,7 @@ Many of the examples and datasets in the package are directly derived from the
 text, which serves as a useful primer for this package.
 
 ### Installation
-`aphid` is currently available as a development version, with a stable
-release available on CRAN shortly. To download the package from 
+To download the development version of the package from 
 GitHub you will first need to ensure you have a C/C++ compliler and the 
 [devtools](https://github.com/hadley/devtools) R package installed. 
 Linux users will generally have a compiler such as `gcc` installed by default; 
@@ -47,6 +46,8 @@ then install and load `aphid` by running
 devtools::install_github("shaunpwilkinson/aphid") 
 library("aphid")
 ```
+
+## Use and Examples
 
 ### Help
 An overview of the package and it's functions can be found by running

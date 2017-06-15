@@ -26,8 +26,8 @@
 #'   which also features a comprehensive suite of functions and tutorials.
 #'
 #'   The \pkg{aphid} package is designed to work in conjunction with the "DNAbin"
-#'   and "AAbin" object types produced by the \code{\link[ape]{ape}} package.
-#'   This is an essential piece of software for those
+#'   and "AAbin" object types produced by the \code{\link[ape]{ape}} package
+#'   (Paradis et al. 2004). This is an essential piece of software for those
 #'   using R for biological sequence analysis, since it provides a binary coding format
 #'   for nucleotides and amino acids that maximizes memory and speed efficiency. While
 #'   \pkg{aphid} also works with standard character vectors and matrices, it will
@@ -37,8 +37,9 @@
 #'   To maximize speed, the low-level dynamic programming functions such
 #'   as \code{\link{Viterbi}}, \code{\link{forward}} and \code{\link{backward}}
 #'   are written in C++ with the help of the \code{\link[Rcpp]{Rcpp}}
-#'   package. Thus those wishing to build the package from source will need a C/C++
-#'   compiler such as \href{https://clang.llvm.org/}{clang}.
+#'   package. Thus those wishing to build the development version of the package
+#'   from source will need a C/C++ compiler such as
+#'   \href{https://clang.llvm.org/}{clang}.
 #'   Note that R versions of these functions are also maintained
 #'   for the purposes of debugging, experimentation and code interpretation.
 #'
@@ -128,17 +129,9 @@
 #' @author Shaun Wilkinson
 #'
 #' @references
-#'   Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
-#'   for fast construction of guide trees for multiple sequence alignment.
-#'   \emph{Algorithms for Molecular Biology}, \strong{5}, 21.
-#'
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
-#'
-#'   Edgar RC (2004) Local homology recognition and distance measures in
-#'   linear time using compressed amino acid alphabets.
-#'   \emph{Nucleic Acids Research}, \strong{32}, 380-385.
 #'
 #'   Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
 #'   similarity searching.
@@ -158,6 +151,12 @@
 #'   \emph{IEEE Transactions on Acoustics, Speech, and Signal Processing},
 #'   \strong{38}, 1639-1641.
 #'
+#'   Paradis E, Claude J, Strimmer K, (2004) APE: analyses of phylogenetics
+#'   and evolution in R language. \emph{Bioinformatics} \strong{20}, 289-290.
+#'
+#'   Paradis E (2012) Analysis of Phylogenetics and Evolution with R
+#'   (Second Edition). Springer, New York.
+#'
 #'   Sievers F, Wilm A, Dineen D, Gibson TJ, Karplus K, Li W, Lopez R, McWilliam H,
 #'   Remmert M, Soding J, Thompson JD, Higgins DG (2011) Fast, scalable generation
 #'   of high-quality protein multiple sequence alignments using Clustal Omega.
@@ -167,11 +166,7 @@
 #'   \emph{Bioinformatics}, \strong{21}, 951-960.
 #'
 #'   Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and
-#'   protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{10}, 197-206.
-#'
-#'   Yang K, Zhang L (2008) Performance comparison between k-tuple distance
-#'   and four model-based distances in phylogenetic tree reconstruction.
-#'   \emph{Nucleic Acids Research}, \strong{36}, e33.
+#'   protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{80}, 726-730.
 #'
 #' @docType package
 #' @name aphid
