@@ -1,5 +1,5 @@
 ---
-title: "The 'aphid' package for analysis with profile hidden Markov models"
+title: "The 'aphid' package for analysis with profile hidden Markov models in R"
 author: "Shaun Wilkinson"
 date: "2017-06-12"
 output: rmarkdown::html_vignette
@@ -99,20 +99,21 @@ HMMs and PHMMs are explained in more detail throughout the following sections
 using **aphid** package functions to demonstrate their utility. 
 The examples are borrowed from Durbin et al [-@Durbin1998], 
 to which users are encouraged to refer for a more in-depth explanation on the 
-theory and application of these models.  
-Book chapter numbers are provided for ease of reference. 
+theory and application of these models. Book chapter numbers are provided for 
+ease of reference. 
 
 #### Hidden Markov Models
 A hidden Markov model is a hypothetical data-generating mechanism for a 
 sequence or set of sequences. 
-It is depicted by a network of *states* each 
-emitting symbols from a finite *alphabet* according to a set 
-of *emission probabilities* whose values are specific to each state. 
-The states are traversed by an interconnecting 
-set of *transition probabilities*, that include the probability
+It is depicted by a network of *states* each emitting symbols from a finite 
+*alphabet* according to a set of *emission probabilities*, whose values are 
+specific to each state. 
+The states are traversed by an interconnecting set of 
+*transition probabilities*, that include the probability
 of remaining in a given state and those of transitioning 
-to each of the other connected states. 
-A simple example of a "dishonest casino" is given in Dubrin et al 
+to each of the other connected states.
+
+An example of a simple HMM is given in Dubrin et al 
 [-@Durbin1998] chapter 3.2. 
 An imaginary casino has two die, one fair and one weighted.
 The fair dice emits residues from the alphabet {1, 2, 3, 4, 5, 6}
@@ -128,7 +129,7 @@ loaded dice, he will switch back to the fair dice with a probability of
 This example can be represented by a standard two-state hidden Markov
 model. The following code manually builds and plots the "HMM" object. 
 
-```{r, fig.width=8, fig.height=4}
+```{r, fig.width=7.15, fig.height=4}
 library("aphid")
 states = c("Begin", "Fair", "Loaded")
 residues = paste(1:6)
@@ -141,8 +142,8 @@ dimnames(E) <- list(states = states[-1], residues = residues)
 ### Create the HMM object
 x <- structure(list(A = A, E = E), class = "HMM")
 ### Plot the model with labaled transition probabilities
-plot(x, main = "Dishonest casino hidden Markov model", textexp = 1.5)
-text(x = 0.08, y = 0.5, labels = "0.95")
+plot(x, textexp = 1.5)
+text(x = 0.02, y = 0.5, labels = "0.95")
 text(x = 0.51, y = 0.5, labels = "0.90")
 text(x = 0.5, y = 0.9, labels = "0.05")
 text(x = 0.5, y = 0.1, labels = "0.10")
@@ -154,12 +155,11 @@ No begin/end state is modeled in this example; however, this can be achieved
 by entering non-zero probabilities in the first row and column of the 
 transition matrix and passing "begin = TRUE" to `plot.HMM`.
 
-
-For any given sequence of observed rolls, we can establish the most 
-*likely* sequence of hidden states (i.e. when the dice-switching most 
-likely occurred) using the Viterbi algorithm. 
-In the example given in Durbin et al [-@Durbin1998], the observed sequence 
-of 300 rolls is
+For a sequence of observed rolls, we can establish the most  *likely* sequence 
+of hidden states (including when the dice-switching most likely occurred) using 
+the Viterbi algorithm. 
+In the example given in Durbin et al [-@Durbin1998] chapter 3.2, the observed 
+sequence of 300 rolls is:
 ```{r, echo = FALSE}
 data(casino)
 cat("", 
@@ -171,10 +171,10 @@ cat("",
     paste0(casino[251:300], collapse = ""), "\n")
 ```
 
-Some clusters of 6's suggest that the loaded dice made an appearance 
+Some observable clusters of 6's suggest that the loaded dice made an appearance 
 at some stage, but when did the dice-switching occur?
-The Viterbi algorithm is used to find the most likely sequence of hidden 
-states given the model:
+In the following code, the Viterbi algorithm is used to find the most likely 
+sequence of hidden states given the model.
 ```{r}
 data(casino)
 actual <- c("F", "L")[match(names(casino), c("Fair", "Loaded"))]
@@ -205,55 +205,77 @@ cat("",
 ```
 
 
-We can also calculate the full probability of the sequence given the model, 
-using the `forward` or `backward` algorithm. 
-This is useful not just for beating the house, but for a variety of 
+We can also calculate the full and posterior probabilities of the sequence 
+given the model using the `forward` and/or `backward` algorithms. 
+This is useful not just for beating the house, but for a wide variety of 
 other applications!
 
-##### Deriving HMMs from sequence data
-The **aphid** package also has HMM building functions `deriveHMM` and `derivePHMM`
-To derive an HMM from our sequence with its known a state path (included as a 
-'names' attribute), we can run:   
+```{r, fig.width=7.15, fig.height=4}
+casino.post <- posterior(x, casino)
+plot(1:300, seq(0, 1, length.out = 300), type = "n", xlab = "Roll number",
+     ylab = "Posterior probability of dice being fair")
+starts <- which(c("L", actual) == "F" & c(actual, "F") == "L")
+ends <- which(c("F", actual) == "L" & c(actual, "L") == "F") - 1
+for(i in 1:6) rect(starts[i], 0, ends[i], 1, col = "grey", border = NA)
+lines(1:300, casino.post[1, ])
+```
+**Figure 2: Decoded posterior states for the 300 dice rolls.** 
+The line shows the posterior probability that the dice was fair at each roll,
+while the grey rectangles show the actual periods for which the loaded dice was 
+being used. This example is from Durbin et al [-@Durbin1998] chapter 3.2.
 
-```{r, fig.width=8, fig.height=4}
+
+##### Deriving HMMs from sequence data
+The **aphid** package features the function `deriveHMM` for building an HMM from 
+a set of training sequences.
+The following code derives a simple HMM from our single sequence of dice rolls 
+with its known state path (stored as the 'names' attribute of the sequence).   
+
+```{r, fig.width=7.15, fig.height=4}
 y <- deriveHMM(list(casino), logspace = FALSE)
-plot(y, main = "Derived HMM for dishonest casino", textexp = 1.5)
-text(x = 0.08, y = 0.5, labels = round(y$A["Fair", "Fair"], 2))
+plot(y, textexp = 1.5)
+
+### optionally add the transition probabilities as text boxes
+text(x = 0.02, y = 0.5, labels = round(y$A["Fair", "Fair"], 2))
 text(x = 0.51, y = 0.5, labels = round(y$A["Loaded", "Loaded"], 2))
 text(x = 0.5, y = 0.9, labels = round(y$A["Fair", "Loaded"], 2))
 text(x = 0.5, y = 0.1, labels = round(y$A["Loaded", "Fair"], 2))
 ```
 
-**Figure 2: A simple HMM derived from the single sequence of 300 dice rolls.**
-This is fairly close to the actual model, despite the fact that the training data 
-consists of just a single sequence.
+**Figure 3: A simple HMM derived from the single sequence of 300 dice rolls.**
+As in Fig. 1, transition probabilities are shown as weighted lines and emission 
+probabilities as horizontal grey bars. 
+
+This appears to be fairly close to the actual model, despite the fact that the 
+training data consisted of just a single sequence.
 One would typically derive an HMM from a list of many such sequences (hence why 
-the input argument is a list and not a vector) but this example is simplified
+the input argument is a list and not a vector) but this example is simplified 
 for clarity. 
 
 
 #### Profile Hidden Markov Models 
-A profile hidden Markov model is an extension of a standard HMM where emission
-and transition probabilities are *position specific*. 
+A profile hidden Markov model is an extension of a standard HMM, 
+where emission and transition probabilities are *position specific*. 
 That is, they can change at each point along the sequence. 
 These models typically have many more parameters than their simpler 
 HMM counterparts, but can be very powerful for sequence analysis. 
 The precursor to a profile HMM is normally a multiple sequence alignment.
-Each column in the alignment will generally (but not always) be nominated one 
-internal position or "module" in the model, with each module consisting of 
+Each column in the alignment will often (but not always) be represented by 
+one internal position or "module" in the model, with each module consisting of 
 three states: 
 
 * a silent *delete* state that does not emit residues. 
-* an *insert* state with emission probabilities according to the background
-residues in the entire alignment.
-* a *match* state with emission probabilities according to the frequency of 
-residues in the alignment column. 
+* an *insert* state with emission probabilities reflecting the background
+residues averaged over the entire alignment.
+* a *match* state with emission probabilities reflecting the residue frequencies 
+in the alignment column. 
 
 
-Figure 3 shows the three state types as rectangles, diamonds and squares, respectively.
-The states are linked by transition probabilities shown by directed arrows in the graph. 
+Figure 4 shows the three state types listed above as circles diamonds and rectangles, 
+respectively.
+The states are linked by transition probabilities shown as directed arrows in the graph. 
 
-Consider this small partial alignment of globin amino acid sequences from Durbin
+Consider this small partial alignment of amino acid sequences from Durbin
 et al [-@Durbin1998] chapter 5.3:
 
 ```{r}
@@ -270,21 +292,21 @@ Pseudo-counts can be Laplacean (add one of each emission and transition type),
 background (adjusts the Laplacean pseudo-counts to reflect the background frequencies 
 derived from the entire alignment), or user defined, which can include 
 more complex pseudo-count schemes such as Dirichlet mixtures [@Durbin1998].  
-The default option for the derivePHMM function is `pseudocounts = "background"`.
+The default option for the derivePHMM function is "background".
 
-We can derive a profile HMM from the globin data and plot the graph as follows:
+The following code derives a profile HMM from the globin data and plots the model:
 
-```{r, fig.width=8, fig.height=4}
+```{r, fig.width=7.15, fig.height=5}
 globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
-plot(globins.PHMM, main = "Profile HMM for small globin alignment")
+plot(globins.PHMM)
 ```
 
-**Figure 3: Profile HMM derived from a partial globin sequence alignment.**
+**Figure 4: Profile HMM derived from a partial globin sequence alignment.**
 Match states are shown as rectangles, insert states as diamonds, and delete 
-states as circles. The grey horizontal bars represent the emission 
-probabilities of each residue in the alphabet (in this case the amino acid 
-alphabet) at each position in the model. Numbers in the delete states show 
-the position in the model, while those in the insert states are the 
+states as circles. Grey horizontal bars represent the emission 
+probabilities for each residue in the alphabet (in this case the amino acid 
+alphabet) at each position in the model. Numbers in the delete states are 
+simply model module numbers, while those in the insert states are the 
 probabilities of remaining in the current insert state at the next emission 
 cycle. Lines are weighted and directed where necessary to reflect the 
 transition probabilities between states.
@@ -300,7 +322,7 @@ Instead, the last sequence in the alignment (GLB1_GLYDI) was considered to have
 entered the insert state at position 3 where it remained for two emission cycles
 (emitting an "A" and a "D") before transitioning to the match state in module 4.
 We can show this by calculating the optimal path of that sequence through the 
-model using the Viterbi algorithm:
+model, again using the Viterbi algorithm:
 
 ```{r}
 path <- Viterbi(globins.PHMM, globins["GLB1_GLYDI", ])$path
@@ -311,11 +333,13 @@ values 0 ("delete"), 1 ("match") or 2 ("insert").
 The path can be returned as characters instead of indices by running:
 
 ```{r}
-c("DELETE", "MATCH", "INSERT")[path + 1]
-## adding 1 converts from the C++ indexing style to R's style
+c("D", "M", "I")[path + 1]
 ```
 
-Sequences do not have to be aligned to produce a profile HMM.
+Note that the addition of 1 to each path element is simply to convert 
+from the C/C++ indexing style (which begins at 0) to R's style. 
+
+Sequences do not need to be aligned to produce a profile HMM.
 The function `derivePHMM` can optionally take a list of unaligned
 sequences, in which case the longest sequence is used as a 'seed'
 to create a preliminary profile HMM, and the model is iteratively
@@ -335,11 +359,11 @@ To simulate data with random variation, the **aphid** package features the
 function `generate` with methods for both HMMs and PHMMs. Sequences are 
 generated recursively using the transition and emission probabilities
 from within the model. There are two compulsory arguments, a model 
-(object class: "HMM" or PHMM) and the argument `size`, which specifies
-the maximum length of the sequence to prevent overflow 
-(e.g. if insert-insert transition probabilities are relatively high). 
+(object class: "HMM" or "PHMM") and the size argument, which specifies
+the maximum length of the sequence (this prevent an overflow situation 
+that can occur if insert-insert transition probabilities are relatively high). 
 For example, to simulate a list of 10 random sequences from the small globin
-profile HMM, run:
+profile HMM, we could run:
 
 ```{r}
 sim <- list()
@@ -348,8 +372,8 @@ for(i in 1:10) sim[[i]] <- generate(globins.PHMM, size = 20)
 sim
 ```
 Note that the names attributes specify which state each residue was emitted 
-from, and gaps are emitted from delete states. 
-If not required, the gaps can be removed as follows:
+from, and gap symbols are emitted from delete states. 
+If these gaps are not required they can be removed as follows:
 ```{r}
 sim <- lapply(sim, function(s) s[s != "-"])
 ```
@@ -358,7 +382,7 @@ sim <- lapply(sim, function(s) s[s != "-"])
 The **aphid** package offers the function `train` for updating model
 parameters using either the Baum Welch or Viterbi training algorithm.
 Both are iterative refinement algorithms; the former
-algorithm does not rely on a multiple sequence alignment
+does not rely on a multiple sequence alignment
 but is generally much slower than the latter. 
 The Viterbi training operation can be sped up further on larger 
 workstations by specifying the "cores" argument for parallel processing. 
@@ -366,8 +390,9 @@ The best choice of training algorithm will generally depend on the
 nature of the problem and the computing resources available. 
 For more information see Durbin et al [-@Durbin1998] chapter 3.3 for 
 standard HMMs and chapter 6.5 for profile HMMs.
-To train our small globins profile HMM  with the sequences 
-simulated in the previous step using the Baum Welch algorithm, run:
+
+The following code trains our small globin profile HMM with the sequences 
+simulated in the previous step using the Baum Welch algorithm.
 ```{r}
 globins2.PHMM <- train(globins.PHMM, sim, method = "BaumWelch", deltaLL = 0.001)
 ```
@@ -378,28 +403,31 @@ specified delta log-likelihood threshold of 0.001.
 
 ## Sequence Alignment
 The **aphid** package can be used to produce high-quality multiple sequence 
-alignments by iterative model training. 
+alignments using the iterative model training method outlined above. 
 The function `align` takes as its primary argument a list of sequences 
 either as a "DNAbin" object, an "AAbin" object, or a list of character sequences. 
-An object of class "PHMM" can be passed as the optional secondary 
-argument ("model"), in which case the sequences are aligned to the model to 
-produce the alignment matrix. 
-If "model = NULL" (default), a preliminary model is derived using the 
-'seed' sequence method outlined above, the model is trained using either 
-the Baum Welch or Viterbi training algorithm (specified *via* the "method" 
-argument) and the sequences aligned to the model to produce the alignment.
+An object of class "PHMM" can be passed to the function as an optional secondary 
+argument ("model"), in which case the sequences are simply aligned to the model 
+to produce the alignment matrix. 
+If "model" is set to NULL (the default option), a preliminary model is first 
+derived using the 'seed' sequence method outlined above, after which the model 
+is trained using either the Baum Welch or Viterbi training algorithm 
+(specified *via* the "method" argument). 
+The sequences are then aligned to the model in the usual fashion to produce the 
+alignment.
 Note that the `align` function will perform a pairwise alignment using the
 Viterbi algorithm without a profile HMM if only two sequences are present in 
 the input list.
-In this final example, we will align the simulated sequences using the 
-PHMM we derived from the original alignment.
+In this final example, we will deconstruct the original globin alignment and 
+re-align the sequences using the original PHMM as a guide.
 
 ```{r}
-align(sim, model = globins.PHMM, seqweights = NULL, residues = "AMINO")
+globins <- unalign(globins, gap = "-")
+align(globins, model = globins.PHMM, seqweights = NULL, residues = "AMINO")
 ```
-Note that the column names show the progressive positions in the model
-and where residues were emitted by insert states (e.g. sequence 1
-position 3, etc).   
+Note that the column names show the progressive positions along the model
+and where residues were predicted to have been emitted by insert states 
+(e.g. sequence 1 position 3, etc).   
 
 ## Further Reading
 This package was written based on the algorithms described in 
