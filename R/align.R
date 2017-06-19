@@ -59,9 +59,9 @@
 #'   proportion of gaps form match states in the model), \code{"map"} (default;
 #'   match and insert columns are found using the maximum \emph{a posteriori}
 #'   method outlined in Durbin et al. (1998) chapter 5.7), \code{"inherited"}
-#'   (match and insert columns are inherited from the "inserts" attribute
-#'   of the input alignment), and \code{"none"} (all columns are assigned
-#'   match states in the model). Alternatively, insert columns can be
+#'   (match and insert columns are inherited from the input alignment),
+#'   and \code{"none"} (all columns are assigned match states in the model).
+#'   Alternatively, insert columns can be
 #'   specified manually by providing a logical vector the same length
 #'   as the number of columns in the alignment, with \code{TRUE} for insert
 #'   columns and \code{FALSE} for match states.
@@ -307,7 +307,7 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
     vit <- Viterbi(model, s, ... = ...)
     res <- c(vit$path, 1) #append the final transition to end state
     # this is just so the c++ function knows where to stop
-    attr(res, "score") <- vit$score
+    # attr(res, "score") <- vit$score
     return(res)
   }
   #if(!quiet) cat("Aligning sequences to model\n")
@@ -318,7 +318,7 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   }
   if(para & stopclustr) parallel::stopCluster(cores)
   ###
-  score <- sum(sapply(paths, function(p) attr(p, "score")))
+  # score <- sum(sapply(paths, function(p) attr(p, "score")))
   fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, x, paths, l = l,
                      gap = gap, SIMPLIFY = FALSE)
   rm(paths)
@@ -352,8 +352,8 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   colnames(res) <- resnames
   rownames(res) <- names(x)
   class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
-  attr(res, "score") <- score
-  attr(res, "inserts") <- inserts
+  # attr(res, "score") <- score
+  # attr(res, "inserts") <- inserts
   return(res)
 }
 ################################################################################

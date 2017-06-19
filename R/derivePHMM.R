@@ -70,8 +70,8 @@
 #'   proportion of gaps form match states in the model), \code{"map"} (default;
 #'   match and insert columns are found using the maximum \emph{a posteriori}
 #'   method outlined in Durbin et al. (1998) chapter 5.7), \code{"inherited"}
-#'   (match and insert columns are inherited from the "inserts" attribute
-#'   of the input alignment), and \code{"none"} (all columns are assigned
+#'   (match and insert columns are inherited from the input alignment),
+#'   and \code{"none"} (all columns are assigned
 #'   match states in the model). Alternatively, insert columns can be
 #'   specified manually by providing a logical vector the same length
 #'   as the number of columns in the alignment, with \code{TRUE} for insert
@@ -530,7 +530,8 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   if(identical(inserts, "none")){
     inserts <- rep(FALSE, m)
   }else if(identical(inserts, "inherited")){
-    inserts <- attr(x, "inserts")
+    # inserts <- attr(x, "inserts")
+    inserts <- colnames(x) == "I"
     if(is.null(inserts)) stop("Alignment missing 'inserts' attribute, nothing to inherit")
   }else if(identical(inserts, "threshold")){
     inserts <- apply(gapweights, 2, sum) > threshold * n
