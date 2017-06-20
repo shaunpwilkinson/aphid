@@ -61,3 +61,7 @@ test_that("Model training yielded acceptable results", {
   expect_is(x2, "HMM")
   expect_is(x3, "HMM")
 })
+
+test_that("Plotting command functions as expected", {
+  expect_identical(plot(x, begin = TRUE), NULL)
+})

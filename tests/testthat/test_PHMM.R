@@ -54,14 +54,14 @@ yAA.bck <- backward(yAA.PHMM, yAA[1, ])
 y.vit <- Viterbi(y.PHMM, y[1, ], cpp = FALSE, residues = "AMINO", S = substitution$MATCH)
 yAA.vit <- Viterbi(yAA.PHMM, yAA[1, ], S = substitution$MATCH)
 
-# ensure cpp and R evaluations give same results
+# Ensure cpp and R evaluations give same results
 x2.vit <- Viterbi(x.PHMM, x[[1]], cpp = FALSE, type = "semiglobal")
 xDNA2.vit <- Viterbi(xDNA.PHMM, xDNA[[1]], type = "semiglobal")
 x3.vit <- Viterbi(x.PHMM, x[[1]], cpp = FALSE, type = "local")
 xDNA3.vit <- Viterbi(xDNA.PHMM, xDNA[[1]], type = "local")
 
 
-# generate random sequences
+# Generate random sequences
 x.sim <-generate(x.PHMM, size = 200)
 xDNA.sim <-generate(xDNA.PHMM, size = 200, DNA = TRUE)
 y.sim <-generate(y.PHMM, size = 200)
@@ -87,6 +87,8 @@ x.alig <- align(x, quiet = TRUE)
 set.seed(999)
 x2.alig <- align(x, progressive = TRUE, quiet = TRUE)
 
+
+
 test_that("objects have correct classes", {
   expect_is(x.PHMM, "PHMM")
   expect_is(xDNA.PHMM, "PHMM")
@@ -100,7 +102,7 @@ test_that("objects have correct classes", {
 })
 
 
-test_that("character and raw inputs give same output", {
+test_that("Character and raw inputs give same output", {
   expect_equal(round(unname(x.PHMM$A), 2), round(unname(xDNA.PHMM$A), 2))
   expect_equal(round(unname(x.PHMM$E), 2), round(unname(xDNA.PHMM$E), 2))
   expect_equal(round(unname(y.PHMM$A), 2), round(unname(yAA.PHMM$A), 2))
@@ -120,4 +122,8 @@ test_that("character and raw inputs give same output", {
   expect_equal(round(x.vit$score), round(xDNA.vit$score))
   expect_equal(y.vit$path, yAA.vit$path)
   expect_equal(y.vit$score, yAA.vit$score)
+})
+
+test_that("Plotting command functions as expected", {
+  expect_identical(plot(x.PHMM, from = 0, to = 10), NULL)
 })

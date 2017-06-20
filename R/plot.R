@@ -191,6 +191,7 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
     }
     pos <- pos + 1
   }
+  invisible()
 }
 ################################################################################
 #' Plot standard hidden Markov models.
@@ -338,6 +339,7 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
     }
     symbcoords[, 1] <- symbcoords[, 1] + (2 * xunit)
   }
+  invisible()
 }
 ################################################################################
 #################### Internal geometric functions ##############################
