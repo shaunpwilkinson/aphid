@@ -131,8 +131,8 @@ model. The following code manually builds and plots the "HMM" object.
 
 ```{r, fig.width=7.15, fig.height=4}
 library("aphid")
-states = c("Begin", "Fair", "Loaded")
-residues = paste(1:6)
+states <- c("Begin", "Fair", "Loaded")
+residues <- paste(1:6)
 ### Define transition probability matrix A
 A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9), nrow = 3)
 dimnames(A) <- list(from = states, to = states)
@@ -143,6 +143,7 @@ dimnames(E) <- list(states = states[-1], residues = residues)
 x <- structure(list(A = A, E = E), class = "HMM")
 ### Plot the model with labaled transition probabilities
 plot(x, textexp = 1.5)
+### Optionally add the transition probabilities as text
 text(x = 0.02, y = 0.5, labels = "0.95")
 text(x = 0.51, y = 0.5, labels = "0.90")
 text(x = 0.5, y = 0.9, labels = "0.05")
@@ -178,10 +179,10 @@ sequence of hidden states given the model.
 ```{r}
 data(casino)
 actual <- c("F", "L")[match(names(casino), c("Fair", "Loaded"))]
-### actual path is stored in the names attribute of the sequence
+### Actual path is stored in the names attribute of the sequence
 vit1 <- Viterbi(x, casino)
 predicted <- c("F", "L")[vit1$path + 1]
-### note the path element of the output Viterbi object is an integer vector
+### Note the path element of the output Viterbi object is an integer vector
 ### the addition of 1 to the path converts from C/C++ to R's indexing style
 ```
 
@@ -235,16 +236,16 @@ with its known state path (stored as the 'names' attribute of the sequence).
 y <- deriveHMM(list(casino), logspace = FALSE)
 plot(y, textexp = 1.5)
 
-### optionally add the transition probabilities as text boxes
+### Optionally add the transition probabilities as text
 text(x = 0.02, y = 0.5, labels = round(y$A["Fair", "Fair"], 2))
 text(x = 0.51, y = 0.5, labels = round(y$A["Loaded", "Loaded"], 2))
 text(x = 0.5, y = 0.9, labels = round(y$A["Fair", "Loaded"], 2))
 text(x = 0.5, y = 0.1, labels = round(y$A["Loaded", "Fair"], 2))
 ```
 
-**Figure 3: A simple HMM derived from the single sequence of 300 dice rolls.**
-As in Fig. 1, transition probabilities are shown as weighted lines and emission 
-probabilities as horizontal grey bars. 
+**Figure 3: A simple HMM derived from the sequence of 300 dice rolls.**
+As in Fig. 1, transition probabilities are shown as weighted lines and 
+emission probabilities as horizontal grey bars. 
 
 This appears to be fairly close to the actual model, despite the fact that the 
 training data consisted of just a single sequence.
@@ -359,7 +360,7 @@ To simulate data with random variation, the **aphid** package features the
 function `generate` with methods for both HMMs and PHMMs. Sequences are 
 generated recursively using the transition and emission probabilities
 from within the model. There are two compulsory arguments, a model 
-(object class: "HMM" or "PHMM") and the size argument, which specifies
+(object class "HMM" or "PHMM") and the "size" argument, which specifies
 the maximum length of the sequence (this prevent an overflow situation 
 that can occur if insert-insert transition probabilities are relatively high). 
 For example, to simulate a list of 10 random sequences from the small globin

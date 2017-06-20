@@ -563,13 +563,13 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   }
   ### emission counts
   ecs <- if(AA){
-    apply(x[, !inserts, drop = F], 2, .tabulateAA,
+    apply(x[, !inserts, drop = FALSE], 2, .tabulateAA,
           ambiguities = TRUE, seqweights = seqweights)
   }else if(DNA){
-    apply(x[, !inserts, drop = F], 2, .tabulateDNA,
+    apply(x[, !inserts, drop = FALSE], 2, .tabulateDNA,
           ambiguities = TRUE, seqweights = seqweights)
   }else{
-    apply(x[, !inserts, drop = F], 2, .tabulateCH,
+    apply(x[, !inserts, drop = FALSE], 2, .tabulateCH,
           residues = residues, seqweights = seqweights)
   }
   if(length(ecs) > 0){
@@ -577,18 +577,18 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   }else ecs <- NULL
   ### transitions
   xtr <- matrix(nrow = n, ncol = m)
-  insertsn <- matrix(rep(inserts, n), nrow = n, byrow = T)
+  insertsn <- matrix(rep(inserts, n), nrow = n, byrow = TRUE)
   xtr[gaps & !insertsn] <- 0L # Delete
   xtr[!gaps & !insertsn] <- 1L # Match
   xtr[!gaps & insertsn] <- 2L # Insert
   xtr <- cbind(1L, xtr, 1L) # append begin and end match states
   tcs <- .atab(xtr, seqweights = seqweights)
-  alltcs <- apply(tcs, 1, sum) # forced addition of Laplacian pseudos
+  alltcs <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
   ### background transition probs
   if(is.null(qa)){
     if(!DI) alltcs["DI"] <- 0
     if(!ID) alltcs["ID"] <- 0
-    qa <- (alltcs + 1)/sum(alltcs + 1)
+    qa <- (alltcs)/sum(alltcs)
   }else{
     if(!is.vector(qa) | length(qa) != 9) stop("qa must be a numeric vector of length 9")
     if(all(qa <= 0)) qa <- exp(qa)
@@ -630,8 +630,8 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     E <- t(t(ecs)/apply(ecs, 2, sum))
   }
   A <- t(tcs)
-  for(i in c(1, 4, 7)) {
-    A[, i:(i + 2)] <- A[, i:(i + 2)]/apply(A[, i:(i + 2), drop = F], 1, sum)
+  for(i in c(1, 4, 7)){
+    A[, i:(i + 2)] <- A[, i:(i + 2)]/apply(A[, i:(i + 2), drop = FALSE], 1, sum)
   }
   A[1, 1:3] <- 0 # gets rid of NaNs caused by division by zero
   A <- t(A)

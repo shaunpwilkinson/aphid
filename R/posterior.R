@@ -27,8 +27,8 @@
 #' @examples
 #'   ## Posterior decoding for standard hidden Markov models
 #'   ## The dishonest casino example from Durbin et al (1998) chapter 3.2
-#'   states = c("Begin", "Fair", "Loaded")
-#'   residues = paste(1:6)
+#'   states <- c("Begin", "Fair", "Loaded")
+#'   residues <- paste(1:6)
 #'   ### Define the transition probability matrix
 #'   A <- matrix(c(0, 0, 0, 0.99, 0.95, 0.1, 0.01, 0.05, 0.9), nrow = 3)
 #'   dimnames(A) <- list(from = states, to = states)
