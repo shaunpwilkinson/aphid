@@ -60,8 +60,7 @@ weight <- function(x, ...){
 ################################################################################
 #' @rdname weight
 ################################################################################
-weight.DNAbin <- function(x, method = "Gerstein", k = 5, residues = NULL,
-                          gap = "-", ...){
+weight.DNAbin <- function(x, method = "Gerstein", k = 5, ...){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
   }else{

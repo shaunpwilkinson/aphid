@@ -334,32 +334,33 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
     if(progressive){
       catchnames <- names(x)
       names(x) <- paste0("S", 1:nseq)
-      distances <- phylogram::mbed(x, seeds = seeds, k = k, residues = residues,
-                                   gap = gap, counts = TRUE)
-      seeds <- attr(distances, "seeds")
-      ## just a check - can remove eventually
+      # distances <- phylogram::mbed(x, seeds = seeds, k = k, residues = residues,
+      #                              gap = gap, counts = TRUE)
+      # seeds <- attr(distances, "seeds")
+      if(is.null(seeds)) seeds <- seq_along(x)
       stopifnot(
         mode(seeds) %in% c("numeric", "integer"),
         max(seeds) <= nseq,
         min(seeds) > 0
+        ## just a check - can remove eventually
       )
-      ## Opportunity to calculate weights cheaply here:
       if(is.null(seqweights)){
         seqweights <- rep(1, nseq)
+        names(seqweights) <- catchnames
       }else if(identical(seqweights, "Gerstein")){
         if(!quiet) cat("Calculating sequence weights\n")
-        weighttree <- phylogram::topdown(distances, weighted = TRUE)
-        seqweights <- weight.dendrogram(weighttree)[names(x)]
+        seqweights <- weight(x, method = "Gerstein", k = k, residues = residues, gap = gap)
+        #weighttree <- phylogram::topdown(distances, weighted = TRUE)
+        #seqweights <- weight.dendrogram(weighttree)[names(x)]
         names(seqweights) <- catchnames
       }else{
         stopifnot(mode(seqweights) %in% c("numeric", "integer"),
                   length(seqweights) == nseq)
       }
       ### this is just easier than trying to subset distances:
-      guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues,
-                                      gap = gap, weighted = FALSE)
+      guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues, gap = gap)
       attachseqs <- function(tree, sequences){
-        if(!is.list(tree)) attr(tree, "seqs") <- sequences[attr(tree, "label")]
+        if(!is.list(tree)) attr(tree, "seqs") <- sequences[[attr(tree, "label")]]
         return(tree)
       }
       guidetree <- dendrapply(guidetree, attachseqs, sequences = x)
@@ -391,6 +392,7 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
     }else{
       if(is.null(seqweights)){
         seqweights <- rep(1, nseq)
+        names(seqweights) <- names(x)
       }else if(identical(seqweights, "Gerstein")){
         seqweights <- weight(x, method = "Gerstein", k = k,
                              residues = residues, gap = gap)

@@ -11,8 +11,7 @@
 \usage{
 weight(x, ...)
 
-\method{weight}{DNAbin}(x, method = "Gerstein", k = 5, residues = NULL,
-  gap = "-", ...)
+\method{weight}{DNAbin}(x, method = "Gerstein", k = 5, ...)
 
 \method{weight}{AAbin}(x, method = "Gerstein", k = 5, ...)
 

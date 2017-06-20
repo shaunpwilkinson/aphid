@@ -119,7 +119,6 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }else stop("Invalid input object y: multi-sequence list")
     }
     y.AAbin <- y
-    #y <- AA2heptovigesimal(y, na.rm = TRUE)
     y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else if(pc){
     if(is.list(y)){
@@ -127,7 +126,6 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         y <- y[[1]]
       }else stop("Invalid input object y: multi-sequence list")
     }
-    #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
     if(mode(y) == "character"){
       y <- match(y, rownames(x$E)) - 1
       if(any(is.na(y))) {
@@ -299,7 +297,6 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
         class(y) <- "DNAbin"
       }else stop("Invalid input object y: multi-sequence list")
     }
-    #y <- DNA2pentadecimal(y, na.rm = TRUE)
     y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(AA){
     colnames(x$E) <- toupper(colnames(x$E))
@@ -315,7 +312,6 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
         class(y) <- "AAbin"
       }else stop("Invalid input object y: multi-sequence list")
     }
-    #y <- AA2heptovigesimal(y, na.rm = TRUE)
     y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else{
     if(is.list(y)){

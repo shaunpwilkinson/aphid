@@ -169,6 +169,14 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   pd <- .isDNA(y)
   pa <- .isAA(y)
   pc <- !pp & !pd & !pa
+  if(!pp & is.list(y)){
+    if(length(y) == 1){
+      y <- y[[1]]
+      # namesy <- names(y)
+      # y <- matrix(y[[1]], nrow = 1)
+      # if(!is.null(namesy)) rownames(y) <- namesy
+    }else stop("Invalid input object for y: multi-sequence list")
+  }
   if(pd){
     rownames(x$E) <- toupper(rownames(x$E))
     if("U" %in% rownames(x$E)) rownames(x$E)[rownames(x$E) == "U"] <- "T"
@@ -178,12 +186,13 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       stop("invalid model for DNA, residue alphabet does not correspond to
             nucleotide alphabet")
     }
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-        class(y) <- "DNAbin"
-      }else stop("Invalid input object y: multi-sequence list")
-    }
+    # if(is.list(y)){
+    #   if(length(y) == 1){
+    #     y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+    #     class(y) <- "DNAbin"
+    #   }else stop("Invalid input object y: multi-sequence list")
+    # }
+    class(y) <- "DNAbin"
     y.DNAbin <- y
     #y <- DNA2pentadecimal(y, na.rm = TRUE)
     y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
@@ -195,21 +204,21 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       stop("invalid model for AA, residue alphabet does not correspond to
             20-letter amino acid alphabet")
     }
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-        class(y) <- "AAbin"
-      }else stop("Invalid input object y: multi-sequence list")
-    }
+    # if(is.list(y)){
+    #   if(length(y) == 1){
+    #     y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+    #     class(y) <- "AAbin"
+    #   }else stop("Invalid input object y: multi-sequence list")
+    # }
+    class(y) <- "AAbin"
     y.AAbin <- y
-    #y <- AA2heptovigesimal(y, na.rm = TRUE)
     y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else if(pc){
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- y[[1]]
-      }else stop("Invalid input object y: multi-sequence list")
-    }
+    # if(is.list(y)){
+    #   if(length(y) == 1){
+    #     y <- y[[1]]
+    #   }else stop("Invalid input object y: multi-sequence list")
+    # }
     #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
     if(mode(y) == "character"){
       y <- match(y, rownames(x$E)) - 1
@@ -259,6 +268,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     if(identical(windowspace, "WilburLipman")){
       #warning("No WilburLipman method available for PHMM=PHMM comparison yet")
       windowspace <- c(-x$size, y$size)
+      # TODO
       # xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE)
       # xseq <- setNames(seq_along(rownames(x$E)) - 1,  rownames(x$E))[xseq]
       # yseq <- generate.PHMM(y, size = 10 * ncol(y$A), random = FALSE)
@@ -287,7 +297,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       P[, , 4] <- res$GDpointer
       P[, , 5] <- res$IMpointer
       res$array <- V
-      res$pointer = P
+      res$pointer <- P
     }else{
       fun <- Vectorize(function(a, b) logsum((Ex[, a] + Ey[, b]) - qe))
       Saa <- outer(1:(n - 1), 1:(m - 1), fun)
@@ -400,13 +410,13 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         }
         startposition = z[1:2]
       }else(stop("Invalid alignment type"))
-      key <- "MI = 1, DG = 2, MM = 3, GD = 4, IM = 5"
+      #key <- "MI = 1, DG = 2, MM = 3, GD = 4, IM = 5"
       rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
-      progression <- progression - 1 #to account for 0 row
+      #progression <- progression - 1 #to account for 0 row
       path <- path - 1
       res <- structure(list(score = score,
                             path = path,
-                            progression = progression,
+                            #progression = progression,
                             start = startposition,
                             array = V,
                             pointer = P,
@@ -479,7 +489,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       P[, , 2] <- res$Mpointer
       P[, , 3] <- res$Ipointer
       res$array <- V
-      res$pointer = P
+      res$pointer <- P
     }else{
       P[, 1, 1] <- c(NA, 2, rep(1, n - 2))
       P[1, , 3] <- c(NA, 2, rep(3, m - 2))
@@ -586,11 +596,11 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         startposition = z[1:2]
       }
       #key: "1 = delete, 2 = match, 3 = insert"
-      progression <- progression - 1 #to account for 0 row
+      #progression <- progression - 1 #to account for 0 row
       path <- path - 1
       res <- structure(list(score = score,
                             path = path,
-                            progression = progression,
+                            #progression = progression,
                             start = startposition,
                             array = V,
                             pointer = P),
@@ -626,7 +636,6 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
         class(y) <- "DNAbin"
       }else stop("Invalid input object y: multi-sequence list")
     }
-    #y <- DNA2pentadecimal(y, na.rm = TRUE)
     y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(AA){
     colnames(x$E) <- toupper(colnames(x$E))
@@ -642,7 +651,6 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
         class(y) <- "AAbin"
       }else stop("Invalid input object y: multi-sequence list")
     }
-    #y <- AA2heptovigesimal(y, na.rm = TRUE)
     y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else{
     if(is.list(y)){
@@ -728,27 +736,48 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
 Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
                             residues = NULL, S = NULL, windowspace = "all",
                             offset = 0, cpp = TRUE, ...){
-  if(!(type %in% c('global','semiglobal','local'))) stop("invalid type")
+  if(!(type %in% c("global", "semiglobal", "local"))) stop("invalid type")
+  # check x is valid
+  if(is.list(x)){
+    if(length(x) == 1){
+      #namesx <- names(x)
+      x <- x[[1]]
+      #x <- matrix(x[[1]], nrow = 1)
+      #if(!is.null(namesx)) rownames(x) <- namesx
+    }else stop("Invalid input object x: multi-sequence list")
+  }
+  # check y is valid
+  if(is.list(y)){
+    if(length(y) == 1){
+      #namesy <- names(y)
+      y <- y[[1]]
+      #y <- matrix(y[[1]], nrow = 1)
+      #if(!is.null(namesy)) rownames(y) <- names
+    }else stop("Invalid input object y: multi-sequence list")
+  }
+
   DNA <- .isDNA(x)
   AA <- .isAA(x)
+
   if(DNA){
     if(!.isDNA(y)) stop("x is a DNAbin object but y is not")
+    class(x) <- class(y) <- "DNAbin"
     # changes here need also apply in Viterbi.PHMM, alignpair
-    if(is.list(x)){
-      if(length(x) == 1){
-        namesx <- names(x)
-        x <- matrix(x[[1]], nrow = 1)
-        if(!is.null(namesx)) rownames(x) <- namesx
-        #x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
-        class(x) <- "DNAbin"
-      }else stop("Invalid input object x: multi-sequence list")
-    }
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-        class(y) <- "DNAbin"
-      }else stop("Invalid input object y: multi-sequence list")
-    }
+    # if(is.list(x)){
+    #   if(length(x) == 1){
+    #     namesx <- names(x)
+    #     x <- matrix(x[[1]], nrow = 1)
+    #     if(!is.null(namesx)) rownames(x) <- namesx
+    #     #x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
+    #     class(x) <- "DNAbin"
+    #   }else stop("Invalid input object x: multi-sequence list")
+    # }
+    # if(is.list(y)){
+    #   if(length(y) == 1){
+    #     y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+    #     class(y) <- "DNAbin"
+    #   }else stop("Invalid input object y: multi-sequence list")
+    # }
     if(is.null(S)){
       S <- aphid::substitution$NUC.4.4
     }else{
@@ -766,27 +795,26 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     }else if(identical(windowspace, "all")){
       windowspace <- c(-length(x), length (y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
-    #x <- DNA2pentadecimal(x, na.rm = TRUE)
-    #y <- DNA2pentadecimal(y, na.rm = TRUE)
     x <- .encodeDNA(x, arity = 15, na.rm = TRUE)
     y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(AA){
     if(!.isAA(y)) stop("x is an AAbin object but y is not")
-    if(is.list(x)){
-      if(length(x) == 1){
-        namesx <- names(x)
-        x <- matrix(x[[1]], nrow = 1)
-        if(!is.null(namesx)) rownames(x) <- namesx
-        #x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
-        class(x) <- "AAbin"
-      }else stop("Invalid input object x: multi-sequence list")
-    }
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-        class(y) <- "AAbin"
-      }else stop("Invalid input object y: multi-sequence list")
-    }
+    class(x) <- class(y) <- "AAbin"
+    # if(is.list(x)){
+    #   if(length(x) == 1){
+    #     namesx <- names(x)
+    #     x <- matrix(x[[1]], nrow = 1)
+    #     if(!is.null(namesx)) rownames(x) <- namesx
+    #     #x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
+    #     class(x) <- "AAbin"
+    #   }else stop("Invalid input object x: multi-sequence list")
+    # }
+    # if(is.list(y)){
+    #   if(length(y) == 1){
+    #     y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
+    #     class(y) <- "AAbin"
+    #   }else stop("Invalid input object y: multi-sequence list")
+    # }
     if(is.null(S)){
       S <- aphid::substitution$MATCH
     }else{
@@ -805,18 +833,15 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       windowspace <- c(-length(x), length (y))
     }else if(length(windowspace) != 2) stop("invalid windowspace argument")
     if(identical(S, aphid::substitution$GONNET)){
-      #x <- AA2duovigesimal(x, na.rm = TRUE)
-      #y <- AA2duovigesimal(y, na.rm = TRUE)
       x <- .encodeAA(x, arity = 22, na.rm = TRUE)
       y <- .encodeAA(y, arity = 22, na.rm = TRUE)
     }else{
-      #x <- AA2quadrovigesimal(x, na.rm = TRUE)
-      #y <- AA2quadrovigesimal(y, na.rm = TRUE)
       x <- .encodeAA(x, arity = 24, na.rm = TRUE)
       y <- .encodeAA(y, arity = 24, na.rm = TRUE)
     }
     ### need some conditions here
   }else{
+    if(mode(x) != mode(y)) stop("x and y have different modes")
     if(is.null(S)){
       residues <- .alphadetect(list(x, y), residues = residues)
       S <- diag(2, nrow = length(residues)) - 1
@@ -826,8 +851,6 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       if(is.null(residues)) stop("scoring matrix S must have 'dimnames' attributes")
     }
     # code x and y vectors as integers in with arity = length(residues) - 1
-    # x <- setNames(seq_along(residues) - 1, residues)[x]
-    # y <- setNames(seq_along(residues) - 1, residues)[y]
     x  <- .encodeCH(x, residues = residues, na.rm = TRUE)
     y  <- .encodeCH(y, residues = residues, na.rm = TRUE)
     if(identical(windowspace, "WilburLipman")) {
@@ -871,7 +894,6 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0
       P[1, , ] <- P[, 1, ]  <- 4
     }
-
     #if(type == 0) P[1, 1, 2] <- 4
     for(i in 2:n){
       for(j in 2:m){
@@ -942,12 +964,9 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       # find highest score in scoring array M
       ind <- which(M[, , 2] == max(M[, , 2]), arr.ind = TRUE)
       z <- c(ind, 2)
-      #cat(z)
       score <- M[z[1], z[2], z[3]]
       P[1, 1, 2] <- 4
-      # cat(P[z[1], z[2], z[3]])
       while(P[z[1], z[2], z[3]] != 4){
-        #cat(z[3])
         path <- c(z[3], path)
         progression <- cbind(z[1:2], progression)
         z[3] <- P[z[1], z[2], z[3]]
@@ -955,8 +974,8 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       }
       startposition <- z[1:2]
     }
-    key <- "1: x aligns to gap in y, 2: match, 3: y aligns to gap in x"
-    progression <- progression - 1
+    #key <- "1: x aligns to gap in y, 2: match, 3: y aligns to gap in x"
+    #progression <- progression - 1
     path <- unname(path) - 1
     #rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
     res <- structure(list(score = score,
@@ -964,8 +983,8 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
                           path = path,
                           start = startposition,
                           #firstmatch = firstmatch,
-                          progression = progression,
-                          key = key,
+                          #progression = progression,
+                          #key = key,
                           array = M,
                           pointer = P),
                      class = 'Viterbi')
