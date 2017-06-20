@@ -432,7 +432,7 @@ and where residues were predicted to have been emitted by insert states
 
 ## Further Reading
 This package was written based on the algorithms described in 
-Durbin et al. [-@Durbin1998].
+Durbin et al [-@Durbin1998].
 This book offers an in depth explanation of hidden Markov models 
 and profile HMMs for users of all levels of familiarity. 
 Many of the examples and datasets in the package are directly 
