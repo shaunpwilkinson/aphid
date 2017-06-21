@@ -145,12 +145,6 @@
 #'   names(simulation)
 #' @name Viterbi
 ################################################################################
-# Viterbi <- function(x, y, qe = NULL, logspace = "autodetect", type = "global",
-#                     odds = TRUE, offset = 0, d = 8, e = 2, S = NULL,
-#                     residues = NULL, windowspace = "all", DI = FALSE, ID = FALSE,
-#                     cpp = TRUE){
-#   UseMethod("Viterbi")
-# }
 Viterbi <- function(x, y, ...){
   UseMethod("Viterbi")
 }
@@ -169,14 +163,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   pd <- .isDNA(y)
   pa <- .isAA(y)
   pc <- !pp & !pd & !pa
-  if(!pp & is.list(y)){
-    if(length(y) == 1){
-      y <- y[[1]]
-      # namesy <- names(y)
-      # y <- matrix(y[[1]], nrow = 1)
-      # if(!is.null(namesy)) rownames(y) <- namesy
-    }else stop("Invalid input object for y: multi-sequence list")
-  }
+  if(!pp & is.list(y)) if(length(y) == 1) y <- y[[1]] else stop("y is invalid")
   if(pd){
     rownames(x$E) <- toupper(rownames(x$E))
     if("U" %in% rownames(x$E)) rownames(x$E)[rownames(x$E) == "U"] <- "T"
@@ -186,47 +173,28 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       stop("invalid model for DNA, residue alphabet does not correspond to
             nucleotide alphabet")
     }
-    # if(is.list(y)){
-    #   if(length(y) == 1){
-    #     y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-    #     class(y) <- "DNAbin"
-    #   }else stop("Invalid input object y: multi-sequence list")
-    # }
     class(y) <- "DNAbin"
     y.DNAbin <- y
-    #y <- DNA2pentadecimal(y, na.rm = TRUE)
     y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(pa){
     rownames(x$E) <- toupper(rownames(x$E))
     PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
     x$E <- x$E[PFAMorder, ]
     if(!(identical(rownames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
-      stop("invalid model for AA, residue alphabet does not correspond to
+      stop("Invalid model for AA, residue alphabet does not correspond to
             20-letter amino acid alphabet")
     }
-    # if(is.list(y)){
-    #   if(length(y) == 1){
-    #     y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-    #     class(y) <- "AAbin"
-    #   }else stop("Invalid input object y: multi-sequence list")
-    # }
     class(y) <- "AAbin"
     y.AAbin <- y
     y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else if(pc){
-    # if(is.list(y)){
-    #   if(length(y) == 1){
-    #     y <- y[[1]]
-    #   }else stop("Invalid input object y: multi-sequence list")
-    # }
-    #y <- setNames(seq_along(colnames(x$E)) - 1, colnames(x$E))[y]
     if(mode(y) == "character"){
       y <- match(y, rownames(x$E)) - 1
       if(any(is.na(y))){
-        warning("residues in sequence(s) are missing from the model")
+        warning("Residues in sequence(s) are missing from the model")
         y <- y[!is.na(y)]
       }
-    }#else if length(unique(y)) > nrow(x$E) stop("")
+    }
   }
   n <- ncol(x$E) + 1
   m <- if(pp) ncol(y$E) + 1 else length(y) + 1
@@ -283,8 +251,6 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     Ex <- if(logspace) x$E else log(x$E)
     Ey <- if(logspace) y$E else log(y$E)
     if(cpp){
-      #res <- NULL
-      #stop("cpp option not supported yet")
       res <- .ViterbiPP(Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
       V[, , 1] <- res$MImatrix
       V[, , 2] <- res$DGmatrix
@@ -428,7 +394,6 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE, AA = pa, DNA = pd)
       if(pd){
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
-        #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
         yqt <- .encodeDNA(y.DNAbin, arity = 4, na.rm = TRUE)
         windowspace <- .streak(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
@@ -501,7 +466,6 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }else{
         V[-1, 1, 1] <- 0
         V[1, -1, 3] <- cumsum(qey)
-        #V[-1, 1, 1] <- V[1, -1, 3] <- 0 ### check this - should be qey??
       }
       for(i in 2:n){
         for(j in 2:m){
@@ -604,12 +568,6 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                             start = startposition,
                             array = V,
                             pointer = P),
-                            # Dmatrix = V[, , 1],
-                            # Mmatrix = V[, , 2],
-                            # Imatrix = V[, , 3],
-                            # Dpointer = P[, , 1],
-                            # Mpointer = P[, , 2],
-                            # Ipointer = P[, , 3]),
                        class = 'Viterbi')
     }
   }
@@ -737,47 +695,13 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
                             residues = NULL, S = NULL, windowspace = "all",
                             offset = 0, cpp = TRUE, ...){
   if(!(type %in% c("global", "semiglobal", "local"))) stop("invalid type")
-  # check x is valid
-  if(is.list(x)){
-    if(length(x) == 1){
-      #namesx <- names(x)
-      x <- x[[1]]
-      #x <- matrix(x[[1]], nrow = 1)
-      #if(!is.null(namesx)) rownames(x) <- namesx
-    }else stop("Invalid input object x: multi-sequence list")
-  }
-  # check y is valid
-  if(is.list(y)){
-    if(length(y) == 1){
-      #namesy <- names(y)
-      y <- y[[1]]
-      #y <- matrix(y[[1]], nrow = 1)
-      #if(!is.null(namesy)) rownames(y) <- names
-    }else stop("Invalid input object y: multi-sequence list")
-  }
-
+  if(is.list(x)) if(length(x) == 1) x <- x[[1]] else stop("x is invalid")
+  if(is.list(y)) if(length(y) == 1) y <- y[[1]] else stop("y is invalid")
   DNA <- .isDNA(x)
   AA <- .isAA(x)
-
   if(DNA){
     if(!.isDNA(y)) stop("x is a DNAbin object but y is not")
     class(x) <- class(y) <- "DNAbin"
-    # changes here need also apply in Viterbi.PHMM, alignpair
-    # if(is.list(x)){
-    #   if(length(x) == 1){
-    #     namesx <- names(x)
-    #     x <- matrix(x[[1]], nrow = 1)
-    #     if(!is.null(namesx)) rownames(x) <- namesx
-    #     #x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
-    #     class(x) <- "DNAbin"
-    #   }else stop("Invalid input object x: multi-sequence list")
-    # }
-    # if(is.list(y)){
-    #   if(length(y) == 1){
-    #     y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-    #     class(y) <- "DNAbin"
-    #   }else stop("Invalid input object y: multi-sequence list")
-    # }
     if(is.null(S)){
       S <- aphid::substitution$NUC.4.4
     }else{
@@ -789,7 +713,6 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       }
     }
     if(identical(windowspace, "WilburLipman")){
-      #windowspace <- .streak(DNA2quaternary(x), DNA2quaternary(y), arity = 4)
       windowspace <- .streak(.encodeDNA(x, arity = 4, na.rm = TRUE),
                             .encodeDNA(y, arity = 4, na.rm = TRUE), arity = 4)
     }else if(identical(windowspace, "all")){
@@ -800,21 +723,6 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
   }else if(AA){
     if(!.isAA(y)) stop("x is an AAbin object but y is not")
     class(x) <- class(y) <- "AAbin"
-    # if(is.list(x)){
-    #   if(length(x) == 1){
-    #     namesx <- names(x)
-    #     x <- matrix(x[[1]], nrow = 1)
-    #     if(!is.null(namesx)) rownames(x) <- namesx
-    #     #x <- matrix(x[[1]], nrow = 1, dimnames = list(names(x), NULL))
-    #     class(x) <- "AAbin"
-    #   }else stop("Invalid input object x: multi-sequence list")
-    # }
-    # if(is.list(y)){
-    #   if(length(y) == 1){
-    #     y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-    #     class(y) <- "AAbin"
-    #   }else stop("Invalid input object y: multi-sequence list")
-    # }
     if(is.null(S)){
       S <- aphid::substitution$MATCH
     }else{
@@ -839,7 +747,6 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       x <- .encodeAA(x, arity = 24, na.rm = TRUE)
       y <- .encodeAA(y, arity = 24, na.rm = TRUE)
     }
-    ### need some conditions here
   }else{
     if(mode(x) != mode(y)) stop("x and y have different modes")
     if(is.null(S)){
@@ -848,7 +755,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       dimnames(S) <- list(residues, residues)
     }else{
       residues <- rownames(S)
-      if(is.null(residues)) stop("scoring matrix S must have 'dimnames' attributes")
+      if(is.null(residues)) stop("Scoring matrix S must have 'dimnames' attributes")
     }
     # code x and y vectors as integers in with arity = length(residues) - 1
     x  <- .encodeCH(x, residues = residues, na.rm = TRUE)
@@ -886,7 +793,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       P[3:n, 1, 1] <- 1
       P[1, 3:m, 3] <- 3
     }else if (type == 1){
-      M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0 ### check this - should fill dim2 instead?
+      M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0
       P[2, 1, 1] <- P[1, 2, 1] <- 2
       P[3:n, 1, 1] <- 1
       P[1, 3:m, 3] <- 3
@@ -894,7 +801,6 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
       M[2:n, 1, 1] <- M[1, 2:m, 3] <- 0
       P[1, , ] <- P[, 1, ]  <- 4
     }
-    #if(type == 0) P[1, 1, 2] <- 4
     for(i in 2:n){
       for(j in 2:m){
         if(j - i >= windowspace[1] & j - i <= windowspace[2]){
@@ -929,11 +835,10 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
         z[3] <- P[z[1], z[2], z[3]]
         z <- z - switch(path[1], c(1, 0, 0), c(1, 1, 0), c(0, 1, 0))
       }
-      #alig <- trackback(z, condition = "z[1] > 1 | z[2] > 1", P = P)
       startposition <- c(1, 1)
     }else if(type == 1){
       # find highest score on bottom row or right column of scoring array M
-      border <- rbind(M[n, , ], M[-n, m, ]) ### needs fixing, cosider M[,,2] only
+      border <- rbind(M[n, , ], M[-n, m, ]) ### consider M[,,2] only?
       ind <- which(border == max(border), arr.ind = TRUE)
       if(nrow(ind) > 1) ind <- ind[sample(1:nrow(ind), 1),]
       z <- if(ind[1] <= m) c(n, ind) else c(ind[1] - m, m, ind[2])
@@ -979,12 +884,9 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     path <- unname(path) - 1
     #rownames(progression) <- c(deparse(substitute(x)), deparse(substitute(y)))
     res <- structure(list(score = score,
-                          #alignment = alig,
                           path = path,
                           start = startposition,
-                          #firstmatch = firstmatch,
                           #progression = progression,
-                          #key = key,
                           array = M,
                           pointer = P),
                      class = 'Viterbi')

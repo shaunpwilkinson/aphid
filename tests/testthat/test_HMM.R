@@ -39,6 +39,12 @@ for(i in 1:5) sim[[i]] <- generate(x, size = 300)
 x2 <- train(x, sim, method = "BaumWelch", deltaLL = 0.01, quiet = TRUE)
 x3 <- train(x, sim, method = "Viterbi", quiet = TRUE)
 
+### Plotting
+fl <- tempfile(fileext=".pdf")
+pdf(file = fl)
+x.plot <- plot(x, begin = TRUE)
+dev.off()
+
 
 test_that("Dynammic programming found correct path and probs", {
   expect_equal(sum(predicted == "F"), 216)
@@ -63,5 +69,5 @@ test_that("Model training yielded acceptable results", {
 })
 
 test_that("Plotting command functions as expected", {
-  expect_identical(plot(x, begin = TRUE), NULL)
+  expect_identical(x.plot, NULL)
 })

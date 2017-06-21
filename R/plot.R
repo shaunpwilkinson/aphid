@@ -367,6 +367,7 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
              y1 = coords[l + 1, 2], code = code, length = arrowsize, ... = ...)
     }
   }
+  invisible()
 }
 ################################################################################
 .chord <- function(x, y, rad, type = 'outer', no.points = 100,
@@ -403,6 +404,7 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
            length = arrowlength,
            ... = ...)
   }
+  invisible()
 }
 ################################################################################
 .ellipse <- function(x, y, radx, rady = radx,
@@ -412,11 +414,13 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
   coords[, 1] <- x + radx * sin(piseq)
   coords[, 2] <- y - rady * cos(piseq)
   polygon(coords, col = col, lwd = lwd)
+  invisible()
 }
 ################################################################################
 .diamond <- function(x, y, radx, rady = radx, col = NULL, lwd = 1){
   xcoords <- c(x + c(0, radx, 0, -radx))
   ycoords <- c(y + c(rady, 0, -rady, 0))
   polygon(xcoords, ycoords, col = col, lwd = lwd)
+  invisible()
 }
 ################################################################################

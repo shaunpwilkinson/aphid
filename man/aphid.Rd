@@ -6,13 +6,15 @@
 \alias{aphid-package}
 \title{The \pkg{aphid} package for analysis with profile hidden Markov models.}
 \description{
-The \pkg{aphid} package contains functions for building and using profile hidden
-  Markov models for biological sequence analysis. Functions are included for
-  multiple and pairwise sequence alignment, model construction and parameter optimization,
-  calculation of conditional probabilities (with the forward and Viterbi algorithms),
-  tree-based sequence weighting, k-mer distance calculation, sequence simulation,
-  and file import/export compatible with the \href{http://www.hmmer.org}{HMMER}
-  software package.
+\pkg{aphid} is an R package for the development and application of
+  hidden Markov models and profile HMMs for biological sequence analysis.
+  Functions are included for multiple and pairwise sequence alignment,
+  model construction and parameter optimization, calculation of conditional
+  probabilities (using the forward, backward and Viterbi algorithms),
+  tree-based sequence weighting, sequence simulation, and file import/export
+  compatible with the \href{http://www.hmmer.org}{HMMER} software package.
+  The package has a wide variety of uses including database searching,
+  gene-finding and annotation, phylogenetic analysis and sequence classification.
 }
 \details{
 The \pkg{aphid} package is based on the algorithms outlined in the book 'Biological
@@ -33,19 +35,17 @@ The \pkg{aphid} package is based on the algorithms outlined in the book 'Biologi
 
   The \pkg{aphid} package is designed to work in conjunction with the "DNAbin"
   and "AAbin" object types produced by the \code{\link[ape]{ape}} package
-  (Paradis et al. 2004). This is an essential piece of software for those
-  using R for biological sequence analysis, since it provides a binary coding format
-  for nucleotides and amino acids that maximizes memory and speed efficiency. While
-  \pkg{aphid} also works with standard character vectors and matrices, it will
-  not recognize the DNA and amino acid amibguity codes and therefore is not
+  (Paradis et al 2004, 2012). This is an essential piece of software for those
+  using R for biological sequence analysis, and provides a binary coding format
+  for nucleotides and amino acids that maximizes memory and speed efficiency.
+  While \pkg{aphid} also works with standard character vectors and matrices,
+  it may not recognize the DNA and amino acid amibguity codes and therefore is not
   guaranteed to treat them appropriately.
 
   To maximize speed, the low-level dynamic programming functions such
   as \code{\link{Viterbi}}, \code{\link{forward}} and \code{\link{backward}}
   are written in C++ with the help of the \code{\link[Rcpp]{Rcpp}}
-  package. Thus those wishing to build the development version of the package
-  from source will need a C/C++ compiler such as
-  \href{https://clang.llvm.org/}{clang}.
+  package (Eddelbuettel & Francois 2011).
   Note that R versions of these functions are also maintained
   for the purposes of debugging, experimentation and code interpretation.
 }
@@ -58,11 +58,8 @@ The \pkg{aphid} package is based on the algorithms outlined in the book 'Biologi
   (denoted E and A), vectors of non-position-specific background emission and transition
   probabilies (denoted qe and qa) and other model metadata.
   Objects of class \code{"Viterbi"} and \code{"fullprob"} are also generated
-  by the Viterbi and forward/backward functions, respectively. Functions in the
-  \pkg{aphid} package are compatible with "DNAbin" and "AAbin" objects generated
-  by the \code{\link[ape]{ape}} package.
-  These object types, in which sequences are represented in a bit-level
-  coding scheme, are recommended for maximizing memory and speed effficiency.
+  by the Viterbi and forward/backward functions, respectively. These are
+  primarily created for succinct console printing.
 }
 
 \section{Functions}{
@@ -96,22 +93,20 @@ to their help pages below.
 \item \code{\link{deriveHMM}} builds a \code{"HMM"} object from a list of training
 sequences
 \item \code{\link{derivePHMM}} builds a \code{"PHMM"} object from a multiple sequence
-alignment or a list of unaligned sequences
+alignment or a list of non-aligned sequences
 \item \code{\link{map}} optimizes profile hidden Markov model construction
 using the maximum \emph{a posteriori} algorithm
-\item \code{\link{train.HMM}} optimizes the parameters of a \code{"HMM"} object
-using a list of training sequences
-\item \code{\link{train.PHMM}} optimizes the parameters of a \code{"PHMM"} object
-using a list of training sequences
+\item \code{\link{train}} optimizes the parameters of a \code{"HMM"} or
+\code{"PHMM"} object using a list of training sequences
 }
 }
 
 \section{Sequence alignment and weighting}{
 
 \itemize{
-\item \code{\link{align}} performs a PHMM-based progressive multiple sequence
-alignment
-\item \code{\link{weight}} assigns weights to sequences based on a tree
+\item \code{\link{align}} performs a multiple sequence alignment
+\item \code{\link{weight}} assigns weights to sequences using
+the recursive algorithm of Gerstein et al (1994)
 }
 }
 
@@ -132,20 +127,21 @@ of a sequence given a HMM or PHMM
 \section{Sequence simulation}{
 
 \itemize{
-\item \code{\link{generate}} simulates random sequences from a HMM
-or PHMM
+\item \code{\link{generate.HMM}} simulates a random sequence from an HMM
+\item \code{\link{generate.PHMM}} simulates a random sequence from a PHMM
 }
 }
 
 \section{Datasets}{
 
 \itemize{
-\item \code{\link{substitution}} DNA and protein substitution
-matrices including PAM, BLOSUM, GONNET, DAYHOFF, NUC.4.2 and NUC.4.4
-\item \code{\link{casino}} the dishonest casino example from Durbin et al.
-(1998) chapter 3.2
+\item \code{\link{substitution}} a collection of DNA and amino acid
+substitution matrices from \href{ftp://ftp.ncbi.nih.gov/blast/matrices/}{NCBI}
+including the PAM, BLOSUM, GONNET, DAYHOFF and NUC matrices
+\item \code{\link{casino}} data from the dishonest casino example of
+Durbin et al (1998) chapter 3.2
 \item \code{\link{globins}} Small globin alignment data from
-Durbin et al. (1998) Figure 5.3
+Durbin et al (1998) Figure 5.3
 }
 }
 
@@ -154,7 +150,10 @@ Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   sequence analysis: probabilistic models of proteins and nucleic acids.
   Cambridge University Press, Cambridge, United Kingdom.
 
-  Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
+  Eddelbuettel D, Francois R (2011) Rcpp: seamless R and C++ integration.
+  \emph{Journal of Statistical Software} \strong{40}, 1-18.
+
+  Finn RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
   similarity searching.
   \emph{Nucleic Acids Research}. \strong{39}:W29-W37. \url{http://hmmer.org/}.
 
@@ -167,27 +166,11 @@ Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   NCBI index of substitution matrices.
   \url{ftp://ftp.ncbi.nih.gov/blast/matrices/}.
 
-  Juang B-H, Rabiner LR (1990) The segmental K-means
-  algorithm for estimating parameters of hidden Markov models.
-  \emph{IEEE Transactions on Acoustics, Speech, and Signal Processing},
-  \strong{38}, 1639-1641.
-
   Paradis E, Claude J, Strimmer K, (2004) APE: analyses of phylogenetics
   and evolution in R language. \emph{Bioinformatics} \strong{20}, 289-290.
 
   Paradis E (2012) Analysis of Phylogenetics and Evolution with R
   (Second Edition). Springer, New York.
-
-  Sievers F, Wilm A, Dineen D, Gibson TJ, Karplus K, Li W, Lopez R, McWilliam H,
-  Remmert M, Soding J, Thompson JD, Higgins DG (2011) Fast, scalable generation
-  of high-quality protein multiple sequence alignments using Clustal Omega.
-  \emph{Molecular Systems Biology}, \strong{7}, 539.
-
-  Soding J (2005) Protein homology detection by HMM-HMM comparison.
-  \emph{Bioinformatics}, \strong{21}, 951-960.
-
-  Wilbur WJ, Lipman DJ (1983) Rapid similarity searches of nucleic acid and
-  protein data banks. \emph{Proc Natl Acad Sci USA}, \strong{80}, 726-730.
 }
 \author{
 Shaun Wilkinson

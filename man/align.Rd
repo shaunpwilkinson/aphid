@@ -215,7 +215,7 @@ This function uses a progressive alignment procedure similar to
   or Smith-Waterman algorithm.
 }
 \examples{
-  ## Protein pairwise alignment example from Durbin et al. (1998) chapter 2.
+  ## Protein pairwise alignment example from Durbin et al (1998) chapter 2.
   x <- c("H", "E", "A", "G", "A", "W", "G", "H", "E", "E")
   y <- c("P", "A", "W", "H", "E", "A", "E")
   sequences <- list(x = x, y = y)
@@ -225,6 +225,13 @@ This function uses a progressive alignment procedure similar to
   glo
   sem
   loc
+\dontrun{
+  ## Deconstruct the woodmouse alignment and re-align
+  library(ape)
+  data(woodmouse)
+  tmp <- unalign(woodmouse)
+  x <- align(tmp, windowspace = "WilburLipman")
+}
 }
 \references{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological

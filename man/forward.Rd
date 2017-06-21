@@ -9,8 +9,8 @@
 forward(x, y, ...)
 
 \method{forward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
-  type = "global", odds = TRUE, windowspace = "all", DI = FALSE,
-  ID = FALSE, cpp = TRUE, ...)
+  odds = TRUE, windowspace = "all", DI = FALSE, ID = FALSE,
+  cpp = TRUE, ...)
 
 \method{forward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 }
@@ -35,11 +35,6 @@ if the probabilities are logged, returning an error if
 inconsistencies are found. Note that choosing the latter option
 increases the computational overhead; therefore specifying
 \code{TRUE} or \code{FALSE} can reduce the running time.}
-
-\item{type}{character string indicating whether insert and delete states
-at the beginning and end of the path should count towards the final score
-('global'; default). Note that unlike \code{link{Viterbi}}, semiglobal
-and local models are not currently supported.}
 
 \item{odds}{logical, indicates whether the returned scores
 should be odds ratios (TRUE) or full logged probabilities (FALSE).}

@@ -32,7 +32,7 @@ a list of sequences of the same mode and class as the input alignment
 ## unaligned sequences
 library(ape)
 data(woodmouse)
-sequences <- unalign(woodmouse)
+x <- unalign(woodmouse)
 }
 \seealso{
 \code{\link{align}}.

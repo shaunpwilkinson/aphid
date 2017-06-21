@@ -686,7 +686,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 #'   \emph{a posteriori} algorithm outlined in Durbin et al. (1998) chapter 5.7.
 #'
 #' @param x a matrix of aligned sequences. Accepted modes are "character"
-#'   and "raw" (for "DNAbin" and "AAbin" objects).
+#'   and "raw" (the latter being used for "DNAbin" and "AAbin" objects).
 #' @param seqweights either NULL (default; all sequences are given
 #'   weights of 1) or a numeric vector the same length as \code{x} representing
 #'   the sequence weights used to derive the model.
@@ -826,7 +826,6 @@ map <- function(x, seqweights = NULL, residues = NULL,
   if(cpp){
     res <- .map(ecs, notgaps, pseudocounts, seqweights, qe, lambda)
   }else{
-    cat("cpp not used\n")
     ecs2 <- ecs + pseudocounts$E
     term2 <- t(t(ecs2)/apply(ecs2, 2, sum))
     term2[ecs != 0] <- log(term2[ecs != 0]) # increase speed for conserved alignments

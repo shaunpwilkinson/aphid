@@ -223,8 +223,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // forwardP
-List forwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, bool DI, bool ID, bool DNA, bool AA);
-RcppExport SEXP aphid_forwardP(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
+List forwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, IntegerVector windowspace, bool DI, bool ID, bool DNA, bool AA);
+RcppExport SEXP aphid_forwardP(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -233,13 +233,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
     Rcpp::traits::input_parameter< NumericVector >::type qe(qeSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type qey(qeySEXP);
-    Rcpp::traits::input_parameter< int >::type type(typeSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type windowspace(windowspaceSEXP);
     Rcpp::traits::input_parameter< bool >::type DI(DISEXP);
     Rcpp::traits::input_parameter< bool >::type ID(IDSEXP);
     Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
     Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
-    rcpp_result_gen = Rcpp::wrap(forwardP(y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA));
+    rcpp_result_gen = Rcpp::wrap(forwardP(y, A, E, qe, qey, windowspace, DI, ID, DNA, AA));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -259,8 +258,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // backwardP
-List backwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, int type, IntegerVector windowspace, bool DI, bool ID, bool DNA, bool AA);
-RcppExport SEXP aphid_backwardP(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP typeSEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
+List backwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe, NumericVector qey, IntegerVector windowspace, bool DI, bool ID, bool DNA, bool AA);
+RcppExport SEXP aphid_backwardP(SEXP ySEXP, SEXP ASEXP, SEXP ESEXP, SEXP qeSEXP, SEXP qeySEXP, SEXP windowspaceSEXP, SEXP DISEXP, SEXP IDSEXP, SEXP DNASEXP, SEXP AASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -269,13 +268,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type E(ESEXP);
     Rcpp::traits::input_parameter< NumericVector >::type qe(qeSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type qey(qeySEXP);
-    Rcpp::traits::input_parameter< int >::type type(typeSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type windowspace(windowspaceSEXP);
     Rcpp::traits::input_parameter< bool >::type DI(DISEXP);
     Rcpp::traits::input_parameter< bool >::type ID(IDSEXP);
     Rcpp::traits::input_parameter< bool >::type DNA(DNASEXP);
     Rcpp::traits::input_parameter< bool >::type AA(AASEXP);
-    rcpp_result_gen = Rcpp::wrap(backwardP(y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA));
+    rcpp_result_gen = Rcpp::wrap(backwardP(y, A, E, qe, qey, windowspace, DI, ID, DNA, AA));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -9,8 +9,8 @@
 backward(x, y, ...)
 
 \method{backward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
-  type = "global", odds = TRUE, windowspace = "all", DI = FALSE,
-  ID = FALSE, cpp = TRUE, ...)
+  odds = TRUE, windowspace = "all", DI = FALSE, ID = FALSE,
+  cpp = TRUE, ...)
 
 \method{backward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 }
@@ -35,11 +35,6 @@ if the probabilities are logged, returning an error if
 inconsistencies are found. Note that choosing the latter option
 increases the computational overhead; therefore specifying
 \code{TRUE} or \code{FALSE} can reduce the running time.}
-
-\item{type}{character string indicating whether insert and delete states
-at the beginning and end of the path should count towards the final score
-('global'; default). Note that unlike \code{link{Viterbi}}, semiglobal
-and local models are not currently supported.}
 
 \item{odds}{logical, indicates whether the returned scores
 should be odds ratios (TRUE) or full logged probabilities (FALSE).}
@@ -79,7 +74,7 @@ This function is a wrapper for a compiled C++ function that recursively
   calculates the full (logged) probability of a sequence given a HMM or
   PHMM.
   For a thorough explanation of the backward, forward and Viterbi
-  algorithms, see Durbin et al. (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
+  algorithms, see Durbin et al (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
 }
 \examples{
   ## Backward algorithm for standard HMMs:

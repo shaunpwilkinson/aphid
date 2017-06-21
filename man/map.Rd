@@ -10,7 +10,7 @@ map(x, seqweights = NULL, residues = NULL, gap = "-", endchar = "?",
 }
 \arguments{
 \item{x}{a matrix of aligned sequences. Accepted modes are "character"
-and "raw" (for "DNAbin" and "AAbin" objects).}
+and "raw" (the latter being used for "DNAbin" and "AAbin" objects).}
 
 \item{seqweights}{either NULL (default; all sequences are given
 weights of 1) or a numeric vector the same length as \code{x} representing

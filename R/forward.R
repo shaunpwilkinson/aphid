@@ -8,10 +8,6 @@
 #' @param y a vector of mode "character" or "raw" (a "DNAbin" or "AAbin"
 #'   object) representing a single sequence hypothetically emitted by
 #'   the model in \code{x}.
-#' @param type character string indicating whether insert and delete states
-#'   at the beginning and end of the path should count towards the final score
-#'   ('global'; default). Note that unlike \code{link{Viterbi}}, semiglobal
-#'   and local models are not currently supported.
 #' @inheritParams Viterbi
 #' @return an object of class \code{"fullprob"}, which is simply a list
 #'   containing the score and dynamic programming arrays.
@@ -67,11 +63,6 @@
 #'   x$array
 #' @name forward
 ################################################################################
-# forward <- function(x, y, qe = NULL, logspace = "autodetect", odds = TRUE,
-#                     type = "global", windowspace = "all",
-#                     DI = FALSE, ID = FALSE, cpp = TRUE){
-#   UseMethod("forward")
-# }
 forward <- function(x, y, ...){
   UseMethod("forward")
 }
@@ -79,7 +70,7 @@ forward <- function(x, y, ...){
 #' @rdname forward
 ################################################################################
 forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
-                         type = "global", odds = TRUE, windowspace = "all",
+                         odds = TRUE, windowspace = "all",
                          DI = FALSE, ID = FALSE, cpp = TRUE, ...){
   if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   pp <- inherits(y, "PHMM")
@@ -87,21 +78,18 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   pd <- .isDNA(y)
   pa <- .isAA(y)
   pc <- !pp & !pd & !pa
+  if(!pp & is.list(y)) if(length(y) == 1) y <- y[[1]] else stop("y is invalid")
+
   if(pd){
     rownames(x$E) <- toupper(rownames(x$E))
     if("U" %in% rownames(x$E)) rownames(x$E)[rownames(x$E) == "U"] <- "T"
     NUCorder <- sapply(rownames(x$E), match, c("A", "T", "G", "C"))
     x$E <- x$E[NUCorder, ]
     if(!(identical(rownames(x$E), c("A", "T", "G", "C")))){
-      stop("invalid model for DNA, residue alphabet does not correspond to
+      stop("Invalid model for DNA, residue alphabet does not correspond to
            nucleotide alphabet")
     }
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-        class(y) <- "DNAbin"
-      }else stop("Invalid input object y: multi-sequence list")
-    }
+    class(y) <- "DNAbin"
     y.DNAbin <- y
     y <- .encodeDNA(y, arity = 15, na.rm = TRUE)
   }else if(pa){
@@ -109,38 +97,24 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     PFAMorder <- sapply(rownames(x$E), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
     x$E <- x$E[PFAMorder, ]
     if(!(identical(rownames(x$E), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
-      stop("invalid model for AA, residue alphabet does not correspond to
+      stop("Invalid model for AA, residue alphabet does not correspond to
            20-letter amino acid alphabet")
     }
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- matrix(y[[1]], nrow = 1, dimnames = list(names(y), NULL))
-        class(y) <- "AAbin"
-      }else stop("Invalid input object y: multi-sequence list")
-    }
+    class(y) <- "AAbin"
     y.AAbin <- y
     y <- .encodeAA(y, arity = 27, na.rm = TRUE)
   }else if(pc){
-    if(is.list(y)){
-      if(length(y) == 1){
-        y <- y[[1]]
-      }else stop("Invalid input object y: multi-sequence list")
-    }
     if(mode(y) == "character"){
       y <- match(y, rownames(x$E)) - 1
-      if(any(is.na(y))) {
-        warning("residues in sequence(s) are missing from the model")
+      if(any(is.na(y))){
+        warning("Residues in sequence(s) are missing from the model")
         y <- y[!is.na(y)]
       }
-    }#else if length(unique(y)) > nrow(x$E) stop("")
+    }
   }
   n <- ncol(x$E) + 1
   m <- if(pp) ncol(y$E) + 1 else length(y) + 1
-  # if(identical(windowspace, "WilburLipman") | identical(windowspace, "all")){
-  #   windowspace <- c(-x$size, if(pp) y$size else length(y)) ### placeholder
-  # }else if(length(windowspace) != 2) stop("invalid windowspace argument")
   states <- if(pp) c("MI", "DG", "MM", "GD", "IM") else c("D", "M", "I")
-
   # background emission probabilities
   if(!(is.null(qe))){
     if(all(qe >= 0) & all(qe <= 1)) qe <- log(qe)
@@ -166,7 +140,6 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       names(qe) <- rownames(x$E)
     }
   }
-  type = switch(type, "global" = 0L, "semiglobal" = 1L, stop("invalid type"))
   R <- array(-Inf, dim = c(n, m, length(states)))
   dimnames(R) <- list(x = 0:(n - 1), y = 0:(m - 1), state = states)
   R[1, 1, 2] <- 0
@@ -177,7 +150,6 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE, AA = pa, DNA = pd)
       if(pd){
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
-        #yqt <- DNA2quaternary(y.DNAbin, na.rm = TRUE)
         yqt <- .encodeDNA(y.DNAbin, arity = 4, na.rm = TRUE)
         windowspace <- .streak(xqt, yqt, arity = 4, k = 5)
       }else if(pa){
@@ -190,7 +162,7 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       }
     }else if(identical(windowspace, "all")){
       windowspace <- c(-x$size, length(y))
-    }else if(length(windowspace) != 2) stop("invalid windowspace argument")
+    }else if(length(windowspace) != 2) stop("Invalid windowspace argument")
     qey <- if(odds) {
       rep(0, m - 1)
     }else if(pd){
@@ -218,20 +190,16 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     }
     if(odds) E <- E - qe
     if(cpp){
-      res <- .forwardP(y, A, E, qe, qey, type, windowspace, DI, ID, DNA = pd, AA = pa)
+      res <- .forwardP(y, A, E, qe, qey, windowspace, DI, ID, DNA = pd, AA = pa)
       R[, , 1] <- res$Dmatrix
       R[, , 2] <- res$Mmatrix
       R[, , 3] <- res$Imatrix
       res$array <- R
     }else{
-      if(type == 0){
-        R[2, 1, "D"] <- A["MD", 1]
-        for(i in 3:n) R[i, 1, "D"] <- R[i - 1, 1, "D"] + A["DD", i - 1]
-        R[1, 2, "I"] <- A["MI", 1] + qey[1]
-        for(j in 3:m) R[1, j, "I"] <- R[1, j - 1, "I"] + A["II", 1] + qey[j - 1]
-      }else{
-        R[-1, 1, 1] <- R[1, -1, 3] <- 0 ### needs checking, in viterbi too
-      }
+      R[2, 1, "D"] <- A["MD", 1]
+      for(i in 3:n) R[i, 1, "D"] <- R[i - 1, 1, "D"] + A["DD", i - 1]
+      R[1, 2, "I"] <- A["MI", 1] + qey[1]
+      for(j in 3:m) R[1, j, "I"] <- R[1, j - 1, "I"] + A["II", 1] + qey[j - 1]
       for(i in 2:n){
         for(j in 2:m){
           if(j - i >= windowspace[1] & j - i <= windowspace[2]){
@@ -257,20 +225,13 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
           }
         }
       }
-      if(type == 0){
-        LLcdt <- c(R[n, m, "M"] + A["MM", n],
-                   R[n, m, "I"] + A["IM", n],
-                   R[n, m, "D"] + A["DM", n])
-        score <- logsum(LLcdt)
-      }else{
-        stop("semiglobal type not available for forward.PHMM yet")
-      }
+      LLcdt <- c(R[n, m, "M"] + A["MM", n],
+                 R[n, m, "I"] + A["IM", n],
+                 R[n, m, "D"] + A["DM", n])
+      score <- logsum(LLcdt)
       res <- structure(list(score = score,
                             odds = odds,
                             array = R),
-                            # Dmatrix = R[, , 1],
-                            # Mmatrix = R[, , 2],
-                            # Imatrix = R[, , 3]),
                        class = 'fullprob')
     }
   }
@@ -332,7 +293,7 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
     res <- .forwardH(y, A, E, DNA, AA)
     rownames(res$array) <- states
   }else{
-    R <- array(NA, dim = c(H, n))#, dimnames = list(state = states, step = 1:n))
+    R <- array(NA, dim = c(H, n))
     rownames(R) <- states
     tmp <- matrix(nrow = H, ncol = H)
     if(DNA){

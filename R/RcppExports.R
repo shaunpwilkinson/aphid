@@ -90,15 +90,15 @@ whichmax <- function(x, start = 1L) {
     .Call('aphid_forwardH', PACKAGE = 'aphid', y, A, E, DNA, AA)
 }
 
-.forwardP <- function(y, A, E, qe, qey, type, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
-    .Call('aphid_forwardP', PACKAGE = 'aphid', y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA)
+.forwardP <- function(y, A, E, qe, qey, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
+    .Call('aphid_forwardP', PACKAGE = 'aphid', y, A, E, qe, qey, windowspace, DI, ID, DNA, AA)
 }
 
 .backwardH <- function(y, A, E, DNA = FALSE, AA = FALSE) {
     .Call('aphid_backwardH', PACKAGE = 'aphid', y, A, E, DNA, AA)
 }
 
-.backwardP <- function(y, A, E, qe, qey, type, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
-    .Call('aphid_backwardP', PACKAGE = 'aphid', y, A, E, qe, qey, type, windowspace, DI, ID, DNA, AA)
+.backwardP <- function(y, A, E, qe, qey, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
+    .Call('aphid_backwardP', PACKAGE = 'aphid', y, A, E, qe, qey, windowspace, DI, ID, DNA, AA)
 }
 

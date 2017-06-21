@@ -1079,7 +1079,7 @@ List forwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
 
 // [[Rcpp::export(name = ".forwardP")]]
 List forwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
-                  NumericVector qey, int type, IntegerVector windowspace,
+                  NumericVector qey, IntegerVector windowspace,
                   bool DI = false, bool ID = false, bool DNA = false, bool AA = false){
   int n = E.ncol() + 1;
   int m = y.size() + 1;
@@ -1097,16 +1097,10 @@ List forwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
   NumericMatrix Imatrix = clone(Dmatrix); // y aligns to gap in x
   // initialize scoring matrices
   Mmatrix(0, 0) = 0;
-  if(type == 0){
-    Dmatrix(1, 0) = A(3, 0); // Match -> Delete transition prob for position 0
-    Imatrix(0, 1) = A(5, 0) + qey[0];
-    for(int i = 2; i < n; i++) Dmatrix(i, 0) = Dmatrix(i - 1, 0) + A(0, i - 1);
-    for(int j = 2; j < m; j++) Imatrix(0, j) = Imatrix(0, j - 1) + A(8, 0) + qey[j - 1];
-  }else{
-    throw Rcpp::exception("type semiglobal not supported");
-    //for(int i = 1; i < n; i++) Dmatrix(i, 0) = 0;
-    //for(int j = 1; j < m; j++) Imatrix(0, j) = 0; // qey??
-  }
+  Dmatrix(1, 0) = A(3, 0); // Match -> Delete transition prob for position 0
+  Imatrix(0, 1) = A(5, 0) + qey[0];
+  for(int i = 2; i < n; i++) Dmatrix(i, 0) = Dmatrix(i - 1, 0) + A(0, i - 1);
+  for(int j = 2; j < m; j++) Imatrix(0, j) = Imatrix(0, j - 1) + A(8, 0) + qey[j - 1];
   // recursion
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
@@ -1135,14 +1129,10 @@ List forwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
     checkUserInterrupt();
   }
   double score;
-  if(type == 0){
-    NumericVector LLcdt = NumericVector::create(Dmatrix(n - 1, m - 1) + A(1, n - 1), //DM
-                                                Mmatrix(n - 1, m - 1) + A(4, n - 1), //MM
-                                                Imatrix(n - 1, m - 1) + A(7, n - 1)); //IM
-    score = logsum(LLcdt);
-  }else{
-    score = 0;
-  }
+  NumericVector LLcdt = NumericVector::create(Dmatrix(n - 1, m - 1) + A(1, n - 1), //DM
+                                              Mmatrix(n - 1, m - 1) + A(4, n - 1), //MM
+                                              Imatrix(n - 1, m - 1) + A(7, n - 1)); //IM
+  score = logsum(LLcdt);
   bool odds = all(qey == 0).is_true();
   List res = List::create(Named("score") = score,
                           Named("odds") = odds,
@@ -1219,7 +1209,7 @@ List backwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
 
 // [[Rcpp::export(name = ".backwardP")]]
 List backwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector qe,
-                  NumericVector qey, int type, IntegerVector windowspace,
+                  NumericVector qey, IntegerVector windowspace,
                   bool DI = false, bool ID = false, bool DNA = false, bool AA = false){
   int n = E.ncol() + 1;
   int m = y.size() + 1;
@@ -1239,21 +1229,15 @@ List backwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector 
   Dmatrix(n - 1, m - 1) = A(1, n - 1);
   Mmatrix(n - 1, m - 1) = A(4, n - 1);
   Imatrix(n - 1, m - 1) = A(7, n - 1);
-  if(type == 0){
-    for(int i = n - 1; i > 0; i--) {
-      Dmatrix(i - 1, m - 1) = Dmatrix(i, m - 1) + A(0, i - 1); //DD
-      Mmatrix(i - 1, m - 1) = Dmatrix(i, m - 1) + A(3, i - 1); //MD
-      if(ID) Imatrix(i - 1, m - 1) = Dmatrix(i, m - 1) + A(6, i - 1); //ID
-    }
-    for(int j = m - 1; j > 0; j--){
-      if(DI) Dmatrix(n - 1, j - 1) = Imatrix(n - 1, j) + A(2, n - 1) + qey[j - 1]; //DI
-      Mmatrix(n - 1, j - 1) = Imatrix(n - 1, j) + A(5, n - 1) + qey[j - 1]; //MI
-      Imatrix(n - 1, j - 1) = Imatrix(n - 1, j) + A(8, n - 1) + qey[j - 1]; //II
-    }
-  }else{
-    throw Rcpp::exception("type semiglobal not supported");
-    //for(int i = 1; i < n; i++) Dmatrix(i, 0) = 0;
-    //for(int j = 1; j < m; j++) Imatrix(0, j) = 0; // qey??
+  for(int i = n - 1; i > 0; i--) {
+    Dmatrix(i - 1, m - 1) = Dmatrix(i, m - 1) + A(0, i - 1); //DD
+    Mmatrix(i - 1, m - 1) = Dmatrix(i, m - 1) + A(3, i - 1); //MD
+    if(ID) Imatrix(i - 1, m - 1) = Dmatrix(i, m - 1) + A(6, i - 1); //ID
+  }
+  for(int j = m - 1; j > 0; j--){
+    if(DI) Dmatrix(n - 1, j - 1) = Imatrix(n - 1, j) + A(2, n - 1) + qey[j - 1]; //DI
+    Mmatrix(n - 1, j - 1) = Imatrix(n - 1, j) + A(5, n - 1) + qey[j - 1]; //MI
+    Imatrix(n - 1, j - 1) = Imatrix(n - 1, j) + A(8, n - 1) + qey[j - 1]; //II
   }
   // recursion
   for(int i = n - 2; i >= 0; i--){
@@ -1283,11 +1267,7 @@ List backwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector 
     checkUserInterrupt();
   }
   double score;
-  if(type == 0){
-    score = Mmatrix(0, 0);
-  }else{
-    score = 0;
-  }
+  score = Mmatrix(0, 0);
   bool odds = all(qey == 0).is_true();
   List res = List::create(Named("score") = score,
                           Named("odds") = odds,
