@@ -4,17 +4,14 @@
 \alias{print}
 \alias{print.PHMM}
 \alias{print.HMM}
-\alias{print.fullprob}
-\alias{print.Viterbi}
+\alias{print.DPA}
 \title{Print summary methods.}
 \usage{
 \method{print}{PHMM}(x, ...)
 
 \method{print}{HMM}(x, ...)
 
-\method{print}{fullprob}(x, ...)
-
-\method{print}{Viterbi}(x, ...)
+\method{print}{DPA}(x, ...)
 }
 \arguments{
 \item{x}{object of various classes.}

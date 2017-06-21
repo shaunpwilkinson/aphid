@@ -60,8 +60,8 @@ should be filled using compiled C++ functions (default; many times faster).
 The FALSE option is primarily retained for bug fixing and experimentation.}
 }
 \value{
-an object of class \code{"fullprob"}, which is simply a list
-  containing the score and dynamic programming arrays.
+an object of class \code{"DPA"}, which is a list
+  containing the score and dynamic programming array.
 }
 \description{
 This function calculates the full (log) probability or odds
@@ -74,7 +74,7 @@ This function is a wrapper for a compiled C++ function that recursively
   calculates the full (logged) probability of a sequence given a HMM or
   PHMM.
   For a thorough explanation of the backward, forward and Viterbi
-  algorithms, see Durbin et al. (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
+  algorithms, see Durbin et al (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
 }
 \examples{
   ## Forward algorithm for standard HMMs:

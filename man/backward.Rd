@@ -60,8 +60,8 @@ should be filled using compiled C++ functions (default; many times faster).
 The FALSE option is primarily retained for bug fixing and experimentation.}
 }
 \value{
-an object of class \code{"fullprob"}, which is simply a list
-  containing the score and dynamic programming arrays.
+an object of class \code{"DPA"}, which is a list
+  containing the score and dynamic programming array.
 }
 \description{
 This function calculates the full (log) probability or odds

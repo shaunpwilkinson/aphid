@@ -43,7 +43,7 @@ NULL (invisibly).
   in the example below.
 }
 \examples{
-  ## Small globin alignment example from Durbin et al. (1998) Figure 5.3
+  ## Small globin alignment example from Durbin et al (1998) Figure 5.3
   data(globins)
   ## derive a profile hidden Markov model from the alignment
   globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)

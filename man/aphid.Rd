@@ -57,9 +57,9 @@ The \pkg{aphid} package is based on the algorithms outlined in the book 'Biologi
   These objects are lists consisting of emission and transition probability matrices
   (denoted E and A), vectors of non-position-specific background emission and transition
   probabilies (denoted qe and qa) and other model metadata.
-  Objects of class \code{"Viterbi"} and \code{"fullprob"} are also generated
-  by the Viterbi and forward/backward functions, respectively. These are
-  primarily created for succinct console printing.
+  Objects of class \code{"DPA"} (dynammic programming array) are also generated
+  by the Viterbi and forward/backward functions.
+  These are primarily created for succinct console printing.
 }
 
 \section{Functions}{

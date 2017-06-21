@@ -3,7 +3,7 @@
 \docType{data}
 \name{casino}
 \alias{casino}
-\title{Dishonest casino example.}
+\title{Dishonest casino.}
 \format{A named character vector showing the result of 300 rolls of a die
   that switches from "Fair" to "Loaded" with a probability
   of 0.05 and back to "Fair" with a probability of 0.1. In the Fair
@@ -22,6 +22,6 @@ Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 casino
 }
 \description{
-The 'dishonest casino' example from Durbin et al. (1998) chapter 3.2.
+The 'dishonest casino' example from Durbin et al (1998) chapter 3.2.
 }
 \keyword{datasets}

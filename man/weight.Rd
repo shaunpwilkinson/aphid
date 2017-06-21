@@ -66,7 +66,7 @@ This is a generic function that uses the agglomerative method of
   ASCII character format provided either as lists or matrices.
 }
 \details{
-For further details see Durbin et al. (1998) chapter 5.8.
+For further details see Durbin et al (1998) chapter 5.8.
 }
 \examples{
   ## weight the sequences in the woodmouse dataset from the ape package

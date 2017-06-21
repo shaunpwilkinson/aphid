@@ -103,7 +103,7 @@ are marked as either match or insert states. Accepted methods include
 \code{"threshold"} (only columns with fewer than a specified
 proportion of gaps form match states in the model), \code{"map"} (default;
 match and insert columns are found using the maximum \emph{a posteriori}
-method outlined in Durbin et al. (1998) chapter 5.7), \code{"inherited"}
+method outlined in Durbin et al (1998) chapter 5.7), \code{"inherited"}
 (match and insert columns are inherited from the input alignment),
 and \code{"none"} (all columns are assigned match states in the model).
 Alternatively, insert columns can be
@@ -113,7 +113,7 @@ columns and \code{FALSE} for match states.}
 
 \item{lambda}{penalty parameter used to favour models with fewer match
 states. Equivalent to the log of the prior probability of marking each
-column (Durbin et al. 1998, pg 124). Only applicable when
+column (Durbin et al 1998, chapter 5.7). Only applicable when
 \code{inserts = "map"}.}
 
 \item{threshold}{the maximum proportion of gaps for an alignment column

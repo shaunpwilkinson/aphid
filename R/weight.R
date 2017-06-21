@@ -32,7 +32,7 @@
 #' @param ... additional arguments to be passed between methods.
 #' @return a named vector of weights, the sum of which is equal to
 #'    the total number of sequences (average weight = 1).
-#' @details For further details see Durbin et al. (1998) chapter 5.8.
+#' @details For further details see Durbin et al (1998) chapter 5.8.
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological

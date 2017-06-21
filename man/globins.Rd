@@ -4,9 +4,9 @@
 \name{globins}
 \alias{globins}
 \title{Globin protein alignment.}
-\format{a 7 x 10 character matrix showing ten columns from a multiple
-  alignment of globin proteins shown in Durbin et al. (1998) chapter
-  5.3.}
+\format{a 7 x 10 character matrix with ten columns of a multiple
+  alignment of globin amino acid sequences from Durbin et al (1998)
+  chapter 5.3.}
 \source{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   sequence analysis: probabilistic models of proteins and nucleic acids.
@@ -17,6 +17,6 @@ globins
 }
 \description{
 The small globin protein alignment from figure 5.3 of
-Durbin et al. (1998).
+Durbin et al (1998).
 }
 \keyword{datasets}

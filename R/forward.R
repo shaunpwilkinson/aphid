@@ -9,15 +9,15 @@
 #'   object) representing a single sequence hypothetically emitted by
 #'   the model in \code{x}.
 #' @inheritParams Viterbi
-#' @return an object of class \code{"fullprob"}, which is simply a list
-#'   containing the score and dynamic programming arrays.
+#' @return an object of class \code{"DPA"}, which is a list
+#'   containing the score and dynamic programming array.
 #' @details
 #'   This function is a wrapper for a compiled C++ function that recursively
 #'   fills a dynamic programming matrix with logged probabilities, and
 #'   calculates the full (logged) probability of a sequence given a HMM or
 #'   PHMM.
 #'   For a thorough explanation of the backward, forward and Viterbi
-#'   algorithms, see Durbin et al. (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
+#'   algorithms, see Durbin et al (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -177,7 +177,7 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       if(m > 1) R[1, 2, "I"] <- A["MI", 1]
       if(m > 2) for(j in 3:m) R[1, j, "I"] <- R[1, j - 1, "I"] + A["II", 1] + qey[j - 1]
       score <- if(m > 1) R[1, m, "I"] + A["IM", 1] else 0
-      res <- structure(list(score = score, array = R), class = 'fullprob')
+      res <- structure(list(score = score, array = R), class = "DPA")
       return(res)
     }
     if(m == 1){
@@ -185,7 +185,7 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       if(n > 1) R[2, 1, "D"] <- A["MD", 1]
       if(n > 2) for(i in 3:n) R[i, 1, "D"] <- R[i - 1, 1, "D"] + A["DD", i - 1]
       score <- if(n > 1) R[n, 1, "D"] + A["DM", n] else 0
-      res <- structure(list(score = score, array = R), class = 'fullprob')
+      res <- structure(list(score = score, array = R), class = "DPA")
       return(res)
     }
     if(odds) E <- E - qe
@@ -232,7 +232,7 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       res <- structure(list(score = score,
                             odds = odds,
                             array = R),
-                       class = 'fullprob')
+                       class = "DPA")
     }
   }
   return(res)
@@ -288,7 +288,7 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
   states <- rownames(E)
   residues <- colnames(E)
   H <- length(states)
-  if(length(y) == 0) structure(list(score = A[1, 1], array = NULL), class = 'fullprob')
+  if(length(y) == 0) structure(list(score = A[1, 1], array = NULL), class = "DPA")
   if(cpp){
     res <- .forwardH(y, A, E, DNA, AA)
     rownames(res$array) <- states
@@ -331,7 +331,7 @@ forward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
     ak0 <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H)
     score <- logsum(R[, n] + ak0)
     res <- structure(list(score = score, array = R, odds = FALSE),
-                     class = 'fullprob')
+                     class = "DPA")
   }
   return(res)
 }

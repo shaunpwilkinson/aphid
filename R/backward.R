@@ -9,8 +9,8 @@
 #'   object) representing a single sequence hypothetically emitted by
 #'   the model in \code{x}.
 #' @inheritParams Viterbi
-#' @return an object of class \code{"fullprob"}, which is simply a list
-#'   containing the score and dynamic programming arrays.
+#' @return an object of class \code{"DPA"}, which is a list
+#'   containing the score and dynamic programming array.
 #' @details
 #'   This function is a wrapper for a compiled C++ function that recursively
 #'   fills a dynamic programming matrix with logged probabilities, and
@@ -18,6 +18,7 @@
 #'   PHMM.
 #'   For a thorough explanation of the backward, forward and Viterbi
 #'   algorithms, see Durbin et al (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
+#'
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -218,7 +219,7 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       res <- structure(list(score = score,
                             odds = odds,
                             array = B),
-                       class = 'fullprob')
+                       class = "DPA")
     }
   }
   return(res)
@@ -273,7 +274,7 @@ backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
   A <- if(logspace) x$A else log(x$A)
   states <- rownames(E)
   H <- length(states)
-  if(length(y) == 0) structure(list(score = A[1, 1], array = NULL), class = 'fullprob')
+  if(length(y) == 0) structure(list(score = A[1, 1], array = NULL), class = "DPA")
   if(cpp){
     res <- .backwardH(y, A, E)
     rownames(res$array) <- states
@@ -318,7 +319,7 @@ backward.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
     }
     score <- logsum(logprobs)
     res <- structure(list(score = score, array = B, odds = FALSE),
-                     class = 'fullprob')
+                     class = "DPA")
   }
   return(res)
 }

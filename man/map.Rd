@@ -52,7 +52,7 @@ second.}
 
 \item{lambda}{penalty parameter used to favour models with fewer match
 states. Equivalent to the log of the prior probability of marking each
-column (Durbin et al. 1998, chapter 5.7).}
+column (Durbin et al 1998, chapter 5.7).}
 
 \item{qa}{an optional named 9-element vector of background transition
 probabilities with \code{dimnames(qa) = c("DD", "DM", "DI", "MD", "MM",
@@ -77,15 +77,15 @@ a logical vector with length = ncol(x) indicating the columns to be
 }
 \description{
 Assigns match and insert states to alignment columns using the maximum
-  \emph{a posteriori} algorithm outlined in Durbin et al. (1998) chapter 5.7.
+  \emph{a posteriori} algorithm outlined in Durbin et al (1998) chapter 5.7.
 }
 \details{
-see Durbin et al. (1998) chapter 5.7 for details of
+see Durbin et al (1998) chapter 5.7 for details of
   the maximum \emph{a posteriori} algorithm for match state assignment.
 }
 \examples{
 ## Maximum a posteriori assignment of match states to the small
-## alignment example in Figure 5.3, Durbin et al. (1998)
+## alignment example in Figure 5.3, Durbin et al (1998)
 data(globins)
 map(globins)
 }

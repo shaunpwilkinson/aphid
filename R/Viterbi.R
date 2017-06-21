@@ -66,13 +66,13 @@
 #'   should be filled using compiled C++ functions (default; many times faster).
 #'   The FALSE option is primarily retained for bug fixing and experimentation.
 #' @param ... additional arguments to be passed between methods.
-#' @return an object of class \code{"Viterbi"}, which is a list containing the
-#'   score, the dynammic programming arrays, and the optimal path (an integer
+#' @return an object of class \code{"DPA"}, which is a list containing the
+#'   score, the dynammic programming array, and the optimal path (an integer
 #'   vector). If x is a PHMM and y is a sequence, the path is represented as
 #'   an integer vector containing zeros, ones and twos, where a zero represents
 #'   a downward transition, a one represents a diagonal transition downwards and
 #'   left, and a two represents a left transition in the dynamic programming
-#'   matrix (see Durbin et al. (1998) chapter 2.3). This translates to
+#'   matrix (see Durbin et al (1998) chapter 2.3). This translates to
 #'   0 = delete state, 1 = match state and 2 = insert state.
 #'   If x and y are both sequences (i.e. the Needleman-Wunch or
 #'   Smith Waterman algorithm) a zero refers to x aligning to a gap in y,
@@ -109,12 +109,12 @@
 #'   plot(x, main = "Dishonest casino HMM")
 #'   ### Find optimal path of sequence
 #'   data(casino)
-#'   casino.Viterbi <- Viterbi(x, casino)
-#'   casino.Viterbi$score # full (log) prob of sequence given model = -538.8109
+#'   casino.DPA <- Viterbi(x, casino)
+#'   casino.DPA$score # full (log) prob of sequence given model = -538.8109
 #'   ### Show optinal path path as indices
-#'   casino.Viterbi$path
+#'   casino.DPA$path
 #'   ### Show optimal path as character strings
-#'   rownames(x$E)[casino.Viterbi$path + 1]
+#'   rownames(x$E)[casino.DPA$path + 1]
 #'   ##
 #'   ## Needleman-Wunch pairwise sequence alignment:
 #'   ## Pairwise protein alignment example from Durbin et al (1998) chapter 2.3
@@ -123,7 +123,7 @@
 #'   Viterbi(x, y,  d = 8, e = 2, type = "global")
 #'   ###
 #'   ## Viterbi algorithm for profile HMMs:
-#'   ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
+#'   ## Small globin alignment data from Durbin et al (1998) Figure 5.3
 #'   data(globins)
 #'   ### Derive a profile hidden Markov model from the alignment
 #'   globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
@@ -387,7 +387,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                             array = V,
                             pointer = P,
                             Saa = Saa),
-                       class = 'Viterbi')
+                       class = "DPA")
     }
   }else{
     if(identical(windowspace, "WilburLipman")){
@@ -427,7 +427,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                             start = c(1, 1),
                             array = V,
                             pointer = P),
-                       class = 'Viterbi')
+                       class = "DPA")
       return(res)
     }
     if(m == 1){
@@ -441,7 +441,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                             start = c(1, 1),
                             array = V,
                             pointer = P),
-                       class = 'Viterbi')
+                       class = "DPA")
       return(res)
     }
     if(odds) E <- E - qe
@@ -568,7 +568,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                             start = startposition,
                             array = V,
                             pointer = P),
-                       class = 'Viterbi')
+                       class = "DPA")
     }
   }
   return(res)
@@ -684,7 +684,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
                           path = path - 1,
                           array = V,
                           pointer = P - 1),
-                     class = "Viterbi")
+                     class = "DPA")
   }
   return(res)
 }
@@ -889,7 +889,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
                           #progression = progression,
                           array = M,
                           pointer = P),
-                     class = 'Viterbi')
+                     class = "DPA")
   }
   return(res)
 }

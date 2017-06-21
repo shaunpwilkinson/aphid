@@ -121,9 +121,9 @@ test_that("objects have correct classes", {
   expect_is(yAA.PHMM, "PHMM")
   expect_is(x2.PHMM, "PHMM")
   expect_is(y2.PHMM, "PHMM")
-  expect_is(x.for, "fullprob")
-  expect_is(x.bck, "fullprob")
-  expect_is(x.vit, "Viterbi")
+  expect_is(x.for, "DPA")
+  expect_is(x.bck, "DPA")
+  expect_is(x.vit, "DPA")
 })
 
 

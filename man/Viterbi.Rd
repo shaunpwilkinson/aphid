@@ -100,13 +100,13 @@ alignments. If NULL default settings are used. Default scoring matrices are
 mismatches are scored -1) for AAbin objects and character sequences.}
 }
 \value{
-an object of class \code{"Viterbi"}, which is a list containing the
-  score, the dynammic programming arrays, and the optimal path (an integer
+an object of class \code{"DPA"}, which is a list containing the
+  score, the dynammic programming array, and the optimal path (an integer
   vector). If x is a PHMM and y is a sequence, the path is represented as
   an integer vector containing zeros, ones and twos, where a zero represents
   a downward transition, a one represents a diagonal transition downwards and
   left, and a two represents a left transition in the dynamic programming
-  matrix (see Durbin et al. (1998) chapter 2.3). This translates to
+  matrix (see Durbin et al (1998) chapter 2.3). This translates to
   0 = delete state, 1 = match state and 2 = insert state.
   If x and y are both sequences (i.e. the Needleman-Wunch or
   Smith Waterman algorithm) a zero refers to x aligning to a gap in y,
@@ -137,12 +137,12 @@ TBA.
   plot(x, main = "Dishonest casino HMM")
   ### Find optimal path of sequence
   data(casino)
-  casino.Viterbi <- Viterbi(x, casino)
-  casino.Viterbi$score # full (log) prob of sequence given model = -538.8109
+  casino.DPA <- Viterbi(x, casino)
+  casino.DPA$score # full (log) prob of sequence given model = -538.8109
   ### Show optinal path path as indices
-  casino.Viterbi$path
+  casino.DPA$path
   ### Show optimal path as character strings
-  rownames(x$E)[casino.Viterbi$path + 1]
+  rownames(x$E)[casino.DPA$path + 1]
   ##
   ## Needleman-Wunch pairwise sequence alignment:
   ## Pairwise protein alignment example from Durbin et al (1998) chapter 2.3
@@ -151,7 +151,7 @@ TBA.
   Viterbi(x, y,  d = 8, e = 2, type = "global")
   ###
   ## Viterbi algorithm for profile HMMs:
-  ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
+  ## Small globin alignment data from Durbin et al (1998) Figure 5.3
   data(globins)
   ### Derive a profile hidden Markov model from the alignment
   globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)

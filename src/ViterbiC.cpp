@@ -384,7 +384,7 @@ List ViterbiD(IntegerVector x, IntegerVector y,
                           Named("MMpointer") = PMM,
                           Named("IYpointer") = PIY);
 
-  res.attr("class") = "Viterbi";
+  res.attr("class") = "DPA";
   return(res);
 }
 
@@ -478,7 +478,7 @@ List ViterbiH(IntegerVector y, NumericMatrix A, NumericMatrix E,
     Named("path") = path,
     Named("array") = V,
     Named("pointer") = P);
-  out.attr("class") = "Viterbi";
+  out.attr("class") = "DPA";
   return out;
 }
 
@@ -723,7 +723,7 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
                           Named("Mpointer") = Mpointer,
                           Named("Ipointer") = Ipointer);
   //List res = List::create(Named("Mmat") = Dpointer);
-  res.attr("class") = "Viterbi";
+  res.attr("class") = "DPA";
   return(res);
 }
 
@@ -1011,7 +1011,7 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
                           Named("GDpointer") = GDpointer,
                           Named("IMpointer") = IMpointer,
                           Named("Saa") = Saa);
-  res.attr("class") = "Viterbi";
+  res.attr("class") = "DPA";
   return(res);
 }
 
@@ -1024,7 +1024,7 @@ List forwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
   //int nres = Edim[1];
   if(nrolls == 0){
     List out = List::create(Named("score") = A(0, 0), Named("array") = NULL);
-    out.attr("class") = "fullprob";
+    out.attr("class") = "DPA";
     return out;
   }
   NumericMatrix R(nstates, nrolls);
@@ -1073,7 +1073,7 @@ List forwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
   double res = logsum(R(_, nrolls - 1) + ak0);
   bool odds = false;
   List out = List::create(Named("score") = res, Named("array") = R, Named("odds") = odds);
-  out.attr("class") = "fullprob";
+  out.attr("class") = "DPA";
   return out;
 }
 
@@ -1139,7 +1139,7 @@ List forwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
                           Named("Dmatrix") = Dmatrix,
                           Named("Mmatrix") = Mmatrix,
                           Named("Imatrix") = Imatrix);
-  res.attr("class") = "fullprob";
+  res.attr("class") = "DPA";
   return(res);
 }
 
@@ -1152,7 +1152,7 @@ List backwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
   //int nres = Edim[1];
   if(nrolls == 0){
     List out = List::create(Named("score") = A(0, 0), Named("array") = NULL);
-    out.attr("class") = "fullprob";
+    out.attr("class") = "DPA";
     return out;
   }
   NumericMatrix R(nstates, nrolls);
@@ -1203,7 +1203,7 @@ List backwardH(IntegerVector y, NumericMatrix A, NumericMatrix E,
   double res = logsum(logprobs);
   bool odds = false;
   List out = List::create(Named("score") = res, Named("array") = R, Named("odds") = odds);
-  out.attr("class") = "fullprob";
+  out.attr("class") = "DPA";
   return out;
 }
 
@@ -1274,6 +1274,6 @@ List backwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector 
                           Named("Dmatrix") = Dmatrix,
                           Named("Mmatrix") = Mmatrix,
                           Named("Imatrix") = Imatrix);
-  res.attr("class") = "fullprob";
+  res.attr("class") = "DPA";
   return(res);
 }

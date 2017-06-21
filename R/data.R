@@ -4,21 +4,21 @@
 #' for DNA and amino acids.
 #'
 #' @format A list of 71 matrices, most of which have 24 rows and 24 columns
-#' corresponding to the amino acid alphabet plus the ambiguity codes B, Z,
+#' corresponding to the 20-letter amino acid alphabet plus the ambiguity codes B, Z,
 #' X and *:
 #' \describe{
 #'   \item{PAM}{the PAM matrices from PAM10 to PAM500.}
 #'   \item{BLOSUM}{the BLOSUM matrices from BLOSUM30 to BLOSUM100.}
 #'   \item{others}{also included are the DAYHOFF, GONNET, IDENTITY
-#'   and MATCH substitution matrices for proteins
+#'   and MATCH substitution matrices for amino acids,
 #'   and the NUC.4.2 and NUC.4.4 substitution matrices for DNA.}
 #' }
 #' @source \url{ftp://ftp.ncbi.nih.gov/blast/matrices/}
 "substitution"
 ################################################################################
-#' Dishonest casino example.
+#' Dishonest casino.
 #'
-#' The 'dishonest casino' example from Durbin et al. (1998) chapter 3.2.
+#' The 'dishonest casino' example from Durbin et al (1998) chapter 3.2.
 #'
 #' @format A named character vector showing the result of 300 rolls of a die
 #'   that switches from "Fair" to "Loaded" with a probability
@@ -38,11 +38,11 @@
 #' Globin protein alignment.
 #'
 #' The small globin protein alignment from figure 5.3 of
-#' Durbin et al. (1998).
+#' Durbin et al (1998).
 #'
-#' @format a 7 x 10 character matrix showing ten columns from a multiple
-#'   alignment of globin proteins shown in Durbin et al. (1998) chapter
-#'   5.3.
+#' @format a 7 x 10 character matrix with ten columns of a multiple
+#'   alignment of globin amino acid sequences from Durbin et al (1998)
+#'   chapter 5.3.
 #' @source
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.

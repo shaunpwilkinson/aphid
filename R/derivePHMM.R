@@ -69,7 +69,7 @@
 #'   \code{"threshold"} (only columns with fewer than a specified
 #'   proportion of gaps form match states in the model), \code{"map"} (default;
 #'   match and insert columns are found using the maximum \emph{a posteriori}
-#'   method outlined in Durbin et al. (1998) chapter 5.7), \code{"inherited"}
+#'   method outlined in Durbin et al (1998) chapter 5.7), \code{"inherited"}
 #'   (match and insert columns are inherited from the input alignment),
 #'   and \code{"none"} (all columns are assigned
 #'   match states in the model). Alternatively, insert columns can be
@@ -85,7 +85,7 @@
 #'   automatically used when the number of sequences is less than 5.
 #' @param lambda penalty parameter used to favour models with fewer match
 #'   states. Equivalent to the log of the prior probability of marking each
-#'   column (Durbin et al. 1998, chapter 5.7). Only applicable when
+#'   column (Durbin et al 1998, chapter 5.7). Only applicable when
 #'   \code{inserts = "map"}.
 #' @param DI logical indicating whether delete-insert transitions should be
 #'   allowed in the profile hidden Markov model (if applicable). Defaults
@@ -173,7 +173,7 @@
 #'
 #' @seealso \code{\link{deriveHMM}}, \code{\link{map}}
 #' @examples
-#' ## Small globin alignment data from Durbin et al. (1998) Figure 5.3
+#' ## Small globin alignment data from Durbin et al (1998) Figure 5.3
 #' data(globins)
 #' ## derive a profile hidden Markov model from the alignment
 #' globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
@@ -683,7 +683,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 #' Optimized profile HMM construction.
 #'
 #' Assigns match and insert states to alignment columns using the maximum
-#'   \emph{a posteriori} algorithm outlined in Durbin et al. (1998) chapter 5.7.
+#'   \emph{a posteriori} algorithm outlined in Durbin et al (1998) chapter 5.7.
 #'
 #' @param x a matrix of aligned sequences. Accepted modes are "character"
 #'   and "raw" (the latter being used for "DNAbin" and "AAbin" objects).
@@ -722,7 +722,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 #'   second.
 #' @param lambda penalty parameter used to favour models with fewer match
 #'   states. Equivalent to the log of the prior probability of marking each
-#'   column (Durbin et al. 1998, chapter 5.7).
+#'   column (Durbin et al 1998, chapter 5.7).
 #' @param qa an optional named 9-element vector of background transition
 #'   probabilities with \code{dimnames(qa) = c("DD", "DM", "DI", "MD", "MM",
 #'   "MI", "ID", "IM", "II")}, where M, I and D represent match, insert and
@@ -739,7 +739,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 #' @return a logical vector with length = ncol(x) indicating the columns to be
 #'   assigned as match states (\code{TRUE}) and those assigned as inserts
 #'   (\code{FALSE}).
-#' @details see Durbin et al. (1998) chapter 5.7 for details of
+#' @details see Durbin et al (1998) chapter 5.7 for details of
 #'   the maximum \emph{a posteriori} algorithm for match state assignment.
 #' @author Shaun Wilkinson
 #' @references
@@ -749,7 +749,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 #' @seealso \code{\link{derivePHMM}}
 #' @examples
 #' ## Maximum a posteriori assignment of match states to the small
-#' ## alignment example in Figure 5.3, Durbin et al. (1998)
+#' ## alignment example in Figure 5.3, Durbin et al (1998)
 #' data(globins)
 #' map(globins)
 ################################################################################

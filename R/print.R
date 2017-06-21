@@ -4,6 +4,7 @@
 #' @return NULL (invisibly)
 #' @author Shaun Wilkinson
 #' @name print
+################################################################################
 print.PHMM <- function(x, ...){
   cat("Profile hidden Markov model (object class: 'PHMM')\n",
       "with ",
@@ -16,7 +17,9 @@ print.PHMM <- function(x, ...){
       ").\n",
       sep = "")
 }
+################################################################################
 #' @rdname print
+################################################################################
 print.HMM <- function(x, ...){
   cat("Hidden Markov model (object class: 'HMM') with ",
       nrow(x$E),
@@ -29,19 +32,18 @@ print.HMM <- function(x, ...){
       ").\n",
       sep = "")
 }
+################################################################################
 #' @rdname print
-print.fullprob <- function(x, ...){
-  if(x$odds){
-    cat("Log odds score: ", x$score)
-  } else cat("Full (log) probability of sequence given model =", x$score)
+################################################################################
+print.DPA <- function(x, ...){
+  if(is.null(x$path)){
+    if(x$odds){
+      cat("Log odds score: ", x$score)
+    }else{
+      cat("Full (log) probability of sequence given model =", x$score)
+    }
+  }else{
+    cat("Optimal path with length", length(x$path), "and score", x$score)
+  }
 }
-#' @rdname print
-print.Viterbi <- function(x, ...){
-  cat("Optimal path with length",
-      length(x$path),
-      "and score",
-      x$score)
-}
-
-
-# digits integer, for compatibility with other print methods.
+################################################################################
