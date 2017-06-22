@@ -1,13 +1,21 @@
 Package: aphid
 Type: Package
 Title: Analysis with Profile Hidden Markov Models
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
 Author: Shaun Wilkinson
 Maintainer: Shaun Wilkinson <shaunpwilkinson@gmail.com>
-Description: Contains functions for the creation, visualization and application 
-    of profile hidden Markov models for bioinformatic sequence analysis.
+Description: aphid is an R package for the development and application of
+    hidden Markov models and profile HMMs for biological sequence analysis. 
+    Contains functions for multiple and pairwise sequence alignment, 
+    model construction and parameter optimization, file import/export,
+    implementation of the forward, backward and Viterbi algorithms for 
+    conditional sequence probabilities, tree-based sequence weighting, 
+    and sequence simulation. 
+    The package has a wide variety of uses including database searching, 
+    gene-finding and annotation, phylogenetic analysis and sequence 
+    classification.
 License: GPL-3
 URL: http://github.com/shaunpwilkinson/aphid
 BugReports: http://github.com/shaunpwilkinson/aphid/issues

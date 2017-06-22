@@ -131,11 +131,10 @@ List fragR(RawVector x, IntegerVector path, int l, RawVector gap){
 }
 
 
-
 // [[Rcpp::export(name = ".fragC")]]
 List fragC(CharacterVector x, IntegerVector path, int l, CharacterVector gap){
   // x is a sequence vector of mode "character"
-  // path is a trinary integer vector, must end with 1
+  // path is a ternary integer vector, must end with 1
   // l is PHMM model size (saves on computation time)
   // returns fragmented sequence list of length 2l + 1
   int outlen = 2 * l + 1; // length of returned list, includes

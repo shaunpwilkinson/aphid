@@ -62,9 +62,6 @@ LogicalVector map(NumericMatrix ecs, LogicalMatrix notgaps, List pseudocounts,
           NumericVector tmp = seqweights[tcounts(_, k)];
           tcsij[k] = sum(tmp);
         }
-        //if(any(zeroinserts).is_true()){
-        // }else{
-        //}
         tcsij[8] = sum(icsij) - (tcsij[2] + tcsij[5]); //II
         NumericVector tmp(n);
         tmp[notgaps(_, i + 1)] = 1;

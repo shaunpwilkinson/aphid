@@ -87,8 +87,7 @@ int whichmax(NumericVector x, int start = 1){
 double probDNA(int x, NumericVector probs){
   // x is an integer vector with length 1 and arity = 15, representing DNA with ambiguities
   // order A, T, G, C, S, W, R, Y, K, M, B, V, H, D, N (same as NUC.4.4)
-  // as output by function "DNA2pentadecimal"
-  // format of Paradis (2007). Eg output of a = DNA2pentadecimal(x.DNAbin)[1]
+  // format of Paradis (2007).
   // probs is a 4-element numeric vector of probabilities for the set {A,T,G,C} (in that order)
   if(probs.size() != 4){
     throw Rcpp::exception("probs argument must be a numeric vector of length 4");
@@ -134,7 +133,6 @@ double probAA(int x, NumericVector probs){
   // a is an integer vector with length 1 and arity = 27,
   // representing AA with ambiguities
   // order  ACDEFGHIKLMNPQRSTVWY X BJZ OU *
-  // as output by AA2heptovigesimal
   // format of Paradis (2007).
   // probs is a 20-element numeric vector of probabilities for the set
   // {ACDEFGHIKLMNPQRSTVWY} (in that order)
