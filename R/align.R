@@ -406,7 +406,11 @@ align.default <- function(x, model, pseudocounts = "background",
   if(DNA) class(x) <- class(model) <- "DNAbin"
   if(AA) class(x) <- class(model) <- "AAbin"
   # determine residue alphabet
-  residues <- .alphadetect(c(x, model), residues = residues, gap = gap)
+  resx <- .alphadetect(x, residues = residues, gap = gap)
+  resm <- .alphadetect(model, residues = residues, gap = gap)
+  residues <- unique(c(resx, resm))
+  # residues <- .alphadetect(c(x, model), residues = residues, gap = gap)
+  # preceding line threw error when joining dnabin vectors
   gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
   # pairwise alignment
   if(nrow(x) == 1 & nrow(model) == 1){ # if both are single sequences

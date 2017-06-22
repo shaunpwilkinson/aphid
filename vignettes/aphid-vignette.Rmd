@@ -124,7 +124,7 @@ dice with a probability of 0.05 after each roll, leaving a
 loaded dice, he will switch back to the fair dice with a probability of 
 0.1, or more likely, retain the loaded dice with a probability of 0.9.
 
-This example can be represented by a standard two-state hidden Markov
+This example can be represented by a simple two-state hidden Markov
 model. The following code manually builds and plots the "HMM" object. 
 
 ```{r, fig.width=7.15, fig.height=4}
@@ -139,7 +139,7 @@ E <- matrix(c(rep(1/6, 6), rep(1/10, 5), 1/2), nrow = 2, byrow = TRUE)
 dimnames(E) <- list(states = states[-1], residues = residues)
 ### Create the HMM object
 x <- structure(list(A = A, E = E), class = "HMM")
-### Plot the model with labaled transition probabilities
+### Plot the model
 plot(x, textexp = 1.5)
 ### Optionally add the transition probabilities as text
 text(x = 0.02, y = 0.5, labels = "0.95")
@@ -154,7 +154,7 @@ No begin/end state is modeled in this example; however, this can be achieved
 by entering non-zero probabilities in the first row and column of the 
 transition matrix and passing "begin = TRUE" to `plot.HMM`.
 
-For a sequence of observed rolls, we can establish the most  *likely* sequence 
+For a sequence of observed rolls, we can establish the most likely sequence 
 of hidden states (including when the dice-switching most likely occurred) using 
 the Viterbi algorithm. 
 In the example given in Durbin et al [-@Durbin1998] chapter 3.2, the observed 
@@ -271,7 +271,7 @@ in the alignment column.
 
 Figure 4 shows the three state types listed above as circles diamonds and rectangles, 
 respectively.
-The states are linked by transition probabilities shown as directed arrows in the graph. 
+The states are linked by transition probabilities shown as weighted lines in the graph. 
 
 Consider this small partial alignment of amino acid sequences from Durbin
 et al [-@Durbin1998] chapter 5.3:
@@ -415,18 +415,19 @@ is trained using either the Baum Welch or Viterbi training algorithm
 The sequences are then aligned to the model in the usual fashion to produce the 
 alignment.
 Note that if only two sequences are present inthe input list, the `align` 
-function will perform a pairwise alignment using the Viterbi algorithm 
-without a profile HMM (Smith-Waterman or Needleman-Wunch alignment).
+function will perform a pairwise alignment without a profile HMM 
+(Smith-Waterman or Needleman-Wunch alignment).
+
 In this final example, we will deconstruct the original globin alignment and 
 re-align the sequences using the original PHMM as a guide.
 
 ```{r}
-globins <- unalign(globins, gap = "-")
+globins <- unalign(globins)
 align(globins, model = globins.PHMM, seqweights = NULL, residues = "AMINO")
 ```
 Note that the column names show the progressive positions along the model
 and where residues were predicted to have been emitted by insert states 
-(e.g. sequence 1 position 3, etc).   
+(e.g. the 4th and 5th residues of sequence 7).   
 
 ## Further Reading
 This package was written based on the algorithms described in 
