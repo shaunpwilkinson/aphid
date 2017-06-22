@@ -73,6 +73,7 @@ This function is a wrapper for a compiled C++ function that recursively
   fills a dynamic programming matrix with logged probabilities, and
   calculates the full (logged) probability of a sequence given a HMM or
   PHMM.
+
   For a thorough explanation of the backward, forward and Viterbi
   algorithms, see Durbin et al (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
 }

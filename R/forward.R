@@ -16,6 +16,7 @@
 #'   fills a dynamic programming matrix with logged probabilities, and
 #'   calculates the full (logged) probability of a sequence given a HMM or
 #'   PHMM.
+#'
 #'   For a thorough explanation of the backward, forward and Viterbi
 #'   algorithms, see Durbin et al (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
 #' @author Shaun Wilkinson
@@ -79,7 +80,6 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
   pa <- .isAA(y)
   pc <- !pp & !pd & !pa
   if(!pp & is.list(y)) if(length(y) == 1) y <- y[[1]] else stop("y is invalid")
-
   if(pd){
     rownames(x$E) <- toupper(rownames(x$E))
     if("U" %in% rownames(x$E)) rownames(x$E)[rownames(x$E) == "U"] <- "T"
@@ -147,7 +147,8 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
     ### placeholder
   }else{
     if(identical(windowspace, "WilburLipman")){
-      xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE, AA = pa, DNA = pd)
+      xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE,
+                            AA = pa, DNA = pd)
       if(pd){
         xqt  <- match(xseq, as.raw(c(136, 24, 72, 40))) - 1
         yqt <- .encodeDNA(y.DNAbin, arity = 4, na.rm = TRUE)
@@ -195,6 +196,9 @@ forward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       R[, , 2] <- res$Mmatrix
       R[, , 3] <- res$Imatrix
       res$array <- R
+      res$Dmatrix <- NULL
+      res$Mmatrix <- NULL
+      res$Imatrix <- NULL
     }else{
       R[2, 1, "D"] <- A["MD", 1]
       for(i in 3:n) R[i, 1, "D"] <- R[i - 1, 1, "D"] + A["DD", i - 1]

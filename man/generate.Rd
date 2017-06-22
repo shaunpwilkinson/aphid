@@ -25,7 +25,7 @@ output sequence otherwise (this acts as a safeguard against overflow).}
 
 \item{logspace}{logical indicating whether the emission and transition
 probabilities of x are logged. If \code{logspace = "autodetect"}
-(default setting), the function will automatically detect
+(the default setting), the function will automatically detect
 if the probabilities are logged, returning an error if
 inconsistencies are found. Note that choosing the latter option
 increases the computational overhead; therefore specifying
@@ -33,8 +33,9 @@ increases the computational overhead; therefore specifying
 
 \item{random}{logical indicating whether residues should be emitted randomly
 with probabilities defined by the emission probabilities in the model
-(TRUE; default), or whether the the emitted residue should be determined
-by the maximum emission probability in the current state.}
+(TRUE; default), or deterministically, whereby each residue is emitted
+and each transition taken based on the maximum emission/transition
+probability in the current state.}
 
 \item{gap}{the character used to represent gaps (delete states)
 in the output sequence (only applicable for \code{PHMM} objects).}
@@ -57,7 +58,11 @@ a named vector giving the sequence of residues emitted by the model,
 The \code{generate} function outputs a random sequence from a HMM or PHMM.
 }
 \details{
-TBA
+This simple function generates a single sequence
+  from a HMM or profile HMM by recursively simulating a path through
+  the model. The function is fairly slow in its current state, but a
+  faster C++ function may be made available in a future version depending
+  on demand.
 }
 \examples{
   ## Generate a random sequence from a standard HMM
@@ -86,7 +91,7 @@ TBA
   set.seed(999)
   simulation <- generate(globins.PHMM, size = 20)
   simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
-  ### Names indicate that all residues came from "match" states
+  ### Names attribute indicates that all residues came from "match" states
 }
 \references{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological

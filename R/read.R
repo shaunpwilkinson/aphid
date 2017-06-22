@@ -6,15 +6,31 @@
 #' @param file the name of the file from which to read the model.
 #' @param ... further arguments to be passed to \code{"scan"}.
 #' @return an object of class \code{"PHMM"}.
-#' @details TBA
+#' @details
+#'   This function scans a HMMER3/f text file and creates an object of
+#'   class \code{"PHMM"} in R. Note that unlike HMMER, the \pkg{aphid}
+#'   package does not currently support position-specific background
+#'   emission probabilities, and so only a single vector the same length
+#'   as the reside alphabet is included as an element of the returned
+#'   object. Also the function currently only parses the first profile
+#'   HMM encountered in the text file, with subsequent models ignored.
 #' @author Shaun Wilkinson
 #' @references
 #'   Finn RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
 #'   similarity searching. \emph{Nucleic Acids Research}. \strong{39}:W29-W37.
 #'   \url{http://hmmer.org/}.
+#'
+#'   HMMER: biosequence analysis using profile hidden Markov models.
+#'   \url{http://www.hmmer.org}.
+#'
 #' @seealso \code{\link{writePHMM}} for writing PHMM objects in HMMER3 text format.
 #' @examples
-#'   ## TBA
+#'   ## Derive a profile hidden Markov model from the small globin alignment
+#'   data(globins)
+#'   x <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+#'   fl <- tempfile()
+#'   writePHMM(x, file = fl)
+#'   readPHMM(fl)
 ################################################################################
 readPHMM <- function(file = "", ...){
   x <- scan(file = file, what = "", sep = "\n", quiet = TRUE, ... = ...)
@@ -124,7 +140,8 @@ readPHMM <- function(file = "", ...){
     rownames(tmp) <- "ID"
     out$A <- rbind(out$A, tmp)
   }
-  tmp <- match(c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II"), rownames(out$A))
+  tmp <- match(c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II"),
+               rownames(out$A))
   out$A <- out$A[tmp, ]
   out$A[is.na(out$A)] <- -Inf
   class(out) <- "PHMM"

@@ -9,7 +9,7 @@
 #'   output sequence otherwise (this acts as a safeguard against overflow).
 #' @param logspace logical indicating whether the emission and transition
 #'   probabilities of x are logged. If \code{logspace = "autodetect"}
-#'   (default setting), the function will automatically detect
+#'   (the default setting), the function will automatically detect
 #'   if the probabilities are logged, returning an error if
 #'   inconsistencies are found. Note that choosing the latter option
 #'   increases the computational overhead; therefore specifying
@@ -18,8 +18,9 @@
 #'   in the output sequence (only applicable for \code{PHMM} objects).
 #' @param random logical indicating whether residues should be emitted randomly
 #'   with probabilities defined by the emission probabilities in the model
-#'   (TRUE; default), or whether the the emitted residue should be determined
-#'   by the maximum emission probability in the current state.
+#'   (TRUE; default), or deterministically, whereby each residue is emitted
+#'   and each transition taken based on the maximum emission/transition
+#'   probability in the current state.
 #' @param DNA logical indicating whether the returned sequence should be a
 #'   \code{"DNAbin"} object. Only applicable if the matrix of emission
 #'   probabilities in the model has four residues corresponding to the nucleotide
@@ -31,7 +32,12 @@
 #' @param ... additional arguments to be passed between methods.
 #' @return a named vector giving the sequence of residues emitted by the model,
 #'  with the "names" attribute representing the hidden states.
-#' @details TBA
+#' @details
+#'   This simple function generates a single sequence
+#'   from a HMM or profile HMM by recursively simulating a path through
+#'   the model. The function is fairly slow in its current state, but a
+#'   faster C++ function may be made available in a future version depending
+#'   on demand.
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -64,13 +70,9 @@
 #'   set.seed(999)
 #'   simulation <- generate(globins.PHMM, size = 20)
 #'   simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
-#'   ### Names indicate that all residues came from "match" states
+#'   ### Names attribute indicates that all residues came from "match" states
 #' @name generate
 ################################################################################
-# generate <- function(x, size, logspace = "autodetect", gap = "-",
-#                      random = TRUE, DNA = FALSE, AA = FALSE){
-#   UseMethod("generate")
-# }
 generate <- function(x, size, ...){
   UseMethod("generate")
 }
@@ -117,7 +119,7 @@ generate.PHMM <- function (x, size, logspace = "autodetect", gap = "-",
   A <- if(logspace) exp(x$A) else x$A
   E <- if(logspace) exp(x$E) else x$E
   qe <- if(is.null(x$qe)) rep(1/nrow(E), nrow(E)) else if(logspace) exp(x$qe) else x$qe
-  #### condition if names qe and rownames E mismatch?
+  #### condition if names qe and rownames E mismatch
   stopifnot(!(DNA & AA))
   if(DNA) gap <- as.raw(4) else if(AA) gap <- as.raw(45)
   emitted <- if(DNA | AA) raw(size) else character(size)

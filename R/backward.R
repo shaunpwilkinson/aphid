@@ -179,6 +179,9 @@ backward.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       B[, , 2] <- res$Mmatrix
       B[, , 3] <- res$Imatrix
       res$array <- B
+      res$Dmatrix <- NULL
+      res$Mmatrix <- NULL
+      res$Imatrix <- NULL
     }else{
       for(i in n:2) {
         B[i - 1, m, "D"] <- B[i, m, "D"] + A["DD", i - 1]

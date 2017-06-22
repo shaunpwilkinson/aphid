@@ -57,7 +57,7 @@ NULL (invisibly).
   woodmouse.PHMM <- derivePHMM(woodmouse)
   ## plot partial model to viewer device
   plot(woodmouse.PHMM, from = 0, to = 5)
-  ## plot the entire model to a PDF
+  ## plot the entire model to a PDF in the current working directory
   \dontrun{
   nr <- ceiling((woodmouse.PHMM$size + 2)/10)
   pdf(file = "woodmouse.pdf",

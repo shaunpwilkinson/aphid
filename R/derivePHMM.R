@@ -12,13 +12,13 @@
 #'   \code{"Gerstein"} method is supported (default). For this method, a
 #'   tree is first created by k-mer counting (see \code{\link[phylogram]{topdown}}),
 #'   and sequence weights are then derived from the tree using the 'bottom up'
-#'   algorithm of Gerstein et al. (1994).
+#'   algorithm of Gerstein et al (1994).
 #' @param wfactor numeric. The factor to multiply the sequence weights by.
 #'   Defaults to 1.
-#' @param k integer representing the k-mer size to be used for calculating
-#'   the distance matrix used in tree-based sequence weighting. Defaults to
-#'   5. Note that high values of k (> 8) may be slow to compute and use a lot
-#'   of memory due to the large numbers of calculations required.
+#' @param k integer representing the k-mer size to be used in tree-based
+#'   sequence weighting (if applicable). Defaults to 5. Note that higher
+#'   values of k may be slow to compute and use excessive memory due to
+#'   the large numbers of calculations required.
 #' @param residues either NULL (default; emitted residues are automatically
 #'   detected from the sequences), a case sensitive character vector
 #'   specifying the residue alphabet, or one of the character strings
@@ -158,10 +158,26 @@
 #'   \code{refine = "Viterbi"}) or \code{"forward"} (if
 #'   \code{refine = "BaumWelch"}).
 #' @return an object of class \code{"PHMM"}
-#' @details This function performs a similar operation to the  \code{hmmbuild}
+#' @details
+#'   This function performs a similar operation to the  \code{hmmbuild}
 #'   function in the \href{http://www.hmmer.org}{HMMER} package, and the
 #'   \code{modelfromalign} and \code{buildmodel} functions in the
 #'   \href{https://compbio.soe.ucsc.edu/sam.html}{SAM} package.
+#'   If the primary input argument is an alignment, the function creates a
+#'   profile hidden Markov model (object class:\code{"PHMM"}) using the
+#'   method described in Durbin et al (1998) chapter 5.3. Alternatively, if
+#'   a list of non-aligned sequences is passed, the sequences are first aligned
+#'   using the \code{\link{align}} function before being used to derive the
+#'   model.
+#'
+#'   The function outputs an object of class \code{"PHMM"}, which is a list
+#'   consisting of emission and transition probability matrices
+#'   (elements named "E" and "A"), vectors of non-position-specific
+#'   background emission and transition probabilities
+#'   ("qe" and "qa", respectively) and other model metadata including
+#'   "name", "description", "size" (the number of modules in the model), and
+#'   "alphabet" (the set of symbols/residues emitted by the model).
+#'
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -184,21 +200,9 @@
 #' library(ape)
 #' data(woodmouse)
 #' woodmouse.PHMM <- derivePHMM(woodmouse)
-#' plot(woodmouse.PHMM, from = 0, to = 5, main = "profile HMM for woodmouse alignment")
+#' plot(woodmouse.PHMM, from = 0, to = 5, main = "Partial woodmouse profile HMM")
 #' @name derivePHMM
 ################################################################################
-# derivePHMM <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
-#                        residues = NULL, gap = "-", endchar = "?",
-#                        pseudocounts = "background", logspace = TRUE,
-#                        qa = NULL, qe = NULL, maxsize = NULL, inserts = "map",
-#                        threshold = 0.5, lambda = 0,
-#                        DI = FALSE, ID = FALSE, omit.endgaps = FALSE,
-#                        name = NULL, description = NULL, compo = FALSE,
-#                        consensus = FALSE, seeds = "random", refine = "Viterbi",
-#                        maxiter = 100, deltaLL = 1E-07, cpp = TRUE,
-#                        quiet = FALSE, ...){
-#   UseMethod("derivePHMM")
-# }
 derivePHMM <- function(x, ...){
   UseMethod("derivePHMM")
 }
@@ -218,7 +222,6 @@ derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                               refine = "Viterbi",
                               maxiter = 100, deltaLL = 1E-07, cpp = TRUE,
                               cores = 1, quiet = FALSE, ...){
-  ##TODO don't need gap, residues etc?
   if(is.list(x)){
     derivePHMM.list(x, progressive = progressive, seeds = seeds,
                     refine = refine, maxiter = maxiter,
@@ -319,7 +322,9 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
     navailcores <- parallel::detectCores()
     if(identical(cores, "autodetect")) cores <- navailcores - 1
     if(cores > 1){
-      if(cores > navailcores) stop("Number of cores is more than number available")
+      if(cores > navailcores){
+        stop("Number of cores is more than the number available")
+      }
       if(!quiet) cat("Multithreading over", cores, "cores\n")
       cores <- parallel::makeCluster(cores)
       para <- TRUE
@@ -334,9 +339,6 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
     if(progressive){
       catchnames <- names(x)
       names(x) <- paste0("S", 1:nseq)
-      # distances <- phylogram::mbed(x, seeds = seeds, k = k, residues = residues,
-      #                              gap = gap, counts = TRUE)
-      # seeds <- attr(distances, "seeds")
       if(is.null(seeds)) seeds <- seq_along(x)
       stopifnot(
         mode(seeds) %in% c("numeric", "integer"),
@@ -349,18 +351,19 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
         names(seqweights) <- catchnames
       }else if(identical(seqweights, "Gerstein")){
         if(!quiet) cat("Calculating sequence weights\n")
-        seqweights <- weight(x, method = "Gerstein", k = k, residues = residues, gap = gap)
-        #weighttree <- phylogram::topdown(distances, weighted = TRUE)
-        #seqweights <- weight.dendrogram(weighttree)[names(x)]
+        seqweights <- weight(x, method = "Gerstein", k = k,
+                             residues = residues, gap = gap)
         names(seqweights) <- catchnames
       }else{
         stopifnot(mode(seqweights) %in% c("numeric", "integer"),
                   length(seqweights) == nseq)
       }
-      ### this is just easier than trying to subset distances:
-      guidetree <- phylogram::topdown(x[seeds], k = k, residues = residues, gap = gap)
+      guidetree <- phylogram::topdown(x[seeds], k = k,
+                                      residues = residues, gap = gap)
       attachseqs <- function(tree, sequences){
-        if(!is.list(tree)) attr(tree, "seqs") <- sequences[[attr(tree, "label")]]
+        if(!is.list(tree)){
+          attr(tree, "seqs") <- sequences[[attr(tree, "label")]]
+        }
         return(tree)
       }
       guidetree <- dendrapply(guidetree, attachseqs, sequences = x)
@@ -406,12 +409,12 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
       if(length(seeds) > 1) seeds <- sample(seeds, size = 1) # length 1 index
       seed <- x[longl][[seeds]]
       msa1 <- matrix(seed, nrow = 1)
-      #### in future could offer max freq seq option
+      ### in future could offer max freq seq option here
     }
   }else if(nseq == 2){
     if(!quiet) cat("Aligning seed sequences\n")
-    msa1 <- align.default(x[[1]], x[[2]], residues = residues, gap = gap,
-                          ... = ...)
+    msa1 <- align.default(x[[1]], x[[2]], residues = residues,
+                          gap = gap, ... = ...)
     seqweights <- c(1, 1)
     rownames(msa1) <- names(seqweights) <- names(x)
     seeds <- 1:2
@@ -442,12 +445,12 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
   if(is.null(refine)) refine <- "none"
   if(refine %in% c("Viterbi", "BaumWelch")){
     if(!quiet) cat("Refining model\n")
-    model <- train(model, x, seqweights = seqweights, method = refine,
+    model <- train.PHMM(model, x, seqweights = seqweights, method = refine,
                    maxiter = maxiter, deltaLL = deltaLL,
                    pseudocounts = pseudocounts, maxsize = maxsize,
                    inserts = inserts, lambda = lambda, threshold = threshold,
-                   alignment = alignment, cores = cores, quiet = quiet, cpp = cpp,
-                   ... = ...)
+                   alignment = alignment, cores = cores, quiet = quiet,
+                   cpp = cpp, ... = ...)
   }else {
     stopifnot(identical(refine, "none"))
     # Next line communicates with align.list and ensures all seqs get
@@ -488,23 +491,19 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   transitions <- c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
   xlist <- unalign(x, gap = gap)
   if(is.null(seqweights)){
-    seqweights <- rep(wfactor, n)
+    seqweights <- rep(1, n)
   }else if(identical(seqweights, "Gerstein")){
-    if(n > 2){
-      weighttree <- phylogram::topdown(xlist, k = k, residues = residues,
-                                      gap = gap, weighted = TRUE)
-      seqweights <- weight(weighttree, method = "Gerstein")[names(xlist)] * wfactor
-    }else{
-      seqweights <- rep(wfactor, n)
-    }
+    seqweights <- if(n > 2){
+      weight(xlist, k = k, residues = residues, gap = gap)
+    }else rep(1, n)
   }else{
     stopifnot(
       length(seqweights) == n,
       !any(is.na(seqweights)),
       mode(seqweights) %in% c("numeric", "integer")
     )
-    seqweights <- seqweights * wfactor
   }
+  seqweights <- seqweights * wfactor
   # background emission probabilities (qe)
   if(is.null(qe)){
     allecs <- if(AA){
@@ -521,8 +520,8 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     if(is.null(names(qe))) stop("qe argument is missing names attribute")
     if(!(identical(names(qe), residues))) stop("qe names must match residues")
     if(all(qe <= 0)) qe <- exp(qe)
-    if(!(round(sum(qe), 2) == 1)) stop("background emissions (qe) must sum to 1")
-    if(any(qe == 0)) warning("at least one background emission probability is zero")
+    if(!(round(sum(qe), 2) == 1)) stop("Background emissions (qe) must sum to 1")
+    if(any(qe == 0)) warning("At least one background emission probability = 0")
     qe <- qe/sum(qe) #account for rounding errors
   }
   # designate insert-columns
@@ -534,16 +533,16 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   }else if(identical(inserts, "inherited")){
     # inserts <- attr(x, "inserts")
     inserts <- colnames(x) == "I"
-    if(is.null(inserts)) stop("Alignment missing 'inserts' attribute, nothing to inherit")
+    if(is.null(inserts)) stop("Alignment missing 'inserts', nothing to inherit")
   }else if(identical(inserts, "threshold")){
     inserts <- apply(gapweights, 2, sum) > threshold * n
   }else if(identical(inserts, "map")){
     if(n < 5 | sum(gaps)/length(gaps) > 0.9){
-      # Maximum a posteriori insert assignment unsuitable for fewer than five sequences.
+      # Maximum a posteriori insert assignment unsuitable for
+      # fewer than five sequences.
       # Also can use too much memory for very gappy (sparse) alignments
       inserts <- apply(gapweights, 2, sum) > threshold * n
     }else{
-      # if(!quiet) cat("Marking alignment columns using maximum a posteriori algorithm\n")
       inserts <- !map(x, seqweights = seqweights, residues = residues,
                       gap = gap, endchar = endchar, pseudocounts = pseudocounts,
                       qa = qa, qe = qe, cpp = cpp)
@@ -592,16 +591,18 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     if(!ID) alltcs["ID"] <- 0
     qa <- (alltcs)/sum(alltcs)
   }else{
-    if(!is.vector(qa) | length(qa) != 9) stop("qa must be a numeric vector of length 9")
+    if(!is.vector(qa) | length(qa) != 9) stop("qa must be a length 9 vector")
     if(all(qa <= 0)) qa <- exp(qa)
     if(round(sum(qa), 2) != 1) stop("qa vector must sum to 1")
     if(!DI & (qa[3] != 0)){
-      stop("DI is set to FALSE but delete -> insert transitions are assigned non-zero
-            probabilities in qa vector. Change DI to TRUE or change qa['DI'] to zero")
+      stop("DI is set to FALSE but delete -> insert transitions are
+           assigned non-zero probabilities in qa vector.
+           Change DI to TRUE or change qa['DI'] to zero")
     }
     if(!ID & (qa[7] != 0)){
-      stop("ID is set to FALSE but insert -> delete transitions are assigned non-zero
-            probabilities in qa vector. Change ID to TRUE or change qa['ID'] to zero")
+      stop("ID is set to FALSE but insert -> delete transitions are
+           assigned non-zero probabilities in qa vector.
+           Change ID to TRUE or change qa['ID'] to zero")
     }
     # qa <- qa/apply(qa, 1, sum) #account for rounding errors
     qa <- qa/sum(qa) #account for rounding errors
@@ -638,7 +639,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   A[1, 1:3] <- 0 # gets rid of NaNs caused by division by zero
   A <- t(A)
   inslens <- .insertlengths(!inserts)
-  #which alignment columns correspond to which model positions?
+  # which alignment columns correspond to which model positions
   whichcols <- which(!inserts)
   if(length(whichcols) > 0) names(whichcols) <- 1:l
   if(logspace){
@@ -740,7 +741,8 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 #'   assigned as match states (\code{TRUE}) and those assigned as inserts
 #'   (\code{FALSE}).
 #' @details see Durbin et al (1998) chapter 5.7 for details of
-#'   the maximum \emph{a posteriori} algorithm for match state assignment.
+#'   the maximum \emph{a posteriori} algorithm for optial match and insert
+#'   state assignment.
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -759,7 +761,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
   if(!is.matrix(x)) stop("x must be a matrix")
   L <- ncol(x)
   n <- nrow(x)
-  if(n < 4) return(setNames(rep(TRUE, L), 1:L))
+  if(n < 4) return(structure(rep(TRUE, L), names = paste(1:L)))
   AA <- .isAA(x)
   DNA <- .isDNA(x)
   gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
@@ -787,7 +789,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
   gaps <- x == gap
   #ends <- x == endchar
   notgaps <- cbind(TRUE, !gaps, TRUE)
-  #if(!DI) alltcs[c(3, 7)] <- 0 ### need to work out DI strategy
+  #if(!DI) alltcs[c(3, 7)] <- 0 # TODO
   if(is.null(qa)){
     gapweights <- gaps * seqweights
     inserts <- apply(gapweights, 2, sum) > 0.5 * nrow(x)
@@ -799,7 +801,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
     tcs <- .atab(xtr, seqweights) # modules = sum(!inserts) + 2)
     alltcs <- apply(tcs, 1, sum)
-    qa <- log((alltcs + 1)/sum(alltcs + 1)) # force addition of Laplace pseudos
+    qa <- log((alltcs + 1)/sum(alltcs + 1)) # force addition of Lapl pseudos
   }else if(all(qa >= 0 & qa <= 1) & round(sum(qa), 2) == 1){
     qa <- log(qa)
   }else if(any(qa > 0) | round(sum(exp(qa)), 2) != 1) stop("invalid qa")
@@ -844,7 +846,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
           iota[i] <- sum(ecsij * qe)
           ecsij <- ecsij - ecs[, i]
           zeroinserts <- icsij < 0.00001
-          #need a way to avoid counting NAs in notgaps matrix (endchars)
+          # avoid counting NAs in notgaps matrix (endchars)
           if(any(zeroinserts)){
             tcsij[1] <- sum(seqweights[!notgaps[, i] & !notgaps[, j] & zeroinserts]) #DD
             tcsij[2] <- sum(seqweights[!notgaps[, i] & notgaps[, j] & zeroinserts]) #DM

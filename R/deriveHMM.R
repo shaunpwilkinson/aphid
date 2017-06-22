@@ -53,7 +53,22 @@
 #' @param logspace logical indicating whether the emission and transition
 #'   probabilities in the returned model should be logged. Defaults to TRUE.
 #' @return an object of class \code{"HMM"}.
-#' @details TBA
+#' @details
+#'   This function creates a standard hidden Markov model (object class:
+#'   \code{"HMM"}) using the method described in Durbin et al (1998) chapter
+#'   3.3. It assumes the state sequence is known
+#'   (as opposed to the \code{\link{train.HMM}} function, which is used
+#'   when the state sequence is unknown) and provided as the names attribute(s)
+#'   of the input sequences. The output object is a simple list with elements
+#'   "A" (transition probability matrix) and "E" (emission probability matrix),
+#'   and the "class" attribute "HMM". The emission matrix has the same number
+#'   of rows as the number of states, and the same number of columns as the
+#'   number of unique symbols that can be emitted (i.e. the residue alphabet).
+#'   The number of rows and columns in the transition probability matrix
+#'   should be one more the number of states, to include the silent "Begin"
+#'   state in the first row and column. Despite its name, this state is
+#'   also used when modeling transitions to the (silent)
+#'   end state, which are entered in the first column.
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -68,8 +83,6 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL,
                       modelend = FALSE, pseudocounts = "background",
                       logspace = TRUE){
   if(!(is.list(x))) stop("x must be a list of named vectors")
-  # x is a list of named character vectors
-  # includes start and or end states?
   DNA <- .isDNA(x)
   AA <- .isAA(x)
   namesok <- all(sapply(x, function(y) !is.null(names(y)) | length(y) == 0))
@@ -90,9 +103,7 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL,
     }
   }
   # code states as integers
-  indices <- setNames(seq_along(states) - 1, states)
-  #indices <- 0:(nstates - 1)
-  #names(indices) <- states
+  indices <- structure(seq_along(states) - 1, names = states)
   pathscoded <- lapply(x, function(e) indices[c("Begin", names(e), "Begin")])
   Acounts <- .acount(pathscoded[[1]], arity = nstates) * seqweights[1]
   if(n > 1){
@@ -100,16 +111,14 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL,
       Acounts <- Acounts + .acount(pathscoded[[i]], arity = nstates) * seqweights[i]
     }
   }
-  indices <- setNames(0:(nstates - 2), states[-1])
+  indices <- structure(0:(nstates - 2), names = states[-1])
   statescoded <- lapply(x, function(e) indices[names(e)])
   if(DNA){
-    #rescoded <- lapply(x, DNA2quaternary)
     rescoded <- lapply(x, .encodeDNA, arity = 4)
   }else if(AA){
-    #rescoded <- lapply(x, AA2vigesimal)
     rescoded <- lapply(x, .encodeAA, arity = 20)
   }else{
-    indices <- setNames(0:(nres - 1), residues)
+    indices <- structure(0:(nres - 1), names = residues)
     rescoded <- lapply(x, function(e) indices[e])
   }
   Ecounts <- .ecount(statescoded[[1]], nstates - 1, rescoded[[1]], nres) * seqweights[1]
@@ -133,7 +142,9 @@ deriveHMM <- function(x, seqweights = NULL, residues = NULL, states = NULL,
     stopifnot(length(pseudocounts == 2))
     Acounts <- Acounts + pseudocounts[[1]]
     Ecounts <- Ecounts + pseudocounts[[2]]
-  }else if(!identical(pseudocounts, "none")) stop("invalid pseudocounts argument")
+  }else if(!identical(pseudocounts, "none")){
+    stop("invalid pseudocounts argument")
+  }
   if(!modelend) Acounts[, 1] <- 0
   # calculate transition and emission matrices
   A <- Acounts/apply(Acounts, 1, sum) #rows must sum to 1

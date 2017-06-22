@@ -43,7 +43,7 @@
 #'   woodmouse.PHMM <- derivePHMM(woodmouse)
 #'   ## plot partial model to viewer device
 #'   plot(woodmouse.PHMM, from = 0, to = 5)
-#'   ## plot the entire model to a PDF
+#'   ## plot the entire model to a PDF in the current working directory
 #'   \dontrun{
 #'   nr <- ceiling((woodmouse.PHMM$size + 2)/10)
 #'   pdf(file = "woodmouse.pdf",
@@ -83,16 +83,14 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
   canwid <- canvasdims[1]/(parusr[2] - parusr[1]) #inches
   canhgt <- canvasdims[2]/(parusr[4] - parusr[3]) #inches
   canratio <- canhgt/canwid
-  lim <- if(canratio > plotratio) 'wid' else 'hgt' #is plot width or height limited?
+  lim <- if(canratio > plotratio) 'wid' else 'hgt' # is plot width or height limited
   scalefac <- if(lim == 'wid') canwid/plotwid else canhgt/plothgt
-  # so one box is *scalefac* inches wide (and high)
+  # one box is *scalefac* inches wide (and high)
   xunit <- scalefac/canwid
   yunit <- scalefac/canhgt
   boxhgt <- boxhgt * yunit
   plotwid <- plotwid * xunit
   plothgt <- plothgt * yunit
-  ### so how many inches is one yunit?
-
   coords <- matrix(nrow = 3 * no.boxes, ncol = 2)
   coords[, 1] <- rep(seq(xunit/2, xunit/2 + (no.boxes * 2 - 1) * xunit,
                          by = 2 * xunit), each = 3)
@@ -106,8 +104,6 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
                   rep(rep(c(2, 4, 6), 3), pHMMlength + 1) +
                     rep(seq(0, 3 * pHMMlength, 3), each = 9))
   nr <- nrow(fromto)
-  #fromstates <- rep(rep(c("D", "I", "M"), each = 3), times = pHMMlength + 1)
-  #tostates <- rep(c("I", "D", "M"), times = 3 * (pHMMlength + 1))
   transitions <- rep(c("DI", "DD", "DM", "II", "ID", "IM", "MI", "MD", "MM"), pHMMlength + 1)
   modstates <- paste(rep(0:pHMMlength, each = 9))
   nullarrows <- rep(FALSE, nr)
@@ -115,23 +111,19 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
   if(from != 0) nullarrows[1:(from * 9)] <- TRUE #9 diff arrows from each pos
   if(to != pHMMlength + 1) nullarrows[((to * 9 + 2):nr)[-c(3, 6)]] <- TRUE
   for(i in (1:nr)[!nullarrows]){
-    # arrwgt <- x$A[fromstates[i], modstates[i], tostates[i]] * 4 * arrexp
-    arrwgt <- x$A[transitions[i], modstates[i]] * 4 * arrexp
-    ## 4 just looks about right
-    # lines(rbind(coords[fromto[i - 9 * from, 1], ],
-    #             coords[fromto[i - 9 * from, 2], ]), lwd = arrwgt)
+    arrwgt <- x$A[transitions[i], modstates[i]] * 4 * arrexp # factor 4 looks abt right
     fromi <- fromto[i - 9 * from, 1]
     toi <- fromto[i - 9 * from, 2]
     coordsi <- coords[c(fromi, toi), ]
-    #coordsi[1,1] is x0, [1,2] is y0, [2,1] is x1, [2,2] is y1
+    ## coordsi[1,1] is x0, [1,2] is y0, [2,1] is x1, [2,2] is y1
     if(fromi %% 3 == 1 & toi %% 3 == 2){
       arrows(x0 = coordsi[1, 1], y0 = coordsi[1, 2],
              x1 = coordsi[2, 1], y1 =coordsi[2, 2] + sqrt((yunit^2)/2),
-             length = scalefac/10, lwd = arrwgt)####### fix length
+             length = scalefac/10, lwd = arrwgt)# fix length
     }else if(fromi %% 3 == 0 & toi %% 3 == 2){
       arrows(x0 = coordsi[1, 1], y0 = coordsi[1, 2],
              x1 = coordsi[2, 1], y1 =coordsi[2, 2] - sqrt((yunit^2)/2),
-             length = scalefac/10, lwd = arrwgt)####### fix length
+             length = scalefac/10, lwd = arrwgt)# fix length
     }else{
       lines(coordsi, lwd = arrwgt)
     }
@@ -152,7 +144,6 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
               rady = sqrt((yunit^2)/2),
               col = 'white')
       text(x = coords[i + 1, 1], y = coords[i + 1, 2],
-           # labels = paste(round(x$A["I", pos + 1, "I"] * 100, 0)),
            labels = paste(round(x$A["II", pos + 1] * 100, 0)),
            cex = textexp)
       if(pos != 0){
@@ -252,7 +243,7 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
   canwid <- canvasdims[1]/(parusr[2] - parusr[1]) #inches
   canhgt <- canvasdims[2]/(parusr[4] - parusr[3]) #inches
   canratio <- canhgt/canwid
-  lim <- if(canratio > plotratio) 'wid' else 'hgt' #is plot width or height limited?
+  lim <- if(canratio > plotratio) 'wid' else 'hgt' # is plot width or height limited
   scalefac <- if(lim == 'wid') canwid/plotwid else canhgt/plothgt
   xunit <- scalefac/canwid
   yunit <- scalefac/canhgt

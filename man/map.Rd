@@ -81,7 +81,8 @@ Assigns match and insert states to alignment columns using the maximum
 }
 \details{
 see Durbin et al (1998) chapter 5.7 for details of
-  the maximum \emph{a posteriori} algorithm for match state assignment.
+  the maximum \emph{a posteriori} algorithm for optial match and insert
+  state assignment.
 }
 \examples{
 ## Maximum a posteriori assignment of match states to the small

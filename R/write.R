@@ -13,20 +13,37 @@
 #' @param vers character string indicating the version of version of the format
 #'   in which to write the model. Currently only "f" is supported.
 #' @return NULL (invisibly)
-#' @details TBA
+#' @details
+#'   This function writes an object of class \code{"PHMM"} to a
+#'   HMMER3/f text file. Note that unlike HMMER, the \pkg{aphid}
+#'   package does not currently support position-specific background
+#'   emission probabilities.
 #' @author Shaun Wilkinson
 #' @references
 #'   Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
 #'   similarity searching. \emph{Nucleic Acids Research}. 39:W29-W37.
 #'   \url{http://hmmer.org/}.
+#'
+#'   HMMER: biosequence analysis using profile hidden Markov models.
+#'   \url{http://www.hmmer.org}.
+#'
 #' @seealso \code{\link{readPHMM}} to parse a PHMM object from a HMMER3 text file.
 #' @examples
-#' \dontrun{
-#' library(ape)
-#' data(woodmouse)
-#' woodmouse.PHMM <- derivePHMM(woodmouse)
-#' writePHMM(woodmouse.PHMM, file = "woodmouse.hmm")
-#' }
+#'   ## Derive a profile hidden Markov model from the small globin alignment
+#'   data(globins)
+#'   x <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+#'   x
+#'   fl <- tempfile()
+#'   writePHMM(x, file = fl)
+#'   readPHMM(fl)
+#'   ##
+#'   ## Derive a PHMM for the woodmouse data and write to working directory
+#'   \dontrun{
+#'     library(ape)
+#'     data(woodmouse)
+#'     woodmouse.PHMM <- derivePHMM(woodmouse)
+#'     writePHMM(woodmouse.PHMM, file = "woodmouse.hmm")
+#'   }
 ################################################################################
 writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f"){
   options(digits = 7, scipen = 10)
@@ -50,7 +67,6 @@ writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f")
   csl <- if(is.null(x$construct)) "CS    no" else "CS    yes"
   mpl <- if(is.null(x$map)) "MAP   no" else "MAP   yes"
   cat(rfl, mml, cl, csl, mpl, file = file, sep = "\n", append = TRUE)
-
   if(!is.null(x$date)) cat(paste0("DATE  ", x$date), file = file,
                            append = TRUE, sep = "\n")
   if(!is.null(x$nseq)) cat(paste0("NSEQ  ", x$nseq), file = file,
@@ -77,9 +93,6 @@ writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f")
   qe[trimws(qe) == "Inf"] <- "      *"
   qe <- gsub("(.......).+", "\\1", qe)
   qeline = paste0("          ", paste(qe, collapse = "  "))
-
-  # qe <- as.character(format(-x$qe, digits = 6, scientific = FALSE))
-  # qeline <- paste0("          ", paste(qe, collapse = "  "))
   cat(qeline, file = file, sep = "\n", append = TRUE)
   A <- formatC(-x$A[c(5, 6, 4, 8, 9, 2, 1), ], digits = 6, format = "f")
   A[trimws(A) == "Inf"] <- "      *"
@@ -93,7 +106,8 @@ writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f")
   trans0line = paste("         ", paste(A[, 1], collapse = "  "))
   cat(trans0line, file = file, sep = "\n", append = TRUE)
   for(i in 1:x$size){
-    emline <- paste0(if(i < 10) "      " else if(i < 100) "     " else "    ", i, "   ")
+    emline <- paste0(if(i < 10) "      " else if(i < 100) "     " else "    ",
+                     i, "   ")
     emline <- paste0(emline, paste(E[, i], collapse = "  "))
     if(!is.null(x$map)){
       tmp <- x$map[i]

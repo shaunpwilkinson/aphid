@@ -3,7 +3,7 @@
 #' Update model parameters using a list of training sequences, with either
 #'   the Viterbi training or Baum-Welch algorithm.
 #'
-#' @param x an object of class \code{'HMM'} or \code{'PHMM'} specifying the
+#' @param x an object of class \code{"HMM"} or \code{"PHMM"} specifying the
 #'   initial parameter values.
 #' @param y a list of training sequences whose hidden states are unknown.
 #'   Accepted modes are "character" and "raw" (for "DNAbin" and "AAbin"
@@ -14,6 +14,12 @@
 #' @param seqweights either NULL (default; all sequences are given
 #'   weights of 1) or a numeric vector the same length as \code{x}
 #'   representing the sequence weights used to derive the model.
+#' @param wfactor numeric. The factor to multiply the sequence weights by.
+#'   Defaults to 1.
+#' @param k integer representing the k-mer size to be used in tree-based
+#'   sequence weighting (if applicable). Defaults to 5. Note that higher
+#'   values of k may be slow to compute and use excessive memory due to
+#'   the large numbers of calculations required.
 #' @param logspace logical indicating whether the emission and transition
 #'   probabilities of x are logged. If \code{logspace = "autodetect"}
 #'   (default setting), the function will automatically detect
@@ -89,6 +95,19 @@
 #' @param alignment logical indicating whether the alignment used to
 #'   derive the final model (if applicable) should be included as an element of
 #'   the returned PHMM object. Defaults to FALSE.
+#' @param cores integer giving the number of CPUs to parallelize the operation
+#'   over. Defaults to 1, and reverts to 1 if x is not a list.
+#'   This argument may alternatively be a 'cluster' object,
+#'   in which case it is the user's responsibility to close the socket
+#'   connection at the conclusion of the operation,
+#'   for example by running \code{parallel::stopCluster(cores)}.
+#'   The string "autodetect" is also accepted, in which case the maximum
+#'   number of cores to use is one less than the total number of cores
+#'   available. Note that in this case there
+#'   may be a tradeoff in terms of speed depending on the number and size
+#'   of sequences to be aligned, due to the extra time required to initialize
+#'   the cluster.
+#'   Only applicable if x is a \code{"PHMM"} and \code{method = "Viterbi"}.
 #' @param quiet logical indicating whether feedback should be printed
 #'   to the console.
 #' @param ... aditional arguments to be passed to \code{"Viterbi"} (if
@@ -97,12 +116,34 @@
 #' @return an object of class \code{"HMM"} or \code{"PHMM"}, depending
 #'   on the input model \code{x}.
 #' @details
+#'   This function optimizes the parameters of a hidden Markov model
+#'   (object class: \code{"HMM"}) or profile hidden Markov model
+#'   (object class: \code{"PHMM"}) using the methods described in
+#'   Durbin et al (1998) chapters 3.3 and 6.5, respectively.
+#'   For standard HMMs, the function assumes the state sequence is unknown
+#'   (as opposed to the \code{\link{deriveHMM}} function, which is used
+#'   when the state sequence is known).
+#'   For profile HMMs, the input object is generally a list of non-aligned
+#'   sequences rather than an alignment (for which the \code{\link{derivePHMM}}
+#'   function may be more suitable).
+#'
 #'   This function offers a choice of two model training methods,
 #'   Viterbi training (also known as the segmental
 #'   K-means algorithm (Juang & Rabiner 1990)), and the Baum Welch algorithm,
 #'   a special case of the expectation-maximization (EM) algorithm that
 #'   iteratively finds the locally (but not necessarily globally) optimal
 #'   parameters of a HMM or PHMM.
+#'
+#'   The Viterbi training method is generally much faster, particularly for
+#'   profile HMMs and when the multi-threading option is used
+#'   (see the \code{"cores"} argument). The comparison in accuracy will depend
+#'   on the nature of the problem, but personal experience suggests that
+#'   the methods are comparable for training profile HMMs for DNA and
+#'   amino acid sequences.
+#'
+#'   Note that multi-threading is only currently available for Viterbi
+#'   training of profile HMMs.
+#'
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -139,74 +180,44 @@
 #'   par(op)
 #' @name train
 ################################################################################
-# train <- function(x, y, method = "Viterbi", seqweights = NULL,
-#                   logspace = "autodetect", maxiter = 100,
-#                   deltaLL = 1E-07, modelend = FALSE,
-#                   pseudocounts = "background", gap = "-",
-#                   fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
-#                   inserts = "map", threshold = 0.5, lambda = 0,
-#                   quiet = FALSE, ...){
-#   UseMethod("train")
-# }
 train <- function(x, y, ...){
   UseMethod("train")
 }
 ################################################################################
 #' @rdname train
 ################################################################################
-train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
+train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
+                       wfactor = 1, k = 5,
                        logspace = "autodetect", maxiter = 100, deltaLL = 1E-07,
                        pseudocounts = "background", gap = "-",
                        fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
                        inserts = "map", threshold = 0.5, lambda = 0,
-                       alignment = FALSE, quiet = FALSE, ...){
+                       alignment = FALSE, cores = 1, quiet = FALSE, ...){
   if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
-  #note any changes below also need apply to align2phmm
   DNA <- .isDNA(y)
   AA <- .isAA(y)
   DI <- !all(x$A["DI", ] == if(logspace) -Inf else 0)
   ID <- !all(x$A["ID", ] == if(logspace) -Inf else 0)
-  #maxiter <- maxiter
-  #method <- toupper(method)
   gap <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gap
   if(!is.list(y)){
-    if(DNA | AA){
-      if(is.matrix(y)){
-        nseq <- nrow(y)
-        seqnames <- rownames(y)
-        tmp <- structure(vector(mode = "list", length = nseq), class = if(DNA) "DNAbin" else "AAbin")
-        for(i in 1: nseq){
-          seqi <- as.vector(y[i, ])
-          tmp[[i]] <- seqi[seqi != gap]
-        }
-        names(tmp) <- seqnames
-      }else{
-        tmp <- structure(list(y), class = if(DNA) "DNAbin" else "AAbin")
-        names(tmp) <- deparse(substitute(y))
-      }
-      y <- tmp
-    }else if(is.matrix(y)){
-      if(mode(y[1, 1]) != "character") stop("invalid mode")
-      nseq <- nrow(y)
-      seqnames <- rownames(y)
-      tmp <- structure(vector(mode = "list", length = nseq), class = "DNAbin")
-      for(i in 1: nseq){
-        seqi <- as.vector(y[i, ])
-        tmp[[i]] <- seqi[seqi != gap]
-      }
-      names(tmp) <- seqnames
-      y <- tmp
-    }else if(is.null(dim(y))){
-      if(mode(y) == "character"){
-        yname <- deparse(substitute(y))
-        y <- list(y)
-        names(y) <- yname
-      }else stop("invalid mode")
-    }else stop("invalid 'y' argument")
+    y <- if(is.null(dim(y))) list(y) else unalign(y, gap = gap)
   }
   n <- length(y)
-  if(is.null(seqweights)) seqweights <- rep(1, n)
-  ##### TODO else (seqweights used as numeric below)
+  if(is.null(seqweights)){
+    seqweights <- rep(1, n)
+  }else if(identical(seqweights, "Gerstein")){
+    if(n > 2)
+      seqweights <- if(n > 2){
+        weight(y, k = k, gap = gap) # residues excluded for speed
+      }else rep(1, n)
+  }else{
+    stopifnot(
+      length(seqweights) == n,
+      !any(is.na(seqweights)),
+      mode(seqweights) %in% c("numeric", "integer")
+    )
+  }
+  seqweights <- seqweights * wfactor
   states <- c("D", "M", "I")
   residues <- rownames(x$E)
   l <- x$size
@@ -239,32 +250,47 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
     xtr[!gaps & insertsn] <- 2L # Insert
     xtr <- cbind(1L, xtr, 1L) # append begin and end match states
     tcs <- .atab(xtr, seqweights = seqweights)
-    transtotals <- apply(tcs, 1, sum) + 1 # force addition of Laplacian pseudos
+    transtotals <- apply(tcs, 1, sum) + 1 # force addition of Lapl pseudos
     if(!DI) transtotals[3] <- 0
     if(!ID) transtotals[7] <- 0
-    x$qa <- log(transtotals/sum(transtotals)) ### needs tidying up
+    x$qa <- log(transtotals/sum(transtotals))
   }
   if(method  == "Viterbi"){
-    alig <- align(y, model = x, logspace = TRUE, ... = ...)
-    #scores <- attr(alig, "score")
-    #maxscore <- attr(alig, "score")
+    ## set up multithread
+    if(inherits(cores, "cluster")){
+      para <- TRUE
+      stopclustr <- FALSE
+    }else if(cores == 1){
+      para <- FALSE
+      stopclustr <- FALSE
+    }else{
+      navailcores <- parallel::detectCores()
+      if(identical(cores, "autodetect")) cores <- navailcores - 1
+      if(cores > 1){
+        if(cores > navailcores){
+          stop("Number of cores is more than the number available")
+        }
+        if(!quiet) cat("Multithreading over", cores, "cores\n")
+        cores <- parallel::makeCluster(cores)
+        para <- TRUE
+        stopclustr <- TRUE
+      }else{
+        para <- FALSE
+        stopclustr <- FALSE
+      }
+    }
+    alig <- align.list(y, model = x, logspace = TRUE, cores = cores,
+                       ... = ...)
     alig_cache <- character(maxiter)
-    #alig_cache[1] <- paste(openssl::md5(as.vector(alig)))
     alig_cache[1] <- .digest(alig, simplify = TRUE)
-    # alig_cache <- list()
-    # alig_cache[[1]] <- as.vector(alig)
     for(i in 1:maxiter){
-      # tmpinserts <- inserts
-      # if(identical(inserts, "map")){
-      #   propgaps <- sum(alig == gap)/length(alig)
-      #   if(propgaps > 0.5) tmpinserts <- "inherited"
-      #   ### prevents excessive memory use by 'map' for sparse aligs
-      # }
-      out <- derivePHMM.default(alig, seqweights = seqweights, residues = residues,
-                                gap = gap, DI = DI, ID = ID, maxsize = maxsize,
-                                inserts = inserts, lambda = lambda, threshold = threshold,
-                                pseudocounts = pseudocounts, logspace = TRUE,
-                                alignment = alignment,
+      out <- derivePHMM.default(alig, seqweights = seqweights,
+                                residues = residues, gap = gap,
+                                DI = DI, ID = ID, maxsize = maxsize,
+                                inserts = inserts, lambda = lambda,
+                                threshold = threshold,
+                                pseudocounts = pseudocounts,
+                                logspace = TRUE, alignment = alignment,
                                 qa = if(fixqa) x$qa else NULL,
                                 qe = if(fixqe) x$qe else NULL)
       if(!quiet){
@@ -272,10 +298,8 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
         cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ")
         cat("PHMM with", out$size, "modules\n")
       }
-      ### what about DI and ID
-      newalig <- align(y, model = out, logspace = TRUE, ... = ...)
-      #if(!quiet) cat("Max obj size:", max( sapply(ls(),function(z){object.size(get(z))})) , "\n")
-      #newhash <- paste(openssl::md5(as.vector(newalig)))
+      newalig <- align(y, model = out, logspace = TRUE, cores = cores,
+                       ... = ...)
       newhash <- .digest(newalig, simplify = TRUE)
       if(!any(sapply(alig_cache, identical, newhash))){
         alig_cache[i + 1] <- newhash
@@ -289,13 +313,16 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           out$qa <- exp(out$qa)
           out$qe <- exp(out$qe)
         }
-        if(!quiet) cat("Sequential alignments were identical after", i, "iterations\n")
+        if(!quiet) cat("Sequential alignments were identical after",
+                       i, "iterations\n")
+        if(para & stopclustr) parallel::stopCluster(cores)
         return(out)
       }
     }
-    if(!quiet) cat("Sequential alignments were not identical after", i, "iterations\n")
+    if(!quiet) cat("Sequential alignments were not identical after",
+                   i, "iterations\n")
+    if(para & stopclustr) parallel::stopCluster(cores)
     return(out)
-    #stop("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
   }else if(method == "BaumWelch"){
     if(DNA){
       NUCorder <- sapply(toupper(rownames(x$E)), match, c("A", "T", "G", "C"))
@@ -307,7 +334,6 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       }
       y <- .encodeDNA(y, arity = 4, probs = exp(x$qe), random = FALSE, na.rm = TRUE)
     }else if(AA){
-      #rownames(x$E) <- toupper(rownames(x$E))
       PFAMorder <- sapply(toupper(rownames(x$E)), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
       x$E <- x$E[PFAMorder, ]
       x$qe <- x$qe[PFAMorder]
@@ -380,7 +406,6 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
           for(k in 1:l){
             # Emission and background emission counts
             for(a in seq_along(residues)){
-              #yjea <- c(FALSE, yj == residues[a])
               if(any(yjea[a, ])){
                 tmpEj[a, k] <- exp(logsum(Rj[k + 1, yjea[a, ], "M"] + Bj[k + 1, yjea[a, ], "M"]) - logPxj)
                 tmpqej[a] <- exp(logsum(Rj[k + 1, yjea[a, ], "I"] + Bj[k + 1, yjea[a, ], "I"]) - logPxj)
@@ -424,7 +449,6 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
       out$A <- A
       out$E <- E
       if(!fixqe) out$qe <- qe
-      ### some cleanup required above
       logPx <- sum(tmplogPx) # page 62 eq 3.17
       if(!quiet) cat("Iteration", i, "log likelihood =", logPx, "\n")
       if(abs(LL - logPx) < deltaLL){
@@ -465,22 +489,21 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = NULL,
 ################################################################################
 #' @rdname train
 ################################################################################
-train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL,
-                      maxiter = 100,
-                      deltaLL = 1E-07,
+train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL, wfactor = 1,
+                      maxiter = 100, deltaLL = 1E-07,
                       logspace = "autodetect", quiet = FALSE, modelend = FALSE,
                       pseudocounts = "Laplace", ...){
   if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
   if(identical(pseudocounts, "background")) pseudocounts <- "Laplace"
   # no method for background pseudocounts yet
-  #method <- toupper(method)
   if(is.list(y)){
-  } else if(is.vector(y, mode = "character")){
+  }else if(is.vector(y, mode = "character")){
     y <- list(y)
-  }else stop("invalid y argument")
+  }else stop("Invalid y argument")
   n <- length(y)
   if(is.null(seqweights)) seqweights <- rep(1, n)
   stopifnot(sum(seqweights) == n)
+  seqweights <- seqweights * wfactor
   states <- rownames(x$A)
   nstates <- length(states)
   residues <- colnames(x$E)

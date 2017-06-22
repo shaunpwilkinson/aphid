@@ -72,7 +72,21 @@ an object of class \code{"HMM"}.
   the state from which they were emitted.
 }
 \details{
-TBA
+This function creates a standard hidden Markov model (object class:
+  \code{"HMM"}) using the method described in Durbin et al (1998) chapter
+  3.3. It assumes the state sequence is known
+  (as opposed to the \code{\link{train.HMM}} function, which is used
+  when the state sequence is unknown) and provided as the names attribute(s)
+  of the input sequences. The output object is a simple list with elements
+  "A" (transition probability matrix) and "E" (emission probability matrix),
+  and the "class" attribute "HMM". The emission matrix has the same number
+  of rows as the number of states, and the same number of columns as the
+  number of unique symbols that can be emitted (i.e. the residue alphabet).
+  The number of rows and columns in the transition probability matrix
+  should be one more the number of states, to include the silent "Begin"
+  state in the first row and column. Despite its name, this state is
+  also used when modeling transitions to the (silent)
+  end state, which are entered in the first column.
 }
 \examples{
  data(casino)

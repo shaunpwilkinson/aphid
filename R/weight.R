@@ -1,22 +1,18 @@
-#' Tree-based sequence weighting.
+#' Sequence weighting.
 #'
-#' This is a generic function that uses the agglomerative method of
-#'   Gerstein et al. (1994) to weight sequences based on their relatedness
-#'   as derived from a phylogenetic tree. Methods are available for
-#'   \code{"dendrogram"} objects, \code{"DNAbin"} and \code{"AAbin"}
-#'   sequence objects (as lists or matrices) and sequences in standard
-#'   ASCII character format provided either as lists or matrices.
+#' Weight sequences based on a tree.
 #'
 #' @param x an object of class \code{"dendrogram"}, or a list or matrix of
 #'   sequences (possibly a "DNAbin" or "AAbin" object) from which to derive a
-#'   dendrogram via the \code{\link[phylogram]{topdown}} function.
+#'   dendrogram using the \code{\link[phylogram]{topdown}} function in the
+#'   \code{\link[phylogram]{phylogram}} package.
 #' @param method a character string indicating the weighting method to be used.
-#'   Currently only that of Gerstein et al. (1994) is supported
+#'   Currently only that of Gerstein et al (1994) is supported
 #'   (\code{method = "Gerstein"}).
-#' @param k integer representing the k-mer size to be used for calculating
-#'   the distance matrix used in tree-based sequence weighting. Defaults to
-#'   5. Note that high values of k (> 8) may be slow to compute and use a lot
-#'   of memory due to the large numbers of calculations required.
+#' @param k integer representing the k-mer size to be used in tree-based
+#'   sequence weighting. Defaults to 5. Note that higher
+#'   values of k may be slow to compute and use excessive memory due to
+#'   the large numbers of calculations required.
 #' @param residues either NULL (default; emitted residues are automatically
 #'   detected from the sequences), a case sensitive character vector
 #'   specifying the residue alphabet, or one of the character strings
@@ -32,7 +28,17 @@
 #' @param ... additional arguments to be passed between methods.
 #' @return a named vector of weights, the sum of which is equal to
 #'    the total number of sequences (average weight = 1).
-#' @details For further details see Durbin et al (1998) chapter 5.8.
+#' @details
+#'   This is a generic function that uses the agglomerative method of
+#'   Gerstein et al (1994) to weight sequences based on their relatedness
+#'   as derived from a phylogenetic tree. Methods are available for
+#'   \code{"dendrogram"} objects, \code{"DNAbin"} and \code{"AAbin"}
+#'   sequence objects (as lists or matrices) and sequences in standard
+#'   ASCII character format provided either as lists or matrices.
+#'
+#'   For further details on sequence weighting see Durbin et al
+#'   (1998) chapter 5.8.
+#'
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -41,6 +47,7 @@
 #'
 #'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
 #'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
+#'
 #' @seealso \code{\link[phylogram]{topdown}}
 #' @examples
 #'   ## weight the sequences in the woodmouse dataset from the ape package
@@ -50,10 +57,6 @@
 #'   woodmouse.weights
 #' @name weight
 ################################################################################
-# weight <- function(x, method = "Gerstein", k = 5, residues = NULL,
-#                    gap = "-"){
-#   UseMethod("weight")
-# }
 weight <- function(x, ...){
   UseMethod("weight")
 }
@@ -96,8 +99,6 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
   names(x) <- paste0("S", 1:nsq)
   if(nsq > 2){
     guidetree <- phylogram::topdown(x, k = k, residues = residues, gap = gap)
-    # qds <- phylogram::kdistance(x, k = k, alpha = if(AA) "Dayhoff6" else if(DNA) NULL else residues)
-    # guidetree <- as.dendrogram(hclust(qds, method = "average"))
     res <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)]
   }else if(nsq == 2){
     res <- c(1, 1)
@@ -122,14 +123,19 @@ weight.dendrogram <- function(x, method = "Gerstein", ...){
     childisdendro <- ngrandchildren > 1
     if(md(x)){
       childheights <- ch(x[childisdendro])
-      childedges <- attr(x, "height") - childheights # ch only works on dendro lists
-      grandchildheights <- lapply(x[childisdendro], ch) #  list same length as childedges
-      grandchildedges <- mapply("-", childheights, grandchildheights, SIMPLIFY = FALSE)
-      grandchildedges <- lapply(grandchildedges, function(e) e + 0.0000001) # this just
-      # safeguards against 0 denominators (but is a bit of a hack)
+      childedges <- attr(x, "height") - childheights
+      # ch only works on dendro lists
+      grandchildheights <- lapply(x[childisdendro], ch)
+      #  list same length as childedges
+      grandchildedges <- mapply("-", childheights, grandchildheights,
+                                SIMPLIFY = FALSE)
+      grandchildedges <- lapply(grandchildedges, function(e){
+        e + 0.0000001})
+      # this just safeguards against 0 denominators (but is a bit of a hack)
       ratios <- lapply(grandchildedges, function(v) v/sum(v))
       inheritances <- mapply("*", childedges, ratios, SIMPLIFY = FALSE)
-      newgrandchildedges <- mapply("+", grandchildedges, inheritances, SIMPLIFY = FALSE)
+      newgrandchildedges <- mapply("+", grandchildedges, inheritances,
+                                   SIMPLIFY = FALSE)
       lcounter <- 1 #leaf counter
       dcounter <- 1 #dendro counter
       tmp <- x
@@ -137,7 +143,8 @@ weight.dendrogram <- function(x, method = "Gerstein", ...){
         if(ngrandchildren[i] > 1){
           for(j in 1:ngrandchildren[i]){
             leafj <- tmp[[i]][[j]]
-            attr(leafj, "height") <- attr(tmp, "height") - newgrandchildedges[[dcounter]][j]
+            attr(leafj, "height") <- attr(tmp, "height") -
+              newgrandchildedges[[dcounter]][j]
             x[[lcounter]] <- leafj
             lcounter <- lcounter + 1
           }

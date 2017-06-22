@@ -1,5 +1,8 @@
-# Internal functions.
-# detect residue alphabet
+################################################################################
+####################### Internal helper functions ##############################
+################################################################################
+
+## Detect residue alphabet
 .alphadetect <- function(sequences, residues = NULL, gap = "-",
                         endchar = "?"){
   if(identical(toupper(residues), "RNA")){
@@ -24,7 +27,7 @@
   return(residues)
 }
 
-# Detect if model parameters are in log space.
+## Detect if model parameters are in log space
 .logdetect <- function(x){
   if(inherits(x, "HMM")){
     if(all(x$A <= 0) & all(x$E <= 0)){
@@ -42,9 +45,10 @@
   } else stop("x must be an object of class 'HMM' or 'PHMM'")
 }
 
-# Convert a vector in any arity to a decimal integer
+## Convert a vector in any arity to a decimal integer
 .decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
 
+## Remove unknown end characters
 .trim <- function(x, gap = "-", endchar = "?", DNA = FALSE, AA = FALSE){
   #X is a raw or character matrix
   # gap can have length > 1
@@ -76,6 +80,7 @@
   return(x)
 }
 
+# Detect if sequence or list is raw DNA
 .isDNA <- function(x){
   if(inherits(x, "DNAbin")){
     return(TRUE)
@@ -98,6 +103,7 @@
   }
 }
 
+## Detect if sequence or list is raw AA
 .isAA <- function(x){
   if(inherits(x, "AAbin")){
     return(TRUE)
@@ -118,6 +124,7 @@
   }
 }
 
+## Count residues for character vectors
 .tabulateCH <- function(x, residues, seqweights = NULL){
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
   #if(identical(seqweights, 1)) seqweights <- rep(1, length(v))
@@ -127,6 +134,7 @@
   return(res)
 }
 
+## Count residues for raw DNA vectors
 .tabulateDNA <- function(x, ambiguities = FALSE, seqweights = NULL){
   # x is a DNAbin vector
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
@@ -161,6 +169,7 @@
   return(res)
 }
 
+## Count residues for raw AA vectors
 .tabulateAA <- function(x, ambiguities = FALSE, seqweights = NULL){
   # x is an AAbin vector
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
@@ -196,6 +205,7 @@
   return(res)
 }
 
+## Remove ambiguities from DNA sequences
 .disambiguateDNA <- function(a, probs = rep(0.25, 4), random = TRUE){
   # a is a raw byte in Paradis (2007) format
   # probs is a 4-element numeric vector of background probabilities for the set {a,c,g,t}
@@ -280,6 +290,7 @@
   }else stop("invalid byte for class 'DNAbin'")
 }
 
+## Remove ambiguities from raw AA sequences
 .disambiguateAA <- function(a, probs = rep(0.05, 20), random = TRUE){
   # a is a raw byte in AAbin format
   guide <- as.raw(c(65:90, 42, 45)) #length = 28
@@ -444,7 +455,7 @@
 }
 
 
-# given logical vector, how many falses are after each true?
+# Given logical vector, how many falses are after each true?
 # note - also outputs a zero position
 .insertlengths <- function(x){
   tuples <- rbind(c(T, x), c(x, T))
@@ -460,17 +471,18 @@
   names(res) <- 0:(length(res) - 1)
   res
 }
-#x <- c(F,F,T,T,T,F,F,T,T,T,F,T,T,F,F,F,F,F,T,F,F,F)
-#.insertlengths(x)
+# example
+# x <- c(F,F,T,T,T,F,F,T,T,T,F,T,T,F,F,F,F,F,T,F,F,F)
+# aphid:::.insertlengths(x)
 
-# this function is used for matrix x matrix alignment
+## This function is used for matrix x matrix alignment
 .insert <- function(x, into, at){
   if(ncol(x) == 0) return(into)
   into[, at:(at + ncol(x) - 1)] <- x
   return(into)
 }
 
-# define search space for dynammic programming
+## Define search space for dynammic programming
 .streak <- function(x, y, arity = "autodetect", k = 4, w = 30, threshold = 5){
   # x and y coded as integers starting from 0
   if(arity == "autodetect") arity <- max(c(x, y)) + 1
@@ -506,6 +518,7 @@
   }
 }
 
+## Find MD5 hash for a character or raw sequence
 .digest <- function(x, simplify = TRUE){
   digest1 <- function(s){
     if(mode(s) != "raw"){

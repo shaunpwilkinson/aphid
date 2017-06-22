@@ -76,7 +76,7 @@ the method to derive the weights from the sequences. Currently only the
 \code{"Gerstein"} method is supported (default). For this method, a
 tree is first created by k-mer counting (see \code{\link[phylogram]{topdown}}),
 and sequence weights are then derived from the tree using the 'bottom up'
-algorithm of Gerstein et al. (1994).}
+algorithm of Gerstein et al (1994).}
 
 \item{refine}{the method used to iteratively refine the model parameters
 following the initial progressive alignment and model derivation step.
@@ -85,10 +85,10 @@ the default option), \code{"BaumWelch"} (a modified version of the
 Expectation-Maximization algorithm), and "none" (skips the model
 refinement step).}
 
-\item{k}{integer representing the k-mer size to be used for calculating
-the distance matrix used in tree-based sequence weighting. Defaults to
-5. Note that high values oof k (> 8) may be slow to compute and use a lot
-of memory due to the large numbers of calculations required.}
+\item{k}{integer representing the k-mer size to be used in tree-based
+sequence weighting (if applicable). Defaults to 5. Note that higher
+values of k may be slow to compute and use excessive memory due to
+the large numbers of calculations required.}
 
 \item{maxiter}{the maximum number of EM iterations or Viterbi training
 iterations to carry out before the cycling process is terminated and
@@ -204,15 +204,29 @@ a matrix of aligned sequences, with the same mode and class as the
   sequences using profile hidden Markov models.
 }
 \details{
-This function uses a progressive alignment procedure similar to
-  the Clustal Omega algorithm (Sievers et al. 2011). The procedure
-  involves an initial progressive multiple sequence alignment via a guide tree,
+This function builds a multiple sequence alignment using profile
+  hidden Markov models. The default behaviour is to select the longest
+  sequence in the set that had the lowest sequence weight, derive a profile
+  HMM from the single sequence, and iteratively train the model
+  using the entire sequence set. Training can be achieved using either
+  the Baum Welch or Viterbi training algorithm, with the latter being
+  significantly faster, particularly when multi-threading is used.
+  Once the model parameters have converged (Baum Welch) or no variation
+  is seen in the sequential alignments (Viterbi training), the sequences
+  are aligned to the profile HMM to produce the alignment matrix.
+  The preceeding steps can be omitted if a pre-trained profile HMM
+  is passed to the function via the "model" argument.
+
+  If \code{progressive = TRUE} the function alternatively uses a
+  progressive alignment procedure similar to the Clustal Omega algorithm
+  (Sievers et al 2011). The involves an initial progressive multiple
+  sequence alignment via a guide tree,
   followed by the derivation of a profile hidden Markov model
-  from the alignment, an
-  iterative model refinement step, and finally the alignment of the
-  sequences back to the model. If only two sequences are provided,
-  a standard pairwise alignment is carried out using the Needleman-Wunch
-  or Smith-Waterman algorithm.
+  from the alignment, an iterative model refinement step,
+  and finally the alignment of the sequences back to the model as above.
+
+  If only two sequences are provided, a standard pairwise alignment
+  is carried out using the Needleman-Wunch or Smith-Waterman algorithm.
 }
 \examples{
   ## Protein pairwise alignment example from Durbin et al (1998) chapter 2.

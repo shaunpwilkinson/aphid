@@ -100,26 +100,41 @@ alignments. If NULL default settings are used. Default scoring matrices are
 mismatches are scored -1) for AAbin objects and character sequences.}
 }
 \value{
-an object of class \code{"DPA"}, which is a list containing the
+an object of class \code{"DPA"}, which is a list including the
   score, the dynammic programming array, and the optimal path (an integer
-  vector). If x is a PHMM and y is a sequence, the path is represented as
-  an integer vector containing zeros, ones and twos, where a zero represents
-  a downward transition, a one represents a diagonal transition downwards and
-  left, and a two represents a left transition in the dynamic programming
-  matrix (see Durbin et al (1998) chapter 2.3). This translates to
-  0 = delete state, 1 = match state and 2 = insert state.
-  If x and y are both sequences (i.e. the Needleman-Wunch or
-  Smith Waterman algorithm) a zero refers to x aligning to a gap in y,
-  a one refers to a match, and a two refers to y aligning to a gap in x.
-  If x is a standard hidden Markov model (HMM) and y is a sequence,
-  each integer (starting at zero) represents a state in the model.
+  vector, see details section).
 }
 \description{
 The \code{Viterbi} function finds the optimal path of a sequence through a HMM
   or PHMM and returns its full (log) probability or log-odds score.
 }
 \details{
-TBA.
+This function is a wrapper for a compiled C++ function that recursively
+  fills a dynamic programming matrix with probabilities, and
+  calculates the (logged) probability and optimal path of a sequence
+  through a HMM or PHMM.
+
+  If x is a PHMM and y is a sequence, the path is represented as
+  an integer vector containing zeros, ones and twos, where a zero represents
+  a downward transition, a one represents a diagonal transition downwards and
+  left, and a two represents a left transition in the dynamic programming
+  matrix (see Durbin et al (1998) chapter 2.3). This translates to
+  0 = delete state, 1 = match state and 2 = insert state.
+
+  If x and y are both sequences, the function implements the
+  Needleman-Wunch or Smith Waterman algorithm depending on
+  the type of alignment specified. In this case, a zero
+  in the path refers to x aligning to a gap in y, a one refers
+  to a match, and a two refers to y aligning to a gap in x.
+
+  If x is a standard hidden Markov model (HMM) and y is a sequence,
+  each integer in the path represents a state in the model.
+  Note that the path elements can take values between 0 and
+  one less than number of states, as in the C/C++ indexing
+  style rather than R's.
+
+  For a thorough explanation of the backward, forward and Viterbi
+  algorithms, see Durbin et al (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
 }
 \examples{
   ## Viterbi algorithm for standard HMMs:

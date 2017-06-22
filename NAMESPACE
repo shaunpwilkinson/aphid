@@ -49,6 +49,5 @@ importFrom(stats, hclust)
 importFrom(stats, is.leaf)
 importFrom(stats, runif)
 importFrom(stats, sd)
-importFrom(stats, setNames)
 
 useDynLib(aphid)

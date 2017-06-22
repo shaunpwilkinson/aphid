@@ -13,18 +13,7 @@ rawbases <- as.raw(c(136, 40, 72, 24))
 xDNA <- lapply(x, function(s) rawbases[match(s, bases)])
 class(xDNA) <- "DNAbin"
 
-# # simulate an AA sequence dataset, this time an alignment
-# set.seed(999)
-# aminos <- LETTERS[-c(2, 10, 15, 21, 24, 26)]
-# y <- matrix(sample(aminos, replace = TRUE, size = 100), nrow = 1)
-# evolve <- function(a) if(runif(1) > 0.95) sample(aminos, 1) else a
-# for(i in 2:5) y <- rbind(y, sapply(y[i - 1,], evolve))
-# rownames(y) <- paste("Sequence", 1:5)
-# # convert to AAbin object
-# rawaminos <- as.raw((65:89)[-c(2, 10, 15, 21, 24, 26)])
-# yAA <- apply(y, c(1, 2), function(s) rawaminos[match(s, aminos)])
-# class(yAA) <- "AAbin"
-
+# use the globins data for amino acid tests
 y <- globins
 aminos <- c("-", LETTERS[-c(2, 10, 15, 21, 24, 26)])
 rawaminos <- as.raw(c(45, (65:89)[-c(2, 10, 15, 21, 24, 26)]))
@@ -84,10 +73,11 @@ xbw.PHMM <- train(x.PHMM, c(x, list(x.sim)),
                   method = "BaumWelch", deltaLL = 0.1, quiet = TRUE)
 xDNAbw.PHMM <- train(xDNA.PHMM, c(xDNA, list(unclass(xDNA.sim))),
                      method = "BaumWelch", deltaLL = 0.1, quiet = TRUE)
-ybw.PHMM <- train(y.PHMM, c(unalign(y), list(y.sim)),
+ybw.PHMM <- train(y.PHMM, c(unalign(y), list(y.sim)), seqweights = NULL,
                   method = "BaumWelch", deltaLL = 0.1, quiet = TRUE)
 yAAbw.PHMM <- train(yAA.PHMM, c(unalign(yAA), list(unclass(yAA.sim))),
-                    method = "BaumWelch", deltaLL = 0.1, quiet = TRUE)
+                    seqweights = NULL, method = "BaumWelch",
+                    deltaLL = 0.1, quiet = TRUE)
 
 # Read and write HMMER files
 fl <- tempfile()

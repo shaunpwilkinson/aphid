@@ -62,15 +62,15 @@ the method to derive the weights from the sequences. Currently only the
 \code{"Gerstein"} method is supported (default). For this method, a
 tree is first created by k-mer counting (see \code{\link[phylogram]{topdown}}),
 and sequence weights are then derived from the tree using the 'bottom up'
-algorithm of Gerstein et al. (1994).}
+algorithm of Gerstein et al (1994).}
 
 \item{wfactor}{numeric. The factor to multiply the sequence weights by.
 Defaults to 1.}
 
-\item{k}{integer representing the k-mer size to be used for calculating
-the distance matrix used in tree-based sequence weighting. Defaults to
-5. Note that high values of k (> 8) may be slow to compute and use a lot
-of memory due to the large numbers of calculations required.}
+\item{k}{integer representing the k-mer size to be used in tree-based
+sequence weighting (if applicable). Defaults to 5. Note that higher
+values of k may be slow to compute and use excessive memory due to
+the large numbers of calculations required.}
 
 \item{residues}{either NULL (default; emitted residues are automatically
 detected from the sequences), a case sensitive character vector
@@ -246,6 +246,20 @@ This function performs a similar operation to the  \code{hmmbuild}
   function in the \href{http://www.hmmer.org}{HMMER} package, and the
   \code{modelfromalign} and \code{buildmodel} functions in the
   \href{https://compbio.soe.ucsc.edu/sam.html}{SAM} package.
+  If the primary input argument is an alignment, the function creates a
+  profile hidden Markov model (object class:\code{"PHMM"}) using the
+  method described in Durbin et al (1998) chapter 5.3. Alternatively, if
+  a list of non-aligned sequences is passed, the sequences are first aligned
+  using the \code{\link{align}} function before being used to derive the
+  model.
+
+  The function outputs an object of class \code{"PHMM"}, which is a list
+  consisting of emission and transition probability matrices
+  (elements named "E" and "A"), vectors of non-position-specific
+  background emission and transition probabilities
+  ("qe" and "qa", respectively) and other model metadata including
+  "name", "description", "size" (the number of modules in the model), and
+  "alphabet" (the set of symbols/residues emitted by the model).
 }
 \examples{
 ## Small globin alignment data from Durbin et al (1998) Figure 5.3
@@ -259,7 +273,7 @@ plot(globins.PHMM, main = "Profile HMM for small globin alignment")
 library(ape)
 data(woodmouse)
 woodmouse.PHMM <- derivePHMM(woodmouse)
-plot(woodmouse.PHMM, from = 0, to = 5, main = "profile HMM for woodmouse alignment")
+plot(woodmouse.PHMM, from = 0, to = 5, main = "Partial woodmouse profile HMM")
 }
 \references{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological

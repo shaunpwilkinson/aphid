@@ -7,7 +7,7 @@
 \alias{weight.list}
 \alias{weight.dendrogram}
 \alias{weight.default}
-\title{Tree-based sequence weighting.}
+\title{Sequence weighting.}
 \usage{
 weight(x, ...)
 
@@ -26,18 +26,19 @@ weight(x, ...)
 \arguments{
 \item{x}{an object of class \code{"dendrogram"}, or a list or matrix of
 sequences (possibly a "DNAbin" or "AAbin" object) from which to derive a
-dendrogram via the \code{\link[phylogram]{topdown}} function.}
+dendrogram using the \code{\link[phylogram]{topdown}} function in the
+\code{\link[phylogram]{phylogram}} package.}
 
 \item{...}{additional arguments to be passed between methods.}
 
 \item{method}{a character string indicating the weighting method to be used.
-Currently only that of Gerstein et al. (1994) is supported
+Currently only that of Gerstein et al (1994) is supported
 (\code{method = "Gerstein"}).}
 
-\item{k}{integer representing the k-mer size to be used for calculating
-the distance matrix used in tree-based sequence weighting. Defaults to
-5. Note that high values of k (> 8) may be slow to compute and use a lot
-of memory due to the large numbers of calculations required.}
+\item{k}{integer representing the k-mer size to be used in tree-based
+sequence weighting. Defaults to 5. Note that higher
+values of k may be slow to compute and use excessive memory due to
+the large numbers of calculations required.}
 
 \item{residues}{either NULL (default; emitted residues are automatically
 detected from the sequences), a case sensitive character vector
@@ -58,15 +59,18 @@ a named vector of weights, the sum of which is equal to
    the total number of sequences (average weight = 1).
 }
 \description{
+Weight sequences based on a tree.
+}
+\details{
 This is a generic function that uses the agglomerative method of
-  Gerstein et al. (1994) to weight sequences based on their relatedness
+  Gerstein et al (1994) to weight sequences based on their relatedness
   as derived from a phylogenetic tree. Methods are available for
   \code{"dendrogram"} objects, \code{"DNAbin"} and \code{"AAbin"}
   sequence objects (as lists or matrices) and sequences in standard
   ASCII character format provided either as lists or matrices.
-}
-\details{
-For further details see Durbin et al (1998) chapter 5.8.
+
+  For further details on sequence weighting see Durbin et al
+  (1998) chapter 5.8.
 }
 \examples{
   ## weight the sequences in the woodmouse dataset from the ape package

@@ -29,20 +29,35 @@ NULL (invisibly)
   text file in HMMER3 format.
 }
 \details{
-TBA
+This function writes an object of class \code{"PHMM"} to a
+  HMMER3/f text file. Note that unlike HMMER, the \pkg{aphid}
+  package does not currently support position-specific background
+  emission probabilities.
 }
 \examples{
-\dontrun{
-library(ape)
-data(woodmouse)
-woodmouse.PHMM <- derivePHMM(woodmouse)
-writePHMM(woodmouse.PHMM, file = "woodmouse.hmm")
-}
+  ## Derive a profile hidden Markov model from the small globin alignment
+  data(globins)
+  x <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+  x
+  fl <- tempfile()
+  writePHMM(x, file = fl)
+  readPHMM(fl)
+  ##
+  ## Derive a PHMM for the woodmouse data and write to working directory
+  \dontrun{
+    library(ape)
+    data(woodmouse)
+    woodmouse.PHMM <- derivePHMM(woodmouse)
+    writePHMM(woodmouse.PHMM, file = "woodmouse.hmm")
+  }
 }
 \references{
 Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
   similarity searching. \emph{Nucleic Acids Research}. 39:W29-W37.
   \url{http://hmmer.org/}.
+
+  HMMER: biosequence analysis using profile hidden Markov models.
+  \url{http://www.hmmer.org}.
 }
 \seealso{
 \code{\link{readPHMM}} to parse a PHMM object from a HMMER3 text file.

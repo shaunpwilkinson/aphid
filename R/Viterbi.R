@@ -66,20 +66,37 @@
 #'   should be filled using compiled C++ functions (default; many times faster).
 #'   The FALSE option is primarily retained for bug fixing and experimentation.
 #' @param ... additional arguments to be passed between methods.
-#' @return an object of class \code{"DPA"}, which is a list containing the
+#' @return an object of class \code{"DPA"}, which is a list including the
 #'   score, the dynammic programming array, and the optimal path (an integer
-#'   vector). If x is a PHMM and y is a sequence, the path is represented as
+#'   vector, see details section).
+#' @details
+#'   This function is a wrapper for a compiled C++ function that recursively
+#'   fills a dynamic programming matrix with probabilities, and
+#'   calculates the (logged) probability and optimal path of a sequence
+#'   through a HMM or PHMM.
+#'
+#'   If x is a PHMM and y is a sequence, the path is represented as
 #'   an integer vector containing zeros, ones and twos, where a zero represents
 #'   a downward transition, a one represents a diagonal transition downwards and
 #'   left, and a two represents a left transition in the dynamic programming
 #'   matrix (see Durbin et al (1998) chapter 2.3). This translates to
 #'   0 = delete state, 1 = match state and 2 = insert state.
-#'   If x and y are both sequences (i.e. the Needleman-Wunch or
-#'   Smith Waterman algorithm) a zero refers to x aligning to a gap in y,
-#'   a one refers to a match, and a two refers to y aligning to a gap in x.
+#'
+#'   If x and y are both sequences, the function implements the
+#'   Needleman-Wunch or Smith Waterman algorithm depending on
+#'   the type of alignment specified. In this case, a zero
+#'   in the path refers to x aligning to a gap in y, a one refers
+#'   to a match, and a two refers to y aligning to a gap in x.
+#'
 #'   If x is a standard hidden Markov model (HMM) and y is a sequence,
-#'   each integer (starting at zero) represents a state in the model.
-#' @details TBA.
+#'   each integer in the path represents a state in the model.
+#'   Note that the path elements can take values between 0 and
+#'   one less than number of states, as in the C/C++ indexing
+#'   style rather than R's.
+#'
+#'   For a thorough explanation of the backward, forward and Viterbi
+#'   algorithms, see Durbin et al (1998) chapters 3.2 (HMMs) and 5.4 (PHMMs).
+#'
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -155,10 +172,11 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                          type = "global", odds = TRUE, offset = 0,
                          windowspace = "all", DI = FALSE, ID = FALSE,
                          cpp = TRUE, ...){
-  if(type != "global" & !odds) stop("Non-odds option only available for global alignment")
+  if(type != "global" & !odds) {
+    stop("Non-odds option only available for global alignment")
+  }
   if(identical(logspace, "autodetect")) logspace <- .logdetect(x)
-  if(!(type %in% c("global", "semiglobal", "local"))) stop("invalid type")
-  #if(!odds) stop("Full probability scores are not available for Viterbi yet")
+  if(!(type %in% c("global", "semiglobal", "local"))) stop("Invalid type")
   pp <- inherits(y, "PHMM")
   pd <- .isDNA(y)
   pa <- .isAA(y)
@@ -224,17 +242,20 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       names(qe) <- rownames(x$E)
     }
   }
-  type = switch(type, "global" = 0L, "semiglobal" = 1L, "local" = 2L, stop("invalid type"))
+  type = switch(type, "global" = 0L, "semiglobal" = 1L, "local" = 2L,
+                stop("invalid type"))
   V <- array(-Inf, dim = c(n, m, length(states)))
   dimnames(V) <- list(x = 0:(n - 1), y = 0:(m - 1), state = states)
   # pointer array
   P <- V + NA
   # fill scoring and pointer arrays. Key: D = 1, M = 2, I = 3
   if(pp){
-    if(!odds) stop("Full probability scores for PHMM-PHMM alignment are not supported")
-    if(.logdetect(y) != logspace) stop("Both models must be in the same logspace format")
+    if(!odds) stop("Full probabilities for PHMM-PHMM alignment are not supported")
+    if(.logdetect(y) != logspace) {
+      stop("Both models must be in the same logspace format")
+    }
     if(identical(windowspace, "WilburLipman")){
-      #warning("No WilburLipman method available for PHMM=PHMM comparison yet")
+      warning("No Wilbur Lipman method available for PHMM-PHMM comparison yet")
       windowspace <- c(-x$size, y$size)
       # TODO
       # xseq <- generate.PHMM(x, size = 10 * ncol(x$A), random = FALSE)
@@ -264,6 +285,16 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       P[, , 5] <- res$IMpointer
       res$array <- V
       res$pointer <- P
+      res$MImatrix <- NULL
+      res$DGmatrix <- NULL
+      res$MMmatrix <- NULL
+      res$GDmatrix <- NULL
+      res$IMmatrix <- NULL
+      res$MIpointer <- NULL
+      res$DGpointer <- NULL
+      res$MMpointer <- NULL
+      res$GDpointer <- NULL
+      res$IMpointer <- NULL
     }else{
       fun <- Vectorize(function(a, b) logsum((Ex[, a] + Ey[, b]) - qe))
       Saa <- outer(1:(n - 1), 1:(m - 1), fun)
@@ -455,6 +486,12 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
       P[, , 3] <- res$Ipointer
       res$array <- V
       res$pointer <- P
+      res$Dmatrix <- NULL
+      res$Mmatrix <- NULL
+      res$Imatrix <- NULL
+      res$Dpointer <- NULL
+      res$Mpointer <- NULL
+      res$Ipointer <- NULL
     }else{
       P[, 1, 1] <- c(NA, 2, rep(1, n - 2))
       P[1, , 3] <- c(NA, 2, rep(3, m - 2))
@@ -781,7 +818,13 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     P[, , 2] <- res$MMpointer
     P[, , 3] <- res$IYpointer
     res$array <- M
-    res$pointer = P
+    res$pointer <- P
+    res$IXmatrix <- NULL
+    res$MMmatrix <- NULL
+    res$IYmatrix <- NULL
+    res$IXpointer <- NULL
+    res$MMpointer <- NULL
+    res$IYpointer <- NULL
   }else{
     x <- x + 1
     y <- y + 1 # convert to R's indexing style

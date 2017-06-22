@@ -15,10 +15,14 @@
 #'   \code{TRUE} or \code{FALSE} can reduce the running time.
 #' @param cpp logical, indicates whether the dynamic programming matrix
 #'   should be filled using compiled C++ functions (default; many times faster).
-#'   The FALSE option is primarily retained for bug fixing and experimentation.
+#'   The R version is primarily retained for bug-fixing and experimentation.
 #' @param ... additional arguments to be passed between methods.
 #' @return a vector or matrix of posterior probabilities.
-#' @details TBA
+#' @details
+#'   See Durbin et al (1998) chapter 3.2 for details on the calculation
+#'   and interpretation of posterior state probabilities.
+#'   Currently no method is available for profile HMMs, but this may be
+#'   included in a future version if required.
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -47,9 +51,6 @@
 #' @seealso \code{\link{forward}}, \code{\link{backward}}, \code{\link{Viterbi}}
 #' @name posterior
 ################################################################################
-# posterior <- function(x, y, logspace = "autodetect", cpp = TRUE){
-#   UseMethod("posterior")
-# }
 posterior <- function(x, y, ...){
   UseMethod("posterior")
 }
@@ -70,14 +71,15 @@ posterior.HMM <- function(x, y, logspace = "autodetect", cpp = TRUE, ...){
 #' @rdname posterior
 ################################################################################
 posterior.PHMM <- function(x, y, logspace = "autodetect", cpp = TRUE, ...){
+  stop("Posterior method not currently available for profile HMMs")
+  ### placeholder
   if(identical(logspace, 'autodetect')) logspace <- .logdetect(x)
   back <- backward(x, y, logspace = logspace, cpp = cpp)
   B <- back$array
   forw <- forward(x, y, logspace = logspace, cpp = cpp)
   R <- forw$array
   logPx <- forw$score
-  postprobs <- exp(R[,,"M"] + B[,,"M"] - logPx)
-  maxprobs <- apply(postprobs, 2, max)
-  return(maxprobs)
+  postprobs <- exp(R[, ,"M"] + B[, ,"M"] - logPx)
+  return(postprobs)
 }
 ################################################################################

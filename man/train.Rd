@@ -8,18 +8,19 @@
 \usage{
 train(x, y, ...)
 
-\method{train}{PHMM}(x, y, method = "Viterbi", seqweights = NULL,
-  logspace = "autodetect", maxiter = 100, deltaLL = 1e-07,
-  pseudocounts = "background", gap = "-", fixqa = FALSE, fixqe = FALSE,
-  maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  alignment = FALSE, quiet = FALSE, ...)
+\method{train}{PHMM}(x, y, method = "Viterbi", seqweights = "Gerstein",
+  wfactor = 1, k = 5, logspace = "autodetect", maxiter = 100,
+  deltaLL = 1e-07, pseudocounts = "background", gap = "-",
+  fixqa = FALSE, fixqe = FALSE, maxsize = NULL, inserts = "map",
+  threshold = 0.5, lambda = 0, alignment = FALSE, cores = 1,
+  quiet = FALSE, ...)
 
 \method{train}{HMM}(x, y, method = "Viterbi", seqweights = NULL,
-  maxiter = 100, deltaLL = 1e-07, logspace = "autodetect",
+  wfactor = 1, maxiter = 100, deltaLL = 1e-07, logspace = "autodetect",
   quiet = FALSE, modelend = FALSE, pseudocounts = "Laplace", ...)
 }
 \arguments{
-\item{x}{an object of class \code{'HMM'} or \code{'PHMM'} specifying the
+\item{x}{an object of class \code{"HMM"} or \code{"PHMM"} specifying the
 initial parameter values.}
 
 \item{y}{a list of training sequences whose hidden states are unknown.
@@ -37,6 +38,14 @@ and \code{"BaumWelch"}.}
 \item{seqweights}{either NULL (default; all sequences are given
 weights of 1) or a numeric vector the same length as \code{x}
 representing the sequence weights used to derive the model.}
+
+\item{wfactor}{numeric. The factor to multiply the sequence weights by.
+Defaults to 1.}
+
+\item{k}{integer representing the k-mer size to be used in tree-based
+sequence weighting (if applicable). Defaults to 5. Note that higher
+values of k may be slow to compute and use excessive memory due to
+the large numbers of calculations required.}
 
 \item{logspace}{logical indicating whether the emission and transition
 probabilities of x are logged. If \code{logspace = "autodetect"}
@@ -122,6 +131,20 @@ column (Durbin et al 1998, chapter 5.7). Only applicable when
 derive the final model (if applicable) should be included as an element of
 the returned PHMM object. Defaults to FALSE.}
 
+\item{cores}{integer giving the number of CPUs to parallelize the operation
+over. Defaults to 1, and reverts to 1 if x is not a list.
+This argument may alternatively be a 'cluster' object,
+in which case it is the user's responsibility to close the socket
+connection at the conclusion of the operation,
+for example by running \code{parallel::stopCluster(cores)}.
+The string "autodetect" is also accepted, in which case the maximum
+number of cores to use is one less than the total number of cores
+available. Note that in this case there
+may be a tradeoff in terms of speed depending on the number and size
+of sequences to be aligned, due to the extra time required to initialize
+the cluster.
+Only applicable if x is a \code{"PHMM"} and \code{method = "Viterbi"}.}
+
 \item{quiet}{logical indicating whether feedback should be printed
 to the console.}
 
@@ -138,12 +161,33 @@ Update model parameters using a list of training sequences, with either
   the Viterbi training or Baum-Welch algorithm.
 }
 \details{
-This function offers a choice of two model training methods,
+This function optimizes the parameters of a hidden Markov model
+  (object class: \code{"HMM"}) or profile hidden Markov model
+  (object class: \code{"PHMM"}) using the methods described in
+  Durbin et al (1998) chapters 3.3 and 6.5, respectively.
+  For standard HMMs, the function assumes the state sequence is unknown
+  (as opposed to the \code{\link{deriveHMM}} function, which is used
+  when the state sequence is known).
+  For profile HMMs, the input object is generally a list of non-aligned
+  sequences rather than an alignment (for which the \code{\link{derivePHMM}}
+  function may be more suitable).
+
+  This function offers a choice of two model training methods,
   Viterbi training (also known as the segmental
   K-means algorithm (Juang & Rabiner 1990)), and the Baum Welch algorithm,
   a special case of the expectation-maximization (EM) algorithm that
   iteratively finds the locally (but not necessarily globally) optimal
   parameters of a HMM or PHMM.
+
+  The Viterbi training method is generally much faster, particularly for
+  profile HMMs and when the multi-threading option is used
+  (see the \code{"cores"} argument). The comparison in accuracy will depend
+  on the nature of the problem, but personal experience suggests that
+  the methods are comparable for training profile HMMs for DNA and
+  amino acid sequences.
+
+  Note that multi-threading is only currently available for Viterbi
+  training of profile HMMs.
 }
 \examples{
   ## Baum Welch training for standard HMMs:

@@ -31,7 +31,7 @@ increases the computational overhead; therefore specifying
 
 \item{cpp}{logical, indicates whether the dynamic programming matrix
 should be filled using compiled C++ functions (default; many times faster).
-The FALSE option is primarily retained for bug fixing and experimentation.}
+The R version is primarily retained for bug-fixing and experimentation.}
 }
 \value{
 a vector or matrix of posterior probabilities.
@@ -40,7 +40,10 @@ a vector or matrix of posterior probabilities.
 Calculate the posterior probability of a sequence given a model.
 }
 \details{
-TBA
+See Durbin et al (1998) chapter 3.2 for details on the calculation
+  and interpretation of posterior state probabilities.
+  Currently no method is available for profile HMMs, but this may be
+  included in a future version if required.
 }
 \examples{
   ## Posterior decoding for standard hidden Markov models
