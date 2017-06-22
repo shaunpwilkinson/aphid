@@ -1,7 +1,7 @@
 ---
 title: "The 'aphid' package for analysis with profile hidden Markov models"
 author: "Shaun Wilkinson"
-date: "2017-06-12"
+date: "2017-06-22"
 output: rmarkdown::html_vignette
 bibliography: aphid.bib
 vignette: >
@@ -20,7 +20,7 @@ vignette: >
 **aphid** is an R package for the development and application of
 hidden Markov models and profile HMMs for biological sequence analysis. 
 It contains functions for multiple and pairwise sequence alignment, 
-model construction and parameter optimization, text file import/export,
+model construction and parameter optimization, file import/export,
 implementation of the forward, backward and Viterbi algorithms for conditional sequence probabilities, tree-based sequence weighting, and sequence simulation. 
 The package has a wide variety of uses including database searching, 
 gene-finding and annotation, phylogenetic analysis and sequence classification.  
@@ -31,9 +31,8 @@ computational biology, including multiple sequence alignment,
 genome annotation, and increasingly, sequence database searching. 
 Originally developed for speech recognition algorithms, 
 their application to the field of molecular biology has increased 
-dramatically since advances in computational capacity and refined 
-algorithms have enabled full probabilistic analysis in place of 
-heuristic approximations. 
+dramatically since advances in computational capacity have 
+enabled full probabilistic analysis in place of heuristic approximations. 
 Pioneering this transition are two groups lead by 
 Anders Krogh and Sean Eddy, whose respective software packages 
 [SAM](https://compbio.soe.ucsc.edu/sam.html) 
@@ -58,14 +57,14 @@ and "AAbin" object types produced using the **ape** package
 These object types, in which sequences are represented in a bit-level coding 
 scheme, are preferred over standard character-type sequences for maximizing 
 memory and speed efficiency.
-While we highly recommend using **ape** alongside **aphid**, it is not a 
+While we recommend using **ape** alongside **aphid**, it is not a 
 requisite and as such is listed in the "Suggests" rather than "Imports" 
-section of the package description file. 
+section of the package description. 
 Indeed, any sequence of standard ASCII characters is supported, 
 making **aphid** suitable for other applications outside of biological 
 sequence analysis. 
 However, it should be noted that if DNA and/or amino acid sequences are 
-input as character vectors, the **aphid** functions may not recognize 
+input as character vectors, the functions may not recognize 
 the ambiguity codes and therefore are not guaranteed to treat them 
 appropriately.
 
@@ -265,7 +264,7 @@ three states:
 
 * a silent *delete* state that does not emit residues. 
 * an *insert* state with emission probabilities reflecting the background
-residues averaged over the entire alignment.
+residue frequencies averaged over the entire alignment.
 * a *match* state with emission probabilities reflecting the residue frequencies 
 in the alignment column. 
 
@@ -374,7 +373,7 @@ Note that the names attributes specify which state each residue was emitted
 from, and gap symbols are emitted from delete states. 
 If these gaps are not required they can be removed as follows:
 ```{r}
-sim <- lapply(sim, function(s) s[s != "-"])
+sim <- lapply(sim, function(s) s[names(s) != "D"])
 ```
 
 ##### Model Training
@@ -383,8 +382,8 @@ parameters using either the Baum Welch or Viterbi training algorithm.
 Both are iterative refinement algorithms; the former
 does not rely on a multiple sequence alignment
 but is generally much slower than the latter. 
-The Viterbi training operation can be sped up further on larger 
-workstations by specifying the "cores" argument for parallel processing. 
+The Viterbi training operation can be sped up further on multi-CPU 
+machines by specifying the "cores" argument for parallel processing. 
 The best choice of training algorithm will generally depend on the 
 nature of the problem and the computing resources available. 
 For more information see Durbin et al [-@Durbin1998] chapter 3.3 for 
