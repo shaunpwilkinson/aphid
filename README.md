@@ -1,11 +1,5 @@
 # aphid
 
-[![Build Status](https://travis-ci.org/shaunpwilkinson/aphid.svg?branch=master)](https://travis-ci.org/shaunpwilkinson/aphid)
-[![codecov](https://codecov.io/github/shaunpwilkinson/aphid/branch/master/graphs/badge.svg)](https://codecov.io/github/shaunpwilkinson/aphid)
-[![ORCiD](https://img.shields.io/badge/ORCiD-0000--0002--7332--7931-brightgreen.svg)](http://orcid.org/0000-0002-7332-7931) 
-[![Project Status: Active - The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
-
 Analysis with profile hidden Markov models
 
 --------------------------------------------------------------------------------
@@ -30,35 +24,40 @@ Many of the examples and datasets in the package are directly derived from the
 text, which serves as a useful primer for this package.
 
 ### Installation
-To download the development version of the package from 
-GitHub you will first need to ensure you have a C/C++ compliler and the 
-[devtools](https://github.com/hadley/devtools) R package installed. 
-Linux users will generally have a compiler such as `gcc` installed by default; 
-however Windows users will need to download 
+To download `aphid` from CRAN and load the package, run
+```R
+install.packages("phylogram")
+library("phylogram")
+```
+To download the development version from 
+GitHub, first ensure a C/C++ compliler is available and the 
+[devtools](https://github.com/hadley/devtools) R package is installed. 
+Linux users will generally have a compiler installed by default; 
+however Windows users may need to download 
 [Rtools](https://cran.r-project.org/bin/windows/Rtools/) and Mac 
 OSX users will need [Xcode](https://developer.apple.com/xcode) 
-(note that Rtools and Xcode are not R packages). To download and install 
-devtools, run 
+(note that Rtools and Xcode are not R packages). 
+To download and install devtools, run 
 ```R
 install.packages("devtools")
 ``` 
-then install and load `aphid` by running 
+Then install and load the `aphid` package by running 
 ```R
-devtools::install_github("shaunpwilkinson/aphid") 
+devtools::install_github("shaunpwilkinson/aphid", build_vignettes = TRUE) 
 library("aphid")
 ```
 
 ## Use and Examples
-
-### Help
 An overview of the package and it's functions can be found by running
 ```R
 ?aphid
 ```
-To build the vignette users will need to have LaTeX installed. RStudio recommends 
-[MiKTeX Complete](http://miktex.org/2.9/setup) for Windows and
-[TexLive 2013 Full](http://tug.org/) for Mac OS X and Linux.
+To view the tutorial, run
+```R
+vignette("aphid-vignette")
+```
 
+### Issues
 If you experience a problem using this package please feel free to
 raise it as an issue on [GitHub](http://github.com/shaunpwilkinson/aphid/issues).
 

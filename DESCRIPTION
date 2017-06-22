@@ -4,7 +4,7 @@ Title: Analysis with Profile Hidden Markov Models
 Version: 1.0.0
 Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
-Author: Shaun Wilkinson
+Author: Shaun Wilkinson [aut, cre]
 Maintainer: Shaun Wilkinson <shaunpwilkinson@gmail.com>
 Description: aphid is an R package for the development and application of
     hidden Markov models and profile HMMs for biological sequence analysis. 
