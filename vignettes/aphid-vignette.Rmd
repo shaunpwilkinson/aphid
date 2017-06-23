@@ -1,11 +1,11 @@
 ---
 title: "The 'aphid' package for analysis with profile hidden Markov models"
 author: "Shaun Wilkinson"
-date: "2017-06-22"
+date: "2017-06-23"
 output: rmarkdown::html_vignette
 bibliography: aphid.bib
 vignette: >
-  %\VignetteIndexEntry{Introduction to the phylogram package}
+  %\VignetteIndexEntry{Introduction to the aphid package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

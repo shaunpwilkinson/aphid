@@ -26,8 +26,8 @@ text, which serves as a useful primer for this package.
 ### Installation
 To download `aphid` from CRAN and load the package, run
 ```R
-install.packages("phylogram")
-library("phylogram")
+install.packages("aphid")
+library("aphid")
 ```
 To download the development version from 
 GitHub, first ensure a C/C++ compliler is available and the 
@@ -35,8 +35,7 @@ GitHub, first ensure a C/C++ compliler is available and the
 Linux users will generally have a compiler installed by default; 
 however Windows users may need to download 
 [Rtools](https://cran.r-project.org/bin/windows/Rtools/) and Mac 
-OSX users will need [Xcode](https://developer.apple.com/xcode) 
-(note that Rtools and Xcode are not R packages). 
+OSX users will need Xcode (note that these are not R packages). 
 To download and install devtools, run 
 ```R
 install.packages("devtools")
