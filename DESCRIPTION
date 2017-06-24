@@ -6,16 +6,16 @@ Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
 Author: Shaun Wilkinson [aut, cre]
 Maintainer: Shaun Wilkinson <shaunpwilkinson@gmail.com>
-Description: The aphid package is designed for the development and application of
+Description: Designed for the development and application of
     hidden Markov models and profile HMMs for biological sequence analysis. 
-    It contains functions for multiple and pairwise sequence alignment, 
+    Contains functions for multiple and pairwise sequence alignment, 
     model construction and parameter optimization, file import/export,
     implementation of the forward, backward and Viterbi algorithms for 
     conditional sequence probabilities, tree-based sequence weighting, 
     and sequence simulation. 
-    The package has a wide variety of uses including database searching, 
-    gene-finding and annotation, phylogenetic analysis and sequence 
-    classification.
+    Features a wide variety of potential applications including 
+    database searching, gene-finding and annotation, phylogenetic 
+    analysis and sequence classification.
 License: GPL-3
 URL: http://github.com/shaunpwilkinson/aphid
 BugReports: http://github.com/shaunpwilkinson/aphid/issues

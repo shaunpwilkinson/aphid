@@ -20,7 +20,7 @@
 #'
 #' The 'dishonest casino' example from Durbin et al (1998) chapter 3.2.
 #'
-#' @format A named character vector showing the result of 300 rolls of a die
+#' @format A named character vector showing the result of 300 rolls of a dice
 #'   that switches from "Fair" to "Loaded" with a probability
 #'   of 0.05 and back to "Fair" with a probability of 0.1. In the Fair
 #'   state each outcome from 1 to 6 has an equal probability of occurring,

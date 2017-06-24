@@ -1,2 +1,2 @@
 # aphid 1.0.0
-Submitted to CRAN 2017-06-22.
+Released on CRAN 2017-06-24.

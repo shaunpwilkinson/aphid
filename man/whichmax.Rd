@@ -23,8 +23,8 @@ Returns the position (index) of the maximum value in a numeric or integer vector
   with ties broken at random.
 }
 \details{
-This is a simple compiled function similar to which.max{base} but
-  with random breaking of ties. Unlike which.max{base}, logical vectors are
+This is a simple function similar to which.max (base R) but
+  with random breaking of ties. Unlike which.max, logical vectors are
   not accepted.
 }
 \author{

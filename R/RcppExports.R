@@ -53,8 +53,8 @@ logsum <- function(x) {
 #'   an index of 0).
 #' @return returns an integer representing the position (index) of the maximum
 #'   value in the input vector.
-#' @details This is a simple compiled function similar to which.max{base} but
-#'   with random breaking of ties. Unlike which.max{base}, logical vectors are
+#' @details This is a simple function similar to which.max (base R) but
+#'   with random breaking of ties. Unlike which.max, logical vectors are
 #'   not accepted.
 #' @author Shaun Wilkinson
 #'
