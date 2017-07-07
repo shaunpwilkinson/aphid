@@ -1,19 +1,10 @@
-This is a resubmission addressing Kurt's request to edit on syntax in 
-Description:
-
-> PLs write
-> 
->   Designed for ...
-> 
-> 
->   Contains ...
-  
-These have been changed as requested.  
+This is a patch release, internalizing a function that was 
+erroneously exported in the initial CRAN release.
 
 ## Test environments
  * local ubuntu 16.04 x86_64-pc-linux-gnu; R version 3.4.0 
  * travis-ci ubuntu 12.04.5 x86_64-pc-linux-gnu; R 3.4.0
- * winbuilder devel (2017-06-21 r72825)
+ * winbuilder devel (2017-07-05 r72891)
 
 ## R CMD check results
 There were no ERRORs or WARNINGs. there was one NOTE.
