@@ -41,24 +41,7 @@ logsum <- function(x) {
     .Call('aphid_logsum', PACKAGE = 'aphid', x)
 }
 
-#' Find the position of the maximum value.
-#'
-#' Returns the position (index) of the maximum value in a numeric or integer vector,
-#'   with ties broken at random.
-#'
-#' @param x a numeric or integer vector.
-#' @param start integer indicating the index of the first value
-#'   of the vector. Defaults to 1 (consistent the indexing system used by R,
-#'   as opposed to that used by C and C++ in which the first value is given
-#'   an index of 0).
-#' @return returns an integer representing the position (index) of the maximum
-#'   value in the input vector.
-#' @details This is a simple function similar to which.max (base R) but
-#'   with random breaking of ties. Unlike which.max, logical vectors are
-#'   not accepted.
-#' @author Shaun Wilkinson
-#'
-whichmax <- function(x, start = 1L) {
+.whichmax <- function(x, start = 1L) {
     .Call('aphid_whichmax', PACKAGE = 'aphid', x, start)
 }
 

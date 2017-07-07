@@ -329,11 +329,11 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                        V[i, j - 1, "GD"] + Ay["DD", j - 1])
             IMcdt <- c(V[i, j - 1, "MM"] + Ax["MI", i] + Ay["MM", j - 1],
                        V[i, j - 1, "IM"] + Ax["II", i] + Ay["MM", j - 1])
-            MImax <- whichmax(MIcdt)
-            DGmax <- whichmax(DGcdt)
-            MMmax <- whichmax(MMcdt)
-            GDmax <- whichmax(GDcdt)
-            IMmax <- whichmax(IMcdt)
+            MImax <- .whichmax(MIcdt)
+            DGmax <- .whichmax(DGcdt)
+            MMmax <- .whichmax(MMcdt)
+            GDmax <- .whichmax(GDcdt)
+            IMmax <- .whichmax(IMcdt)
             V[i, j, "MI"] <- MIcdt[MImax]
             V[i, j, "DG"] <- DGcdt[DGmax]
             V[i, j, "MM"] <- MMcdt[MMmax]
@@ -355,7 +355,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
                    V[n, m, "MM"] + Ax["MM", n] + Ay["MM", m],
                    V[n, m, "GD"] + Ax["MM", n] + Ay["DM", m],
                    V[n, m, "IM"] + Ax["IM", n] + Ay["MM", m])
-        LLptr <- whichmax(LLcdt)
+        LLptr <- .whichmax(LLcdt)
         score <- LLcdt[LLptr]
         z <- c(n, m, LLptr)
         while(z[1] > 1 | z[2] > 1){
@@ -524,9 +524,9 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
             Icdt <- c(if(DI) V[i, j - 1, "D"] + A["DI", i] else -Inf,
                       V[i, j - 1, "M"] + A["MI", i],
                       V[i, j - 1, "I"] + A["II", i])
-            Dmax <- whichmax(Dcdt)
-            Mmax <- whichmax(Mcdt)
-            Imax <- whichmax(Icdt)
+            Dmax <- .whichmax(Dcdt)
+            Mmax <- .whichmax(Mcdt)
+            Imax <- .whichmax(Icdt)
             V[i, j, "D"] <- Dcdt[Dmax]
             V[i, j, "M"] <- Mcdt[Mmax]
             V[i, j, "I"] <- Icdt[Imax] + qey[j - 1]
@@ -542,7 +542,7 @@ Viterbi.PHMM <- function(x, y, qe = NULL, logspace = "autodetect",
         LLcdt <- c(V[n, m, "D"] + A["DM", n],
                    V[n, m, "M"] + A["MM", n],
                    V[n, m, "I"] + A["IM", n])
-        LLptr <- whichmax(LLcdt)
+        LLptr <- .whichmax(LLcdt)
         score <- LLcdt[LLptr]
         z <- c(n, m, LLptr)
         while(z[1] > 1 | z[2] > 1){
@@ -676,7 +676,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
           }
         }
         for(k in 1:H){
-          P[k, i] <- whichmax(tmp[, k])
+          P[k, i] <- .whichmax(tmp[, k])
           V[k, i] <- tmp[P[k, i], k] + .probDNA(y[i], E[k, ])
         }
       }
@@ -689,7 +689,7 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
           }
         }
         for(k in 1:H) {
-          P[k, i] <- whichmax(tmp[, k])
+          P[k, i] <- .whichmax(tmp[, k])
           V[k, i] <- tmp[P[k, i], k] + .probAA(y[i], E[k, ])
         }
       }
@@ -703,13 +703,13 @@ Viterbi.HMM <- function (x, y, logspace = "autodetect", cpp = TRUE, ...){
           }
         }
         for(k in 1:H) {
-          P[k, i] <- whichmax(tmp[, k])
+          P[k, i] <- .whichmax(tmp[, k])
           V[k, i] <- tmp[P[k, i], k] + E[k, y[i]]
         }
       }
     }
     ak0 <- if(any(is.finite(A[-1, 1]))) A[-1, 1] else rep(0, H)
-    endstate <- whichmax(V[, n] + ak0)
+    endstate <- .whichmax(V[, n] + ak0)
     maxLL <- V[endstate, n] + ak0[endstate]
     path[n] <- endstate
     tmp <- path[n]
@@ -854,9 +854,9 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
                     M[i - 1, j - 1, 3] + sij,
                     if(type == 2) 0 else NULL)
           Iycdt <- c(-Inf, M[i, j - 1, 2] - (d + e), M[i, j - 1, 3] - e)
-          Ixmax <- whichmax(Ixcdt)
-          Mmax <- whichmax(Mcdt)
-          Iymax <- whichmax(Iycdt)
+          Ixmax <- .whichmax(Ixcdt)
+          Mmax <- .whichmax(Mcdt)
+          Iymax <- .whichmax(Iycdt)
           M[i, j, 1] <- Ixcdt[Ixmax]
           M[i, j, 2] <- Mcdt[Mmax]
           M[i, j, 3] <- Iycdt[Iymax]
@@ -870,7 +870,7 @@ Viterbi.default <- function(x, y, type = "global", d = 8, e = 2,
     progression <- matrix(nrow = 2, ncol = 0)
     if(type == 0){
       # find highest score in bottom right corner of scoring array M
-      z <- c(n, m, whichmax(M[n, m, ]))
+      z <- c(n, m, .whichmax(M[n, m, ]))
       score <- M[z[1], z[2], z[3]]
       while(z[1] > 1 | z[2] > 1){
         path <- c(z[3], path)

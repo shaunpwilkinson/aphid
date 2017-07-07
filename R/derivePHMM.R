@@ -886,7 +886,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
         icsj <- icsj + seqweights * notgaps[, j]
       }
       tmp <- S[1:(j - 1)] + tau + iota + M[j] + lambda
-      sigma[j] <- whichmax(tmp)
+      sigma[j] <- .whichmax(tmp)
       S[j] <- tmp[sigma[j]]
     }
     res <- structure(logical(L + 2), names = 0:(L + 1))
