@@ -562,7 +562,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
       l <- sum(!inserts)
     }
   }
-  ### emission counts
+  ### emission counts (redo now that we know insert positions)
   ecs <- if(AA){
     apply(x[, !inserts, drop = FALSE], 2, .tabulateAA,
           ambiguities = TRUE, seqweights = seqweights)

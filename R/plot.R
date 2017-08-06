@@ -71,7 +71,8 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
   residues <- rownames(x$E)
   symblen <- length(residues)
   pHMMlength <- ncol(x$E)
-  maxemiss <- if(ncol(x$E) > 0) max(x$E) else 1
+  #maxemiss <- if(ncol(x$E) > 0) max(x$E) else 1
+  maxemiss <- 1
   if(from == "start") from <- 0
   if(to == "end") to <- pHMMlength + 1
   no.boxes <- to  + 1 - from
@@ -166,7 +167,7 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
                                               xunit/2)/maxemiss + xunit/3,
                ytop = symbcoords[j, 2] + 0.4 * interval,
                lwd = 0,
-               col = 'darkgrey')
+               col = 'black')
         }
         symbcoords[, 1] <- symbcoords[, 1] + (2 * xunit)
       }
@@ -233,7 +234,8 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
   residues <- colnames(x$E)
   statelen <- length(states)
   symblen <- length(residues)
-  maxemiss <- max(x$E)
+  #maxemiss <- max(x$E)
+  maxemiss <- 1
   no.boxes <- if(begin) statelen + 1 else statelen
   boxhgt <- symblen/4 # in yunits
   plotwid <- 2 * no.boxes # in xunits
@@ -326,7 +328,7 @@ plot.HMM <- function(x, just = "center", arrexp = 1, textexp = 1,
              (x$E[i, j] * xunit/2)/maxemiss + xunit/4,
            ytop = symbcoords[j + 1, 2] + 0.4 * interval,
            lwd = 0,
-           col = 'darkgrey')
+           col = 'black')
     }
     symbcoords[, 1] <- symbcoords[, 1] + (2 * xunit)
   }
