@@ -404,12 +404,22 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
                   length(seqweights) == nseq)
       }
       xlengths <- sapply(x, length)
-      longl <- xlengths == max(xlengths) #logical
+      ## model length is based on max frequency
+      lm <- as.numeric(names(sort(table(xlengths), decreasing = TRUE)[1]))
+      if(!is.null(maxsize)){
+        xlengths2 <- xlengths[xlengths <= maxsize]
+        if(length(xlenths2) == 0) stop("maxsize parameter is too low")
+        if(lm > maxsize) lm <- max(xlengths2)
+      }
+      longl <- xlengths == lm
+      # longl <- xlengths == max(xlengths) #logical
+      # changed Aug2017 to reflect frequency rather than length
       seeds <- which.min(seqweights[longl]) #index (or indices)
       if(length(seeds) > 1) seeds <- sample(seeds, size = 1) # length 1 index
       seed <- x[longl][[seeds]]
       msa1 <- matrix(seed, nrow = 1)
-      ### in future could offer max freq seq option here
+      colnames(msa1) <- paste(1:ncol(msa1))
+      ## colnames are used when inserts = "inherited"
     }
   }else if(nseq == 2){
     if(!quiet) cat("Aligning seed sequences\n")
@@ -420,6 +430,8 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
     seeds <- 1:2
   }else if(nseq == 1){
     msa1 <- matrix(x[[1]], nrow = 1)
+    colnames(msa1) <- paste(1:ncol(msa1))
+    ## colnames are used when inserts = "inherited"
     seqweights <- 1
     rownames(msa1) <- names(seqweights) <- names(x)
     seeds <- 1
