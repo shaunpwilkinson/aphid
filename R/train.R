@@ -11,9 +11,14 @@
 #' @param method a character string specifying the iterative model training
 #'   method to use. Accepted methods are \code{"Viterbi"} (the default)
 #'   and \code{"BaumWelch"}.
-#' @param seqweights either NULL (default; all sequences are given
-#'   weights of 1) or a numeric vector the same length as \code{x}
-#'   representing the sequence weights used to derive the model.
+#' @param seqweights either NULL (all sequences are given weights
+#'   of 1), a numeric vector the same length as \code{y} representing
+#'   the sequence weights used to derive the model, or a character string giving
+#'   the method to derive the weights from the sequences. Currently only the
+#'   \code{"Gerstein"} method is supported (default). For this method, a
+#'   tree is first created by k-mer counting (see \code{\link[phylogram]{topdown}}),
+#'   and sequence weights are then derived from the tree using the 'bottom up'
+#'   algorithm of Gerstein et al (1994).
 #' @param wfactor numeric. The factor to multiply the sequence weights by.
 #'   Defaults to 1.
 #' @param k integer representing the k-mer size to be used in tree-based

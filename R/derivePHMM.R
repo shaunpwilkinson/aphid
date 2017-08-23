@@ -5,8 +5,8 @@
 #'
 #' @param x a matrix of aligned sequences or a list of unaligned sequences.
 #'   Accepted modes are "character" and "raw" (for "DNAbin" and "AAbin" objects).
-#' @param seqweights either NULL (default; all sequences are given
-#'   weights of 1), a numeric vector the same length as \code{x} representing
+#' @param seqweights either NULL (all sequences are given weights
+#'   of 1), a numeric vector the same length as \code{x} representing
 #'   the sequence weights used to derive the model, or a character string giving
 #'   the method to derive the weights from the sequences. Currently only the
 #'   \code{"Gerstein"} method is supported (default). For this method, a
