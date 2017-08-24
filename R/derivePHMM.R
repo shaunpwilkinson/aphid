@@ -408,7 +408,7 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
       lm <- as.numeric(names(sort(table(xlengths), decreasing = TRUE)[1]))
       if(!is.null(maxsize)){
         xlengths2 <- xlengths[xlengths <= maxsize]
-        if(length(xlenths2) == 0) stop("maxsize parameter is too low")
+        if(length(xlengths2) == 0) stop("maxsize parameter is too low")
         if(lm > maxsize) lm <- max(xlengths2)
       }
       longl <- xlengths == lm
