@@ -69,7 +69,7 @@ and \code{progressive = TRUE}, ignored otherwise).
 Defaults to NULL, in which a set of log(n, 2)^2 non-identical
 sequences are chosen from the list of sequences by k-means clustering.}
 
-\item{seqweights}{either NULL (default; all sequences are given weights
+\item{seqweights}{either NULL (all sequences are given weights
 of 1), a numeric vector the same length as \code{x} representing
 the sequence weights used to derive the model, or a character string giving
 the method to derive the weights from the sequences. Currently only the
