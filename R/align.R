@@ -279,7 +279,7 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
     navailcores <- parallel::detectCores()
     if(identical(cores, "autodetect")) cores <- navailcores - 1
     if(cores > 1){
-      if(cores > navailcores) stop("Number of cores is more than number available")
+      # if(cores > navailcores) stop("No. cores is more than number available")
       if(!quiet) cat("Multithreading over", cores, "cores\n")
       cores <- parallel::makeCluster(cores)
       para <- TRUE

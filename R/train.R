@@ -272,9 +272,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
       navailcores <- parallel::detectCores()
       if(identical(cores, "autodetect")) cores <- navailcores - 1
       if(cores > 1){
-        if(cores > navailcores){
-          stop("Number of cores is more than the number available")
-        }
+        # if(cores > navailcores) stop("No. cores is more than number available")
         if(!quiet) cat("Multithreading over", cores, "cores\n")
         cores <- parallel::makeCluster(cores)
         para <- TRUE
