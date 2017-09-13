@@ -115,9 +115,16 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
 ################################################################################
 weight.dendrogram <- function(x, method = "Gerstein", ...){
   if(!identical(method, "Gerstein")) stop("Only Gerstein method supported")
+  if(is.leaf(x)) return(structure(1, names = attr(x, "label")))
   acal <- function(d) !any(sapply(d, is.list)) # all children are leaves?
   md <- function(d) all(sapply(d, acal)) & !acal(d) # mergable dendro?
   ch <- function(d) sapply(d, attr, "height") # child heights
+  if(acal(x)){
+    res <- attr(x, "height") - ch(x) + 0.0000001
+    res <- length(res) * (res/sum(res))
+    names(res) <- sapply(x, attr, "label")
+    return(res)
+  }
   Gerstein <- function(x){ # x is a dendrogram
     ngrandchildren <- sapply(x, length)
     childisdendro <- ngrandchildren > 1
@@ -129,8 +136,7 @@ weight.dendrogram <- function(x, method = "Gerstein", ...){
       #  list same length as childedges
       grandchildedges <- mapply("-", childheights, grandchildheights,
                                 SIMPLIFY = FALSE)
-      grandchildedges <- lapply(grandchildedges, function(e){
-        e + 0.0000001})
+      grandchildedges <- lapply(grandchildedges, function(e) e + 0.0000001)
       # this just safeguards against 0 denominators (but is a bit of a hack)
       ratios <- lapply(grandchildedges, function(v) v/sum(v))
       inheritances <- mapply("*", childedges, ratios, SIMPLIFY = FALSE)
