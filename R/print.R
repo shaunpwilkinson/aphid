@@ -9,7 +9,7 @@ print.PHMM <- function(x, ...){
   cat("Profile hidden Markov model (object class: 'PHMM')\n",
       "with ",
       x$size,
-      " internal positions emitting ",
+      " internal modules emitting ",
       nrow(x$E),
       " unique residues\n",
       "(",
