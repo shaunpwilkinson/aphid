@@ -356,7 +356,8 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
         stopifnot(mode(seqweights) %in% c("numeric", "integer"),
                   length(seqweights) == nseq)
       }
-      guidetree <- kmer::cluster(x[seeds], k = k, residues = residues, gap = gap)
+      guidetree <- kmer::cluster(x[seeds], k = k,
+                                      residues = residues, gap = gap)
       attachseqs <- function(tree, sequences){
         if(!is.list(tree)){
           attr(tree, "seqs") <- sequences[[attr(tree, "label")]]
