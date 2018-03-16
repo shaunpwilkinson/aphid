@@ -34,7 +34,7 @@
 #'   the sequence weights used to derive the model, or a character string giving
 #'   the method to derive the weights from the sequences. Currently only the
 #'   \code{"Gerstein"} method is supported (default). For this method, a
-#'   tree is first created by k-mer counting (see \code{\link[phylogram]{topdown}}),
+#'   tree is first created by k-mer counting (see \code{\link[kmer]{cluster}}),
 #'   and sequence weights are then derived from the tree using the 'bottom up'
 #'   algorithm of Gerstein et al (1994).
 #' @param refine the method used to iteratively refine the model parameters

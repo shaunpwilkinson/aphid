@@ -1,12 +1,11 @@
-This is a patch release, internalizing a function that was 
-erroneously exported in the initial CRAN release.
+This is a minor release.
 
-## Test environments
- * local ubuntu 16.04 x86_64-pc-linux-gnu; R version 3.4.0 
- * travis-ci ubuntu 12.04.5 x86_64-pc-linux-gnu; R 3.4.0
- * winbuilder devel (2017-07-05 r72891)
+### Test environments
+ * local ubuntu 16.04.2 x86_64-pc-linux-gnu; R version 3.4.0 
+ * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R 3.4.2
+ * winbuilder devel (2018-03-16 r74345)
 
-## R CMD check results
+### R CMD check results
 There were no ERRORs or WARNINGs. there was one NOTE.
 
 Possibly mis-spelled words in DESCRIPTION:
@@ -16,5 +15,5 @@ Possibly mis-spelled words in DESCRIPTION:
   
 These have been checked and are spelled correctly.
 
-## Downstream dependencies
+### Downstream dependencies
 There were no issues.

@@ -1,7 +1,7 @@
 Package: aphid
 Type: Package
 Title: Analysis with Profile Hidden Markov Models
-Version: 1.0.1.9000
+Version: 1.1.0
 Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
 Author: Shaun Wilkinson [aut, cre]
@@ -16,6 +16,7 @@ Description: Designed for the development and application of
     Features a wide variety of potential applications including 
     database searching, gene-finding and annotation, phylogenetic 
     analysis and sequence classification.
+    Based on the models and algorithms described in Durbin et al (1998, ISBN:9780521629713).
 License: GPL-3
 URL: http://github.com/shaunpwilkinson/aphid
 BugReports: http://github.com/shaunpwilkinson/aphid/issues
@@ -26,7 +27,7 @@ Depends:
 Imports:
     graphics,
     openssl,
-    phylogram (>= 1.0.0),
+    kmer,
     Rcpp (>= 0.12.5),
     stats
 Suggests:
