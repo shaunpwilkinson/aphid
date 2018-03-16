@@ -26,8 +26,8 @@ weight(x, ...)
 \arguments{
 \item{x}{an object of class \code{"dendrogram"}, or a list or matrix of
 sequences (possibly a "DNAbin" or "AAbin" object) from which to derive a
-dendrogram using the \code{\link[phylogram]{topdown}} function in the
-\code{\link[phylogram]{phylogram}} package.}
+dendrogram using the \code{\link[kmer]{cluster}} function in the
+\code{\link[kmer]{kmer}} package.}
 
 \item{...}{additional arguments to be passed between methods.}
 
@@ -88,7 +88,7 @@ Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 }
 \seealso{
-\code{\link[phylogram]{topdown}}
+\code{\link[kmer]{cluster}}
 }
 \author{
 Shaun Wilkinson

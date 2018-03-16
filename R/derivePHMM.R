@@ -10,7 +10,7 @@
 #'   the sequence weights used to derive the model, or a character string giving
 #'   the method to derive the weights from the sequences. Currently only the
 #'   \code{"Gerstein"} method is supported (default). For this method, a
-#'   tree is first created by k-mer counting (see \code{\link[phylogram]{topdown}}),
+#'   tree is first created by k-mer counting (see \code{\link[kmer]{cluster}}),
 #'   and sequence weights are then derived from the tree using the 'bottom up'
 #'   algorithm of Gerstein et al (1994).
 #' @param wfactor numeric. The factor to multiply the sequence weights by.
@@ -356,7 +356,7 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
         stopifnot(mode(seqweights) %in% c("numeric", "integer"),
                   length(seqweights) == nseq)
       }
-      guidetree <- phylogram::topdown(x[seeds], k = k,
+      guidetree <- kmer::cluster(x[seeds], k = k,
                                       residues = residues, gap = gap)
       attachseqs <- function(tree, sequences){
         if(!is.list(tree)){

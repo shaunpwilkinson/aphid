@@ -2,27 +2,27 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 .map <- function(ecs, notgaps, pseudocounts, seqweights, qe, lambda = 0) {
-    .Call('aphid_map', PACKAGE = 'aphid', ecs, notgaps, pseudocounts, seqweights, qe, lambda)
+    .Call('_aphid_map', PACKAGE = 'aphid', ecs, notgaps, pseudocounts, seqweights, qe, lambda)
 }
 
 .acount <- function(x, arity) {
-    .Call('aphid_acount', PACKAGE = 'aphid', x, arity)
+    .Call('_aphid_acount', PACKAGE = 'aphid', x, arity)
 }
 
 .ecount <- function(states, statearity, residues, resarity) {
-    .Call('aphid_ecount', PACKAGE = 'aphid', states, statearity, residues, resarity)
+    .Call('_aphid_ecount', PACKAGE = 'aphid', states, statearity, residues, resarity)
 }
 
 .atab <- function(x, seqweights) {
-    .Call('aphid_atab', PACKAGE = 'aphid', x, seqweights)
+    .Call('_aphid_atab', PACKAGE = 'aphid', x, seqweights)
 }
 
 .fragR <- function(x, path, l, gap) {
-    .Call('aphid_fragR', PACKAGE = 'aphid', x, path, l, gap)
+    .Call('_aphid_fragR', PACKAGE = 'aphid', x, path, l, gap)
 }
 
 .fragC <- function(x, path, l, gap) {
-    .Call('aphid_fragC', PACKAGE = 'aphid', x, path, l, gap)
+    .Call('_aphid_fragC', PACKAGE = 'aphid', x, path, l, gap)
 }
 
 #' Sum of logged probabilities.
@@ -38,50 +38,50 @@
 #' @author Shaun Wilkinson
 #'
 logsum <- function(x) {
-    .Call('aphid_logsum', PACKAGE = 'aphid', x)
+    .Call('_aphid_logsum', PACKAGE = 'aphid', x)
 }
 
 .whichmax <- function(x, start = 1L) {
-    .Call('aphid_whichmax', PACKAGE = 'aphid', x, start)
+    .Call('_aphid_whichmax', PACKAGE = 'aphid', x, start)
 }
 
 .probDNA <- function(x, probs) {
-    .Call('aphid_probDNA', PACKAGE = 'aphid', x, probs)
+    .Call('_aphid_probDNA', PACKAGE = 'aphid', x, probs)
 }
 
 .probAA <- function(x, probs) {
-    .Call('aphid_probAA', PACKAGE = 'aphid', x, probs)
+    .Call('_aphid_probAA', PACKAGE = 'aphid', x, probs)
 }
 
 .ViterbiD <- function(x, y, type, d, e, S, windowspace, offset = 0) {
-    .Call('aphid_ViterbiD', PACKAGE = 'aphid', x, y, type, d, e, S, windowspace, offset)
+    .Call('_aphid_ViterbiD', PACKAGE = 'aphid', x, y, type, d, e, S, windowspace, offset)
 }
 
 .ViterbiH <- function(y, A, E, DNA = FALSE, AA = FALSE) {
-    .Call('aphid_ViterbiH', PACKAGE = 'aphid', y, A, E, DNA, AA)
+    .Call('_aphid_ViterbiH', PACKAGE = 'aphid', y, A, E, DNA, AA)
 }
 
 .ViterbiP <- function(y, A, E, qe, qey, type, windowspace, offset = 0, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
-    .Call('aphid_ViterbiP', PACKAGE = 'aphid', y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA, AA)
+    .Call('_aphid_ViterbiP', PACKAGE = 'aphid', y, A, E, qe, qey, type, windowspace, offset, DI, ID, DNA, AA)
 }
 
 .ViterbiPP <- function(Ax, Ay, Ex, Ey, qe, type, windowspace, offset = 0) {
-    .Call('aphid_ViterbiPP', PACKAGE = 'aphid', Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
+    .Call('_aphid_ViterbiPP', PACKAGE = 'aphid', Ax, Ay, Ex, Ey, qe, type, windowspace, offset)
 }
 
 .forwardH <- function(y, A, E, DNA = FALSE, AA = FALSE) {
-    .Call('aphid_forwardH', PACKAGE = 'aphid', y, A, E, DNA, AA)
+    .Call('_aphid_forwardH', PACKAGE = 'aphid', y, A, E, DNA, AA)
 }
 
 .forwardP <- function(y, A, E, qe, qey, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
-    .Call('aphid_forwardP', PACKAGE = 'aphid', y, A, E, qe, qey, windowspace, DI, ID, DNA, AA)
+    .Call('_aphid_forwardP', PACKAGE = 'aphid', y, A, E, qe, qey, windowspace, DI, ID, DNA, AA)
 }
 
 .backwardH <- function(y, A, E, DNA = FALSE, AA = FALSE) {
-    .Call('aphid_backwardH', PACKAGE = 'aphid', y, A, E, DNA, AA)
+    .Call('_aphid_backwardH', PACKAGE = 'aphid', y, A, E, DNA, AA)
 }
 
 .backwardP <- function(y, A, E, qe, qey, windowspace, DI = FALSE, ID = FALSE, DNA = FALSE, AA = FALSE) {
-    .Call('aphid_backwardP', PACKAGE = 'aphid', y, A, E, qe, qey, windowspace, DI, ID, DNA, AA)
+    .Call('_aphid_backwardP', PACKAGE = 'aphid', y, A, E, qe, qey, windowspace, DI, ID, DNA, AA)
 }
 

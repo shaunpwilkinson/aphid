@@ -4,8 +4,8 @@
 #'
 #' @param x an object of class \code{"dendrogram"}, or a list or matrix of
 #'   sequences (possibly a "DNAbin" or "AAbin" object) from which to derive a
-#'   dendrogram using the \code{\link[phylogram]{topdown}} function in the
-#'   \code{\link[phylogram]{phylogram}} package.
+#'   dendrogram using the \code{\link[kmer]{cluster}} function in the
+#'   \code{\link[kmer]{kmer}} package.
 #' @param method a character string indicating the weighting method to be used.
 #'   Currently only that of Gerstein et al (1994) is supported
 #'   (\code{method = "Gerstein"}).
@@ -48,7 +48,7 @@
 #'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
 #'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 #'
-#' @seealso \code{\link[phylogram]{topdown}}
+#' @seealso \code{\link[kmer]{cluster}}
 #' @examples
 #'   ## weight the sequences in the woodmouse dataset from the ape package
 #'   library(ape)
@@ -98,7 +98,7 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
   tmpnames <- names(x)
   names(x) <- paste0("S", 1:nsq)
   if(nsq > 2){
-    guidetree <- phylogram::topdown(x, k = k, residues = residues, gap = gap)
+    guidetree <- kmer::cluster(x, k = k, residues = residues, gap = gap)
     res <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)]
   }else if(nsq == 2){
     res <- c(1, 1)
