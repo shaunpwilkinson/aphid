@@ -1,4 +1,4 @@
-#' Substutution matrices.
+#' Substitution matrices.
 #'
 #' A dataset containing several popular substitution scoring matrices
 #' for DNA and amino acids.

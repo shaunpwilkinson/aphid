@@ -21,7 +21,7 @@
 #' @author Shaun Wilkinson
 #' @references
 #'   Finn, RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
-#'   similarity searching. \emph{Nucleic Acids Research}. 39:W29-W37.
+#'   similarity searching. \emph{Nucleic Acids Research}. \strong{39} W29-W37.
 #'   \url{http://hmmer.org/}.
 #'
 #'   HMMER: biosequence analysis using profile hidden Markov models.

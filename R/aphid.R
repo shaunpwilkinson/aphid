@@ -133,7 +133,7 @@
 #'
 #'   Finn RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
 #'   similarity searching.
-#'   \emph{Nucleic Acids Research}. \strong{39}:W29-W37. \url{http://hmmer.org/}.
+#'   \emph{Nucleic Acids Research}. \strong{39}, W29-W37. \url{http://hmmer.org/}.
 #'
 #'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
 #'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.

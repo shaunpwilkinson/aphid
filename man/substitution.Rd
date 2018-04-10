@@ -3,7 +3,7 @@
 \docType{data}
 \name{substitution}
 \alias{substitution}
-\title{Substutution matrices.}
+\title{Substitution matrices.}
 \format{A list of 71 matrices, most of which have 24 rows and 24 columns
 corresponding to the 20-letter amino acid alphabet plus the ambiguity codes B, Z,
 X and *:
