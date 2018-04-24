@@ -5,6 +5,7 @@ citEntry(entry = "Manual",
    author = personList(as.person("Shaun Wilkinson")),
    url = "https://cran.r-project.org/package=aphid",
    year   = "2017",
+   doi = "10.5281/zenodo.1227696",
    textVersion =
    paste("Wilkinson SP (2017) The 'aphid' package for analysis",
          "with profile hidden Markov models. R package version 1.0.0.",

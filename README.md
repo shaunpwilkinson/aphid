@@ -2,6 +2,7 @@
 
 Analysis with profile hidden Markov models
 
+[![DOI](https://zenodo.org/badge/63536088.svg)](https://zenodo.org/badge/latestdoi/63536088)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/aphid)](https://cran.r-project.org/package=aphid)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/aphid)](https://cran.r-project.org/package=aphid)
 [![Build Status](https://travis-ci.org/shaunpwilkinson/aphid.svg?branch=master)](https://travis-ci.org/shaunpwilkinson/aphid)
