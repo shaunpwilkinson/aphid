@@ -155,6 +155,9 @@
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
 #'
+#'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
+#'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
+#'
 #'   Juang B-H, Rabiner LR (1990) The segmental K-means
 #'   algorithm for estimating parameters of hidden Markov models.
 #'   \emph{IEEE Transactions on Acoustics, Speech, and Signal Processing},
@@ -204,9 +207,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
   DI <- !all(x$A["DI", ] == if(logspace) -Inf else 0)
   ID <- !all(x$A["ID", ] == if(logspace) -Inf else 0)
   gap <- if(DNA) as.raw(4) else if(AA) as.raw(45) else gap
-  if(!is.list(y)){
-    y <- if(is.null(dim(y))) list(y) else unalign(y, gap = gap)
-  }
+  if(!is.list(y)) y <- if(is.null(dim(y))) list(y) else unalign(y, gap = gap)
   n <- length(y)
   if(is.null(seqweights)){
     seqweights <- rep(1, n)
@@ -234,11 +235,14 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
     if(!logspace) x$qe <- log(x$qe)
   }else{
     allecs <- if(DNA){
-      apply(t(sapply(y, .tabulateDNA, ambiguities = TRUE)) * seqweights, 2, sum) + 1
+      apply(t(sapply(y, .tabulateDNA, ambiguities = TRUE)) *
+              seqweights, 2, sum) + 1
     }else if(AA){
-      apply(t(sapply(y, .tabulateAA, ambiguities = TRUE)) * seqweights, 2, sum) + 1
+      apply(t(sapply(y, .tabulateAA, ambiguities = TRUE)) *
+              seqweights, 2, sum) + 1
     }else{
-      apply(t(sapply(y, .tabulateCH, residues = residues)) * seqweights, 2, sum) + 1
+      apply(t(sapply(y, .tabulateCH, residues = residues)) *
+              seqweights, 2, sum) + 1
     }
     x$qe <- log(allecs/sum(allecs))
   }
@@ -260,34 +264,34 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
     if(!ID) transtotals[7] <- 0
     x$qa <- log(transtotals/sum(transtotals))
   }
-  if(method  == "Viterbi"){
-    ## set up multithread
-    if(inherits(cores, "cluster")){
+  ## set up multithread
+  if(inherits(cores, "cluster")){
+    para <- TRUE
+    stopclustr <- FALSE
+  }else if(cores == 1){
+    para <- FALSE
+    stopclustr <- FALSE
+  }else{
+    navailcores <- parallel::detectCores()
+    if(identical(cores, "autodetect")) cores <- navailcores - 1
+    if(cores > 1){
+      # if(cores > navailcores) stop("No. cores is more than number available")
+      if(!quiet) cat("Multithreading over", cores, "cores\n")
+      cores <- parallel::makeCluster(cores)
       para <- TRUE
-      stopclustr <- FALSE
-    }else if(cores == 1){
+      stopclustr <- TRUE
+    }else{
       para <- FALSE
       stopclustr <- FALSE
-    }else{
-      navailcores <- parallel::detectCores()
-      if(identical(cores, "autodetect")) cores <- navailcores - 1
-      if(cores > 1){
-        # if(cores > navailcores) stop("No. cores is more than number available")
-        if(!quiet) cat("Multithreading over", cores, "cores\n")
-        cores <- parallel::makeCluster(cores)
-        para <- TRUE
-        stopclustr <- TRUE
-      }else{
-        para <- FALSE
-        stopclustr <- FALSE
-      }
     }
+  }
+  if(method  == "Viterbi"){
     alig <- align.list(y, model = x, logspace = TRUE, cores = cores,
                        ... = ...)
     alig_cache <- character(maxiter)
     alig_cache[1] <- .digest(alig, simplify = TRUE)
     for(i in 1:maxiter){
-      out <- derivePHMM.default(alig, seqweights = seqweights,
+      model <- derivePHMM.default(alig, seqweights = seqweights,
                                 residues = residues, gap = gap,
                                 DI = DI, ID = ID, maxsize = maxsize,
                                 inserts = inserts, lambda = lambda,
@@ -299,9 +303,9 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
       if(!quiet){
         cat("Iteration", i)
         cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ")
-        cat("PHMM with", out$size, "modules\n")
+        cat("PHMM with", model$size, "modules\n")
       }
-      newalig <- align(y, model = out, logspace = TRUE, cores = cores,
+      newalig <- align(y, model = model, logspace = TRUE, cores = cores,
                        ... = ...)
       newhash <- .digest(newalig, simplify = TRUE)
       if(!any(sapply(alig_cache, identical, newhash))){
@@ -311,33 +315,36 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
         gc()
       }else{
         if(!logspace){
-          out$A <- exp(out$A)
-          out$E <- exp(out$E)
-          out$qa <- exp(out$qa)
-          out$qe <- exp(out$qe)
+          model$A <- exp(model$A)
+          model$E <- exp(model$E)
+          model$qa <- exp(model$qa)
+          model$qe <- exp(model$qe)
         }
         if(!quiet) cat("Sequential alignments were identical after",
                        i, "iterations\n")
         if(para & stopclustr) parallel::stopCluster(cores)
-        return(out)
+        return(model)
       }
     }
     if(!quiet) cat("Sequential alignments were not identical after",
                    i, "iterations\n")
     if(para & stopclustr) parallel::stopCluster(cores)
-    return(out)
+    return(model)
   }else if(method == "BaumWelch"){
     if(DNA){
-      NUCorder <- sapply(toupper(rownames(x$E)), match, c("A", "T", "G", "C"))
+      NUCorder <- sapply(toupper(rownames(x$E)), match,
+                         c("A", "T", "G", "C"))
       x$E <- x$E[NUCorder, ]
       x$qe <- x$qe[NUCorder]
       if(!(identical(toupper(rownames(x$E)), c("A", "T", "G", "C")))){
         stop("Invalid model for DNA, residue alphabet does not correspond to
               nucleotide alphabet")
       }
-      y <- .encodeDNA(y, arity = 4, probs = exp(x$qe), random = FALSE, na.rm = TRUE)
+      y <- .encodeDNA(y, arity = 4, probs = exp(x$qe),
+                      random = FALSE, na.rm = TRUE)
     }else if(AA){
-      PFAMorder <- sapply(toupper(rownames(x$E)), match, LETTERS[-c(2, 10, 15, 21, 24, 26)])
+      PFAMorder <- sapply(toupper(rownames(x$E)), match,
+                          LETTERS[-c(2, 10, 15, 21, 24, 26)])
       x$E <- x$E[PFAMorder, ]
       x$qe <- x$qe[PFAMorder]
       if(!(identical(toupper(rownames(x$E)), LETTERS[-c(2, 10, 15, 21, 24, 26)]))){
@@ -377,116 +384,178 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
     Apseudocounts[1:3, 1] <- Apseudocounts[c(1, 4, 7), l + 1] <- 0
     if(!DI) Apseudocounts["DI", ] <- 0
     if(!ID) Apseudocounts["ID", ] <- 0
-    E <- x$E
-    A <- x$A
-    qe <- x$qe
+    model <- x
     LL <- -1E12
-    out <- x
-    for(i in 1:maxiter){
-      tmpA <- Apseudocounts
-      tmpE <- Epseudocounts
-      tmpqe <- qepseudocounts
-      tmplogPx <- rep(NA, n)
+    count <- function(y, model, DI = FALSE, ID = FALSE, ...){
+      # y is sequences with weights attr
+      ## output list including A, E, qe (counts)
+      n <- length(y)
+      l <- model$size
+      seqweights <- attr(y, "weights")
+      A <- model$A
+      E <- model$E
+      qe <- model$qe
+      A[] <- E[] <- qe[] <- 0 # counts
+      A0 <- A
+      E0 <- E
+      qe0 <- qe
+      A0[] <- E0[] <- qe0[] <- -Inf # log probs
+      logPx <- 0
       for(j in 1:n){
+        Aj <- A0
+        Ej <- E0
+        qej <- qe0  ### note position specific
+        seqweight <- seqweights[j]
         yj <- y[[j]]
         nj <- length(yj)
-        if(nj == 0){
-          tmpA["DD", 2:(ncol(tmpA) - 1)] <- tmpA["DD", 2:(ncol(tmpA) - 1)] + seqweights[j]
-          tmplogPx[j] <- sum(c(A["MD", 1], A["DD", 2:l], A["DM", l + 1]))
+        if(nj == 0){ # can occasionally simulate zero length seqs
+          A["DD", 2:l] <- A["DD", 2:l] + seqweight
+          logPx <- logPx + sum(c(model$A["MD", 1], model$A["DD", 2:l],
+                                 model$A["DM", l + 1]))
         }else{
-          forwj <- forward(out, yj, logspace = TRUE, odds = FALSE, ... = ...)
+          forwj <- forward.PHMM(model, yj, logspace = TRUE,
+                                odds = FALSE, ... = ...)
           Rj <- forwj$array
           logPxj <- forwj$score
-          tmplogPx[j] <- logPxj
-          backj <- backward(out, yj, logspace = TRUE, odds = FALSE, ... = ...)
+          logPx <- logPx + logPxj
+          backj <- backward.PHMM(model, yj, logspace = TRUE, odds = FALSE, ... = ...)
           Bj <- backj$array
-          tmpEj <- tmpE
-          tmpAj <- tmpA
-          tmpqej <- tmpqe
-          tmpEj[] <- tmpAj[] <- tmpqej[] <- 0
           yj <- yj + 1 # R indexing style
-          yjea <- cbind(FALSE, sapply(yj, function(r) 1:length(residues) == r))
-          for(k in 1:l){
-            # Emission and background emission counts
-            for(a in seq_along(residues)){
-              if(any(yjea[a, ])){
-                tmpEj[a, k] <- exp(logsum(Rj[k + 1, yjea[a, ], "M"] + Bj[k + 1, yjea[a, ], "M"]) - logPxj)
-                tmpqej[a] <- exp(logsum(Rj[k + 1, yjea[a, ], "I"] + Bj[k + 1, yjea[a, ], "I"]) - logPxj)
-              }
+          ## EMISSIONS
+          eM <- Rj[-1, -1, "M"] + Bj[-1, -1, "M"]
+          eI <- Rj[, -1, "I"] + Bj[, -1, "I"]
+          f <- factor(yj, levels = seq_len(nrow(E)))
+          Ej <- qej <- indices <- split(seq_along(yj), f = f)
+          indlens <- sapply(indices, length)
+          for(i in seq_len(nrow(E))){
+            if(indlens[i] == 0){
+              Ej[[i]] <- rep(-Inf, l)
+              qej[[i]] <- rep(-Inf, l + 1)
+            }else if(indlens[i] == 1){
+              Ej[[i]] <- eM[, indices[[i]]]
+              qej[[i]] <- eI[, indices[[i]]] ## I still has state 0 column
+            }else{
+              Ej[[i]] <- apply(eM[, indices[[i]]], 1, logsum)
+              qej[[i]] <- apply(eI[, indices[[i]]], 1, logsum)
             }
-            # Transition counts - all vectors length 1 or nj + 1 (i = 0... L)
-            tmpAj["DD", k] <- exp(logsum(Rj[k, , "D"] + A["DD", k] + Bj[k + 1, , "D"]) - logPxj)
-            tmpAj["MD", k] <- exp(logsum(Rj[k, , "M"] + A["MD", k] + Bj[k + 1, , "D"]) - logPxj)
-            if(ID) tmpAj["ID", k] <- exp(logsum(Rj[k, , "I"] + A["ID", k] + Bj[k + 1, , "D"]) - logPxj)
-            tmpAj["DM", k] <- exp(logsum(Rj[k, , "D"] + A["DM", k] + c(E[yj, k], -Inf) + c(Bj[k + 1, -1, "M"], -Inf)) - logPxj)
-            tmpAj["MM", k] <- exp(logsum(Rj[k, , "M"] + A["MM", k] + c(E[yj, k], -Inf) + c(Bj[k + 1, -1, "M"], -Inf)) - logPxj)
-            tmpAj["IM", k] <- exp(logsum(Rj[k, , "I"] + A["IM", k] + c(E[yj, k], -Inf) + c(Bj[k + 1, -1, "M"], -Inf)) - logPxj)
-            if(DI) tmpAj["DI", k] <- exp(logsum(Rj[k, , "D"] + A["DI", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
-            tmpAj["MI", k] <- exp(logsum(Rj[k, , "M"] + A["MI", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
-            tmpAj["II", k] <- exp(logsum(Rj[k, , "I"] + A["II", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
           }
-          k <- l + 1
-          tmpAj["DM", k] <- exp(Rj[k, nj + 1,"D"] + A["DM", k] - logPxj)
-          tmpAj["MM", k] <- exp(Rj[k, nj + 1,"M"] + A["MM", k] - logPxj)
-          tmpAj["IM", k] <- exp(Rj[k, nj + 1,"I"] + A["IM", k] - logPxj)
-          if(DI) tmpAj["DI", k] <- exp(logsum(Rj[k, , "D"] + A["DI", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
-          tmpAj["MI", k] <- exp(logsum(Rj[k, , "M"] + A["MI", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
-          tmpAj["II", k] <- exp(logsum(Rj[k, , "I"] + A["II", k] + c(qe[yj], -Inf) + c(Bj[k, -1, "I"], -Inf)) - logPxj)
-          # correct for sequence weight
-          tmpA <- tmpA + tmpAj * seqweights[j]
-          tmpE <- tmpE + tmpEj * seqweights[j]
-          tmpqe <- tmpqe + tmpqej * seqweights[j]
+          Ej <- exp(do.call("rbind", Ej) - logPxj)
+          qej <- exp(do.call("rbind", qej) - logPxj)
+          rownames(Ej) <- rownames(qej) <- rownames(E)
+          E <- E + (Ej * seqweight)
+          ####qej <- apply(qej, 1, sum) ############
+          qe <- qe + (qej * seqweight)
+          ## TRANSITIONS
+          Ey <- t(model$E[yj, ])
+          qey <- model$qe[yj]
+          qey <- matrix(rep(qey, l + 1), nrow = l + 1, byrow = TRUE)
+          colnames(qey) <- colnames(Ey)
+          rownames(qey) <- c("0", rownames(Ey))
+          Aj["DD", 1:l] <- apply(Rj[1:l, , "D"] + model$A["DD", 1:l] +
+                                   Bj[-1, , "D"] , 1, logsum)
+          Aj["MD", 1:l] <- apply(Rj[1:l, , "M"] + model$A["MD", 1:l] +
+                                   Bj[-1, , "D"] , 1, logsum)
+          if(ID) Aj["ID", 1:l] <- apply(Rj[1:l, , "I"] + model$A["ID", 1:l] +
+                                          Bj[-1, , "D"] , 1, logsum)
+          Aj["DM", 1:l] <- apply(Rj[1:l, 1:nj, "D"] + model$A["DM", 1:l] +
+                                   Ey + Bj[-1, -1, "M"], 1, logsum)
+          Aj["DM", l+1] <- Rj[l + 1, nj + 1, "D"] + model$A["DM", l + 1]
+          Aj["MM", 1:l] <- apply(Rj[1:l, 1:nj, "M"] + model$A["MM", 1:l] +
+                                   Ey + Bj[-1, -1, "M"], 1, logsum)
+          Aj["MM", l+1] <- Rj[l + 1, nj + 1, "M"] + model$A["MM", l + 1]
+          Aj["IM", 1:l] <- apply(Rj[1:l, 1:nj, "I"] + model$A["IM", 1:l] +
+                                   Ey + Bj[-1, -1, "M"], 1, logsum)
+          Aj["IM", l+1] <- Rj[l + 1, nj + 1, "I"] + model$A["IM", l + 1]
+          if(DI) Aj["DI", 1:l] <- apply(Rj[ ,1:nj, "D"] + model$A["DI", ] +
+                                          qey + Bj[, -1, "I"], 1, logsum)
+          Aj["MI", ] <- apply(Rj[, 1:nj, "M"] + model$A["MI", ] + qey +
+                                Bj[, -1, "I"], 1, logsum)
+          Aj["II", ] <- apply(Rj[, 1:nj, "I"] + model$A["II", ] + qey +
+                                Bj[, -1, "I"], 1, logsum)
+          Aj <- exp(Aj - logPxj)
+          A <- A + (Aj * seqweight)
         }
       }
-      tmpE <- t(tmpE)
-      tmpE <- log(tmpE/apply(tmpE, 1, sum))
-      tmpE <- t(tmpE)
-      tmpqe <- log(tmpqe/sum(tmpqe))
-      tmpA <- t(tmpA)
-      for(X in c(1, 4, 7)) tmpA[, X:(X + 2)] <- log(tmpA[, X:(X + 2)]/apply(tmpA[, X:(X + 2)], 1, sum))
-      tmpA <- t(tmpA)
-      tmpA[1:3, 1] <- -Inf # replace NaNs generated when dividing by 0
-      A <- tmpA
-      E <- tmpE
-      if(!fixqe) qe <- tmpqe
-      out$A <- A
-      out$E <- E
-      if(!fixqe) out$qe <- qe
-      logPx <- sum(tmplogPx) # page 62 eq 3.17
+      return(list(A = A, E = E, qe = qe, logPx = logPx))
+    }
+    do_multi <- para & length(y) > length(cores)
+    if(do_multi){
+      f <- rep(seq(1, length(cores)), each = ceiling(n/length(cores)))[1:n]
+      y <- split(y, f)
+      swl <- split(seqweights, f)
+      for(i in seq_along(y)) attr(y[[i]], "weights") <- swl[[i]]
+    }else{
+      attr(y, "weights") <- seqweights
+    }
+    for(i in 1:maxiter){
+      if(do_multi){
+        counts <- parallel::parLapply(cores, y, count, model = model,
+                                      DI = DI, ID = ID, ... = ...)
+        A <- Reduce("+", lapply(counts, "[[", 1))
+        E <- Reduce("+", lapply(counts, "[[", 2))
+        qe <- Reduce("+", lapply(counts, "[[", 3))
+        logPx <- Reduce("+", lapply(counts, "[[", 4))
+      }else{
+        counts <- count(y, model = model, DI = DI, ID = ID, ... = ...)
+        A <- counts$A
+        E <- counts$E
+        qe <- counts$qe
+        logPx <- counts$logPx
+      }
+      ## add pseudocounts
+      qe <- apply(qe, 1, sum)
+      A <- A + Apseudocounts
+      E <- E + Epseudocounts
+      qe <- qe + qepseudocounts
+      E <- t(E)
+      E <- log(E/apply(E, 1, sum))
+      E <- t(E)
+      qe <- log(qe/sum(qe))
+      A <- t(A)
+      M <- matrix(1:9, 3)
+      for(m in 1:3) A[, M[, m]] <- log(A[, M[, m]]/apply(A[, M[, m]], 1, sum))
+      A <- t(A)
+      A[1:3, 1] <- -Inf # replace NaNs generated when dividing by 0
+      model$A <- A
+      model$E <- E
+      if(!fixqe) model$qe <- qe
+      # logPx <- sum(logPxs) # page 62 eq 3.17
       if(!quiet) cat("Iteration", i, "log likelihood =", logPx, "\n")
       if(abs(LL - logPx) < deltaLL){
         if(!logspace){
-          out$A <- exp(out$A)
-          out$E <- exp(out$E)
-          out$qe <- exp(out$qe)
+          model$A <- exp(model$A)
+          model$E <- exp(model$E)
+          model$qe <- exp(model$qe)
         }
         if(DNA){
-          out$E <- out$E[NUCorder, ]
-          out$qe <- out$qe[NUCorder]
+          model$E <- model$E[NUCorder, ]
+          model$qe <- model$qe[NUCorder]
         }else if(AA){
-          out$E <- out$E[PFAMorder, ]
-          out$qe <- out$qe[PFAMorder]
+          model$E <- model$E[PFAMorder, ]
+          model$qe <- model$qe[PFAMorder]
         }
+        if(para & stopclustr) parallel::stopCluster(cores)
         if(!quiet) cat("Convergence threshold reached after", i, "EM iterations\n")
-        return(out)
+        return(model)
       }
       LL <- logPx
       gc()
     }
     warning("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
     if(!logspace){
-      out$A <- exp(out$A)
-      out$E <- exp(out$E)
-      out$qe <- exp(out$qe)
+      model$A <- exp(model$A)
+      model$E <- exp(model$E)
+      model$qe <- exp(model$qe)
     }
     if(DNA){
-      out$E <- out$E[NUCorder, ]
-      out$qe <- out$qe[NUCorder]
+      model$E <- model$E[NUCorder, ]
+      model$qe <- model$qe[NUCorder]
     }else if(AA){
-      out$E <- out$E[PFAMorder, ]
-      out$qe <- out$qe[PFAMorder]
+      model$E <- model$E[PFAMorder, ]
+      model$qe <- model$qe[PFAMorder]
     }
-    return(out)
+    if(para & stopclustr) parallel::stopCluster(cores)
+    return(model)
   }else stop("Invalid argument given for 'method'")
 }
 ################################################################################
@@ -511,16 +580,16 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL, wfactor = 1,
   nstates <- length(states)
   residues <- colnames(x$E)
   nres <- length(residues)
-  out <- x
+  model <- x
   if(!logspace){
-    out$E <- log(out$E)
-    out$A <- log(out$A)
+    model$E <- log(model$E)
+    model$A <- log(model$A)
   }
   if(method == "Viterbi"){
     for(i in 1:maxiter){
       samename <- logical(n)
       for(j in 1:n){
-        vitj <- Viterbi(out, y[[j]], logspace = TRUE, ... = ...)
+        vitj <- Viterbi(model, y[[j]], logspace = TRUE, ... = ...)
         pathchar <- states[-1][vitj$path + 1]
         if(identical(pathchar, names(y[[j]]))) samename[j] <- TRUE
         # need to be named to feed into deriveHMM
@@ -528,15 +597,15 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL, wfactor = 1,
       }
       if(all(samename)){
         if(!logspace){
-          out$A <- exp(out$A)
-          out$E <- exp(out$E)
+          model$A <- exp(model$A)
+          model$E <- exp(model$E)
         }
         if(!quiet) cat("Iteration", i, "\nPaths were identical after",
                        i, "iterations\n")
-        return(out)
+        return(model)
       }else{
         if(!quiet) cat("Iteration", i, "\n")
-        out <- deriveHMM(y, seqweights = seqweights, residues = residues,
+        model <- deriveHMM(y, seqweights = seqweights, residues = residues,
                          states = states, modelend = modelend,
                          pseudocounts = pseudocounts, logspace = TRUE)
       }
@@ -557,8 +626,8 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL, wfactor = 1,
       Apseudocounts[] <- pseudocounts[[1]]
       Epseudocounts[] <- pseudocounts[[2]]
     } else if(!identical(pseudocounts, "none")) stop("Invalid 'pseudocounts' argument")
-    E <- out$E
-    A <- out$A
+    E <- model$E
+    A <- model$A
     LL <- -1E12
     for(i in 1:maxiter){
       tmpA <- Apseudocounts
@@ -570,11 +639,11 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL, wfactor = 1,
         if(nj == 0){
           tmpA[1, 1] <- tmpA[1, 1] + if(modelend) seqweights[j] else 0
         }else{
-          forwj <- forward(out, yj, logspace = TRUE, ... = ...)
+          forwj <- forward(model, yj, logspace = TRUE, ... = ...)
           Rj <- forwj$array
           logPxj <- forwj$score
           tmplogPx[j] <- logPxj
-          backj <- backward(out, yj, logspace = TRUE)
+          backj <- backward(model, yj, logspace = TRUE)
           Bj <- backj$array
           tmpAj <- tmpA
           tmpEj <- tmpE
@@ -597,27 +666,27 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL, wfactor = 1,
       }
       A[] <- log(tmpA/apply(tmpA, 1, sum))
       E[] <- log(tmpE/apply(tmpE, 1, sum))
-      out$A <- A
-      out$E <- E
+      model$A <- A
+      model$E <- E
       logPx <- sum(tmplogPx) # page 62 eq 3.17
       if(!quiet) cat("Iteration", i, "log likelihood = ", logPx, "\n")
       if(abs(LL - logPx) < deltaLL){
         if(!logspace){
-          out$A <- exp(out$A)
-          out$E <- exp(out$E)
+          model$A <- exp(model$A)
+          model$E <- exp(model$E)
         }
         if(!quiet) cat("Convergence threshold reached after", i, "EM iterations\n")
-        return(out)
+        return(model)
       }
       LL <- logPx
     }
     if(!logspace){
-      out$A <- exp(out$A)
-      out$E <- exp(out$E)
+      model$A <- exp(model$A)
+      model$E <- exp(model$E)
     }
     warning("Failed to converge on a local maximum. Try increasing 'maxiter',
         decreasing 'deltaLL' or modifying start parameters")
-    return(out)
+    return(model)
   }else stop("Invalid argument given for 'method'")
 }
 ################################################################################

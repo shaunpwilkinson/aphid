@@ -71,7 +71,7 @@ readPHMM <- function(file = "", ...){
   i <- grep("^EFFN ", x[1:30])#Optional
   if(length(i) > 0) out$effn <- as.numeric(gsub("EFFN +", "", x[i]))
   i <- grep("^CKSUM ", x[1:30]) #Optional
-  if(length(i) > 0) out$checksum <- as.integer(gsub("CKSUM +", "", x[i]))
+  if(length(i) > 0) out$checksum <- gsub("CKSUM +", "", x[i])
   i <- grep("^HMM ", x[1:30])[1] #Mandatory, note use ^ for start, $ for end
   out$residues <- unlist(strsplit(gsub("HMM +", "", x[i]), split = " +"))
   transitions <- unlist(strsplit(x[i + 1], split = " +"))

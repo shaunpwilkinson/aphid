@@ -4,7 +4,8 @@
 \alias{writePHMM}
 \title{Export profile hidden Markov models as text.}
 \usage{
-writePHMM(x, file = "", append = FALSE, form = "HMMER3", vers = "f")
+writePHMM(x, file = "", append = FALSE, form = "HMMER3",
+  vers = "f")
 }
 \arguments{
 \item{x}{an object of class \code{"PHMM"}.}

@@ -12,40 +12,42 @@ derivePHMM(x, ...)
 
 \method{derivePHMM}{DNAbin}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gap = "-", endchar = "?",
-  pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE,
-  alignment = FALSE, progressive = FALSE, seeds = NULL,
-  refine = "Viterbi", maxiter = 100, deltaLL = 1e-07, cpp = TRUE,
-  cores = 1, quiet = FALSE, ...)
+  pseudocounts = "background", logspace = TRUE, qa = NULL,
+  qe = NULL, maxsize = NULL, inserts = "map", threshold = 0.5,
+  lambda = 0, DI = FALSE, ID = FALSE, omit.endgaps = FALSE,
+  name = NULL, description = NULL, compo = FALSE,
+  consensus = FALSE, alignment = FALSE, progressive = FALSE,
+  seeds = NULL, refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
+  cpp = TRUE, cores = 1, quiet = FALSE, ...)
 
-\method{derivePHMM}{AAbin}(x, seqweights = "Gerstein", wfactor = 1, k = 5,
-  residues = NULL, gap = "-", endchar = "?",
-  pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  maxsize = NULL, inserts = "map", threshold = 0.5, lambda = 0,
-  DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE,
-  alignment = FALSE, progressive = FALSE, seeds = NULL,
-  refine = "Viterbi", maxiter = 100, deltaLL = 1e-07, cpp = TRUE,
-  cores = 1, quiet = FALSE, ...)
+\method{derivePHMM}{AAbin}(x, seqweights = "Gerstein", wfactor = 1,
+  k = 5, residues = NULL, gap = "-", endchar = "?",
+  pseudocounts = "background", logspace = TRUE, qa = NULL,
+  qe = NULL, maxsize = NULL, inserts = "map", threshold = 0.5,
+  lambda = 0, DI = FALSE, ID = FALSE, omit.endgaps = FALSE,
+  name = NULL, description = NULL, compo = FALSE,
+  consensus = FALSE, alignment = FALSE, progressive = FALSE,
+  seeds = NULL, refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
+  cpp = TRUE, cores = 1, quiet = FALSE, ...)
 
 \method{derivePHMM}{list}(x, progressive = FALSE, seeds = NULL,
   refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
   seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
-  gap = "-", pseudocounts = "background", logspace = TRUE, qa = NULL,
-  qe = NULL, maxsize = NULL, inserts = "map", lambda = 0, DI = FALSE,
-  ID = FALSE, threshold = 0.5, omit.endgaps = FALSE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE,
-  alignment = FALSE, cpp = TRUE, cores = 1, quiet = FALSE, ...)
+  gap = "-", pseudocounts = "background", logspace = TRUE,
+  qa = NULL, qe = NULL, maxsize = NULL, inserts = "map",
+  lambda = 0, DI = FALSE, ID = FALSE, threshold = 0.5,
+  omit.endgaps = FALSE, name = NULL, description = NULL,
+  compo = FALSE, consensus = FALSE, alignment = FALSE, cpp = TRUE,
+  cores = 1, quiet = FALSE, ...)
 
 \method{derivePHMM}{default}(x, seqweights = "Gerstein", wfactor = 1,
   k = 5, residues = NULL, gap = "-", endchar = "?",
-  pseudocounts = "background", logspace = TRUE, qa = NULL, qe = NULL,
-  maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
-  DI = FALSE, ID = FALSE, omit.endgaps = FALSE, name = NULL,
-  description = NULL, compo = FALSE, consensus = FALSE,
-  alignment = FALSE, cpp = TRUE, quiet = FALSE, ...)
+  pseudocounts = "background", logspace = TRUE, qa = NULL,
+  qe = NULL, maxsize = NULL, inserts = "map", lambda = 0,
+  threshold = 0.5, DI = FALSE, ID = FALSE, omit.endgaps = FALSE,
+  name = NULL, description = NULL, compo = FALSE,
+  consensus = FALSE, alignment = FALSE, cpp = TRUE, quiet = FALSE,
+  ...)
 }
 \arguments{
 \item{x}{a matrix of aligned sequences or a list of unaligned sequences.

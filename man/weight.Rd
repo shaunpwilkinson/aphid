@@ -20,8 +20,8 @@ weight(x, ...)
 
 \method{weight}{dendrogram}(x, method = "Gerstein", ...)
 
-\method{weight}{default}(x, method = "Gerstein", k = 5, residues = NULL,
-  gap = "-", ...)
+\method{weight}{default}(x, method = "Gerstein", k = 5,
+  residues = NULL, gap = "-", ...)
 }
 \arguments{
 \item{x}{an object of class \code{"dendrogram"}, or a list or matrix of

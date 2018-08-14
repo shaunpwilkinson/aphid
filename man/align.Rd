@@ -10,26 +10,26 @@
 \usage{
 align(x, ...)
 
-\method{align}{DNAbin}(x, model = NULL, progressive = FALSE, seeds = NULL,
-  seqweights = "Gerstein", refine = "Viterbi", k = 5, maxiter = 100,
-  maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
-  deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, cores = 1,
-  quiet = FALSE, ...)
+\method{align}{DNAbin}(x, model = NULL, progressive = FALSE,
+  seeds = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
+  maxiter = 100, maxsize = NULL, inserts = "map", lambda = 0,
+  threshold = 0.5, deltaLL = 1e-07, DI = FALSE, ID = FALSE,
+  residues = NULL, gap = "-", pseudocounts = "background",
+  qa = NULL, qe = NULL, cores = 1, quiet = FALSE, ...)
 
-\method{align}{AAbin}(x, model = NULL, progressive = FALSE, seeds = NULL,
-  seqweights = "Gerstein", refine = "Viterbi", k = 5, maxiter = 100,
-  maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
-  deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, cores = 1,
-  quiet = FALSE, ...)
+\method{align}{AAbin}(x, model = NULL, progressive = FALSE,
+  seeds = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
+  maxiter = 100, maxsize = NULL, inserts = "map", lambda = 0,
+  threshold = 0.5, deltaLL = 1e-07, DI = FALSE, ID = FALSE,
+  residues = NULL, gap = "-", pseudocounts = "background",
+  qa = NULL, qe = NULL, cores = 1, quiet = FALSE, ...)
 
-\method{align}{list}(x, model = NULL, progressive = FALSE, seeds = NULL,
-  seqweights = "Gerstein", k = 5, refine = "Viterbi", maxiter = 100,
-  maxsize = NULL, inserts = "map", lambda = 0, threshold = 0.5,
-  deltaLL = 1e-07, DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
-  pseudocounts = "background", qa = NULL, qe = NULL, cores = 1,
-  quiet = FALSE, ...)
+\method{align}{list}(x, model = NULL, progressive = FALSE,
+  seeds = NULL, seqweights = "Gerstein", k = 5, refine = "Viterbi",
+  maxiter = 100, maxsize = NULL, inserts = "map", lambda = 0,
+  threshold = 0.5, deltaLL = 1e-07, DI = FALSE, ID = FALSE,
+  residues = NULL, gap = "-", pseudocounts = "background",
+  qa = NULL, qe = NULL, cores = 1, quiet = FALSE, ...)
 
 \method{align}{default}(x, model, pseudocounts = "background",
   residues = NULL, gap = "-", maxsize = NULL, quiet = FALSE, ...)
@@ -251,6 +251,9 @@ This function builds a multiple sequence alignment using profile
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   sequence analysis: probabilistic models of proteins and nucleic acids.
   Cambridge University Press, Cambridge, United Kingdom.
+
+  Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
+  \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 
   Sievers F, Wilm A, Dineen D, Gibson TJ, Karplus K, Li W, Lopez R, McWilliam H,
   Remmert M, Soding J, Thompson JD, Higgins DG (2011) Fast, scalable generation

@@ -173,6 +173,9 @@
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
 #'
+#'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
+#'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
+#'
 #'   Sievers F, Wilm A, Dineen D, Gibson TJ, Karplus K, Li W, Lopez R, McWilliam H,
 #'   Remmert M, Soding J, Thompson JD, Higgins DG (2011) Fast, scalable generation
 #'   of high-quality protein multiple sequence alignments using Clustal Omega.

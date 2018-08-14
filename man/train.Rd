@@ -16,8 +16,9 @@ train(x, y, ...)
   quiet = FALSE, ...)
 
 \method{train}{HMM}(x, y, method = "Viterbi", seqweights = NULL,
-  wfactor = 1, maxiter = 100, deltaLL = 1e-07, logspace = "autodetect",
-  quiet = FALSE, modelend = FALSE, pseudocounts = "Laplace", ...)
+  wfactor = 1, maxiter = 100, deltaLL = 1e-07,
+  logspace = "autodetect", quiet = FALSE, modelend = FALSE,
+  pseudocounts = "Laplace", ...)
 }
 \arguments{
 \item{x}{an object of class \code{"HMM"} or \code{"PHMM"} specifying the
@@ -219,6 +220,9 @@ This function optimizes the parameters of a hidden Markov model
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   sequence analysis: probabilistic models of proteins and nucleic acids.
   Cambridge University Press, Cambridge, United Kingdom.
+
+  Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
+  \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 
   Juang B-H, Rabiner LR (1990) The segmental K-means
   algorithm for estimating parameters of hidden Markov models.

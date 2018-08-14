@@ -8,7 +8,8 @@
 \usage{
 generate(x, size, ...)
 
-\method{generate}{HMM}(x, size, logspace = "autodetect", random = TRUE, ...)
+\method{generate}{HMM}(x, size, logspace = "autodetect", random = TRUE,
+  ...)
 
 \method{generate}{PHMM}(x, size, logspace = "autodetect", gap = "-",
   random = TRUE, DNA = FALSE, AA = FALSE, ...)
