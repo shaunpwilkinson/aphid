@@ -37,12 +37,13 @@
 #'   writePHMM(x, file = fl)
 #'   readPHMM(fl)
 #'   ##
-#'   ## Derive a PHMM for the woodmouse data and write to working directory
-#'   \dontrun{
+#'   ## Derive a PHMM for the woodmouse data and write to file
+#'   \donttest{
 #'     library(ape)
 #'     data(woodmouse)
 #'     woodmouse.PHMM <- derivePHMM(woodmouse)
-#'     writePHMM(woodmouse.PHMM, file = "woodmouse.hmm")
+#'     tmpf <- tempfile(fileext = ".hmm")
+#'     writePHMM(woodmouse.PHMM, file = tmpf)
 #'   }
 ################################################################################
 writePHMM <- function(x, file = "", append = FALSE, form = "HMMER3", vers = "f"){

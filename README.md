@@ -34,10 +34,12 @@ text, which serves as a useful primer for this package.
 
 ### Installation
 To download `aphid` from CRAN and load the package, run
+
 ```R
 install.packages("aphid")
 library("aphid")
 ```
+
 To download the development version from 
 GitHub, first ensure a C/C++ compliler is available and the 
 [devtools](https://github.com/hadley/devtools) R package is installed. 
@@ -45,22 +47,22 @@ Linux users will generally have a compiler installed by default;
 however Windows users may need to download 
 [Rtools](https://cran.r-project.org/bin/windows/Rtools/) and Mac 
 OSX users will need Xcode (note that these are not R packages). 
-To download and install devtools, run 
-```R
-install.packages("devtools")
-``` 
-Then install and load the `aphid` package by running 
+Install and load the package by running 
+
 ```R
 devtools::install_github("shaunpwilkinson/aphid", build_vignettes = TRUE) 
 library("aphid")
 ```
 
-## Use and Examples
-An overview of the package and it's functions can be found by running
+### Use and Examples
+An overview of the package and its functions can be found by running
+
 ```R
 ?aphid
 ```
+
 To view the tutorial, run
+
 ```R
 vignette("aphid-vignette")
 ```

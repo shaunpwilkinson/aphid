@@ -193,7 +193,7 @@
 #'   glo
 #'   sem
 #'   loc
-#' \dontrun{
+#' \donttest{
 #'   ## Deconstruct the woodmouse alignment and re-align
 #'   library(ape)
 #'   data(woodmouse)

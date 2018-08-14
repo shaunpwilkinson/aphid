@@ -58,10 +58,10 @@ NULL (invisibly).
   ## plot partial model to viewer device
   plot(woodmouse.PHMM, from = 0, to = 5)
   ## plot the entire model to a PDF in the current working directory
-  \dontrun{
+  \donttest{
+  tmpf <- tempfile(fileext = ".pdf")
   nr <- ceiling((woodmouse.PHMM$size + 2)/10)
-  pdf(file = "woodmouse.pdf",
-     width = 8.27, height = nr * 2)
+  pdf(file = tmpf, width = 8.27, height = nr * 2)
   par(mfrow = c(nr, 1), mar = c(0, 0, 0, 0) + 0.1)
   from <- 0
   to <- 10

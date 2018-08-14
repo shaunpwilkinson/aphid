@@ -1,3 +1,11 @@
+# aphid 1.2.0 (2018-08-14)
+
+* Enabled multithread option for Baum Welch training of profile HMMs.
+
+* Fixed checksum parse issue in readPHMM 
+
+--------------------------------------------------------------------------------
+
 # aphid 1.1.0
 
 * Added posterior probabilities for PHMMs.
