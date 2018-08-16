@@ -286,8 +286,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
     }
   }
   if(method  == "Viterbi"){
-    alig <- align.list(y, model = x, logspace = TRUE, cores = cores,
-                       ... = ...)
+    alig <- align.list(y, model = x, logspace = TRUE, cores = cores, ... = ...)
     alig_cache <- character(maxiter)
     alig_cache[1] <- .digest(alig, simplify = TRUE)
     for(i in 1:maxiter){
@@ -303,16 +302,18 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
       if(!quiet){
         cat("Iteration", i)
         cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ")
-        cat("PHMM with", model$size, "modules\n")
+        cat("PHMM with", model$size, "modules,", round(object.size(model)/1E06, 2), "MB")
       }
-      newalig <- align(y, model = model, logspace = TRUE, cores = cores,
-                       ... = ...)
+      if(!quiet) cat(".")
+      newalig <- align(y, model = model, logspace = TRUE, cores = cores, ... = ...)
+      if(!quiet) cat(".")
       newhash <- .digest(newalig, simplify = TRUE)
       if(!any(sapply(alig_cache, identical, newhash))){
         alig_cache[i + 1] <- newhash
         alig <- newalig
         rm(newalig)
         gc()
+        if(!quiet) cat(".\n")
       }else{
         if(!logspace){
           model$A <- exp(model$A)
