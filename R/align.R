@@ -328,16 +328,16 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
     # attr(res, "score") <- vit$score
     return(res)
   }
-  cat("finding paths\n")############
-  model2 <<- model###############
-  x <<- x ###############
+  #cat("finding paths\n")############
+  #model2 <<- model###############
+  #x <<- x ###############
   paths <- if(para & nseq > 10){
     parallel::parLapply(cores, x, pathfinder, model = model, ...)
   }else{
     lapply(x, pathfinder, model, ...)
   }
   if(para & stopclustr) parallel::stopCluster(cores)
-  cat("found paths\n")############
+  #cat("found paths\n")############
   # score <- sum(sapply(paths, function(p) attr(p, "score")))
   fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, x, paths, l = l,
                      gap = gap, SIMPLIFY = FALSE)
