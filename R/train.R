@@ -290,7 +290,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
     alig_cache <- character(maxiter)
     alig_cache[1] <- .digest(alig, simplify = TRUE)
     for(i in 1:maxiter){
-      model <- derivePHMM.default(alig, seqweights = seqweights,
+      model <<- derivePHMM.default(alig, seqweights = seqweights, ###############
                                 residues = residues, gap = gap,
                                 DI = DI, ID = ID, maxsize = maxsize,
                                 inserts = inserts, lambda = lambda,
@@ -302,18 +302,18 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
       if(!quiet){
         cat("Iteration", i)
         cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ")
-        cat("PHMM with", model$size, "modules,", round(object.size(model)/1E06, 2), "MB")
+        cat("PHMM with", model$size, "modules,", round(object.size(model)/1E06, 2), "MB.")
       }
-      if(!quiet) cat(".")
+      y <<- y##############################
       newalig <- align(y, model = model, logspace = TRUE, cores = cores, ... = ...)
-      if(!quiet) cat(".")
+      if(!quiet) cat(".") ########################
       newhash <- .digest(newalig, simplify = TRUE)
       if(!any(sapply(alig_cache, identical, newhash))){
         alig_cache[i + 1] <- newhash
         alig <- newalig
         rm(newalig)
         gc()
-        if(!quiet) cat(".\n")
+        if(!quiet) cat(".\n") ################
       }else{
         if(!logspace){
           model$A <- exp(model$A)
@@ -321,7 +321,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
           model$qa <- exp(model$qa)
           model$qe <- exp(model$qe)
         }
-        if(!quiet) cat("Sequential alignments were identical after",
+        if(!quiet) cat("\nSequential alignments were identical after",
                        i, "iterations\n")
         if(para & stopclustr) parallel::stopCluster(cores)
         return(model)
