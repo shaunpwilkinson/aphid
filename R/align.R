@@ -320,23 +320,26 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   }
   stopifnot(inherits(model, "PHMM"))
   l <- model$size
-  pathfinder <- function(s, model, ...){
-    vit <- Viterbi(model, s, ... = ...)
-    res <- c(vit$path, 1)
-    # append the final transition to end state
-    # this is just so the c++ function knows where to stop
-    # attr(res, "score") <- vit$score
-    return(res)
-  }
+  ## pathfinder function
+  pf <- function(s, model, ...) as.raw(c(Viterbi(model, s, ... = ...)$path, 1))
+  # pathfinder <- function(s, model, ...){
+  #   vit <- Viterbi(model, s, ... = ...)
+  #   res <- c(vit$path, 1)
+  #   # append the final transition to end state
+  #   # this is just so the c++ function knows where to stop
+  #   # attr(res, "score") <- vit$score
+  #   return(res)
+  # }
   #cat("finding paths\n")############
   #model2 <<- model###############
   #x <<- x ###############
   paths <- if(para & nseq > 10){
-    parallel::parLapply(cores, x, pathfinder, model = model, ...)
+    parallel::parLapply(cores, x, pf, model = model, ...)
   }else{
-    lapply(x, pathfinder, model, ...)
+    lapply(x, pf, model, ...)
   }
   if(para & stopclustr) parallel::stopCluster(cores)
+  paths <- lapply(paths, as.integer)
   #cat("found paths\n")############
   # score <- sum(sapply(paths, function(p) attr(p, "score")))
   fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, x, paths, l = l,
