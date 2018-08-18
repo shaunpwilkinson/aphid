@@ -302,7 +302,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
       if(!quiet){
         cat("Iteration", i)
         cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ")
-        cat("PHMM with", model$size, "modules,", round(object.size(model)/1E06, 2), "MB.")
+        cat("PHMM with", model$size, "modules,", round(object.size(model)/1E06, 2), "MB\n")
       }
       #y <<- y##############################
       newalig <- align(y, model = model, logspace = TRUE, cores = cores, ... = ...)
