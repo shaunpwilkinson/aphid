@@ -301,7 +301,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
                                 qe = if(fixqe) x$qe else NULL)
       if(!quiet){
         cat("Iteration", i)
-        cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ")
+        cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ", round(object.size(alig)/1E06, 2), "MB\n")
         cat("PHMM with", model$size, "modules,", round(object.size(model)/1E06, 2), "MB\n")
       }
       #y <<- y##############################
