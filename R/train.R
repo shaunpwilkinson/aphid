@@ -304,15 +304,13 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
         cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ", round(object.size(alig)/1E06, 2), "MB. ")
         cat("PHMM with", model$size, "modules,", round(object.size(model)/1E06, 2), "MB\n")
       }
-      alig <- ## NULL free up space for next alignment
+      alig <- NULL ## free up space for next alignment
       #y <<- y##############################
-      newalig <- align(y, model = model, logspace = TRUE, cores = cores, ... = ...)
+      alig <- align(y, model = model, logspace = TRUE, cores = cores, ... = ...)
       #if(!quiet) cat(".") ########################
-      newhash <- .digest(newalig, simplify = TRUE)
+      newhash <- .digest(alig, simplify = TRUE)
       if(!any(sapply(alig_cache, identical, newhash))){
         alig_cache[i + 1] <- newhash
-        alig <- newalig
-        newalig <- NULL
         #if(!quiet) cat(".\n") ################
       }else{
         if(!logspace){
