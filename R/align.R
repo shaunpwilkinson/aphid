@@ -344,7 +344,7 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   # score <- sum(sapply(paths, function(p) attr(p, "score")))
   fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, x, paths, l = l,
                      gap = gap, SIMPLIFY = FALSE)
-  rm(paths)
+  paths <- NULL
   odds <- seq(1, 2 * l + 1, by = 2)
   evens <- seq(2, 2 * l, by = 2)
   inslens <- lapply(fragseqs, function(e) sapply(e[odds], length))
@@ -361,9 +361,9 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   }
   unfragseqs <- lapply(fragseqs, unlist, use.names = FALSE)
   # note prev line was causing major probs until use.names=F added
-  rm(fragseqs)
+  fragseqs <- NULL
   res <- matrix(unlist(unfragseqs, use.names = FALSE), nrow = nseq, byrow = TRUE)
-  rm(unfragseqs)
+  unfragseqs <- NULL
   inserts <- vector(length = 2 * l + 1, mode = "list")
   inserts[evens] <- FALSE
   inserts[odds] <- lapply(insmaxs, function(e) rep(TRUE, e))

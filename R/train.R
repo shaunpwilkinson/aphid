@@ -301,9 +301,10 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
                                 qe = if(fixqe) x$qe else NULL)
       if(!quiet){
         cat("Iteration", i)
-        cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ", round(object.size(alig)/1E06, 2), "MB\n")
+        cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ", round(object.size(alig)/1E06, 2), "MB. ")
         cat("PHMM with", model$size, "modules,", round(object.size(model)/1E06, 2), "MB\n")
       }
+      alig <- ## NULL free up space for next alignment
       #y <<- y##############################
       newalig <- align(y, model = model, logspace = TRUE, cores = cores, ... = ...)
       #if(!quiet) cat(".") ########################
@@ -311,8 +312,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
       if(!any(sapply(alig_cache, identical, newhash))){
         alig_cache[i + 1] <- newhash
         alig <- newalig
-        rm(newalig)
-        gc()
+        newalig <- NULL
         #if(!quiet) cat(".\n") ################
       }else{
         if(!logspace){
