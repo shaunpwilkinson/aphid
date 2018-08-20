@@ -269,6 +269,7 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   AA <- .isAA(x)
   if(DNA) class(x) <- "DNAbin" else if(AA) class(x) <- "AAbin"
   residues <- .alphadetect(x, residues = residues, gap = gap)
+  gapc <- gap
   gap <- if(AA) as.raw(45) else if(DNA) as.raw(4) else gap
   for(i in 1:length(x)) x[[i]] <- x[[i]][x[[i]] != gap]
   ## set up multithread
@@ -321,63 +322,80 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   stopifnot(inherits(model, "PHMM"))
   l <- model$size
   ## pathfinder function
-  pf <- function(s, model, ...) as.raw(c(Viterbi(model, s, ... = ...)$path, 1))
-  # pathfinder <- function(s, model, ...){
-  #   vit <- Viterbi(model, s, ... = ...)
-  #   res <- c(vit$path, 1)
-  #   # append the final transition to end state
-  #   # this is just so the c++ function knows where to stop
-  #   # attr(res, "score") <- vit$score
-  #   return(res)
-  # }
-  #cat("finding paths\n")############
-  #model2 <<- model###############
-  #x <<- x ###############
-  paths <- if(para & nseq > 10){
+  pf <- function(s, model, ...){
+    path <- Viterbi(model, s, ... = ...)$path
+    news <- rep(gap, length(path))
+    news[path != 0L] <- s
+    newpath <- path
+    newpath[path == 0L] <- 1L
+    newpath[path == 2L] <- 0L
+    r <- split(news, f = cumsum(newpath))
+    r <- if(DNA) .d2s(r) else if(AA) .a2s(r) else vapply(r, paste0, "", collapse = "")
+    return(r)
+  }
+  newlines <- if(para & nseq > 10){
     parallel::parLapply(cores, x, pf, model = model, ...)
   }else{
     lapply(x, pf, model, ...)
   }
   if(para & stopclustr) parallel::stopCluster(cores)
-  paths <- lapply(paths, as.integer)
-  #cat("found paths\n")############
-  # score <- sum(sapply(paths, function(p) attr(p, "score")))
-  fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, x, paths, l = l,
-                     gap = gap, SIMPLIFY = FALSE)
-  paths <- NULL
-  odds <- seq(1, 2 * l + 1, by = 2)
-  evens <- seq(2, 2 * l, by = 2)
-  inslens <- lapply(fragseqs, function(e) sapply(e[odds], length))
-  inslens <- matrix(unlist(inslens, use.names = FALSE), nrow = nseq, byrow = TRUE)
-  insmaxs <- apply(inslens, 2, max)
-  insappends <- t(insmaxs - t(inslens))
-  for(i in 1:nseq){
-    needsapp <- insappends[i, ] > 0
-    if(any(needsapp)){
-      apps <- lapply(insappends[i, needsapp], function(e) rep(gap, e))
-      fragseqs[[i]][odds][needsapp] <- mapply(c, fragseqs[[i]][odds][needsapp],
-                                              apps, SIMPLIFY = FALSE)
-    }
+
+  alig <- do.call("rbind", newlines)
+  colfun <- function(v, gapc){
+    nc <- nchar(v)
+    if(any(nc > 1)) v <- paste0(v, strrep(gapc, max(nc) - nc))
+    return(v)
   }
-  unfragseqs <- lapply(fragseqs, unlist, use.names = FALSE)
-  # note prev line was causing major probs until use.names=F added
-  fragseqs <- NULL
-  res <- matrix(unlist(unfragseqs, use.names = FALSE), nrow = nseq, byrow = TRUE)
-  unfragseqs <- NULL
-  inserts <- vector(length = 2 * l + 1, mode = "list")
-  inserts[evens] <- FALSE
-  inserts[odds] <- lapply(insmaxs, function(e) rep(TRUE, e))
-  inserts <- unlist(inserts, use.names = TRUE)
-  resnames <- vector(length = 2 * l + 1, mode = "list")
-  resnames[evens] <- paste(1:l)
-  resnames[odds] <- lapply(insmaxs, function(e) rep("I", e))
-  resnames <- unlist(resnames, use.names = TRUE)
-  colnames(res) <- resnames
-  rownames(res) <- names(x)
-  class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
-  # attr(res, "score") <- score
-  # attr(res, "inserts") <- inserts
-  return(res)
+  alig <- apply(alig, 2, colfun, gapc)
+  ins <- strrep("I|", nchar(alig[1, ]) - 1)
+  newcolnms <- paste0(colnames(alig), "|", ins)
+  newcolnms <- paste0(newcolnms, collapse = "")
+  newcolnms <- gsub("I\\|$", "I", newcolnms) #in case ends on insert state
+  newcolnms <- unlist(strsplit(newcolnms, split = "\\|"), use.names = FALSE)
+  alig <- apply(alig, 1, paste0, collapse = "")
+  alig <- if(DNA) .s2d(alig) else if(AA) .s2a(alig) else strsplit(alig, split = "")
+  alig <- do.call("rbind", alig)
+  colnames(alig) <- newcolnms
+  rownames(alig) <- names(x)
+  class(alig) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
+  return(alig)
+
+  # paths <- lapply(paths, as.integer)
+  # # score <- sum(sapply(paths, function(p) attr(p, "score")))
+  # fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, x, paths, l = l,
+  #                    gap = gap, SIMPLIFY = FALSE)
+  # paths <- NULL
+  # odds <- seq(1, 2 * l + 1, by = 2)
+  # evens <- seq(2, 2 * l, by = 2)
+  # inslens <- lapply(fragseqs, function(e) sapply(e[odds], length))
+  # inslens <- matrix(unlist(inslens, use.names = FALSE), nrow = nseq, byrow = TRUE)
+  # insmaxs <- apply(inslens, 2, max)
+  # insappends <- t(insmaxs - t(inslens))
+  # for(i in 1:nseq){
+  #   needsapp <- insappends[i, ] > 0
+  #   if(any(needsapp)){
+  #     apps <- lapply(insappends[i, needsapp], function(e) rep(gap, e))
+  #     fragseqs[[i]][odds][needsapp] <- mapply(c, fragseqs[[i]][odds][needsapp],
+  #                                             apps, SIMPLIFY = FALSE)
+  #   }
+  # }
+  # unfragseqs <- lapply(fragseqs, unlist, use.names = FALSE)
+  # # note prev line was causing major probs until use.names=F added
+  # fragseqs <- NULL
+  # res <- matrix(unlist(unfragseqs, use.names = FALSE), nrow = nseq, byrow = TRUE)
+  # unfragseqs <- NULL
+  # inserts <- vector(length = 2 * l + 1, mode = "list")
+  # inserts[evens] <- FALSE
+  # inserts[odds] <- lapply(insmaxs, function(e) rep(TRUE, e))
+  # inserts <- unlist(inserts, use.names = TRUE)
+  # resnames <- vector(length = 2 * l + 1, mode = "list")
+  # resnames[evens] <- paste(1:l)
+  # resnames[odds] <- lapply(insmaxs, function(e) rep("I", e))
+  # resnames <- unlist(resnames, use.names = TRUE)
+  # colnames(res) <- resnames
+  # rownames(res) <- names(x)
+  # class(res) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
+  # return(res)
 }
 ################################################################################
 #' @rdname align

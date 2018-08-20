@@ -48,6 +48,45 @@
 ## Convert a vector in any arity to a decimal integer
 .decimal <- function(x, from) sum(x * from^rev(seq_along(x) - 1))
 
+## DNA, AA and character string conversion functions
+.d2s <- function(x){
+  cbytes <- as.raw(c(65, 84, 71, 67, 83, 87, 82, 89, 75,
+                     77, 66, 86, 72, 68, 78, 45, 63))
+  indices <- c(136, 24, 72, 40, 96, 144, 192, 48, 80,
+               160, 112, 224, 176, 208, 240, 4, 2)
+  vec <- raw(240)
+  vec[indices] <- cbytes
+  res <- if(is.list(x)){
+    vapply(x, function(s) rawToChar(vec[as.integer(s)]), "")
+  }else{
+    rawToChar(vec[as.integer(x)])
+  }
+  return(res)
+}
+
+.a2s <- function(x) if(is.list(x)) vapply(x, rawToChar, "") else rawToChar(x)
+
+.s2d <- function(z, simplify = FALSE){
+  dbytes <- as.raw(c(136, 24, 72, 40, 96, 144, 192, 48, 80,
+                     160, 112, 224, 176, 208, 240, 240, 4, 2))
+  indices <- c(65, 84, 71, 67, 83, 87, 82, 89, 75, 77, 66,
+               86, 72, 68, 78, 73, 45, 63) # max 89
+  vec <- raw(89)
+  vec[indices] <- dbytes
+  s2d1 <- function(s) vec[as.integer(charToRaw(s))]
+  res <- if(length(z) == 1 & simplify) s2d1(z) else lapply(z, s2d1)
+  class(res) <- "DNAbin"
+  return(res)
+}
+
+.s2a <- function(z, simplify = FALSE){
+  res <- if(length(z) == 1 & simplify) charToRaw(z) else lapply(z, charToRaw)
+  class(res) <- "AAbin"
+  return(res)
+}
+
+
+
 ## Remove unknown end characters
 .trim <- function(x, gap = "-", endchar = "?", DNA = FALSE, AA = FALSE){
   #X is a raw or character matrix

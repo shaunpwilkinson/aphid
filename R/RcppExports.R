@@ -17,14 +17,6 @@
     .Call('_aphid_atab', PACKAGE = 'aphid', x, seqweights)
 }
 
-.fragR <- function(x, path, l, gap) {
-    .Call('_aphid_fragR', PACKAGE = 'aphid', x, path, l, gap)
-}
-
-.fragC <- function(x, path, l, gap) {
-    .Call('_aphid_fragC', PACKAGE = 'aphid', x, path, l, gap)
-}
-
 #' Sum of logged probabilities.
 #'
 #' \code{"logsum"} takes a vector of logged probabilities (neagtive values)

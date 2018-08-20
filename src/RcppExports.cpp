@@ -59,34 +59,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// fragR
-List fragR(RawVector x, IntegerVector path, int l, RawVector gap);
-RcppExport SEXP _aphid_fragR(SEXP xSEXP, SEXP pathSEXP, SEXP lSEXP, SEXP gapSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< RawVector >::type x(xSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
-    Rcpp::traits::input_parameter< int >::type l(lSEXP);
-    Rcpp::traits::input_parameter< RawVector >::type gap(gapSEXP);
-    rcpp_result_gen = Rcpp::wrap(fragR(x, path, l, gap));
-    return rcpp_result_gen;
-END_RCPP
-}
-// fragC
-List fragC(CharacterVector x, IntegerVector path, int l, CharacterVector gap);
-RcppExport SEXP _aphid_fragC(SEXP xSEXP, SEXP pathSEXP, SEXP lSEXP, SEXP gapSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< CharacterVector >::type x(xSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
-    Rcpp::traits::input_parameter< int >::type l(lSEXP);
-    Rcpp::traits::input_parameter< CharacterVector >::type gap(gapSEXP);
-    rcpp_result_gen = Rcpp::wrap(fragC(x, path, l, gap));
-    return rcpp_result_gen;
-END_RCPP
-}
 // logsum
 double logsum(NumericVector x);
 RcppExport SEXP _aphid_logsum(SEXP xSEXP) {
