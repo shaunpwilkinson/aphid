@@ -484,6 +484,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                                consensus = FALSE, alignment = FALSE, cpp = TRUE,
                                quiet = FALSE,
                                ...){
+  if(!quiet) cat("Deriving profile HMM from alignment\n")
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
   catchnames <- rownames(x)
   rownames(x) <- paste0("S", 1:nrow(x)) ## just ensures names are unique
@@ -537,7 +538,11 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   # designate insert-columns
   gaps <- x == gap
   #ends <- x == endchar
-  gapweights <- gaps * seqweights
+  #gapweights <- gaps * seqweights
+  sws <- sum(seqweights)
+  gpws <- numeric(m)
+  for(i in seq_along(gpws)) gpws[i] <- sum(seqweights[gaps[, i]])
+  if(!quiet) cat("Marking insert states\n")
   if(identical(inserts, "none")){
     inserts <- rep(FALSE, m)
   }else if(identical(inserts, "inherited")){
@@ -545,35 +550,39 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     inserts <- colnames(x) == "I"
     if(is.null(inserts)) stop("Alignment missing 'inserts', nothing to inherit")
   }else if(identical(inserts, "threshold")){
-    inserts <- apply(gapweights, 2, sum) > threshold * n
+    # inserts <- apply(gapweights, 2, sum) > threshold * n
+    inserts <- gpws > threshold * sws
   }else if(identical(inserts, "map")){
     if(n < 5 | sum(gaps)/length(gaps) > 0.9){
       # Maximum a posteriori insert assignment unsuitable for
       # fewer than five sequences.
       # Also can use too much memory for very gappy (sparse) alignments
-      inserts <- apply(gapweights, 2, sum) > threshold * n
+      # inserts <- apply(gapweights, 2, sum) > threshold * n
+      inserts <- gpws > threshold * sws
     }else{
       inserts <- !map(x, seqweights = seqweights, residues = residues,
                       gap = gap, endchar = endchar, pseudocounts = pseudocounts,
                       qa = qa, qe = qe, cpp = cpp)
-      if(sum(!inserts) < 3) inserts <- apply(gapweights, 2, sum) > threshold * n
+      # if(sum(!inserts) < 3) inserts <- apply(gapweights, 2, sum) > threshold * n
+      if(sum(!inserts) < 3) inserts <- gpws > threshold * sws
     }
   }else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
     stop("invalid inserts argument")
   }
-
   l <- sum(!inserts) # PHMM length (excluding B & E positions)
   if(!is.null(maxsize)){
     maxsize <- as.integer(maxsize)
     if(maxsize < 3) stop("maxsize is too small")
     if(maxsize < l){
-      gapnos <- apply(gapweights[, !inserts, drop = FALSE], 2, sum)
-      inserts[!inserts][order(gapnos)[(maxsize + 1):l]] <- TRUE
+      # gapnos <- apply(gapweights[, !inserts, drop = FALSE], 2, sum)
+      gapnos <- gpws[!inserts]
+      inserts[!inserts][order(gapnos)[seq(maxsize + 1, l)]] <- TRUE
       l <- sum(!inserts)
     }
   }
-  rm(gapweights)
+  # rm(gapweights)
   ### emission counts (redo now that we know insert positions)
+  if(!quiet) cat("Finding emission probabilities\n")
   ecs <- if(AA){
     apply(x[, !inserts, drop = FALSE], 2, .tabulateAA,
           ambiguities = TRUE, seqweights = seqweights)
@@ -588,6 +597,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     dimnames(ecs) <- list(residue = residues, position = 1:l)
   }else ecs <- NULL
   ### transitions
+  if(!quiet) cat("Finding transition probabilities\n")
   xtr <- matrix(NA_integer_, nrow = n, ncol = m)
   insertsn <- matrix(rep(inserts, n), nrow = n, byrow = TRUE)
   xtr[gaps & !insertsn] <- 0L # Delete
@@ -694,6 +704,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   }
   if(compo) res$compo <- log(apply(exp(E), 1, mean))
   gc()
+  if(!quiet) cat("Done\n")
   return(res)
 }
 ################################################################################
