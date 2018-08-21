@@ -59,12 +59,12 @@ NumericMatrix atab(IntegerMatrix x, NumericVector seqweights){
       if((x(i, j) == 0) & (x(i, k) == 0)) out(0, module) = out(0, module) + seqweights[i];
       else if((x(i, j) == 0) & (x(i, k) == 1)) out(1, module) = out(1, module) + seqweights[i];
       else if((x(i, j) == 0) & (x(i, k) == 2)) out(2, module) = out(2, module) + seqweights[i];
-      else if((x(i, j) == 1) & (x(i, k) == 0)) out(3, module)= out(3, module) + seqweights[i];
-      else if((x(i, j) == 1) & (x(i, k) == 1)) out(4, module)= out(4, module) + seqweights[i];
-      else if((x(i, j) == 1) & (x(i, k) == 2)) out(5, module)= out(5, module) + seqweights[i];
-      else if((x(i, j) == 2) & (x(i, k) == 0)) out(6, module)= out(6, module) + seqweights[i];
-      else if((x(i, j) == 2) & (x(i, k) == 1)) out(7, module)= out(7, module) + seqweights[i];
-      else if((x(i, j) == 2) & (x(i, k) == 2)) out(8, module)= out(8, module) + seqweights[i];
+      else if((x(i, j) == 1) & (x(i, k) == 0)) out(3, module) = out(3, module) + seqweights[i];
+      else if((x(i, j) == 1) & (x(i, k) == 1)) out(4, module) = out(4, module) + seqweights[i];
+      else if((x(i, j) == 1) & (x(i, k) == 2)) out(5, module) = out(5, module) + seqweights[i];
+      else if((x(i, j) == 2) & (x(i, k) == 0)) out(6, module) = out(6, module) + seqweights[i];
+      else if((x(i, j) == 2) & (x(i, k) == 1)) out(7, module) = out(7, module) + seqweights[i];
+      else if((x(i, j) == 2) & (x(i, k) == 2)) out(8, module) = out(8, module) + seqweights[i];
       //
       if(x(i, k) != 2) module++;
       j = k;

@@ -284,7 +284,7 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
     if(identical(cores, "autodetect")) cores <- navailcores - 1
     if(cores > 1){
       # if(cores > navailcores) stop("No. cores is more than number available")
-      if(!quiet) cat("Multithreading over", cores, "cores\n")
+      # if(!quiet) cat("Multithreading over", cores, "cores\n")
       cores <- parallel::makeCluster(cores)
       para <- TRUE
       stopclustr <- TRUE
@@ -323,31 +323,30 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   l <- model$size
   ## pathfinder function
   pf <- function(s, model, ...){
-    path <- Viterbi(model, s, ... = ...)$path
+    path <- c(1L, Viterbi(model, s, ... = ...)$path)
     news <- rep(gap, length(path))
-    news[path != 0L] <- s
+    news[path != 0L][-1L] <- s
     newpath <- path
     newpath[path == 0L] <- 1L
     newpath[path == 2L] <- 0L
-    r <- split(news, f = cumsum(newpath))
+    r <- split(news, f = cumsum(newpath) - 1L)
     r <- if(DNA) .d2s(r) else if(AA) .a2s(r) else vapply(r, paste0, "", collapse = "")
     return(r)
   }
-  newlines <- if(para & nseq > 10){
+  alig <- if(para & nseq > 10){
     parallel::parLapply(cores, x, pf, model = model, ...)
   }else{
     lapply(x, pf, model, ...)
   }
   if(para & stopclustr) parallel::stopCluster(cores)
-
-  alig <- do.call("rbind", newlines)
+  alig <- do.call("rbind", alig)
   colfun <- function(v, gapc){
     nc <- nchar(v)
     if(any(nc > 1)) v <- paste0(v, strrep(gapc, max(nc) - nc))
     return(v)
   }
   alig <- apply(alig, 2, colfun, gapc)
-  ins <- strrep("I|", nchar(alig[1, ]) - 1)
+  ins <- strrep("I|", nchar(alig[1L, ]) - 1)
   newcolnms <- paste0(colnames(alig), "|", ins)
   newcolnms <- paste0(newcolnms, collapse = "")
   newcolnms <- gsub("I\\|$", "I", newcolnms) #in case ends on insert state
@@ -357,7 +356,9 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   alig <- do.call("rbind", alig)
   colnames(alig) <- newcolnms
   rownames(alig) <- names(x)
+  alig <- alig[, -1L] ## remove gap emitted by begin state
   class(alig) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
+  gc()
   return(alig)
 
   # paths <- lapply(paths, as.integer)

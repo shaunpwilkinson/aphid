@@ -557,11 +557,11 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                       gap = gap, endchar = endchar, pseudocounts = pseudocounts,
                       qa = qa, qe = qe, cpp = cpp)
       if(sum(!inserts) < 3) inserts <- apply(gapweights, 2, sum) > threshold * n
-      gc()
     }
   }else if(!(mode(inserts) == "logical" & length(inserts) == ncol(x))){
     stop("invalid inserts argument")
   }
+
   l <- sum(!inserts) # PHMM length (excluding B & E positions)
   if(!is.null(maxsize)){
     maxsize <- as.integer(maxsize)
@@ -572,6 +572,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
       l <- sum(!inserts)
     }
   }
+  rm(gapweights)
   ### emission counts (redo now that we know insert positions)
   ecs <- if(AA){
     apply(x[, !inserts, drop = FALSE], 2, .tabulateAA,
@@ -587,13 +588,17 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     dimnames(ecs) <- list(residue = residues, position = 1:l)
   }else ecs <- NULL
   ### transitions
-  xtr <- matrix(nrow = n, ncol = m)
+  xtr <- matrix(NA_integer_, nrow = n, ncol = m)
   insertsn <- matrix(rep(inserts, n), nrow = n, byrow = TRUE)
   xtr[gaps & !insertsn] <- 0L # Delete
   xtr[!gaps & !insertsn] <- 1L # Match
   xtr[!gaps & insertsn] <- 2L # Insert
+  rm(gaps)
+  rm(insertsn)
   xtr <- cbind(1L, xtr, 1L) # append begin and end match states
   tcs <- .atab(xtr, seqweights = seqweights)
+  rm(xtr)
+  gc()
   alltcs <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
   ### background transition probs
   if(is.null(qa)){
@@ -908,6 +913,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
     }
     res <- res[-(c(1, L + 2))]
   }
+  gc()
   return(res)
 }
 ################################################################################

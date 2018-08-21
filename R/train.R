@@ -290,7 +290,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
     alig_cache <- character(maxiter)
     alig_cache[1] <- .digest(alig, simplify = TRUE)
     for(i in 1:maxiter){
-      model <- derivePHMM.default(alig, seqweights = seqweights, ###############
+      model <- derivePHMM.default(alig, seqweights = seqweights,
                                 residues = residues, gap = gap,
                                 DI = DI, ID = ID, maxsize = maxsize,
                                 inserts = inserts, lambda = lambda,
@@ -304,14 +304,12 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
         cat(": alignment with", nrow(alig), "rows &", ncol(alig), "columns, ")
         cat("PHMM with", model$size, "modules\n")
       }
-      alig <- NULL ## free up space for next alignment
-      #y <<- y##############################
+      rm(alig) ## free up space for next alignment
+      gc()
       alig <- align(y, model = model, logspace = TRUE, cores = cores, ... = ...)
-      #if(!quiet) cat(".") ########################
       newhash <- .digest(alig, simplify = TRUE)
       if(!any(sapply(alig_cache, identical, newhash))){
         alig_cache[i + 1] <- newhash
-        #if(!quiet) cat(".\n") ################
       }else{
         if(!logspace){
           model$A <- exp(model$A)
@@ -322,6 +320,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
         if(!quiet) cat("\nSequential alignments were identical after",
                        i, "iterations\n")
         if(para & stopclustr) parallel::stopCluster(cores)
+        gc()
         return(model)
       }
     }
@@ -540,7 +539,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
       LL <- logPx
       gc()
     }
-    warning("Failed to converge. Try increasing 'maxiter' or modifying start parameters")
+    if(!quiet) cat("Warning: failed to converge. Try increasing 'maxiter' or modifying start parameters")
     if(!logspace){
       model$A <- exp(model$A)
       model$E <- exp(model$E)
@@ -554,6 +553,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
       model$qe <- model$qe[PFAMorder]
     }
     if(para & stopclustr) parallel::stopCluster(cores)
+    gc()
     return(model)
   }else stop("Invalid argument given for 'method'")
 }
