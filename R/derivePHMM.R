@@ -693,6 +693,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     res$alignment <- x
   }
   if(compo) res$compo <- log(apply(exp(E), 1, mean))
+  gc()
   return(res)
 }
 ################################################################################
