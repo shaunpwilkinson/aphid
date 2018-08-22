@@ -330,6 +330,9 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
     newpath[path == 0L] <- 1L
     newpath[path == 2L] <- 0L
     r <- split(news, f = cumsum(newpath) - 1L)
+    # rm(path)
+    # rm(newpath)
+    # rm(news)
     r <- if(DNA) .d2s(r) else if(AA) .a2s(r) else vapply(r, paste0, "", collapse = "")
     return(r)
   }

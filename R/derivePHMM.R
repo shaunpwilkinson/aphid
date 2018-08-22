@@ -500,13 +500,15 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   m <- ncol(x)
   states <- c("D", "M", "I")
   transitions <- c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II")
-  xlist <- unalign(x, gap = gap)
+
   if(is.null(seqweights)){
     seqweights <- rep(1, n)
   }else if(identical(seqweights, "Gerstein")){
     seqweights <- if(n > 2){
-      weight(xlist, k = k, residues = residues, gap = gap)
-    }else rep(1, n)
+      weight(unalign(x, gap = gap), k = k, residues = residues, gap = gap)
+    }else{
+      rep(1, n)
+    }
   }else{
     stopifnot(
       length(seqweights) == n,
@@ -514,8 +516,9 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
       mode(seqweights) %in% c("numeric", "integer")
     )
   }
-  seqweights <- seqweights * wfactor
+  if(wfactor != 1) seqweights <- seqweights * wfactor
   # background emission probabilities (qe)
+  # if(!quiet) cat("Finding background emission probabilities\n")
   if(is.null(qe)){
     allecs <- if(AA){
       apply(x, 2, .tabulateAA, ambiguities = TRUE, seqweights = seqweights)
@@ -542,7 +545,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   sws <- sum(seqweights)
   gpws <- numeric(m)
   for(i in seq_along(gpws)) gpws[i] <- sum(seqweights[gaps[, i]])
-  if(!quiet) cat("Marking insert states\n")
+  # if(!quiet) cat("Marking insert states\n")
   if(identical(inserts, "none")){
     inserts <- rep(FALSE, m)
   }else if(identical(inserts, "inherited")){
@@ -582,7 +585,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   }
   # rm(gapweights)
   ### emission counts (redo now that we know insert positions)
-  if(!quiet) cat("Finding emission probabilities\n")
+  # if(!quiet) cat("Finding emission probabilities\n")
   ecs <- if(AA){
     apply(x[, !inserts, drop = FALSE], 2, .tabulateAA,
           ambiguities = TRUE, seqweights = seqweights)
@@ -597,7 +600,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
     dimnames(ecs) <- list(residue = residues, position = 1:l)
   }else ecs <- NULL
   ### transitions
-  if(!quiet) cat("Finding transition probabilities\n")
+  # if(!quiet) cat("Finding transition probabilities\n")
   xtr <- matrix(NA_integer_, nrow = n, ncol = m)
   insertsn <- matrix(rep(inserts, n), nrow = n, byrow = TRUE)
   xtr[gaps & !insertsn] <- 0L # Delete
@@ -704,7 +707,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
   }
   if(compo) res$compo <- log(apply(exp(E), 1, mean))
   gc()
-  if(!quiet) cat("Done\n")
+  # if(!quiet) cat("Done\n")
   return(res)
 }
 ################################################################################

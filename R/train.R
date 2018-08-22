@@ -327,6 +327,15 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
     if(!quiet) cat("Sequential alignments were not identical after",
                    i, "iterations\n")
     if(para & stopclustr) parallel::stopCluster(cores)
+    model <- derivePHMM.default(alig, seqweights = seqweights,
+                                residues = residues, gap = gap,
+                                DI = DI, ID = ID, maxsize = maxsize,
+                                inserts = inserts, lambda = lambda,
+                                threshold = threshold,
+                                pseudocounts = pseudocounts,
+                                logspace = TRUE, alignment = alignment,
+                                qa = if(fixqa) x$qa else NULL,
+                                qe = if(fixqe) x$qe else NULL)
     return(model)
   }else if(method == "BaumWelch"){
     if(DNA){
