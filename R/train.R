@@ -317,7 +317,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
           model$qa <- exp(model$qa)
           model$qe <- exp(model$qe)
         }
-        if(!quiet) cat("\nSequential alignments were identical after",
+        if(!quiet) cat("Sequential alignments were identical after",
                        i, "iterations\n")
         if(para & stopclustr) parallel::stopCluster(cores)
         gc()

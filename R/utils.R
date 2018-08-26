@@ -377,7 +377,7 @@
     fun <- function(v){
       v <- unclass(v)
       ambigs <- (v & as.raw(8)) != 8
-      if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], .disambiguateDNA, probs, random)
+      if(any(ambigs)) v[ambigs] <- sapply(unclass(v[ambigs]), .disambiguateDNA, probs, random)
       bits <- c(136, 24, 72, 40)
       ints <- 0:3
       res <- ints[match(as.numeric(v), bits)]
@@ -406,7 +406,7 @@
   if(arity == 20){
     fun <- function(v){
       ambigs <- !(v %in% as.raw((65:89)[-c(2, 10, 15, 21, 24)]))
-      if(any(ambigs)) v[ambigs] <- sapply(v[ambigs], .disambiguateAA, probs)
+      if(any(ambigs)) v[ambigs] <- sapply(unclass(v[ambigs]), .disambiguateAA, probs)
       bits <- (65:89)[-c(2, 10, 15, 21, 24)]
       ints <- 0:19
       res <- ints[match(as.numeric(v), bits)]
