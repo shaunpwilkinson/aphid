@@ -449,6 +449,7 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
                               quiet = quiet)
   if(nseq < 3){
     if(!quiet) cat("Done\n")
+    if(para & stopclustr) parallel::stopCluster(cores)
     return(model)
   }
   ## train model
@@ -484,7 +485,7 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                                consensus = FALSE, alignment = FALSE, cpp = TRUE,
                                quiet = FALSE,
                                ...){
-  if(!quiet) cat("Deriving profile HMM from alignment\n")
+  # if(!quiet) cat("Deriving profile HMM from alignment\n")
   if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
   catchnames <- rownames(x)
   rownames(x) <- paste0("S", 1:nrow(x)) ## just ensures names are unique

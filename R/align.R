@@ -349,6 +349,10 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
     return(v)
   }
   alig <- apply(alig, 2, colfun, gapc)
+  if(is.null(dim(alig))){## apply always simplifies vectors!
+    alig <- rbind(alig)
+    rownames(alig) <- names(x)[1]
+  }
   ins <- strrep("I|", nchar(alig[1L, ]) - 1)
   newcolnms <- paste0(colnames(alig), "|", ins)
   newcolnms <- paste0(newcolnms, collapse = "")
