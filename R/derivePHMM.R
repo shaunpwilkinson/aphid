@@ -486,7 +486,8 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
                                quiet = FALSE,
                                ...){
   # if(!quiet) cat("Deriving profile HMM from alignment\n")
-  if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
+  #if(!(is.matrix(x))) stop("invalid object type, x must be a matrix")
+  if(is.null(dim(x))) x <- matrix(x, nrow = 1)
   catchnames <- rownames(x)
   rownames(x) <- paste0("S", 1:nrow(x)) ## just ensures names are unique
   DNA <- .isDNA(x) # raw DNA bytes

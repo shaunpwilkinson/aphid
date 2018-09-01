@@ -363,11 +363,10 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   alig <- do.call("rbind", alig)
   colnames(alig) <- newcolnms
   rownames(alig) <- names(x)
-  alig <- alig[, -1L] ## remove gap emitted by begin state
+  alig <- alig[, -1L, drop = FALSE] ## remove gap emitted by begin state
   class(alig) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
   gc()
   return(alig)
-
   # paths <- lapply(paths, as.integer)
   # # score <- sum(sapply(paths, function(p) attr(p, "score")))
   # fragseqs <- mapply(if(DNA | AA) .fragR else .fragC, x, paths, l = l,

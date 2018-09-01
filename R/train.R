@@ -212,10 +212,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
   if(is.null(seqweights)){
     seqweights <- rep(1, n)
   }else if(identical(seqweights, "Gerstein")){
-    if(n > 2)
-      seqweights <- if(n > 2){
-        weight(y, k = k, gap = gap) # residues excluded for speed
-      }else rep(1, n)
+    seqweights <- if(n > 2) weight(y, k = k, gap = gap) else rep(1, n)
   }else{
     stopifnot(
       length(seqweights) == n,
