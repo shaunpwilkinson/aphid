@@ -32,11 +32,8 @@
 #' @param seqweights either NULL (all sequences are given weights
 #'   of 1), a numeric vector the same length as \code{x} representing
 #'   the sequence weights used to derive the model, or a character string giving
-#'   the method to derive the weights from the sequences. Currently only the
-#'   \code{"Gerstein"} method is supported (default). For this method, a
-#'   tree is first created by k-mer counting (see \code{\link[kmer]{cluster}}),
-#'   and sequence weights are then derived from the tree using the 'bottom up'
-#'   algorithm of Gerstein et al (1994).
+#'   the method to derive the weights from the sequences
+#'   (see \code{\link{weight}}).
 #' @param refine the method used to iteratively refine the model parameters
 #'   following the initial progressive alignment and model derivation step.
 #'   Current supported options are \code{"Viterbi"} (Viterbi training;
@@ -172,9 +169,6 @@
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
-#'
-#'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
-#'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 #'
 #'   Sievers F, Wilm A, Dineen D, Gibson TJ, Karplus K, Li W, Lopez R, McWilliam H,
 #'   Remmert M, Soding J, Thompson JD, Higgins DG (2011) Fast, scalable generation

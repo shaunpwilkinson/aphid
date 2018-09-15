@@ -8,11 +8,8 @@
 #' @param seqweights either NULL (all sequences are given weights
 #'   of 1), a numeric vector the same length as \code{x} representing
 #'   the sequence weights used to derive the model, or a character string giving
-#'   the method to derive the weights from the sequences. Currently only the
-#'   \code{"Gerstein"} method is supported (default). For this method, a
-#'   tree is first created by k-mer counting (see \code{\link[kmer]{cluster}}),
-#'   and sequence weights are then derived from the tree using the 'bottom up'
-#'   algorithm of Gerstein et al (1994).
+#'   the method to derive the weights from the sequences
+#'   (see \code{\link{weight}}).
 #' @param wfactor numeric. The factor to multiply the sequence weights by.
 #'   Defaults to 1.
 #' @param k integer representing the k-mer size to be used in tree-based
@@ -183,9 +180,6 @@
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
-#'
-#'   Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
-#'   \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 #'
 #' @seealso \code{\link{deriveHMM}}, \code{\link{map}}
 #' @examples

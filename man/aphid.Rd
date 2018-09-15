@@ -105,8 +105,7 @@ using the maximum \emph{a posteriori} algorithm
 
 \itemize{
 \item \code{\link{align}} performs a multiple sequence alignment
-\item \code{\link{weight}} assigns weights to sequences using
-the recursive algorithm of Gerstein et al (1994)
+\item \code{\link{weight}} assigns weights to sequences
 }
 }
 
@@ -156,9 +155,6 @@ Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   Finn RD, Clements J & Eddy SR (2011) HMMER web server: interactive sequence
   similarity searching.
   \emph{Nucleic Acids Research}. \strong{39}, W29-W37. \url{http://hmmer.org/}.
-
-  Gerstein M, Sonnhammer ELL, Chothia C (1994) Volume changes in protein evolution.
-  \emph{Journal of Molecular Biology}, \strong{236}, 1067-1078.
 
   HMMER: biosequence analysis using profile hidden Markov models.
   \url{http://www.hmmer.org}.
