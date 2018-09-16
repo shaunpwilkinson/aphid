@@ -109,7 +109,7 @@
 #'   may be a tradeoff in terms of speed depending on the number and size
 #'   of sequences to be aligned, due to the extra time required to initialize
 #'   the cluster.
-#'   Only applicable if x is a \code{"PHMM"} and \code{method = "Viterbi"}.
+#'   Only applicable if x is an object of class \code{"PHMM"}.
 #' @param quiet logical indicating whether feedback should be printed
 #'   to the console.
 #' @param ... aditional arguments to be passed to \code{"Viterbi"} (if
@@ -142,9 +142,6 @@
 #'   on the nature of the problem, but personal experience suggests that
 #'   the methods are comparable for training profile HMMs for DNA and
 #'   amino acid sequences.
-#'
-#'   Note that multi-threading is only currently available for Viterbi
-#'   training of profile HMMs.
 #'
 #' @author Shaun Wilkinson
 #' @references
@@ -205,8 +202,10 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
   n <- length(y)
   if(is.null(seqweights)){
     seqweights <- rep(1, n)
+  }else if(identical(seqweights, "Henikoff")){
+    seqweights <- weight(y, k = k, gap = gap, method = "Henikoff")
   }else if(identical(seqweights, "Gerstein")){
-    seqweights <- if(n > 2) weight(y, k = k, gap = gap) else rep(1, n)
+    seqweights <- weight(y, k = k, gap = gap, method = "Gerstein")
   }else{
     stopifnot(
       length(seqweights) == n,
