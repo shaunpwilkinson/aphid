@@ -113,12 +113,13 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
   if(nsq > 2){
     if(identical(method, "Henikoff")){
       kmers <- round(kmer::kcount(x, k = k, residues = residues, gap = gap))
-      klog <- kmers > 0
-      ksums <- apply(klog, 2, sum)
+      kmers <- kmers > 0
+      ksums <- apply(kmers, 2, sum)
       uwfs <- ksums/nsq # unweighted freqs
       ftweights <- rbind(1/(2*(1-uwfs)), 1/(2*uwfs))
       f <- function(a, b) mean(b[rbind(!a, a)])
-      res <- apply(klog, 1, f, ftweights)
+      res <- apply(kmers, 1, f, ftweights)
+      rm(kmers)
     }else if(identical(method, "Gerstein")){
       tmpnames <- names(x)
       names(x) <- paste0("S", 1:nsq)
