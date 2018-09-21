@@ -11,21 +11,21 @@
 align(x, ...)
 
 \method{align}{DNAbin}(x, model = NULL, progressive = FALSE,
-  seeds = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
+  seeds = NULL, seqweights = "Henikoff", refine = "Viterbi", k = 5,
   maxiter = 100, maxsize = NULL, inserts = "map", lambda = 0,
   threshold = 0.5, deltaLL = 1e-07, DI = FALSE, ID = FALSE,
   residues = NULL, gap = "-", pseudocounts = "background",
   qa = NULL, qe = NULL, cores = 1, quiet = FALSE, ...)
 
 \method{align}{AAbin}(x, model = NULL, progressive = FALSE,
-  seeds = NULL, seqweights = "Gerstein", refine = "Viterbi", k = 5,
+  seeds = NULL, seqweights = "Henikoff", refine = "Viterbi", k = 5,
   maxiter = 100, maxsize = NULL, inserts = "map", lambda = 0,
   threshold = 0.5, deltaLL = 1e-07, DI = FALSE, ID = FALSE,
   residues = NULL, gap = "-", pseudocounts = "background",
   qa = NULL, qe = NULL, cores = 1, quiet = FALSE, ...)
 
 \method{align}{list}(x, model = NULL, progressive = FALSE,
-  seeds = NULL, seqweights = "Gerstein", k = 5, refine = "Viterbi",
+  seeds = NULL, seqweights = "Henikoff", k = 5, refine = "Viterbi",
   maxiter = 100, maxsize = NULL, inserts = "map", lambda = 0,
   threshold = 0.5, deltaLL = 1e-07, DI = FALSE, ID = FALSE,
   residues = NULL, gap = "-", pseudocounts = "background",

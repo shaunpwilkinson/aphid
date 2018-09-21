@@ -185,7 +185,7 @@ train <- function(x, y, ...){
 ################################################################################
 #' @rdname train
 ################################################################################
-train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Gerstein",
+train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Henikoff",
                        wfactor = 1, k = 5,
                        logspace = "autodetect", maxiter = 100, deltaLL = 1E-07,
                        pseudocounts = "background", gap = "-",

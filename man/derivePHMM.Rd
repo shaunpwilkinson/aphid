@@ -10,7 +10,7 @@
 \usage{
 derivePHMM(x, ...)
 
-\method{derivePHMM}{DNAbin}(x, seqweights = "Gerstein", wfactor = 1,
+\method{derivePHMM}{DNAbin}(x, seqweights = "Henikoff", wfactor = 1,
   k = 5, residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL,
   qe = NULL, maxsize = NULL, inserts = "map", threshold = 0.5,
@@ -20,7 +20,7 @@ derivePHMM(x, ...)
   seeds = NULL, refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
   cpp = TRUE, cores = 1, quiet = FALSE, ...)
 
-\method{derivePHMM}{AAbin}(x, seqweights = "Gerstein", wfactor = 1,
+\method{derivePHMM}{AAbin}(x, seqweights = "Henikoff", wfactor = 1,
   k = 5, residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL,
   qe = NULL, maxsize = NULL, inserts = "map", threshold = 0.5,
@@ -32,7 +32,7 @@ derivePHMM(x, ...)
 
 \method{derivePHMM}{list}(x, progressive = FALSE, seeds = NULL,
   refine = "Viterbi", maxiter = 100, deltaLL = 1e-07,
-  seqweights = "Gerstein", wfactor = 1, k = 5, residues = NULL,
+  seqweights = "Henikoff", wfactor = 1, k = 5, residues = NULL,
   gap = "-", pseudocounts = "background", logspace = TRUE,
   qa = NULL, qe = NULL, maxsize = NULL, inserts = "map",
   lambda = 0, DI = FALSE, ID = FALSE, threshold = 0.5,
@@ -40,7 +40,7 @@ derivePHMM(x, ...)
   compo = FALSE, consensus = FALSE, alignment = FALSE, cpp = TRUE,
   cores = 1, quiet = FALSE, ...)
 
-\method{derivePHMM}{default}(x, seqweights = "Gerstein", wfactor = 1,
+\method{derivePHMM}{default}(x, seqweights = "Henikoff", wfactor = 1,
   k = 5, residues = NULL, gap = "-", endchar = "?",
   pseudocounts = "background", logspace = TRUE, qa = NULL,
   qe = NULL, maxsize = NULL, inserts = "map", lambda = 0,

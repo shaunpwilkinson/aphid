@@ -203,7 +203,7 @@ align <- function(x, ...){
 #' @rdname align
 ################################################################################
 align.DNAbin <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
-                         seqweights = "Gerstein", refine = "Viterbi", k = 5,
+                         seqweights = "Henikoff", refine = "Viterbi", k = 5,
                          maxiter = 100, maxsize = NULL, inserts = "map",
                          lambda = 0, threshold = 0.5, deltaLL = 1E-07,
                          DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
@@ -227,7 +227,7 @@ align.DNAbin <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
 #' @rdname align
 ################################################################################
 align.AAbin <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
-                        seqweights = "Gerstein", refine = "Viterbi", k = 5,
+                        seqweights = "Henikoff", refine = "Viterbi", k = 5,
                         maxiter = 100, maxsize = NULL, inserts = "map",
                         lambda = 0, threshold = 0.5, deltaLL = 1E-07,
                         DI = FALSE, ID = FALSE, residues = NULL, gap = "-",
@@ -251,7 +251,7 @@ align.AAbin <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
 #' @rdname align
 ################################################################################
 align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
-                       seqweights = "Gerstein", k = 5,
+                       seqweights = "Henikoff", k = 5,
                        refine = "Viterbi", maxiter = 100,
                        maxsize = NULL, inserts = "map", lambda = 0,
                        threshold = 0.5, deltaLL = 1E-07,
@@ -469,7 +469,7 @@ align.default <- function(x, model, pseudocounts = "background",
       rm(tmp) # the old switcharoo
     }
     n <- nrow(x)
-    z <- derivePHMM(x, seqweights = "Gerstein", k = 2, pseudocounts = pseudocounts,
+    z <- derivePHMM(x, seqweights = "Henikoff", k = 2, pseudocounts = pseudocounts,
                      residues = residues, logspace = TRUE)
     l <- z$size
     alignment <- Viterbi(z, model, ... = ...)
@@ -561,9 +561,9 @@ align.default <- function(x, model, pseudocounts = "background",
   }else if(nrow(x) > 1 & nrow(model) > 1){ # if both args are alignments
     nx <- nrow(x)
     ny <- nrow(model)
-    zx <- derivePHMM(x, seqweights = "Gerstein", k = 2, pseudocounts = pseudocounts,
+    zx <- derivePHMM(x, seqweights = "Henikoff", k = 2, pseudocounts = pseudocounts,
                      residues = residues, logspace = TRUE)
-    zy <- derivePHMM(model,  seqweights = "Gerstein", k = 2, pseudocounts = pseudocounts,
+    zy <- derivePHMM(model,  seqweights = "Henikoff", k = 2, pseudocounts = pseudocounts,
                      residues = residues, logspace = TRUE)
     lx <- zx$size
     ly <- zy$size

@@ -203,7 +203,7 @@ derivePHMM <- function(x, ...){
 ################################################################################
 #' @rdname derivePHMM
 ################################################################################
-derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
+derivePHMM.DNAbin <- function(x, seqweights = "Henikoff", wfactor = 1, k = 5,
                               residues = NULL, gap = "-", endchar = "?",
                               pseudocounts = "background", logspace = TRUE,
                               qa = NULL, qe = NULL, maxsize = NULL,
@@ -247,7 +247,7 @@ derivePHMM.DNAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 ################################################################################
 #' @rdname derivePHMM
 ################################################################################
-derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
+derivePHMM.AAbin <- function(x, seqweights = "Henikoff", wfactor = 1, k = 5,
                              residues = NULL, gap = "-", endchar = "?",
                              pseudocounts = "background", logspace = TRUE,
                              qa = NULL, qe = NULL, maxsize = NULL,
@@ -289,7 +289,7 @@ derivePHMM.AAbin <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 ################################################################################
 derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
                             refine = "Viterbi", maxiter = 100, deltaLL = 1E-07,
-                            seqweights = "Gerstein", wfactor = 1, k = 5,
+                            seqweights = "Henikoff", wfactor = 1, k = 5,
                             residues = NULL, gap = "-",
                             pseudocounts = "background", logspace = TRUE,
                             qa = NULL, qe = NULL, maxsize = NULL,
@@ -341,8 +341,13 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
       if(is.null(seqweights)){
         seqweights <- rep(1, nseq)
         names(seqweights) <- catchnames
+      }else if(identical(seqweights, "Henikoff")){
+        if(!quiet) cat("Calculating sequence weights using maximum entropy method\n")
+        seqweights <- weight(x, method = "Henikoff", k = k,
+                             residues = residues, gap = gap)
+        names(seqweights) <- catchnames
       }else if(identical(seqweights, "Gerstein")){
-        if(!quiet) cat("Calculating sequence weights\n")
+        if(!quiet) cat("Calculating sequence weights using tree-based method\n")
         seqweights <- weight(x, method = "Gerstein", k = k,
                              residues = residues, gap = gap)
         names(seqweights) <- catchnames
@@ -388,9 +393,8 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
       if(is.null(seqweights)){
         seqweights <- rep(1, nseq)
         names(seqweights) <- names(x)
-      }else if(identical(seqweights, "Gerstein")){
-        seqweights <- weight(x, method = "Gerstein", k = k,
-                             residues = residues, gap = gap)
+      }else if(identical(seqweights, "Henikoff") | identical(seqweights, "Gerstein")){
+        seqweights <- weight(x, method = seqweights, k = k, residues = residues, gap = gap)
       }else{
         stopifnot(mode(seqweights) %in% c("numeric", "integer"),
                   length(seqweights) == nseq)
@@ -469,7 +473,7 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
 ################################################################################
 #'@rdname derivePHMM
 ################################################################################
-derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
+derivePHMM.default <- function(x, seqweights = "Henikoff", wfactor = 1, k = 5,
                                residues = NULL, gap = "-", endchar = "?",
                                pseudocounts = "background", logspace = TRUE,
                                qa = NULL, qe = NULL, maxsize = NULL,
@@ -499,9 +503,9 @@ derivePHMM.default <- function(x, seqweights = "Gerstein", wfactor = 1, k = 5,
 
   if(is.null(seqweights)){
     seqweights <- rep(1, n)
-  }else if(identical(seqweights, "Gerstein")){
+  }else if(identical(seqweights, "Gerstein") | identical(seqweights, "Henikoff")){
     seqweights <- if(n > 2){
-      weight(unalign(x, gap = gap), k = k, residues = residues, gap = gap)
+      weight(unalign(x, gap = gap), method = seqweights, k = k, residues = residues, gap = gap)
     }else{
       rep(1, n)
     }

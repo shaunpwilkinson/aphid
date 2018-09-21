@@ -8,7 +8,7 @@
 \usage{
 train(x, y, ...)
 
-\method{train}{PHMM}(x, y, method = "Viterbi", seqweights = "Gerstein",
+\method{train}{PHMM}(x, y, method = "Viterbi", seqweights = "Henikoff",
   wfactor = 1, k = 5, logspace = "autodetect", maxiter = 100,
   deltaLL = 1e-07, pseudocounts = "background", gap = "-",
   fixqa = FALSE, fixqe = FALSE, maxsize = NULL, inserts = "map",
@@ -146,7 +146,7 @@ available. Note that in this case there
 may be a tradeoff in terms of speed depending on the number and size
 of sequences to be aligned, due to the extra time required to initialize
 the cluster.
-Only applicable if x is a \code{"PHMM"} and \code{method = "Viterbi"}.}
+Only applicable if x is an object of class \code{"PHMM"}.}
 
 \item{quiet}{logical indicating whether feedback should be printed
 to the console.}
@@ -188,9 +188,6 @@ This function optimizes the parameters of a hidden Markov model
   on the nature of the problem, but personal experience suggests that
   the methods are comparable for training profile HMMs for DNA and
   amino acid sequences.
-
-  Note that multi-threading is only currently available for Viterbi
-  training of profile HMMs.
 }
 \examples{
   ## Baum Welch training for standard HMMs:
