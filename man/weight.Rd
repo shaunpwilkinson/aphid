@@ -11,16 +11,16 @@
 \usage{
 weight(x, ...)
 
-\method{weight}{DNAbin}(x, method = "Gerstein", k = 5, ...)
+\method{weight}{DNAbin}(x, method = "Henikoff", k = 5, ...)
 
-\method{weight}{AAbin}(x, method = "Gerstein", k = 5, ...)
+\method{weight}{AAbin}(x, method = "Henikoff", k = 5, ...)
 
-\method{weight}{list}(x, method = "Gerstein", k = 5, residues = NULL,
+\method{weight}{list}(x, method = "Henikoff", k = 5, residues = NULL,
   gap = "-", ...)
 
 \method{weight}{dendrogram}(x, method = "Gerstein", ...)
 
-\method{weight}{default}(x, method = "Gerstein", k = 5,
+\method{weight}{default}(x, method = "Henikoff", k = 5,
   residues = NULL, gap = "-", ...)
 }
 \arguments{
