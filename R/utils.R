@@ -364,7 +364,7 @@
   }else if(a == guide[21]){# U (Selenocysteine)
     return(nonambigs[2]) #C )(Cysteine)
   }else if(a == guide[27] | a == guide[28]) {
-    return(NULL)
+    stop("Amino acid sequence contains stop codons and/or gaps\n")
   }else stop("invalid byte for class 'AAbin'")
 }
 
@@ -558,22 +558,34 @@
 }
 
 ## Find MD5 hash for a character or raw sequence
-.digest <- function(x, simplify = TRUE){
-  digest1 <- function(s){
-    if(mode(s) != "raw"){
-      if(mode(s) == "character"){
-        s <- sapply(s, charToRaw)
-      }else if(mode(s) == "integer"){
-        s <- sapply(s, as.raw)
-      }else if(mode(s) == "numeric"){
-        stop("Can't digest numeric vectors")
+.digest <- function(x){
+  if(mode(x) == "raw") x <- rawToChar(x)
+  if(mode(x) == "list"){
+    if(length(x) == 0){
+      return(NULL)
+    }else{
+      if(mode(x[[1]]) == "raw"){
+        x <- vapply(x, rawToChar, "", USE.NAMES = TRUE)
+      }else if(mode(x[[1]]) %in% c("character", "numeric")){
+        x <- vapply(x, paste0, "", collapse = "", USE.NAMES = TRUE)
+      }else{
+        stop("Invalid input format\n")
       }
     }
-    return(paste(openssl::md5(as.vector(s))))
   }
-  if(is.list(x)){
-    if(simplify) return(sapply(x, digest1)) else return(lapply(x, digest1))
+  if(mode(x) == "character"){
+    nms <- names(x)
+    res <- openssl::md5(x)
+    names(res) <- nms
+    return(res)
   }else{
-    return(digest1(x))
+    stop("Invalid input format\n")
   }
+}
+
+.point <- function(h){
+  uh <- unique(h)
+  pointers <- seq_along(uh)
+  names(pointers) <- uh
+  unname(pointers[h])
 }

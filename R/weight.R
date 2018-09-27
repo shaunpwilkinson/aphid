@@ -79,7 +79,7 @@ weight <- function(x, ...){
 ################################################################################
 #' @rdname weight
 ################################################################################
-weight.DNAbin <- function(x, method = "Gerstein", k = 5, ...){
+weight.DNAbin <- function(x, method = "Henikoff", k = 5, ...){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
   }else{
@@ -90,7 +90,7 @@ weight.DNAbin <- function(x, method = "Gerstein", k = 5, ...){
 ################################################################################
 #' @rdname weight
 ################################################################################
-weight.AAbin <- function(x, method = "Gerstein", k = 5, ...){
+weight.AAbin <- function(x, method = "Henikoff", k = 5, ...){
   if(is.list(x)){
     weight.list(x, method = method, k = k)
   }else{
@@ -101,7 +101,7 @@ weight.AAbin <- function(x, method = "Gerstein", k = 5, ...){
 ################################################################################
 #' @rdname weight
 ################################################################################
-weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
+weight.list <- function(x, method = "Henikoff", k = 5, residues = NULL,
                         gap = "-", ...){
   nsq <- length(x)
   DNA <- .isDNA(x)
@@ -112,6 +112,11 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
   for(i in 1:nsq) x[[i]] <- x[[i]][x[[i]] != gap]
   if(nsq > 2){
     if(identical(method, "Henikoff")){
+      hashes <- .digest(x)
+      pointers <- .point(hashes)
+      catchnames <- names(x)
+      x <- x[!duplicated(pointers)]
+      nsq <- length(x)
       kmers <- round(kmer::kcount(x, k = k, residues = residues, gap = gap))
       kmers <- kmers > 0
       ksums <- apply(kmers, 2, sum)
@@ -120,6 +125,11 @@ weight.list <- function(x, method = "Gerstein", k = 5, residues = NULL,
       f <- function(a, b) mean(b[rbind(!a, a)])
       res <- apply(kmers, 1, f, ftweights)
       rm(kmers)
+      spl <- split(seq_along(hashes), f = factor(pointers))
+      ## divide weight eveny among duplicates
+      res <- res/vapply(spl, length, 0L)
+      res <- res[pointers]
+      names(res) <- catchnames
     }else if(identical(method, "Gerstein")){
       tmpnames <- names(x)
       names(x) <- paste0("S", 1:nsq)
@@ -200,7 +210,7 @@ weight.dendrogram <- function(x, method = "Gerstein", ...){
 ################################################################################
 #' @rdname weight
 ################################################################################
-weight.default <- function(x, method = "Gerstein", k = 5, residues = NULL,
+weight.default <- function(x, method = "Henikoff", k = 5, residues = NULL,
                            gap = "-", ...){
   x <- unalign(x, gap = gap)
   weight.list(x, method = method, k = k, residues = residues, gap = gap)

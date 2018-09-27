@@ -278,7 +278,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Henikoff",
   if(method  == "Viterbi"){
     alig <- align.list(y, model = x, logspace = TRUE, cores = cores, ... = ...)
     alig_cache <- character(maxiter)
-    alig_cache[1] <- .digest(alig, simplify = TRUE)
+    alig_cache[1] <- .digest(alig)
     for(i in 1:maxiter){
       model <- derivePHMM.default(alig, seqweights = seqweights,
                                 residues = residues, gap = gap,
@@ -297,7 +297,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Henikoff",
       rm(alig) ## free up space for next alignment
       gc()
       alig <- align(y, model = model, logspace = TRUE, cores = cores, ... = ...)
-      newhash <- .digest(alig, simplify = TRUE)
+      newhash <- .digest(alig)
       if(!any(sapply(alig_cache, identical, newhash))){
         alig_cache[i + 1] <- newhash
       }else{
