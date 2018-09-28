@@ -117,7 +117,7 @@ weight.list <- function(x, method = "Henikoff", k = 5, residues = NULL,
       catchnames <- names(x)
       x <- x[!duplicated(pointers)]
       nsq <- length(x)
-      kmers <- round(kmer::kcount(x, k = k, residues = residues, gap = gap))
+      suppressMessages(kmers <- round(kmer::kcount(x, k = k, residues = residues, gap = gap)))
       kmers <- kmers > 0
       ksums <- apply(kmers, 2, sum)
       uwfs <- ksums/nsq # unweighted freqs
@@ -133,7 +133,7 @@ weight.list <- function(x, method = "Henikoff", k = 5, residues = NULL,
     }else if(identical(method, "Gerstein")){
       tmpnames <- names(x)
       names(x) <- paste0("S", 1:nsq)
-      guidetree <- kmer::cluster(x, k = k, residues = residues, gap = gap)
+      guidetree <-suppressMessages(kmer::cluster(x, k = k, residues = residues, gap = gap))
       res <- weight.dendrogram(guidetree, method = "Gerstein")[names(x)]
       names(res) <- tmpnames
     }else stop("Accepted methods are 'Gerstein' and 'Henikoff'\n")

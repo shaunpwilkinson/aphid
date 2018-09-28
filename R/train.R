@@ -277,7 +277,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Henikoff",
   }
   if(method  == "Viterbi"){
     alig <- align.list(y, model = x, logspace = TRUE, cores = cores, ... = ...)
-    alig_cache <- character(maxiter)
+    alig_cache <- character(maxiter + 1)
     alig_cache[1] <- .digest(alig)
     for(i in 1:maxiter){
       model <- derivePHMM.default(alig, seqweights = seqweights,
@@ -298,7 +298,7 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Henikoff",
       gc()
       alig <- align(y, model = model, logspace = TRUE, cores = cores, ... = ...)
       newhash <- .digest(alig)
-      if(!any(sapply(alig_cache, identical, newhash))){
+      if(!newhash %in% alig_cache){
         alig_cache[i + 1] <- newhash
       }else{
         if(!logspace){
