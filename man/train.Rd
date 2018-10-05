@@ -10,10 +10,10 @@ train(x, y, ...)
 
 \method{train}{PHMM}(x, y, method = "Viterbi", seqweights = "Henikoff",
   wfactor = 1, k = 5, logspace = "autodetect", maxiter = 100,
-  deltaLL = 1e-07, pseudocounts = "background", gap = "-",
-  fixqa = FALSE, fixqe = FALSE, maxsize = NULL, inserts = "map",
-  threshold = 0.5, lambda = 0, alignment = FALSE, cores = 1,
-  quiet = FALSE, ...)
+  limit = 1, deltaLL = 1e-07, pseudocounts = "background",
+  gap = "-", fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
+  inserts = "map", threshold = 0.5, lambda = 0, alignment = FALSE,
+  cores = 1, quiet = FALSE, ...)
 
 \method{train}{HMM}(x, y, method = "Viterbi", seqweights = NULL,
   wfactor = 1, maxiter = 100, deltaLL = 1e-07,
@@ -61,6 +61,10 @@ increases the computational overhead; therefore specifying
 \item{maxiter}{the maximum number of EM iterations or Viterbi training
 iterations to carry out before the cycling process is terminated and
 the partially trained model is returned. Defaults to 100.}
+
+\item{limit}{the proportion of alignment rows that must be identical
+between subsequent iterations for the Viterbi training algorithm
+to terminate. Defaults to 1.}
 
 \item{deltaLL}{numeric, the maximum change in log likelihood between EM
 iterations before the cycling procedure is terminated (signifying model

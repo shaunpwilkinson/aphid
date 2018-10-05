@@ -404,7 +404,7 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
       lm <- as.numeric(names(sort(table(xlengths), decreasing = TRUE)[1]))
       if(!is.null(maxsize)){
         xlengths2 <- xlengths[xlengths <= maxsize]
-        if(length(xlengths2) == 0) stop("maxsize parameter is too low")
+        if(length(xlengths2) == 0) stop("maxsize parameter is too low\n")
         if(lm > maxsize) lm <- max(xlengths2)
       }
       longl <- xlengths == lm
@@ -642,6 +642,10 @@ derivePHMM.default <- function(x, seqweights = "Henikoff", wfactor = 1, k = 5,
            named vectors 'A' (transition pseudocounts) and/or 'E'
            (emission pseudocounts)")
     }
+  }else if(mode(pseudocounts) %in% c("numeric", "integer") & length(pseudocounts) == 1L){
+    pseudocounts <- list(A = rep(pseudocounts, 9), E = rep(pseudocounts, nres))
+    pseudocounts$A[3] <- pseudocounts$A[3] * DI
+    pseudocounts$A[7] <- pseudocounts$A[7] * ID
   }else if(identical(pseudocounts, "background")){
     pseudocounts <- list(A = qa * (7 + sum(c(DI, ID))), E = qe * nres)
   }else if(identical(pseudocounts, "Laplace")){
@@ -848,6 +852,8 @@ map <- function(x, seqweights = NULL, residues = NULL,
            be a vector the same length as the size of the residue alphabet
           (e.g. 4 for DNA, 20 for amino acids)")
     }
+  }else if(mode(pseudocounts) %in% c("numeric", "integer") & length(pseudocounts) == 1L){
+    pseudocounts <- list(A = rep(pseudocounts, 9), E = rep(pseudocounts, nres))
   }else if(identical(pseudocounts, "background")){
     pseudocounts <- list(A = exp(qa) * 9, E = exp(qe) * nres)
   }else if(identical(pseudocounts, "Laplace")){

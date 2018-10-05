@@ -32,6 +32,9 @@
 #' @param maxiter the maximum number of EM iterations or Viterbi training
 #'   iterations to carry out before the cycling process is terminated and
 #'   the partially trained model is returned. Defaults to 100.
+#' @param limit the proportion of alignment rows that must be identical
+#'   between subsequent iterations for the Viterbi training algorithm
+#'   to terminate. Defaults to 1.
 #' @param deltaLL numeric, the maximum change in log likelihood between EM
 #'   iterations before the cycling procedure is terminated (signifying model
 #'   convergence). Defaults to 1E-07. Only applicable if
@@ -186,8 +189,8 @@ train <- function(x, y, ...){
 #' @rdname train
 ################################################################################
 train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Henikoff",
-                       wfactor = 1, k = 5,
-                       logspace = "autodetect", maxiter = 100, deltaLL = 1E-07,
+                       wfactor = 1, k = 5, logspace = "autodetect",
+                       maxiter = 100, limit = 1, deltaLL = 1E-07,
                        pseudocounts = "background", gap = "-",
                        fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
                        inserts = "map", threshold = 0.5, lambda = 0,
@@ -278,11 +281,10 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Henikoff",
   if(method  == "Viterbi"){
     alig <- align.list(y, model = x, logspace = TRUE, cores = cores, ... = ...)
     alig_cache <- character(maxiter + 1)
-    hash1 <- apply(alig, 1, .digest)
-    hash1 <- .digest(paste0(hash1, collapse = ""))
-    stopifnot(length(hash1) == 1)
-    alig_cache[1] <- hash1
-    #alig_cache[1] <- .digest(alig)
+    hashis <- apply(alig, 1, .digest)
+    hashi <- .digest(paste0(hashis, collapse = ""))
+    stopifnot(length(hashi) == 1)
+    alig_cache[1] <- hashi
     for(i in 1:maxiter){
       model <- derivePHMM.default(alig, seqweights = seqweights,
                                 residues = residues, gap = gap,
@@ -301,11 +303,13 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Henikoff",
       rm(alig) ## free up space for next alignment
       gc()
       alig <- align(y, model = model, logspace = TRUE, cores = cores, ... = ...)
-      hashi <- apply(alig, 1, .digest)
-      hashi <- .digest(paste0(hashi, collapse = ""))
+      tmp <- apply(alig, 1, .digest)
+      breakme <- sum(tmp == hashis)/length(hashis) > limit
+      hashis <- tmp
+      hashi <- .digest(paste0(hashis, collapse = ""))
       stopifnot(length(hashi) == 1)
       #newhash <- .digest(alig)
-      if(!hashi %in% alig_cache){
+      if(!hashi %in% alig_cache & !breakme){
       #if(!newhash %in% alig_cache){
         #alig_cache[i + 1] <- newhash
         alig_cache[i + 1] <- hashi
@@ -369,7 +373,9 @@ train.PHMM <- function(x, y, method = "Viterbi", seqweights = "Henikoff",
     Epseudocounts <- x$E
     qepseudocounts <- x$qe
     # don't need x$qa since not updated during iteration
-    if(identical(pseudocounts, "background")){
+    if(mode(pseudocounts) %in% c("numeric", "integer") & length(pseudocounts) == 1L){
+      Apseudocounts[] <- Epseudocounts[] <- qepseudocounts[] <- pseudocounts
+    }else if(identical(pseudocounts, "background")){
       qepseudocounts <- exp(x$qe) * length(x$qe)
       Epseudocounts[] <- rep(qepseudocounts, l)
       qacounts <- exp(x$qa) * if(DI & ID) 9 else if (DI | ID) 8 else 7
