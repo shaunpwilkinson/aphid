@@ -1,6 +1,6 @@
-# aphid version 1.2.0
+# aphid version 1.3.0
 
-This is a minor release optimizing some of the slower 
+This is a minor release further optimizing some of the slower 
 iterative model-training functions.
 
 ### Test environments

@@ -1,7 +1,7 @@
 Package: aphid
 Type: Package
 Title: Analysis with Profile Hidden Markov Models
-Version: 1.2.0.9000
+Version: 1.3.0
 Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
 Author: Shaun Wilkinson [aut, cre]

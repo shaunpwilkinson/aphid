@@ -1,3 +1,13 @@
+# aphid 1.3.0 (2018-10-09)
+
+* Enabled 'near-enough' alignment matching between Viterbi iterations in `train.PHMM` via `limit` parameter
+
+* Prevented memory overflow in 'train.PHMM' caused by md5 hash attmpt on very large alignments 
+
+* Included faster maximum entropy  sequence weighting option (Henikoff & Henikoff 1994)
+
+--------------------------------------------------------------------------------
+
 # aphid 1.2.0 (2018-08-14)
 
 * Enabled multithread option for Baum Welch training of profile HMMs.
