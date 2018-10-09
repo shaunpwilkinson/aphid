@@ -6,8 +6,8 @@ iterative model-training functions.
 ### Test environments
 
  * local ubuntu 16.04.4 x86_64-pc-linux-gnu; R version 3.5.1
- * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R version 3.5.0 (2017-01-27)
- * winbuilder R Under development (2018-07-19 r74981)
+ * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R version 3.5.1 (2017-01-27)
+ * winbuilder R Under development (2018-10-08 r75413)
 
 ### R CMD check results
 
