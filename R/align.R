@@ -294,10 +294,12 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
                                  gap = gap, pseudocounts = pseudocounts,
                                  quiet = quiet, ... = ...)
       rownames(res) <- names(x)
+      if(para & stopclustr) parallel::stopCluster(cores)
       return(res)
     }else if(nseq == 1){
       res <- matrix(x[[1]], nrow = 1)
       rownames(res) <- names(x)
+      if(para & stopclustr) parallel::stopCluster(cores)
       return(res)
     }
     model <- derivePHMM.list(x, progressive = progressive, seeds = seeds,
@@ -311,7 +313,10 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
                              qa = qa, qe = qe, cores = cores, quiet = quiet,
                              alignment = TRUE,
                              ... = ...)
-    if(!is.null(model$alignment)) return(model$alignment)
+    if(!is.null(model$alignment)) {
+      if(para & stopclustr) parallel::stopCluster(cores)
+      return(model$alignment)
+    }
   }
   stopifnot(inherits(model, "PHMM"))
   l <- model$size
@@ -359,6 +364,7 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   rownames(alig) <- names(x)
   alig <- alig[, -1L, drop = FALSE] ## remove gap emitted by begin state
   class(alig) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
+  if(para & stopclustr) parallel::stopCluster(cores)
   gc()
   return(alig)
   # paths <- lapply(paths, as.integer)
