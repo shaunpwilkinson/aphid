@@ -322,7 +322,7 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   l <- model$size
   ## pathfinder function
   pf <- function(s, model, ...){
-    path <- c(1L, Viterbi(model, s, ... = ...)$path)
+    path <- c(1L, aphid::Viterbi(model, s, ... = ...)$path)
     news <- rep(gap, length(path))
     news[path != 0L][-1L] <- s
     newpath <- path
