@@ -423,10 +423,11 @@ derivePHMM.list <- function(x, progressive = FALSE, seeds = NULL,
                           gap = gap, ... = ...)
     seqweights <- c(1, 1)
     rownames(msa1) <- names(seqweights) <- names(x)
+    colnames(msa1) <- seq_len(ncol(msa1))
     seeds <- 1:2
   }else if(nseq == 1){
     msa1 <- matrix(x[[1]], nrow = 1)
-    colnames(msa1) <- paste(1:ncol(msa1))
+    colnames(msa1) <- seq_len(ncol(msa1))
     ## colnames are used when inserts = "inherited"
     seqweights <- 1
     rownames(msa1) <- names(seqweights) <- names(x)
@@ -551,7 +552,7 @@ derivePHMM.default <- function(x, seqweights = "Henikoff", wfactor = 1, k = 5,
   }else if(identical(inserts, "inherited")){
     # inserts <- attr(x, "inserts")
     inserts <- colnames(x) == "I"
-    if(is.null(inserts)) stop("Alignment missing 'inserts', nothing to inherit")
+    if(length(inserts) == 0L) inserts <- rep(FALSE, ncol(x)) # for 2-row alignments
   }else if(identical(inserts, "threshold")){
     # inserts <- apply(gapweights, 2, sum) > threshold * n
     inserts <- gpws > threshold * sws

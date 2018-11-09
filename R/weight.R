@@ -126,10 +126,11 @@ weight.list <- function(x, method = "Henikoff", k = 5, residues = NULL,
       res <- apply(kmers, 1, f, ftweights)
       rm(kmers)
       spl <- split(seq_along(hashes), f = factor(pointers))
-      ## divide weight eveny among duplicates
+      ## divide weight evenly among duplicates
       res <- res/vapply(spl, length, 0L)
       res <- res[pointers]
       names(res) <- catchnames
+      res <- res * length(res)/sum(res)
     }else if(identical(method, "Gerstein")){
       tmpnames <- names(x)
       names(x) <- paste0("S", 1:nsq)
