@@ -6,7 +6,7 @@ This is a patch release addressing two minor bugs in `align.list`
 
  * local ubuntu 16.04.4 x86_64-pc-linux-gnu; R version 3.5.1 (2018-07-02)
  * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R version 3.5.1 (2017-01-27)
- * winbuilder R Under development (2018-10-08 r75413)
+ * winbuilder R Under development (2018-11-08 r75566)
 
 ### R CMD check results
 
