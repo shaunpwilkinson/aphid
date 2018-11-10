@@ -1,11 +1,10 @@
-# aphid version 1.3.0
+# aphid version 1.3.1
 
-This is a minor release further optimizing some of the slower 
-iterative model-training functions.
+This is a patch release addressing two minor bugs in `align.list`
 
 ### Test environments
 
- * local ubuntu 16.04.4 x86_64-pc-linux-gnu; R version 3.5.1
+ * local ubuntu 16.04.4 x86_64-pc-linux-gnu; R version 3.5.1 (2018-07-02)
  * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R version 3.5.1 (2017-01-27)
  * winbuilder R Under development (2018-10-08 r75413)
 

@@ -1,3 +1,12 @@
+# aphid 1.3.1 (2018-11-10)
+
+* Fixed bug in `align` not closing cluster after multithread
+
+* Fixed bug in `align` preventing colnames for 2-row alignments 
+
+--------------------------------------------------------------------------------
+
+
 # aphid 1.3.0 (2018-10-09)
 
 * Enabled 'near-enough' alignment matching between Viterbi iterations in `train.PHMM` via `limit` parameter
