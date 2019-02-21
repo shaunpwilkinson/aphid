@@ -30,7 +30,7 @@ NULL (invisibly).
   model.
 }
 \details{
-\code{"plot.HMM"} Plots a \code{"HMM"} object as a directed graph
+\code{"plot.HMM"} Plots a \code{"HMM"} object as a directed graph.
   States (rectangles) are interconnected by directed
   lines with line-weights proportional to the transition probabilities between
   the states.

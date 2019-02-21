@@ -196,7 +196,7 @@ plot.PHMM <- function(x, from = "start", to = "end", just = "center",
 #'   Defaults to FALSE.
 #' @inheritParams plot.PHMM
 #' @return NULL (invisibly).
-#' @details \code{"plot.HMM"} Plots a \code{"HMM"} object as a directed graph
+#' @details \code{"plot.HMM"} Plots a \code{"HMM"} object as a directed graph.
 #'   States (rectangles) are interconnected by directed
 #'   lines with line-weights proportional to the transition probabilities between
 #'   the states.

@@ -505,10 +505,13 @@ derivePHMM.default <- function(x, seqweights = "Henikoff", wfactor = 1, k = 5,
   if(is.null(seqweights)){
     seqweights <- rep(1, n)
   }else if(identical(seqweights, "Gerstein") | identical(seqweights, "Henikoff")){
-    seqweights <- if(n > 2){
-      weight(unalign(x, gap = gap), method = seqweights, k = k, residues = residues, gap = gap)
+    seqlist <- unalign(x, gap = gap)
+    seqlengths <- vapply(seqlist, length, 0L)
+    if(n > 2 & min(seqlengths) > k + 1L){
+      seqweights <- weight(seqlist, method = seqweights, k = k, residues = residues, gap = gap)
     }else{
-      rep(1, n)
+      if(!quiet) cat("Applying uniform sequence weights\n")
+      seqweights <- rep(1, n)
     }
   }else{
     stopifnot(

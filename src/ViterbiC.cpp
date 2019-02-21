@@ -397,7 +397,7 @@ List ViterbiH(IntegerVector y, NumericMatrix A, NumericMatrix E,
   NumericMatrix V(nstates, nrolls);
   IntegerVector prerolls = Range(1, nrolls);
   CharacterVector rolls = as<CharacterVector>(prerolls);
-  List vnames = List::create(Named("state") = states, Named("roll") = rolls);
+  List vnames = List::create(Named("state") = states, Named("position") = rolls);
   V.attr("dimnames") = vnames;
   NumericVector s = A(0, _);
   NumericVector e = A(_, 0);
