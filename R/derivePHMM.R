@@ -615,7 +615,7 @@ derivePHMM.default <- function(x, seqweights = "Henikoff", wfactor = 1, k = 5,
   xtr <- cbind(1L, xtr, 1L) # append begin and end match states
   tcs <- .atab(xtr, seqweights = seqweights)
   rm(xtr)
-  gc()
+  #gc()
   alltcs <- apply(tcs, 1, sum) + 1 # forced addition of Laplacian pseudos
   ### background transition probs
   if(is.null(qa)){
@@ -714,7 +714,7 @@ derivePHMM.default <- function(x, seqweights = "Henikoff", wfactor = 1, k = 5,
     res$alignment <- x
   }
   if(compo) res$compo <- log(apply(exp(E), 1, mean))
-  gc()
+  #gc()
   # if(!quiet) cat("Done\n")
   return(res)
 }
@@ -938,7 +938,7 @@ map <- function(x, seqweights = NULL, residues = NULL,
     }
     res <- res[-(c(1, L + 2))]
   }
-  gc()
+  #gc()
   return(res)
 }
 ################################################################################
