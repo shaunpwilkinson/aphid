@@ -2,6 +2,7 @@ library(aphid)
 context("build, train and apply profile HMMs")
 
 # simulate a DNA sequence dataset
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 bases <- c("A", "C", "G", "T")
 x <- list(sample(bases, replace = TRUE, size = 100))
@@ -22,15 +23,19 @@ class(yAA) <- "AAbin"
 
 
 # derive PHMMs for DNA sequences
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 x.PHMM <- derivePHMM(x, residues = "DNA", quiet = TRUE)
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 xDNA.PHMM <- derivePHMM(xDNA, quiet = TRUE)
 #plot(x.PHMM, from = 0, to = 10)
 
 # derive PHMMs for AA sequences
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 y.PHMM <- derivePHMM(y, residues = "AMINO", seqweights = NULL)
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 yAA.PHMM <- derivePHMM(yAA, seqweights = NULL)
 # plot(y.PHMM, from = 0, to = 10)
@@ -59,12 +64,16 @@ x3.vit <- Viterbi(x.PHMM, x[[1]], cpp = FALSE, type = "local")
 xDNA3.vit <- Viterbi(xDNA.PHMM, xDNA[[1]], type = "local")
 
 # Generate random sequences
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 x.sim <-generate(x.PHMM, size = 200)
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 xDNA.sim <-generate(xDNA.PHMM, size = 200, DNA = TRUE)
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 y.sim <-generate(y.PHMM, size = 20)
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 yAA.sim <-generate(yAA.PHMM, size = 20, AA = TRUE)
 
@@ -88,8 +97,10 @@ y.HMMER <- writePHMM(y.PHMM, file = fl)
 y2.PHMM <- readPHMM(fl)
 
 # Multiple sequence alignments
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 x.alig <- align(x, quiet = TRUE)
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(999)
 x2.alig <- align(x, progressive = TRUE, quiet = TRUE)
 y.inserts <- map(y, cpp = FALSE)

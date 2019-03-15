@@ -1,33 +1,18 @@
 # aphid version 1.3.1
 
-This is a patch release addressing two minor bugs in `align.list`
+This version specifies previous version of set.seed sampler with RNGversion() calls
+as requested by Kurt Hornik 2019-03-07
 
-### Test environments
+## Test environments
 
- * local ubuntu 16.04.4 x86_64-pc-linux-gnu; R version 3.5.1 (2018-07-02)
- * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R version 3.5.1 (2017-01-27)
- * winbuilder R Under development (2018-11-08 r75566)
+ * local ubuntu 16.04.2 x86_64-pc-linux-gnu; R version 3.5.2 
+ * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R 3.5.2
+ * winbuilder R devel (2019-03-12 r76226)
 
-### R CMD check results
+## R CMD check results
 
-There were no ERRORs. 
+There were no ERRORs WARNINGs or NOTEs.
 
-There was one WARNING on local test:
+## Downstream dependencies
 
-checking compilation flags used ... WARNING
-Compilation used the following non-portable flag(s):
-  ‘-Wdate-time’ ‘-Werror=format-security’ ‘-Wformat’
-
-According to this thread, this is a local issue and won't affect CRAN
-<https://github.com/ropensci/stplanr/issues/260>
-
-
-There was one NOTE:
-
-Note_to_CRAN_maintainers
-Maintainer: 'Shaun Wilkinson <shaunpwilkinson@gmail.com>'
-  
-
-### Downstream dependencies
-
-There were no issues.
+ * insect: OK

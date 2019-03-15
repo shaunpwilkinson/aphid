@@ -101,7 +101,7 @@ theory and application of these models. Book chapter numbers are provided
 wherever possible for ease of reference. 
 
 #### Hidden Markov Models
-A hidden Markov model is a hypothetical data-generating mechanism for a 
+A hidden Markov model is a probabilistic data-generating mechanism for a 
 sequence or set of sequences. 
 It is depicted by a network of *states* each emitting symbols from a finite 
 *alphabet* according to a set of *emission probabilities*, whose values are 
@@ -295,7 +295,7 @@ The default option for the derivePHMM function is "background".
 The following code derives a profile HMM from the globin data and plots the model:
 
 ```{r, fig.width=7.15, fig.height=5}
-globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
+globins.PHMM <- derivePHMM(globins, residues = "AMINO", pseudocounts = "Laplace")
 plot(globins.PHMM)
 ```
 
@@ -365,6 +365,7 @@ the small globin profile HMM:
 
 ```{r}
 sim <- list(length = 10)
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(9999)
 for(i in 1:10) sim[[i]] <- generate(globins.PHMM, size = 20)
 sim
@@ -382,8 +383,8 @@ parameters using either the Baum Welch or Viterbi training algorithm.
 Both are iterative refinement algorithms; the former
 does not rely on a multiple sequence alignment
 but is generally much slower than the latter. 
-The Viterbi training operation can be sped up further on multi-CPU 
-machines by specifying the "cores" argument for parallel processing. 
+The Viterbi training operation can be sped up further 
+by specifying the "cores" argument for parallel processing. 
 The best choice of training algorithm will generally depend on the 
 nature of the problem and the computing resources available. 
 For more information see Durbin et al [-@Durbin1998] chapter 3.3 for 

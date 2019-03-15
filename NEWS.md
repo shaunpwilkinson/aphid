@@ -1,3 +1,9 @@
+# aphid 1.3.2 (2019-03-15)
+
+* Specified previous version of set.seed sampler with RNGversion() calls
+
+--------------------------------------------------------------------------------
+
 # aphid 1.3.1 (2018-11-10)
 
 * Fixed bug in `align` not closing cluster after multithread

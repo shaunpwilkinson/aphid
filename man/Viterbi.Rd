@@ -172,6 +172,7 @@ This function is a wrapper for a compiled C++ function that recursively
   globins.PHMM <- derivePHMM(globins, residues = "AMINO", seqweights = NULL)
   plot(globins.PHMM, main = "Profile hidden Markov model for globins")
   ### Simulate a random sequence from the model
+  suppressWarnings(RNGversion("3.5.0"))
   set.seed(999)
   simulation <- generate(globins.PHMM, size = 20)
   simulation ## "F" "S" "A" "N" "N" "D" "W" "E"
