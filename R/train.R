@@ -660,7 +660,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL, wfactor = 1,
           Bj <- backj$array
           tmpAj <- tmpA
           tmpEj <- tmpE
-          tmpAj[] <- tmpAj[] <- 0
+          tmpAj[] <- tmpEj[] <- 0
           for(k in states[-1]){
             tmpAj[1, -1] <- exp(A[1, -1] + E[, yj[1]] + Bj[, 1] - logPxj)
             tmpAj[-1, 1] <- exp(Rj[, nj] + A[-1, 1] - logPxj)
@@ -669,7 +669,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL, wfactor = 1,
             }
             for(b in residues){
               cond <- yj == b
-              tmpEj[k, b] <- exp(logsum(Rj[k, cond] + Bj[k, cond]) - logPxj)
+              if(any(cond)) tmpEj[k, b] <- exp(logsum(Rj[k, cond] + Bj[k, cond]) - logPxj)
             }
           }
           # correct for sequence weight
@@ -682,7 +682,7 @@ train.HMM <- function(x, y, method = "Viterbi", seqweights = NULL, wfactor = 1,
       model$A <- A
       model$E <- E
       logPx <- sum(tmplogPx) # page 62 eq 3.17
-      if(!quiet) cat("Iteration", i, "log likelihood = ", logPx, "\n")
+      if(!quiet) cat("Iteration", i, "log likelihood =", logPx, "\n")
       if(abs(LL - logPx) < deltaLL){
         if(!logspace){
           model$A <- exp(model$A)
