@@ -17,7 +17,7 @@
 #'   should be filled using compiled C++ functions (default; many times faster).
 #'   The R version is primarily retained for bug-fixing and experimentation.
 #' @param ... additional arguments to be passed between methods.
-#' @return a vector or matrix of posterior probabilities.
+#' @return a vector, matrix or array of posterior probabilities.
 #' @details
 #'   See Durbin et al (1998) chapter 3.2 for details on the calculation
 #'   and interpretation of posterior state probabilities.
@@ -71,7 +71,7 @@ posterior.HMM <- function(x, y, logspace = "autodetect", cpp = TRUE, ...){
 #' @rdname posterior
 ################################################################################
 posterior.PHMM <- function(x, y, logspace = "autodetect", cpp = TRUE, ...){
-  stop("Posterior method not currently available for profile HMMs")
+  ### stop("Posterior method not currently available for profile HMMs")
   ### placeholder
   if(identical(logspace, 'autodetect')) logspace <- .logdetect(x)
   back <- backward(x, y, logspace = logspace, cpp = cpp)

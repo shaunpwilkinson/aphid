@@ -35,7 +35,7 @@ should be filled using compiled C++ functions (default; many times faster).
 The R version is primarily retained for bug-fixing and experimentation.}
 }
 \value{
-a vector or matrix of posterior probabilities.
+a vector, matrix or array of posterior probabilities.
 }
 \description{
 Calculate the posterior probability of a sequence given a model.
