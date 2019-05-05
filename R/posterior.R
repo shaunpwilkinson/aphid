@@ -79,7 +79,7 @@ posterior.PHMM <- function(x, y, logspace = "autodetect", cpp = TRUE, ...){
   forw <- forward(x, y, logspace = logspace, cpp = cpp)
   R <- forw$array
   logPx <- forw$score
-  postprobs <- exp(R[, ,"M"] + B[, ,"M"] - logPx)
+  postprobs <- exp(R + B - logPx)
   return(postprobs)
 }
 ################################################################################
