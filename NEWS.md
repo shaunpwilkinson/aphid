@@ -1,3 +1,11 @@
+# aphid 1.3.3 (2019-05-08)
+
+* Fixed bug in train.HMM causing log likelihood to vanish for Baum Welch training (thanks Marie-Amelie Forin-Wiart for bug report)
+
+* Enabled full array output for posterior.PHMM (thanks Leon Eyrich Jessen for bug report)
+
+--------------------------------------------------------------------------------
+
 # aphid 1.3.2 (2019-03-15)
 
 * Specified previous version of set.seed sampler with RNGversion() calls

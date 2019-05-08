@@ -1,11 +1,10 @@
-# aphid version 1.3.1
+# aphid version 1.3.3
 
-This version specifies previous version of set.seed sampler with RNGversion() calls
-as requested by Kurt Hornik 2019-03-07
+This version implements two minor bug-fixes in the train.HMM and posterior.PHMM functions
 
 ## Test environments
 
- * local ubuntu 16.04.2 x86_64-pc-linux-gnu; R version 3.5.2 
+ * local ubuntu 16.04.2 x86_64-pc-linux-gnu; R version 3.5.3 
  * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R 3.5.2
  * winbuilder R devel (2019-03-12 r76226)
 
