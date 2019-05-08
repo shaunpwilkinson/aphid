@@ -2,7 +2,14 @@
 
 Analysis with profile hidden Markov models
 
-
+[![DOI](https://zenodo.org/badge/63536088.svg)](https://zenodo.org/badge/latestdoi/63536088)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/aphid)](https://cran.r-project.org/package=aphid)
+[![](http://cranlogs.r-pkg.org/badges/grand-total/aphid)](https://cran.r-project.org/package=aphid)
+[![Build Status](https://travis-ci.org/shaunpwilkinson/aphid.svg?branch=master)](https://travis-ci.org/shaunpwilkinson/aphid)
+[![codecov](https://codecov.io/github/shaunpwilkinson/aphid/branch/master/graphs/badge.svg)](https://codecov.io/github/shaunpwilkinson/aphid)
+[![ORCiD](https://img.shields.io/badge/ORCiD-0000--0002--7332--7931-brightgreen.svg)](http://orcid.org/0000-0002-7332-7931)
+[![Project Status: Active - The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 
 
 --------------------------------------------------------------------------------
