@@ -47,13 +47,20 @@ subsetPHMM <- function(x, start, end){
   #reindex the labels
   names(new_map) <- 1:(length(new_map))
 
+  #Subset the A and E matrixies, reindex the positions
+  #A is 0 indexed, E is 1 indexed
+  new_A = x$A[,start:end]
+  colnames(new_A) = 0:(length(colnames(new_A))-1)
+  new_E = x$E[,start:end]
+  colnames(new_E) = 1:length(colnames(new_A))
+
   #build the new PHMM object
   newPHMM <- structure(list(name = x$name,
                            description = x$description,
                            size = (end - start)+1,
                            alphabet = x$alphabet,
-                           A = x$A[,start:end],
-                           E = x$E[,start:end],
+                           A = new_A,
+                           E = new_E,
                            qa = x$qa,
                            qe = x$qe,
                            inserts = new_inserts,
