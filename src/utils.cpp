@@ -42,7 +42,7 @@ NumericMatrix atab(IntegerMatrix x, NumericVector seqweights){
     throw Rcpp::exception("length of seqweights vector should equal number of sequences");
   }
   int modules = 0;
-  for(int i = 0; i < x.ncol(); i++) if((x(0, i) == 0) | (x(0, i) == 1)) modules++;
+  for(int i = 0; i < x.ncol(); i++) if((x(0, i) == 0) || (x(0, i) == 1)) modules++;
   // modules is the total number of modules in the model including begin and end states
   NumericMatrix out(9, modules - 1);
   CharacterVector transtype = CharacterVector::create("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II");
@@ -56,15 +56,15 @@ NumericMatrix atab(IntegerMatrix x, NumericVector seqweights){
   for(int i = 0; i < x.nrow(); i++){
     while(j < x.ncol() - 1){
       while(IntegerMatrix::is_na(x(i, k))) k++;
-      if((x(i, j) == 0) & (x(i, k) == 0)) out(0, module) = out(0, module) + seqweights[i];
-      else if((x(i, j) == 0) & (x(i, k) == 1)) out(1, module) = out(1, module) + seqweights[i];
-      else if((x(i, j) == 0) & (x(i, k) == 2)) out(2, module) = out(2, module) + seqweights[i];
-      else if((x(i, j) == 1) & (x(i, k) == 0)) out(3, module) = out(3, module) + seqweights[i];
-      else if((x(i, j) == 1) & (x(i, k) == 1)) out(4, module) = out(4, module) + seqweights[i];
-      else if((x(i, j) == 1) & (x(i, k) == 2)) out(5, module) = out(5, module) + seqweights[i];
-      else if((x(i, j) == 2) & (x(i, k) == 0)) out(6, module) = out(6, module) + seqweights[i];
-      else if((x(i, j) == 2) & (x(i, k) == 1)) out(7, module) = out(7, module) + seqweights[i];
-      else if((x(i, j) == 2) & (x(i, k) == 2)) out(8, module) = out(8, module) + seqweights[i];
+      if((x(i, j) == 0) && (x(i, k) == 0)) out(0, module) = out(0, module) + seqweights[i];
+      else if((x(i, j) == 0) && (x(i, k) == 1)) out(1, module) = out(1, module) + seqweights[i];
+      else if((x(i, j) == 0) && (x(i, k) == 2)) out(2, module) = out(2, module) + seqweights[i];
+      else if((x(i, j) == 1) && (x(i, k) == 0)) out(3, module) = out(3, module) + seqweights[i];
+      else if((x(i, j) == 1) && (x(i, k) == 1)) out(4, module) = out(4, module) + seqweights[i];
+      else if((x(i, j) == 1) && (x(i, k) == 2)) out(5, module) = out(5, module) + seqweights[i];
+      else if((x(i, j) == 2) && (x(i, k) == 0)) out(6, module) = out(6, module) + seqweights[i];
+      else if((x(i, j) == 2) && (x(i, k) == 1)) out(7, module) = out(7, module) + seqweights[i];
+      else if((x(i, j) == 2) && (x(i, k) == 2)) out(8, module) = out(8, module) + seqweights[i];
       //
       if(x(i, k) != 2) module++;
       j = k;
