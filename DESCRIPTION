@@ -30,6 +30,7 @@ Imports:
     graphics,
     openssl,
     kmer (>= 1.0.0),
+    qpdf,
     Rcpp (>= 0.12.5),
     stats
 Suggests:

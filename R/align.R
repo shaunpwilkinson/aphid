@@ -364,7 +364,7 @@ align.list <- function(x, model = NULL, progressive = FALSE, seeds = NULL,
   rownames(alig) <- names(x)
   alig <- alig[, -1L, drop = FALSE] ## remove gap emitted by begin state
   class(alig) <- if(DNA) "DNAbin" else if(AA) "AAbin" else NULL
-  if(para & stopclustr) parallel::stopCluster(cores)
+  #if(para & stopclustr) parallel::stopCluster(cores)
   gc()
   return(alig)
   # paths <- lapply(paths, as.integer)

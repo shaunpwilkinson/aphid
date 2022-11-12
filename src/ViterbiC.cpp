@@ -214,7 +214,7 @@ List ViterbiD(IntegerVector x, IntegerVector y,
   // recursion
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
-      if(((j - i) >= windowspace[0]) & ((j - i) <= windowspace[1])){
+      if(((j - i) >= windowspace[0]) && ((j - i) <= windowspace[1])){
         sij = S(x[i - 1], y[j - 1]) + offset;
         IXcdt[0] = MIX(i - 1, j) - e;
         IXcdt[1] = MMM(i - 1, j) - (d + e);
@@ -525,7 +525,7 @@ List ViterbiP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
   // recursion
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
-      if(((j - i) >= windowspace[0]) & ((j - i) <= windowspace[1])){
+      if(((j - i) >= windowspace[0]) && ((j - i) <= windowspace[1])){
         if(DNA){
           sij = probDNA(y[j - 1], E(_, i - 1)) + offset;
         }else if(AA){
@@ -811,7 +811,7 @@ List ViterbiPP(NumericMatrix Ax, NumericMatrix Ay,
   // recursion step
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
-      if(((j - i) >= windowspace[0]) & ((j - i) <= windowspace[1])){
+      if(((j - i) >= windowspace[0]) && ((j - i) <= windowspace[1])){
         sij = Saa(i - 1, j - 1) + offset;
         MIcdt[0] = MMmatrix(i - 1, j) + Ax(4, i - 1) + Ay(5, j); //MM + MI
         MIcdt[1] = MImatrix(i - 1, j) + Ax(4, i - 1) + Ay(8, j); //MM + II
@@ -1101,7 +1101,7 @@ List forwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector q
   // recursion
   for(int i = 1; i < n; i++){
     for(int j = 1; j < m; j++){
-      if(((j - i) >= windowspace[0]) & ((j - i) <= windowspace[1])){
+      if(((j - i) >= windowspace[0]) && ((j - i) <= windowspace[1])){
         if(DNA){
           sij = probDNA(y[j - 1], E(_, i - 1));
         }else if(AA){
@@ -1239,7 +1239,7 @@ List backwardP(IntegerVector y, NumericMatrix A, NumericMatrix E, NumericVector 
   // recursion
   for(int i = n - 2; i >= 0; i--){
     for(int j = m - 2; j >= 0; j--){
-      if(((j - i) >= windowspace[0]) & ((j - i) <= windowspace[1])){
+      if(((j - i) >= windowspace[0]) && ((j - i) <= windowspace[1])){
         if(DNA){
           sij = probDNA(y[j], E(_, i));
         }else if(AA){
