@@ -405,7 +405,7 @@
   if(is.null(probs)) probs <- rep(0.05, 20)
   if(arity == 20){
     fun <- function(v){
-      ambigs <- !(v %in% as.raw((65:89)[-c(2, 10, 15, 21, 24)]))
+      ambigs <- !(unclass(v) %in% as.raw((65:89)[-c(2, 10, 15, 21, 24)]))
       if(any(ambigs)) v[ambigs] <- sapply(unclass(v[ambigs]), .disambiguateAA, probs)
       bits <- (65:89)[-c(2, 10, 15, 21, 24)]
       ints <- 0:19
