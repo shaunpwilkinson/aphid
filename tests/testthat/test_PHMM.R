@@ -114,6 +114,9 @@ pdf(file = fl)
 x.plot <- plot(x.PHMM, from = 0, to = 10)
 dev.off()
 
+# Subsetting a PHMM
+#x22.PHMM is a subsection of x.PHMM that should be 22 profile positions in length
+x22.PHMM <- subsetPHMM(x.PHMM, 17, 38)
 
 test_that("objects have correct classes", {
   expect_is(x.PHMM, "PHMM")
@@ -154,4 +157,16 @@ test_that("Character and raw inputs give same output", {
 
 test_that("Plotting command functions as expected", {
   expect_identical(x.plot, NULL)
+})
+
+
+test_that("PHMMs can be subset as expected", {
+  expect_error(subsetPHMM(x.PHMM, 5, 222), "Index error, end position out of bounds. Input PHMM only has a length of: 100")
+  expect_error(subsetPHMM(x.PHMM, 7, 2), "Index error, end position must match or exceed the start position.")
+
+  expect_equal(x22.PHMM$size, 22)
+
+  expect_equal(all.equal(x22.PHMM$E[,1], x.PHMM$E[,17]), TRUE)
+  expect_equal(all.equal(x22.PHMM$A[,ncol(x22.PHMM$A)], x.PHMM$A[,38]), TRUE)
+
 })
