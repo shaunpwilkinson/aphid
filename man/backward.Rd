@@ -8,9 +8,18 @@
 \usage{
 backward(x, y, ...)
 
-\method{backward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
-  odds = TRUE, windowspace = "all", DI = FALSE, ID = FALSE,
-  cpp = TRUE, ...)
+\method{backward}{PHMM}(
+  x,
+  y,
+  qe = NULL,
+  logspace = "autodetect",
+  odds = TRUE,
+  windowspace = "all",
+  DI = FALSE,
+  ID = FALSE,
+  cpp = TRUE,
+  ...
+)
 
 \method{backward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 }

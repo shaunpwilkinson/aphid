@@ -4,7 +4,8 @@
 \name{casino}
 \alias{casino}
 \title{Dishonest casino.}
-\format{A named character vector showing the result of 300 rolls of a dice
+\format{
+A named character vector showing the result of 300 rolls of a dice
   that switches from "Fair" to "Loaded" with a probability
   of 0.05 and back to "Fair" with a probability of 0.1. In the Fair
   state each outcome from 1 to 6 has an equal probability of occurring,
@@ -12,7 +13,8 @@
   to 0.5 (with the remaining five probabilities reduced to 0.1).
   The elements of the vector are the outcomes of the 300 rolls
   ("1", "2", "3", "4", "5", or "6") and the "names" attribute
-  represents the underlying Markov states ("Fair" or "Loaded").}
+  represents the underlying Markov states ("Fair" or "Loaded").
+}
 \source{
 Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   sequence analysis: probabilistic models of proteins and nucleic acids.

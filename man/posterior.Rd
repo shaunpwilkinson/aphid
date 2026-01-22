@@ -10,8 +10,7 @@ posterior(x, y, ...)
 
 \method{posterior}{HMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 
-\method{posterior}{PHMM}(x, y, logspace = "autodetect", cpp = TRUE,
-  ...)
+\method{posterior}{PHMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 }
 \arguments{
 \item{x}{an object of class \code{'HMM'} or \code{'PHMM'}.}

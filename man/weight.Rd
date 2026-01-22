@@ -15,13 +15,11 @@ weight(x, ...)
 
 \method{weight}{AAbin}(x, method = "Henikoff", k = 5, ...)
 
-\method{weight}{list}(x, method = "Henikoff", k = 5, residues = NULL,
-  gap = "-", ...)
+\method{weight}{list}(x, method = "Henikoff", k = 5, residues = NULL, gap = "-", ...)
 
 \method{weight}{dendrogram}(x, method = "Gerstein", ...)
 
-\method{weight}{default}(x, method = "Henikoff", k = 5,
-  residues = NULL, gap = "-", ...)
+\method{weight}{default}(x, method = "Henikoff", k = 5, residues = NULL, gap = "-", ...)
 }
 \arguments{
 \item{x}{a list or matrix of sequences

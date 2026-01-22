@@ -9,15 +9,36 @@
 \usage{
 Viterbi(x, y, ...)
 
-\method{Viterbi}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
-  type = "global", odds = TRUE, offset = 0, windowspace = "all",
-  DI = FALSE, ID = FALSE, cpp = TRUE, ...)
+\method{Viterbi}{PHMM}(
+  x,
+  y,
+  qe = NULL,
+  logspace = "autodetect",
+  type = "global",
+  odds = TRUE,
+  offset = 0,
+  windowspace = "all",
+  DI = FALSE,
+  ID = FALSE,
+  cpp = TRUE,
+  ...
+)
 
 \method{Viterbi}{HMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 
-\method{Viterbi}{default}(x, y, type = "global", d = 8, e = 2,
-  residues = NULL, S = NULL, windowspace = "all", offset = 0,
-  cpp = TRUE, ...)
+\method{Viterbi}{default}(
+  x,
+  y,
+  type = "global",
+  d = 8,
+  e = 2,
+  residues = NULL,
+  S = NULL,
+  windowspace = "all",
+  offset = 0,
+  cpp = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{an object of class \code{HMM} or \code{PHMM}. Optionally, both x and

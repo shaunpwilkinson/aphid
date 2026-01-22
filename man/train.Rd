@@ -8,17 +8,45 @@
 \usage{
 train(x, y, ...)
 
-\method{train}{PHMM}(x, y, method = "Viterbi", seqweights = "Henikoff",
-  wfactor = 1, k = 5, logspace = "autodetect", maxiter = 100,
-  limit = 1, deltaLL = 1e-07, pseudocounts = "background",
-  gap = "-", fixqa = FALSE, fixqe = FALSE, maxsize = NULL,
-  inserts = "map", threshold = 0.5, lambda = 0, alignment = FALSE,
-  cores = 1, quiet = FALSE, ...)
+\method{train}{PHMM}(
+  x,
+  y,
+  method = "Viterbi",
+  seqweights = "Henikoff",
+  wfactor = 1,
+  k = 5,
+  logspace = "autodetect",
+  maxiter = 100,
+  limit = 1,
+  deltaLL = 1e-07,
+  pseudocounts = "background",
+  gap = "-",
+  fixqa = FALSE,
+  fixqe = FALSE,
+  maxsize = NULL,
+  inserts = "map",
+  threshold = 0.5,
+  lambda = 0,
+  alignment = FALSE,
+  cores = 1,
+  quiet = FALSE,
+  ...
+)
 
-\method{train}{HMM}(x, y, method = "Viterbi", seqweights = NULL,
-  wfactor = 1, maxiter = 100, deltaLL = 1e-07,
-  logspace = "autodetect", quiet = FALSE, modelend = FALSE,
-  pseudocounts = "Laplace", ...)
+\method{train}{HMM}(
+  x,
+  y,
+  method = "Viterbi",
+  seqweights = NULL,
+  wfactor = 1,
+  maxiter = 100,
+  deltaLL = 1e-07,
+  logspace = "autodetect",
+  quiet = FALSE,
+  modelend = FALSE,
+  pseudocounts = "Laplace",
+  ...
+)
 }
 \arguments{
 \item{x}{an object of class \code{"HMM"} or \code{"PHMM"} specifying the

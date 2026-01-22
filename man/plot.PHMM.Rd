@@ -4,8 +4,15 @@
 \alias{plot.PHMM}
 \title{Plot profile hidden Markov models.}
 \usage{
-\method{plot}{PHMM}(x, from = "start", to = "end", just = "center",
-  arrexp = 1, textexp = 1, ...)
+\method{plot}{PHMM}(
+  x,
+  from = "start",
+  to = "end",
+  just = "center",
+  arrexp = 1,
+  textexp = 1,
+  ...
+)
 }
 \arguments{
 \item{x}{an object of class \code{"PHMM"}.}

@@ -1,13 +1,11 @@
 citHeader("To cite aphid in publications use:")
 
-bibentry(entry = "Article",
+bibentry(bibtype = "Article",
    title = "aphid: an R package for analysis with profile hidden Markov models",
-   author = c("Shaun Wilkinson"),
+   author = c(person("Shaun","Wilkinson", role = "aut")),
    url = "https://doi.org/10.1093/bioinformatics/btz159",
    journal = "Bioinformatics",
    year   = "2019",
-   doi = "10.1093/bioinformatics/btz159",
-   textVersion =
-   paste("Wilkinson SP (2019) aphid: an R package for analysis with profile hidden Markov models.",
-         "Bioinformatics. https://doi.org/10.1093/bioinformatics/btz159.")
+   doi = "10.1093/bioinformatics/btz159"
 )
+

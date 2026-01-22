@@ -146,7 +146,7 @@
 #'   Paradis E (2012) Analysis of Phylogenetics and Evolution with R
 #'   (Second Edition). Springer, New York.
 #'
-#' @docType package
+#' @docType _PACKAGE
 #' @name aphid
 ################################################################################
 NULL

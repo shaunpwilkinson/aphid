@@ -8,9 +8,18 @@
 \usage{
 forward(x, y, ...)
 
-\method{forward}{PHMM}(x, y, qe = NULL, logspace = "autodetect",
-  odds = TRUE, windowspace = "all", DI = FALSE, ID = FALSE,
-  cpp = TRUE, ...)
+\method{forward}{PHMM}(
+  x,
+  y,
+  qe = NULL,
+  logspace = "autodetect",
+  odds = TRUE,
+  windowspace = "all",
+  DI = FALSE,
+  ID = FALSE,
+  cpp = TRUE,
+  ...
+)
 
 \method{forward}{HMM}(x, y, logspace = "autodetect", cpp = TRUE, ...)
 }

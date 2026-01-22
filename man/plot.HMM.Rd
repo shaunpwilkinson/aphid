@@ -4,8 +4,7 @@
 \alias{plot.HMM}
 \title{Plot standard hidden Markov models.}
 \usage{
-\method{plot}{HMM}(x, just = "center", arrexp = 1, textexp = 1,
-  begin = FALSE, ...)
+\method{plot}{HMM}(x, just = "center", arrexp = 1, textexp = 1, begin = FALSE, ...)
 }
 \arguments{
 \item{x}{an object of class \code{"HMM"}.}

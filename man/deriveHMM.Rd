@@ -4,8 +4,15 @@
 \alias{deriveHMM}
 \title{Derive a standard hidden Markov model from a set of sequences.}
 \usage{
-deriveHMM(x, seqweights = NULL, residues = NULL, states = NULL,
-  modelend = FALSE, pseudocounts = "background", logspace = TRUE)
+deriveHMM(
+  x,
+  seqweights = NULL,
+  residues = NULL,
+  states = NULL,
+  modelend = FALSE,
+  pseudocounts = "background",
+  logspace = TRUE
+)
 }
 \arguments{
 \item{x}{a list of named character vectors representing emissions

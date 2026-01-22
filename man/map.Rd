@@ -4,9 +4,18 @@
 \alias{map}
 \title{Optimized profile HMM construction.}
 \usage{
-map(x, seqweights = NULL, residues = NULL, gap = "-",
-  endchar = "?", pseudocounts = "background", lambda = 0,
-  qa = NULL, qe = NULL, cpp = TRUE)
+map(
+  x,
+  seqweights = NULL,
+  residues = NULL,
+  gap = "-",
+  endchar = "?",
+  pseudocounts = "background",
+  lambda = 0,
+  qa = NULL,
+  qe = NULL,
+  cpp = TRUE
+)
 }
 \arguments{
 \item{x}{a matrix of aligned sequences. Accepted modes are "character"

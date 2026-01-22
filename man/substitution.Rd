@@ -4,7 +4,8 @@
 \name{substitution}
 \alias{substitution}
 \title{Substitution matrices.}
-\format{A list of 71 matrices, most of which have 24 rows and 24 columns
+\format{
+A list of 71 matrices, most of which have 24 rows and 24 columns
 corresponding to the 20-letter amino acid alphabet plus the ambiguity codes B, Z,
 X and *:
 \describe{
@@ -13,7 +14,8 @@ X and *:
   \item{others}{also included are the DAYHOFF, GONNET, IDENTITY
   and MATCH substitution matrices for amino acids,
   and the NUC.4.2 and NUC.4.4 substitution matrices for DNA.}
-}}
+}
+}
 \source{
 \url{ftp://ftp.ncbi.nih.gov/blast/matrices/}
 }
