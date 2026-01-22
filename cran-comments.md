@@ -1,5 +1,5 @@
 
-# aphid version 1.3.4
+# aphid version 1.3.6
 
 This version fixes an issue reported by the CRAN team where the now obsolete C++11 or C++14 standards are requested
 

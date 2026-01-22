@@ -159,7 +159,7 @@
 #'   This function performs a similar operation to the  \code{hmmbuild}
 #'   function in the \href{http://www.hmmer.org}{HMMER} package, and the
 #'   \code{modelfromalign} and \code{buildmodel} functions in the
-#'   \href{https://compbio.soe.ucsc.edu/sam.html}{SAM} package.
+#'   \href{https://engineering.ucsc.edu/departments/biomolecular-engineering/}{SAM} package.
 #'   If the primary input argument is an alignment, the function creates a
 #'   profile hidden Markov model (object class:\code{"PHMM"}) using the
 #'   method described in Durbin et al (1998) chapter 5.3. Alternatively, if

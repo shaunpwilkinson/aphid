@@ -35,7 +35,7 @@ dramatically since advances in computational capacity have
 enabled full probabilistic analysis in place of heuristic approximations. 
 Pioneering this transition are two groups lead by 
 Anders Krogh and Sean Eddy, whose respective software packages 
-[SAM](https://compbio.soe.ucsc.edu/sam.html) 
+[SAM](https://engineering.ucsc.edu/departments/biomolecular-engineering/) 
 and [HMMER](http://www.hmmer.org) 
 have underpinned HMM-based bioinformatic analysis for over two 
 decades. 

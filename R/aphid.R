@@ -24,7 +24,7 @@
 #'   compatibility with the \href{http://www.hmmer.org}{HMMER} software suite
 #'   through the file input and output functions \code{\link{readPHMM}} and
 #'   \code{\link{writePHMM}}. Those interested are further encouraged to check out the
-#'   \href{https://compbio.soe.ucsc.edu/sam.html}{SAM} software package,
+#'   \href{https://engineering.ucsc.edu/departments/biomolecular-engineering/}{SAM} software package,
 #'   which also features a comprehensive suite of functions and tutorials.
 #'
 #'   The \pkg{aphid} package is designed to work in conjunction with the "DNAbin"
